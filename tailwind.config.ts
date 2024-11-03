@@ -8,9 +8,21 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        clash: ["Clash Display", "sans-serif"],
+      },
       colors: {
-        background: "var(--background)",
+        background: "#F1F0EE",
         foreground: "var(--foreground)",
+        secondary: "#39498C",
+        primary: "#F1B12D",
+        "text-gray": "#838282",
+        "light-gray": "#F9F9F9",
+        "input-border": "#E0E0E0",
+        border: "#D8D8D8",
+        "pastel-blue": "#DADFF6",
+        "dark-blue": "#010C3B",
+        "dark-yellow": "#CD9C00",
       },
     },
   },
