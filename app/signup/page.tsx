@@ -7,7 +7,7 @@ import SignupStepFive from "@/components/onboarding/signup/steps/Step5";
 import { Progress } from "@/components/ui/Progress";
 import React, { useState } from "react";
 
-export const Signup = () => {
+const page = () => {
   const [step, setStep] = useState(1);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -55,4 +55,4 @@ export const Signup = () => {
   );
 };
 
-export default Signup;
+export default page;
