@@ -1,12 +1,19 @@
-// app/dashboard/page.tsx
-import React from "react";
+"use client";
+import { ActiveAccountDashboard } from "@/components/dashboard/home/active/ActiveAccountDashboard";
+import { PendingAccountDashboard } from "@/components/dashboard/home/pending";
+import React, { useState } from "react";
 
-const DashboardPage = () => {
+const page = () => {
+  const [isFinishedSetup] = useState(true);
   return (
-    <div>
-      <h1 className="text-black">Welcome to the Dashboard</h1>
+    <div className="">
+      {isFinishedSetup ? (
+        <ActiveAccountDashboard />
+      ) : (
+        <PendingAccountDashboard />
+      )}
     </div>
   );
 };
 
-export default DashboardPage;
+export default page;

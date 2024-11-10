@@ -1,7 +1,7 @@
 "use client";
 import BoxOption from "@/components/ui/BoxOption";
-import { Button } from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
+import { Button } from "@/components/ui/button";
+import Input from "@/components/ui/Field";
 import { Progress } from "@/components/ui/Progress";
 import { RadioGroup } from "@radix-ui/react-radio-group";
 import Link from "next/link";
@@ -42,8 +42,8 @@ const SignupStepFive: React.FC<SignupStepFiveProps> = ({ nextStep, title }) => {
         </div>
 
         <Button
-          action={() => router.push("/dashboard")}
-          className="mt-6 text-white rounded-none"
+          onClick={() => router.push("/dashboard/home")}
+          className="mt-6 w-full text-white rounded-none"
         >
           Continue
         </Button>

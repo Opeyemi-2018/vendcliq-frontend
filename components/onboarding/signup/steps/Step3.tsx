@@ -1,7 +1,7 @@
 "use client";
 import BoxOption from "@/components/ui/BoxOption";
-import { Button } from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
+import { Button } from "@/components/ui/button";
+import Input from "@/components/ui/Field";
 import { Progress } from "@/components/ui/Progress";
 import { RadioGroup } from "@radix-ui/react-radio-group";
 import Link from "next/link";
@@ -37,12 +37,15 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
           />
         </div>
         <div className="flex gap-1 items-center justify-center mt-3 font-sans text-sm">
-          <Button className=" flex items-center justify-center bg-inherit gap-2 font-medium text-secondary">
-            <TbReload size="20" />
-            Resend confirmation code
+          <Button className=" flex  items-center justify-center bg-inherit hover:bg-inherit gap-2 font-medium text-secondary">
+            <TbReload size="20" className="text-black" />
+            <p className="text-black">Resend confirmation code</p>
           </Button>
         </div>
-        <Button action={nextStep} className="mt-6 text-white rounded-none">
+        <Button
+          onClick={nextStep}
+          className="mt-6 text-white w-full rounded-none"
+        >
           Continue
         </Button>
       </div>

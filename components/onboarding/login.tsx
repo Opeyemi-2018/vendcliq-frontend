@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import Input from "../ui/Input";
-import { Button } from "../ui/Button";
+import Input from "../ui/Field";
+import { Button } from "../ui/button";
 import { FcGoogle } from "react-icons/fc";
 import Image from "next/image";
 import { FaQuoteLeft } from "react-icons/fa";
@@ -45,9 +45,9 @@ export const Login = () => {
               Forget Password
             </p>
             <Link href={"/dashboard"}>
-              <Button className="mt-10 text-white">Sign In</Button>
+              <Button className="mt-10 w-full text-white">Sign In</Button>
             </Link>
-            <Button className="flex items-center justify-center bg-white border rounded-sm border-border gap-3 mt-5">
+            <Button className="flex items-center justify-center bg-white border rounded-sm border-border gap-3 w-full text-black hover:bg-inherit mt-5">
               <FcGoogle size={"24"} />
               Sign In With Google
             </Button>
@@ -85,10 +85,10 @@ export const Login = () => {
                 <p>Distributor</p>
               </div>
               <div className="flex gap-5 mt-16">
-                <Button className="bg-pastel-blue w-fit px-10 py-5 rounded-lg">
+                <Button className="bg-pastel-blue w-fit px-10 py-7 rounded-lg">
                   <GoArrowLeft color="#010C3B" size="28" />
                 </Button>
-                <Button className="bg-dark-blue w-fit px-10 py-5 rounded-lg">
+                <Button className="bg-dark-blue w-fit px-10 py-7 rounded-lg">
                   <GoArrowRight color="#DADFF6" size="28" />
                 </Button>
               </div>

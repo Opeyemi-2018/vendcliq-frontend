@@ -1,7 +1,7 @@
 "use client";
 import BoxOption from "@/components/ui/BoxOption";
-import { Button } from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
+import { Button } from "@/components/ui/button";
+import Input from "@/components/ui/Field";
 import { Progress } from "@/components/ui/Progress";
 import { RadioGroup } from "@radix-ui/react-radio-group";
 import Link from "next/link";
@@ -40,9 +40,13 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({ nextStep, title }) => {
         </RadioGroup>
 
         <Input label="Password" type="password" className="flex-1  my-5" />
+        <Input label="Referal Code" type="text" className="flex-1  my-5" />
       </div>
 
-      <Button action={nextStep} className="mt-6 text-white rounded-none">
+      <Button
+        onClick={nextStep}
+        className="mt-6 w-full text-white rounded-none"
+      >
         Continue
       </Button>
 
