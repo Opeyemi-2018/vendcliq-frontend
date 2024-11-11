@@ -29,6 +29,8 @@ yarn*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+yarn.lock
+pnpm-lock.yaml
 
 # env files (can opt-in for commiting if needed)
 .env*
