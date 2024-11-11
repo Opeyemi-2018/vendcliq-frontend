@@ -1,5 +1,3 @@
-import { LucideIcon } from "lucide-react";
-
 export interface IButton {
   children: React.ReactNode;
   className?: string;
