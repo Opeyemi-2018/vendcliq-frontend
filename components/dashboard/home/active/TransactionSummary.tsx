@@ -1,5 +1,5 @@
 import React from "react";
-import { FaUniversity } from "react-icons/fa"; // Import the bank icon
+
 import Link from "next/link";
 import { RiBankLine } from "react-icons/ri";
 import TransactionCard from "@/components/ui/TransactionCard";
@@ -13,7 +13,6 @@ const TransactionSummary: React.FC = () => {
         </button>
       </div>
 
-      {/* Transaction Cards */}
       <TransactionCard
         title="Total Transaction Value"
         value="NGN300,000.00"
@@ -30,7 +29,6 @@ const TransactionSummary: React.FC = () => {
         icon={<RiBankLine className="text-[#39498C] text-2xl" />}
       />
 
-      {/* "See More" link */}
       <div className="mt-4">
         <Link href="/more-details">
           <div className="text-blue-600 font-medium hover:underline flex items-center">

@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/StatCard";
 import { SummaryCard } from "@/components/ui/SummaryCard";
-import TransactionCard from "@/components/ui/TransactionCard";
 import React from "react";
 import { CgNotes } from "react-icons/cg";
 import { FaArrowRightLong } from "react-icons/fa6";

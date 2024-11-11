@@ -31,14 +31,14 @@ export const Otp = ({
             disabled={true}
             label="New pin"
             placeholder="Enter new pin"
-            value={"newpassword"}
+            value={newpassword}
             onChange={setNewPassword}
           />
           <PasswordInput
             disabled={true}
             label="Confirm new pin"
             placeholder="Confirm new pin"
-            value={"confirmpassword"}
+            value={confirmpassword}
             onChange={setConfirmPassword}
           />
           <div className="pt-10 space-y-5">

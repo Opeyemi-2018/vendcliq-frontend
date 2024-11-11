@@ -5,7 +5,6 @@ import { Password } from "@/components/dashboard/settings/tabContent/Password";
 import { PersonalProfile } from "@/components/dashboard/settings/tabContent/PersonalProfile";
 import { CreatePin } from "@/components/dashboard/settings/tabContent/pin/CreatePin";
 import { Otp } from "@/components/dashboard/settings/tabContent/pin/Otp";
-import { Button } from "@/components/ui/button";
 import { PageTitle } from "@/components/ui/pageTitle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React, { useState } from "react";

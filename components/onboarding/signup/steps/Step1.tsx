@@ -1,8 +1,6 @@
 "use client";
 import BoxOption from "@/components/ui/BoxOption";
 import { Button } from "@/components/ui/button";
-import Input from "@/components/ui/Field";
-import { Progress } from "@/components/ui/Progress";
 import { RadioGroup } from "@radix-ui/react-radio-group";
 import Link from "next/link";
 import React, { useState } from "react";
@@ -46,7 +44,7 @@ const SignupStepOne: React.FC<SignupStepOneProps> = ({ nextStep, title }) => {
             value="wholesaler"
             title="Wholesaler"
             description="For businesses that buy from distributors and sell to final consumers"
-            iconSrc="/assets/icon/noto-v1_shopping-cart.png"
+            iconSrc="/assets/icon/wholesaler_10103180.png"
             selectedValue={selectedValue}
           />
         </RadioGroup>

@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Upload } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
 import { Input } from "./Input";
 
 export default function CustomFileInput({ label }: { label: string }) {

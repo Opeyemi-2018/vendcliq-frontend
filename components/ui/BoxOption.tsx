@@ -1,4 +1,5 @@
 import * as RadioGroup from "@radix-ui/react-radio-group";
+import Image from "next/image";
 
 interface BoxOptionProps {
   value: string;
@@ -33,7 +34,13 @@ const BoxOption: React.FC<BoxOptionProps> = ({
             "flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-white"
           }
         >
-          <img src={iconSrc} alt={`${title} icon`} className="w-6 h-6" />
+          <Image
+            src={iconSrc}
+            alt={`${title} icon`}
+            className="w-6 h-6"
+            width={80}
+            height={80}
+          />
         </div>
       )}
       {description ? (

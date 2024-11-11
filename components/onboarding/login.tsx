@@ -52,7 +52,7 @@ export const Login = () => {
               Sign In With Google
             </Button>
             <div className="flex gap-1 items-center font-sans justify-center mt-3">
-              <p className="text-black">Don't have an account?</p>
+              <p className="text-black">Don`t have an account?</p>
               <Link href={"/signup"}>
                 <p className="text-primary">Create an account</p>
               </Link>
@@ -67,15 +67,15 @@ export const Login = () => {
             height={800}
             className="object-fill h-full w-full"
           />
-          <div className=" absolute top-5 left-5 h-full w-full  text-white px-20 py-20">
-            <h1 className="text-7xl font-semibold">
+          <div className=" absolute top-5 left-5 h-full w-full  text-white px-20 py-10">
+            <h1 className="text-6xl font-semibold">
               What’s our <br></br>{" "}
               <span className="text-primary">Customers</span> Saying{" "}
             </h1>
-            <div className="e mt-20 font-sans">
+            <div className=" mt-10 font-sans">
               <FaQuoteLeft className=" " size="32" />
 
-              <p className="w-full mt-10 text-2xl ">
+              <p className="w-full mt-5 text-xl ">
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non
                 risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing
                 nec, ultricies sed, dolor.
@@ -84,7 +84,7 @@ export const Login = () => {
                 <p className="font-semibold">Adeshola Adewoye</p>
                 <p>Distributor</p>
               </div>
-              <div className="flex gap-5 mt-16">
+              <div className="flex gap-5 mt-10">
                 <Button className="bg-pastel-blue w-fit px-10 py-7 rounded-lg">
                   <GoArrowLeft color="#010C3B" size="28" />
                 </Button>

@@ -20,7 +20,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MoveRight } from "lucide-react";
 import React from "react";
 import { RiFileDownloadFill } from "react-icons/ri";
 
@@ -105,13 +104,13 @@ const page = () => {
                         {transaction.id}
                       </TableCell>
                       <TableCell>
-                        {FormatCurrency(transaction.amount)}
+                        <FormatCurrency amount={transaction.amount} />
                       </TableCell>
                       <TableCell>{transaction.narration}</TableCell>
                       <TableCell>{transaction.paymentType}</TableCell>
                       <TableCell>{transaction.Date}</TableCell>
                       <TableCell>
-                        {FormatCurrency(transaction.Details)}
+                        <FormatCurrency amount={transaction.Details} />
                       </TableCell>
                     </TableRow>
                   ))}

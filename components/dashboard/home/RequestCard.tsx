@@ -28,7 +28,7 @@ export default function RequestCard({
         </div>
         <Button
           className={`${primaryColor} flex mt-5 w-fit h-8 font-sans rounded-md items-center px-5 text-sm text-black hover:${primaryColor} hover:brightness-90`}
-          action={() => onRequestLoan}
+          onClick={() => onRequestLoan}
         >
           {buttonText}
           <ArrowRight className="ml-2 h-4 w-4" />
