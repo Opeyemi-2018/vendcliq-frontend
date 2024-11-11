@@ -3,8 +3,9 @@ import { ActiveAccountDashboard } from "@/components/dashboard/home/active/Activ
 import { PendingAccountDashboard } from "@/components/dashboard/home/pending";
 import React, { useState } from "react";
 
-const page = () => {
+const Page = () => {
   const [isFinishedSetup] = useState(true);
+
   return (
     <div className="">
       {isFinishedSetup ? (
@@ -16,4 +17,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

@@ -1,5 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { TiArrowRight } from "react-icons/ti";
 import React from "react";
 
 interface SummaryCardProps {

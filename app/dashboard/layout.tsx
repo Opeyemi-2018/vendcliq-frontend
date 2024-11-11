@@ -9,32 +9,17 @@ import {
   Headphones,
   ReceiptText,
   Settings,
-  Trophy,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ISidebarButtonProps } from "@/types";
-import { TbLayoutDashboardFilled } from "react-icons/tb";
-import {
-  RiAccountPinBoxFill,
-  RiGraduationCapFill,
-  RiHome5Line,
-} from "react-icons/ri";
-import { MdReplayCircleFilled } from "react-icons/md";
-import { IoPerson } from "react-icons/io5";
+import { RiHome5Line } from "react-icons/ri";
 import "../globals.css";
-import { GoShareAndroid } from "react-icons/go";
-import { FiMoreVertical } from "react-icons/fi";
-import { ArrowDown3 } from "iconsax-react";
-import { FaBagShopping } from "react-icons/fa6";
-import { BsFillBellFill, BsFillSaveFill } from "react-icons/bs";
 import {
   DropdownMenu,
-  DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuSeparator,
 } from "@/components/ui/DropdownMenu";
 import cn from "@/lib/utils/cn";
 import { CgFileDocument } from "react-icons/cg";

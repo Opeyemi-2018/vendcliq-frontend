@@ -2,7 +2,6 @@
 import BoxOption from "@/components/ui/BoxOption";
 import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/Field";
-import { Progress } from "@/components/ui/Progress";
 import { RadioGroup } from "@radix-ui/react-radio-group";
 import Link from "next/link";
 import React, { useState } from "react";

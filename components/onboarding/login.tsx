@@ -52,7 +52,7 @@ export const Login = () => {
               Sign In With Google
             </Button>
             <div className="flex gap-1 items-center font-sans justify-center mt-3">
-              <p className="text-black">Don't have an account?</p>
+              <p className="text-black">Don`t have an account?</p>
               <Link href={"/signup"}>
                 <p className="text-primary">Create an account</p>
               </Link>
