@@ -32,7 +32,7 @@ const page = () => {
 
   return (
     <div className="h-screen">
-      <div className="py-5 px-10 space-y-5 h-full">
+      <div className="py-5 px-5 md:px-10 space-y-5 h-full">
         <PageTitle className="border-b border-border" title="Account" />
 
         <div className="border font-sans bg-white ">
@@ -52,7 +52,7 @@ const page = () => {
                   <TableCell className="font-medium">{item.bank}</TableCell>
                   <TableCell>{item.accountNumber}</TableCell>
                   <TableCell>
-                    <p className="max-w-52">{item.accuountName}</p>
+                    <p className="md:max-w-52">{item.accuountName}</p>
                   </TableCell>
                   <TableCell>{item.totalTransactionCount}</TableCell>
                   <TableCell>{item.accountBalance}</TableCell>
@@ -70,7 +70,7 @@ const page = () => {
           </Table>
         </div>
 
-        <div className="flex items-center justify-end gap-20 pr-10 font-sans border-b pt-3 pb-10 border-border">
+        <div className="flex flex-row items-center justify-end gap-20 md:pr-10 font-sans border-b pt-3 pb-10 border-border">
           <p>Total</p>
           <p className="text-2xl font-semibold">10,000,000.00</p>
         </div>

@@ -1,3 +1,4 @@
+import LoanTransactionTable from "@/components/dashboard/home/active/LoanTransactionTable";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/ui/StatCard";
 import { SummaryCard } from "@/components/ui/SummaryCard";
@@ -37,7 +38,7 @@ const page = () => {
             </div>
           </div>
           <div className="flex-1 flex flex-col justify-between">
-            <div className="grid grid-cols-2 gap-10">
+            <div className="grid grid-cols-2 gap-5">
               <SummaryCard
                 title="Active Loan"
                 amount="NGN 20,000,000"
@@ -60,13 +61,15 @@ const page = () => {
               />
             </div>
             <hr className=" border-muted-gray" />
-            <div className="grid grid-cols-4 gap-10">
-              <StatCard title="Total Applications" count={20} />
-              <StatCard title="Total Applications" count={20} />
-              <StatCard title="Total Applications" count={20} />
-              <StatCard title="Total Applications" count={20} />
+            <div className="grid grid-cols-3 gap-10">
+              <StatCard color="black" title="Total Applications" count={20} />
+              <StatCard color="#00C53A" title="Total Approved" count={20} />
+              <StatCard color="#FF6242" title="Total Rejected" count={20} />
             </div>
           </div>
+        </div>
+        <div className="bg-white">
+          <LoanTransactionTable />
         </div>
       </div>
     </div>
