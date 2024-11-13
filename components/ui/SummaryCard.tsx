@@ -24,12 +24,14 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
         : title === "Total Outstanding"
         ? "bg-[#D6EBC3]"
         : "bg-[#F3F55C]"
-    } py-5 h-full pl-5 rounded-lg w-full`}
+    } py-5 sm:py-6 md:py-8 h-full px-4 sm:px-5 md:px-6 rounded-lg w-full `}
   >
-    <div className="text-[#565656] text-lg font-sans font-medium flex">
+    <div className="text-[#565656] text-md sm:text-lg md:text-xl font-sans font-medium flex items-center gap-2">
       {icon}
       {title}
     </div>
-    <p className="font-semibold text-3xl text-black mt-3">{amount}</p>
+    <p className="font-semibold text-2xl sm:text-3xl md:text-4xl text-black mt-3">
+      {amount}
+    </p>
   </div>
 );

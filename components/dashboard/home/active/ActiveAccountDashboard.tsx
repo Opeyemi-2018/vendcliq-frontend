@@ -92,10 +92,12 @@ export const ActiveAccountDashboard: React.FC = () => {
     <div className="h-screen">
       <div className="py-5 px-5 lg:px-10  h-full">
         <h1 className="text-black font-medium text-xl">Hi Godwin</h1>
-        <div className="flex md:flex-row flex-col mt-3 bg-white items-center text-md text-black w-full md:w-fit gap-5 py-1 px-5 font-sans border border-border rounded-lg">
-          <p>904567892</p>
-          <p className="border-x border-border px-3">Providus Bank</p>
-          <p>Chukwudi & Sons</p>
+        <div className="flex md:flex-row flex-row text-xs md:text-md mt-3 bg-white items-center text-md text-black w-full md:w-fit gap-5 py-1 md:px-5 p-2 font-sans border border-border rounded-lg">
+          <p className="text-nowrap">904567892</p>
+          <p className="border-x border-border text-nowrap px-3">
+            Providus Bank
+          </p>
+          <p className="text-nowrap">Chukwudi & Sons</p>
         </div>
         <div className="flex flex-col md:flex-row my-5 gap-10 h-full lg:h-[390px]">
           <div className="flex-1 flex flex-col h-full gap-5">

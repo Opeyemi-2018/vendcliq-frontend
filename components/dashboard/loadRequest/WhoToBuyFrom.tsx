@@ -39,19 +39,20 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
 }) => {
   return (
     <>
-      <h3 className="text-xl font-medium border-b border-border pb-2 font-clash mb-8">
+      <h3 className="text-lg sm:text-xl font-medium border-b border-border pb-2 font-clash mb-4 sm:mb-8">
         Who are you buying from?
       </h3>
-      <div>
-        <div className="grid grid-cols-2 gap-4">
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field
             label="Vendor Name"
-            required={true}
+            required
             type="text"
             placeholder="Enter vendor name"
             value={vendor}
             onChange={onVendorChange}
-            className="h-full" // Set a consistent height for Field
+            className="h-full"
           />
           <div>
             <Label className="block text-sm font-medium text-gray-700 mb-2">
@@ -59,7 +60,7 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
             </Label>
             <Select onValueChange={onBankChange} defaultValue={selectedBank}>
               <SelectTrigger className="w-full h-12 bg-gray-100 border border-gray-300 rounded-sm px-3 text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                <SelectValue placeholder="Enter amount" />
+                <SelectValue placeholder="Select Bank" />
               </SelectTrigger>
               <SelectContent className="bg-white border border-gray-300 rounded-md shadow-lg">
                 <SelectGroup>
@@ -80,46 +81,49 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
             </Select>
           </div>
         </div>
+
         <Field
           label="Vendor name / Account name"
-          required={true}
+          required
           type="text"
-          placeholder=""
+          placeholder="Enter account name"
           value={vendor}
           onChange={onVendorChange}
-          className="h-full" // Set a consistent height for Field
+          className="h-full"
         />
-        <div className="grid grid-cols-2 gap-4">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field
             label="Narration"
-            required={true}
+            required
             type="text"
             placeholder="Input narration"
             value={vendor}
             onChange={onVendorChange}
-            className="h-full" // Set a consistent height for Field
+            className="h-full"
           />
           <Field
             label="Invoice number"
-            required={true}
+            required
             type="number"
-            placeholder="Enter vendor name"
+            placeholder="Enter invoice number"
             value={vendor}
             onChange={onVendorChange}
-            className="h-full" // Set a consistent height for Field
+            className="h-full"
           />
         </div>
       </div>
-      <div className="flex  gap-5 mt-8">
+
+      <div className="flex flex-col sm:flex-row gap-4 mt-6 sm:mt-8">
         <Button
           onClick={onNext}
-          className="w-fit py-2 px-8 bg-yellow-500 text-white rounded-sm hover:bg-yellow-600"
+          className="w-full sm:w-auto py-2 px-8 bg-yellow-500 text-white rounded-sm hover:bg-yellow-600"
         >
           Save
         </Button>
         <Button
           onClick={onPrevious}
-          className="w-fit py-2 px-8 bg-gray-300 text-gray-700 rounded-sm hover:bg-gray-400"
+          className="w-full sm:w-auto py-2 px-8 bg-gray-300 text-gray-700 rounded-sm hover:bg-gray-400"
         >
           Previous
         </Button>
