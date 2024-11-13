@@ -42,8 +42,8 @@ export const ItemDetails = ({
   );
 
   return (
-    <div className="w-full min-h-screen bg-gray-100">
-      <div className="bg-white rounded-lg w-full max-w-5xl mx-auto p-0 md:p-8">
+    <div className="w-full min-h-screen">
+      <div className=" rounded-lg w-full max-w-5xl mx-auto p-0 md:p-8">
         <h3 className="text-xl font-medium border-b border-border pb-2 font-clash mb-8">
           Loan Application
         </h3>

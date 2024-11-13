@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Field from "@/components/ui/Field";
-import Link from "next/link";
+
 import React from "react";
 
 export const PayLoan = () => {
@@ -19,13 +19,6 @@ export const PayLoan = () => {
         <Button className="mt-6 text-white w-full rounded-none">
           Continue
         </Button>
-
-        <div className="flex gap-1 items-center justify-center mt-3 font-sans text-sm">
-          <p className="text-black">I already have an account?</p>
-          <Link href={"/"}>
-            <p className="text-primary">Login</p>
-          </Link>
-        </div>
       </div>
     </div>
   );
