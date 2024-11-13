@@ -47,13 +47,15 @@ const LoanApplication: React.FC = () => {
   };
 
   return (
-    <div className="flex gap-20 p-20 h-screen font-sans bg-background">
-      <LoanStepsSidebar
-        currentStep={currentStep}
-        onStepClick={setCurrentStep}
-      />
+    <div className="flex flex-col gap-20 p-5 md:p-20 h-screen font-sans bg-background">
+      <div className="w-full hidden md:flex">
+        <LoanStepsSidebar
+          currentStep={currentStep}
+          onStepClick={setCurrentStep}
+        />
+      </div>
 
-      <div className="ml-1/4 w-3/4 h-screen overflow-y-auto p-16 bg-white">
+      <div className="ml-1/4 w-full md:w-3/4 h-screen overflow-y-auto px-5 py-10 md:p-16 bg-white">
         {currentStep === 1 && (
           <LoanStepOne
             items={items}

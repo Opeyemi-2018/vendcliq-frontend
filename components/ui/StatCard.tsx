@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
+import { DocumentText1 } from "iconsax-react";
 import React from "react";
-import { PiNoteDuotone } from "react-icons/pi";
+
 export const StatCard = ({
   title,
   count,
@@ -19,7 +20,8 @@ export const StatCard = ({
         className
       )}
     >
-      <PiNoteDuotone size={20} color={color} />
+      <DocumentText1 size="24" color={color} />
+
       <div>
         <p className={`font-medium text-[${color}]`}>{title}</p>
         <p className="text-black">{count}</p>

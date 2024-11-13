@@ -3,6 +3,7 @@ import { TiArrowRight } from "react-icons/ti";
 import { FaCheck } from "react-icons/fa";
 import Image from "next/image";
 import React from "react";
+import Link from "next/link";
 
 const LoanLimitCard = () => (
   <div className="bg-[#39498C] font-medium w-full md:w-[600px] h-full rounded-lg p-5 relative">
@@ -35,10 +36,12 @@ const LoanLimitCard = () => (
           <p className="text-sm sm:text-base">Pay small small</p>
         </div>
       </div>
-      <Button className="w-fit z-30 h-10 mt-5 sm:mt-0 text-sm flex text-black rounded-md absolute bottom-5 sm:bottom-10">
-        Request loan
-        <TiArrowRight size="20" className="text-black ml-2" />
-      </Button>
+      <Link href={"/request"}>
+        <Button className="w-fit z-30 h-10 mt-5 sm:mt-0 text-sm flex text-black rounded-md absolute bottom-5 sm:bottom-10">
+          Request loan
+          <TiArrowRight size="20" className="text-black ml-2" />
+        </Button>
+      </Link>
     </div>
   </div>
 );

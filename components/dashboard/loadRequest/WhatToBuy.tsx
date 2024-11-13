@@ -26,14 +26,14 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
 }) => {
   return (
     <>
-      <h3 className="text-xl font-medium border-b border-border pb-2 font-clash mb-8">
+      <h3 className="text-lg sm:text-xl font-medium border-b border-border pb-2 font-clash mb-4 sm:mb-8">
         What do you want to buy?
       </h3>
 
       {items.map((item, index) => (
-        <div key={index} className="grid grid-cols-3 gap-4 mb-4">
+        <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <Field
-            label="Item1"
+            label="Item"
             placeholder="Item name"
             onChange={(e) => onInputChange(index, e)}
           />
@@ -50,13 +50,13 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
         </div>
       ))}
 
-      <div className="text-xl font-clash font-medium mt-6">
+      <div className="text-lg sm:text-xl font-clash font-medium mt-4 sm:mt-6">
         Total: 5,000,000.00
       </div>
 
       <button
         onClick={onAddItem}
-        className="mt-4 w-full p-3 bg-inherit border border-yellow-500 rounded-none hover:bg-inherit text-yellow-500"
+        className="mt-4 w-full p-3 bg-inherit border border-yellow-500 rounded-md hover:bg-yellow-50 text-yellow-500"
       >
         + Add Item
       </button>
