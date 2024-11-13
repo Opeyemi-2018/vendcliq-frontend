@@ -13,8 +13,8 @@ export const Login = () => {
   const [lastName, setLastName] = useState("");
   return (
     <div className=" h-screen">
-      <div className="flex h-full gap-10 px-20 py-24 relative">
-        <div>
+      <div className="flex h-full gap-10 px-5 md:px-20 py-24 relative">
+        <div className="flex-1">
           <div className="text-black absolute top-10">
             <Image
               src={"/assets/logo/logo.png"}
@@ -24,7 +24,7 @@ export const Login = () => {
               className="object-cover"
             />
           </div>
-          <div className=" h-full min-w-[700px]  bg-white rounded-3xl pt-24 px-20">
+          <div className=" h-full w-full  md:min-w-[700px] bg-inherit md:bg-white rounded-3xl pt-24 px-5 md:px-20">
             <h1 className="font-semibold text-black text-2xl">Sign In</h1>
             <div className="mt-10 space-y-5 font-sans">
               <Input
@@ -51,7 +51,7 @@ export const Login = () => {
               <FcGoogle size={"24"} />
               Sign In With Google
             </Button>
-            <div className="flex gap-1 items-center font-sans justify-center mt-3">
+            <div className="flex flex-col md:flex-row gap-1 items-center font-sans justify-center mt-3">
               <p className="text-black">Don`t have an account?</p>
               <Link href={"/signup"}>
                 <p className="text-primary">Create an account</p>
@@ -59,7 +59,7 @@ export const Login = () => {
             </div>
           </div>
         </div>
-        <div className=" h-full  flex-1 rounded-xl relative">
+        <div className=" h-full hidden   md:flex flex-1 rounded-xl relative">
           <Image
             src={"/assets/images/Subtract.png"}
             alt=""
@@ -67,7 +67,7 @@ export const Login = () => {
             height={800}
             className="object-fill h-full w-full"
           />
-          <div className=" absolute top-5 left-5 h-full w-full  text-white px-20 py-10">
+          <div className=" hidden   md:flex flex-col absolute top-5 left-5 h-full w-full  text-white px-20 py-10">
             <h1 className="text-6xl font-semibold">
               What’s our <br></br>{" "}
               <span className="text-primary">Customers</span> Saying{" "}

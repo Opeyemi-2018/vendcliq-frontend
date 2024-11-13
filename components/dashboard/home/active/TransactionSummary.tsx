@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { RiBankLine } from "react-icons/ri";
+
 import TransactionCard from "@/components/ui/TransactionCard";
 import { Bank, Calendar } from "iconsax-react";
 import { Button } from "@/components/ui/button";

@@ -1,4 +1,3 @@
-import { BsArrowDownRightSquare, BsArrowUpRightSquare } from "react-icons/bs";
 import React from "react";
 import { RouteSquare } from "iconsax-react";
 

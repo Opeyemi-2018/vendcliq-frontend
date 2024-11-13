@@ -1,11 +1,8 @@
-// pages/ActiveAccountDashboard.tsx
-import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Image from "next/image";
+
 import React, { useMemo, useState } from "react";
-import { FaCheck } from "react-icons/fa";
-import { TiArrowRight } from "react-icons/ti";
+
 import { DashboardCard } from "./DashboardCard";
 import { TransactionListItem } from "./TransactionListItem";
 import TransactionSummary from "./TransactionSummary";

@@ -15,9 +15,9 @@ const Page = () => {
 
   return (
     <div className="h-screen flex flex-col justify-center items-center">
-      <div className="w-full max-w-xl h-full mt-40">
+      <div className="w-full max-w-xl h-full p-5 md:p-0 mt-40">
         <Progress className="border border-border" value={step * 20} />
-        <div className="bg-white w-full rounded-lg p-10 mt-5">
+        <div className=" md:bg-white w-full rounded-lg md:p-10 p-0 mt-5">
           {step === 1 && (
             <SignupStepOne
               title="What type of business do you operate?"
