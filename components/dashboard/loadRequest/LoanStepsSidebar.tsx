@@ -45,7 +45,7 @@ const LoanStepsSidebar: React.FC<LoanStepsSidebarProps> = ({
   onStepClick,
 }) => {
   return (
-    <aside className="md:w-1/4 w-full top-0 left-0 h-fit bg-white p-6">
+    <aside className="w-full top-0 left-0 h-fit bg-white p-6">
       <h3 className="text-xl font-medium border-b border-border pb-2 font-clash mb-8">
         Loan Steps
       </h3>

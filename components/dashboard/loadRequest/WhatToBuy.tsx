@@ -25,7 +25,7 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
   onInputChange,
 }) => {
   return (
-    <>
+    <div className="w-full ">
       <h3 className="text-lg sm:text-xl font-medium border-b border-border pb-2 font-clash mb-4 sm:mb-8">
         What do you want to buy?
       </h3>
@@ -67,7 +67,7 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
       >
         Next
       </button>
-    </>
+    </div>
   );
 };
 
