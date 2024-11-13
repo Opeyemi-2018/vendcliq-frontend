@@ -1,6 +1,6 @@
-// components/ui/TransactionListItem.tsx
 import { BsArrowDownRightSquare, BsArrowUpRightSquare } from "react-icons/bs";
 import React from "react";
+import { RouteSquare } from "iconsax-react";
 
 interface TransactionListItemProps {
   date: string;
@@ -19,22 +19,42 @@ export const TransactionListItem: React.FC<TransactionListItemProps> = ({
   amount,
   isOutgoing,
 }) => (
-  <div className="flex flex-col gap-5 font-medium py-5 border-b pr-10 border-border text-md">
-    <p className="text-[#797979]">{date}</p>
-    <div className="flex items-center justify-between">
-      <div className="flex gap-10">
+  <div className="flex flex-col gap-4 font-medium mt-6 py-4 px-4 sm:px-6 border-b border-border text-sm sm:text-base">
+    {/* Date */}
+    <p className="text-[#797979] text-xs sm:text-sm md:text-base">{date}</p>
+
+    {/* Transaction Details */}
+    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+      <div className="flex flex-col md:flex-row gap-3 sm:gap-6 items-start">
+        {/* Icon */}
         {isOutgoing ? (
-          <BsArrowUpRightSquare size={32} className="text-destructive" />
+          <RouteSquare size="44" color="#E33629" />
         ) : (
-          <BsArrowDownRightSquare size={32} className="text-[#00C53A]" />
+          <RouteSquare
+            size="44"
+            color="#00C53A"
+            style={{ transform: "rotate(90deg)" }}
+          />
         )}
-        <div className="">
-          <p className="text-[#797979]">{description}</p>
-          <p className="text-[#797979]">{recipientInfo}</p>
-          <p>{transactionId}</p>
+
+        {/* Description and Details */}
+        <div className="flex flex-col">
+          <p className="text-[#797979] text-xs sm:text-sm md:text-base">
+            {description}
+          </p>
+          <p className="text-[#797979] text-xs sm:text-sm md:text-base">
+            {recipientInfo}
+          </p>
+          <p className="text-xs sm:text-sm md:text-base">{transactionId}</p>
         </div>
       </div>
-      <p className={isOutgoing ? "text-destructive" : "text-[#00C53A]"}>
+
+      {/* Amount */}
+      <p
+        className={`text-xs sm:text-sm md:text-base ${
+          isOutgoing ? "text-destructive" : "text-[#00C53A]"
+        }`}
+      >
         {amount}
       </p>
     </div>

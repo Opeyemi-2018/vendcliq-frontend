@@ -3,25 +3,104 @@ import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { FaCheck } from "react-icons/fa";
 import { TiArrowRight } from "react-icons/ti";
 import { DashboardCard } from "./DashboardCard";
 import { TransactionListItem } from "./TransactionListItem";
 import TransactionSummary from "./TransactionSummary";
 import LoanTransactionTable from "./LoanTransactionTable";
+import LoanLimitCard from "./LoanLimitCard";
+import FilterSortDropdown from "@/components/ui/FilterSortDropdown";
 
 export const ActiveAccountDashboard: React.FC = () => {
+  const [filter, setFilter] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
+
+  // Sample transactions data
+  const [transactions] = useState([
+    {
+      date: "7 Mar 2024 | 17:38:00",
+      description: "OUTWARD TRANSFER (N) 2334647 To",
+      recipientInfo: "WEMA BANK | EBUBE DRINKS LIMITED",
+      transactionId: "/00003883383364YTHD647749904",
+      amount: -5000000,
+      isOutgoing: true,
+    },
+    {
+      date: "8 Mar 2024 | 12:30:00",
+      description: "INWARD TRANSFER (N) 5463747 From",
+      recipientInfo: "GTBANK | CHUKWUDI FOODS",
+      transactionId: "/00003453453345YTHD754560123",
+      amount: 1500000,
+      isOutgoing: false,
+    },
+    {
+      date: "9 Mar 2024 | 15:45:00",
+      description: "OUTWARD TRANSFER (N) 8765421 To",
+      recipientInfo: "ZENITH BANK | AYOMIDE STORES",
+      transactionId: "/00005675675674YTHD839458304",
+      amount: -250000,
+      isOutgoing: true,
+    },
+    {
+      date: "10 Mar 2024 | 09:15:00",
+      description: "INWARD TRANSFER (N) 3647534 From",
+      recipientInfo: "ACCESS BANK | JIDE ENTERPRISE",
+      transactionId: "/00008374747484YTHD846464848",
+      amount: 300000,
+      isOutgoing: false,
+    },
+    {
+      date: "11 Mar 2024 | 10:20:00",
+      description: "OUTWARD TRANSFER (N) 2334667 To",
+      recipientInfo: "UBA | OLA MARKET",
+      transactionId: "/00003883383364YTHD647749905",
+      amount: -1000000,
+      isOutgoing: true,
+    },
+  ]);
+
+  // Memoized filtered and sorted data
+  const filteredAndSortedTransactions = useMemo(() => {
+    let data = [...transactions];
+
+    // Apply filter
+    if (filter) {
+      data = data.filter((transaction) => {
+        if (filter === "incoming") return !transaction.isOutgoing;
+        if (filter === "outgoing") return transaction.isOutgoing;
+        return true;
+      });
+    }
+
+    // Apply sorting by amount
+    if (sortOrder) {
+      data.sort((a, b) => {
+        if (sortOrder === "asc") return a.amount - b.amount;
+        if (sortOrder === "desc") return b.amount - a.amount;
+        return 0;
+      });
+    }
+
+    return data;
+  }, [transactions, filter, sortOrder]);
+
+  // Handle Filter and Sort selection
+  const handleFilterChange = (newFilter: string) => setFilter(newFilter);
+  const handleSortChange = (newSortOrder: "asc" | "desc") =>
+    setSortOrder(newSortOrder);
+
   return (
     <div className="h-screen">
-      <div className="py-5 px-10 space-y-5 h-full">
+      <div className="py-5 px-5 lg:px-10  h-full">
         <h1 className="text-black font-medium text-xl">Hi Godwin</h1>
-        <div className="flex bg-white items-center text-md text-black w-fit gap-5 py-1 px-5 font-sans border border-border rounded-lg">
+        <div className="flex md:flex-row flex-col mt-3 bg-white items-center text-md text-black w-full md:w-fit gap-5 py-1 px-5 font-sans border border-border rounded-lg">
           <p>904567892</p>
           <p className="border-x border-border px-3">Providus Bank</p>
           <p>Chukwudi & Sons</p>
         </div>
-        <div className="flex mt-5 gap-10 h-[390px]">
+        <div className="flex flex-col md:flex-row my-5 gap-10 h-full lg:h-[390px]">
           <div className="flex-1 flex flex-col h-full gap-5">
             <DashboardCard
               title="Active loan"
@@ -36,76 +115,51 @@ export const ActiveAccountDashboard: React.FC = () => {
               onFundWallet={() => alert("Fund Wallet Clicked")}
             />
           </div>
-          <div className="bg-[#39498C] font-medium w-[600px] h-full rounded-lg p-5 relative">
-            <div>
-              <Image
-                src="/assets/images/lady.png"
-                alt=""
-                height={300}
-                width={300}
-                className="object-fill w-72 absolute z-20 right-0 bottom-0"
-              />
-              <Image
-                src="/assets/images/pattern.png"
-                alt=""
-                height={100}
-                width={600}
-                className="object-cover w-full h-32 opacity-50 absolute z-0 right-0 bottom-0"
-              />
-            </div>
-            <div className="z-40 text-white">
-              <p className="text-4xl">Your Loan Limit is</p>
-              <p className="text-8xl text-primary">N10M</p>
-              <div className="mt-5">
-                <div className="flex gap-2">
-                  <FaCheck className="text-white" />
-                  <p>Disbursement within 24hrs</p>
-                </div>
-                <div className="flex gap-2">
-                  <FaCheck className="text-white" />
-                  <p>Pay small small</p>
-                </div>
-              </div>
-              <Button className="w-fit z-40 bottom-10 h-8 text-sm flex text-black absolute rounded-md">
-                Request loan
-                <TiArrowRight size="20" className="text-black" />
-              </Button>
-            </div>
-          </div>
+
+          <LoanLimitCard />
         </div>
 
-        <div className="bg-white w-full font-sans">
+        <div className="bg-white w-full font-sans mt-12">
           <Tabs defaultValue="account" className="w-full p-5">
-            <TabsList className="bg-white border-b border-border w-full pb-5">
-              <TabsTrigger value="account">Payment Transactions</TabsTrigger>
-              <TabsTrigger value="password">Loan Transactions</TabsTrigger>
-              <SearchInput className="w-80 ml-20 rounded-none" />
+            <TabsList className="bg-white h-fit border-b border-border w-full pb-5 flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
+              <div className="flex gap-5 md:flex-row flex-col">
+                <TabsTrigger value="account">Payment Transactions</TabsTrigger>
+                <TabsTrigger value="password">Loan Transactions</TabsTrigger>
+              </div>
+              <div className="flex gap-5 flex-col md:flex-row">
+                <SearchInput className="w-full md:w-64 lg:w-80 rounded-sm" />
+                <FilterSortDropdown
+                  onFilterChange={handleFilterChange}
+                  onSortChange={handleSortChange}
+                />
+              </div>
             </TabsList>
+
             <TabsContent value="account">
-              <div className="flex gap-20 px-3 ">
-                <div className="flex-1 ">
-                  <TransactionListItem
-                    date="7 Mar 2024 | 17:38:00"
-                    description="OUTWARD TRANSFER (N) 2334647 To"
-                    recipientInfo="WEMA BANK | EBUBE DRINKS LIMITED"
-                    transactionId="/00003883383364YTHD647749904"
-                    amount="- 5,000,000 NGN"
-                    isOutgoing={true}
-                  />
-                  <TransactionListItem
-                    date="7 Mar 2024 | 17:38:00"
-                    description="OUTWARD TRANSFER (N) 2334647 To"
-                    recipientInfo="WEMA BANK | EBUBE DRINKS LIMITED"
-                    transactionId="/00003883383364YTHD647749904"
-                    amount="5,000,000 NGN"
-                    isOutgoing={false}
-                  />
+              <div className="flex flex-col md:flex-row gap-5 md:px-3">
+                {/* Transaction List */}
+                <div className="flex-1 w-full md:w-[60%]">
+                  {filteredAndSortedTransactions.map((transaction, index) => (
+                    <TransactionListItem
+                      key={index}
+                      date={transaction.date}
+                      description={transaction.description}
+                      recipientInfo={transaction.recipientInfo}
+                      transactionId={transaction.transactionId}
+                      amount={`${transaction.isOutgoing ? "-" : "+"} ${Math.abs(
+                        transaction.amount
+                      ).toLocaleString()} NGN`}
+                      isOutgoing={transaction.isOutgoing}
+                    />
+                  ))}
                 </div>
-                <div className="w-[40%] ">
+                {/* Transaction Summary */}
+                <div className="w-full md:w-[40%]">
                   <TransactionSummary />
                 </div>
               </div>
             </TabsContent>
+
             <TabsContent value="password">
               <LoanTransactionTable />
             </TabsContent>

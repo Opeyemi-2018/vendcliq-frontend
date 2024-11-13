@@ -37,6 +37,8 @@ const config: Config = {
         "pastel-blue": "#DADFF6",
         "dark-blue": "#010C3B",
         "dark-yellow": "#CD9C00",
+        "soft-yellow": "#FFE696",
+        "yellow-line": "#F8BD00",
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",

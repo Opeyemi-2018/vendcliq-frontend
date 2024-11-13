@@ -5,13 +5,13 @@ import React from "react";
 
 export const BusinessProfile = () => {
   return (
-    <div>
-      <div className="mt-10 bg-white w-[800px] p-10">
-        <p className="font-medium text-lg  font-clash border-l-4 border-primary pl-3 ">
+    <div className="flex">
+      <div className="md:mt-0 mt-10 bg-white w-full max-w-[800px] p-5 sm:p-10">
+        <p className="font-medium text-lg font-clash border-l-4 border-primary pl-3">
           Create your Business Profile
         </p>
 
-        <div className="  gap-5 grid grid-cols-2   mt-10">
+        <div className="gap-5 grid grid-cols-1 sm:grid-cols-2 mt-10">
           <Field label="Business Name" placeholder="Business Name" />
           <Field label="Business Email" placeholder="Business Email" />
           <Field
@@ -27,7 +27,9 @@ export const BusinessProfile = () => {
           />
           <Field label="RC Number" placeholder="RC Number" />
         </div>
+
         <MultiValueInput label="Add shareholders" />
+
         <div className="flex mt-10 gap-5 justify-end">
           <Button className="bg-inherit text-primary hover:bg-light-gray border border-primary rounded-none">
             Cancel

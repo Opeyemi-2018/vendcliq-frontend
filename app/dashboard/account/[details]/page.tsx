@@ -1,6 +1,5 @@
 "use client";
 import BackButtonWithTooltip from "@/components/ui/BackButtonWithToolTips";
-
 import FormatCurrency from "@/components/ui/FormatCurrency";
 import { PageTitle } from "@/components/ui/pageTitle";
 import {
@@ -11,12 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import { CalendarDays } from "lucide-react";
-
 import React from "react";
 import { IoCloseOutline } from "react-icons/io5";
-
 import { TbCopyCheck } from "react-icons/tb";
 
 const Page = () => {
@@ -42,18 +38,19 @@ const Page = () => {
 
   const Calender = ({ date }: { date: string }) => {
     return (
-      <div className="border border-[#A2A2A2] rounded-xl flex items-center gap-3 px-5 py-3 font-sans">
+      <div className="border border-[#A2A2A2] rounded-xl flex items-center gap-3 px-3 py-2 font-sans">
         <CalendarDays />
-        <p>{date}</p>
-        <IoCloseOutline size={"28"} className="text-destructive" />
+        <p className="text-sm">{date}</p>
+        <IoCloseOutline size={20} className="text-destructive" />
       </div>
     );
   };
 
   return (
-    <div className="h-screen">
-      <div className="py-5 px-10 space-y-5 h-full">
-        <div className="flex items-center mb-10 pb-2 gap-3 border-b border-border">
+    <div className="min-h-screen px-4 md:px-10 py-5">
+      <div className="space-y-5">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-10 pb-2 border-b border-border">
           <BackButtonWithTooltip
             tooltipText="Return"
             className="text-red-500"
@@ -61,35 +58,36 @@ const Page = () => {
           <PageTitle title="Account" />
         </div>
 
-        <div className="flex items-center gap-5">
+        {/* Calendar Range Selection */}
+        <div className="flex flex-wrap items-center gap-3 md:gap-5">
           <Calender date="05-06-2024" />
-          <p>to</p>
+          <span className="text-gray-600">to</span>
           <Calender date="05-06-2024" />
         </div>
 
-        <div className="flex font-sans gap-8 pb-5 pt-14">
+        {/* Account Info */}
+        <div className="flex flex-wrap gap-5 md:gap-8 pt-10 pb-5">
           <div>
             <p className="text-[#5D5D5D] text-sm">Account Number</p>
             <div className="flex items-center gap-1">
-              <p className="text-3xl font-medium">0135678573</p>
-              <TbCopyCheck size="24" />
+              <p className="text-xl md:text-3xl font-medium">0135678573</p>
+              <TbCopyCheck size="20" className="text-gray-700" />
             </div>
           </div>
           <div>
             <p className="text-[#5D5D5D] text-sm">Account Name</p>
-            <div className="flex items-center gap-1">
-              <p className="text-3xl font-medium">Chukwudi and Sons LTD</p>
-            </div>
+            <p className="text-xl md:text-3xl font-medium">
+              Chukwudi and Sons LTD
+            </p>
           </div>
           <div>
             <p className="text-[#5D5D5D] text-sm">Opening Balance (NGN)</p>
-            <div className="flex items-center gap-1">
-              <p className="text-3xl font-medium">5,000,000.88</p>
-            </div>
+            <p className="text-xl md:text-3xl font-medium">5,000,000.88</p>
           </div>
         </div>
 
-        <div className="rounded-lg border bg-white font-sans">
+        {/* Transactions Table */}
+        <div className="overflow-x-auto rounded-lg border bg-white font-sans">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
@@ -104,11 +102,13 @@ const Page = () => {
             <TableBody>
               {data.map((item, index) => (
                 <TableRow key={index}>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium whitespace-nowrap">
                     {item.reference}
                   </TableCell>
-                  <TableCell>{item.date}</TableCell>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {item.date}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <span className="flex h-2.5 w-2.5 rounded-full bg-green-500" />
                       <span className="font-medium text-green-700 bg-green-50 px-3 py-1 rounded-full text-sm">
@@ -116,10 +116,12 @@ const Page = () => {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
                     <FormatCurrency amount={item.amount} />
                   </TableCell>
-                  <TableCell>{item.balance}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {item.balance}
+                  </TableCell>
                   <TableCell>{item.remarks}</TableCell>
                 </TableRow>
               ))}

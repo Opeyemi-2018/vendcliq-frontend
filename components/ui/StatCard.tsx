@@ -5,10 +5,12 @@ export const StatCard = ({
   title,
   count,
   className,
+  color,
 }: {
   title: string;
   count: number;
   className?: string;
+  color: string;
 }) => {
   return (
     <div
@@ -17,9 +19,9 @@ export const StatCard = ({
         className
       )}
     >
-      <PiNoteDuotone size={20} />
+      <PiNoteDuotone size={20} color={color} />
       <div>
-        <p className="font-medium">{title}</p>
+        <p className={`font-medium text-[${color}]`}>{title}</p>
         <p className="text-black">{count}</p>
       </div>
     </div>

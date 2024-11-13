@@ -10,6 +10,8 @@ export interface IReusableInputProps {
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
+  name?: string;
+  required?: boolean;
 }
 export interface ISidebarButtonProps {
   href: string;

@@ -5,12 +5,13 @@ import React from "react";
 
 export const PersonalProfile = () => {
   return (
-    <div>
-      <div className="mt-10 bg-white w-[800px] p-10 ">
-        <p className="font-medium text-lg  font-clash border-l-4 border-primary pl-3 ">
+    <div className="flex">
+      <div className="md:mt-0 mt-10 bg-white w-full max-w-[800px] p-5 sm:p-10">
+        <p className="font-medium text-lg font-clash border-l-4 border-primary pl-3">
           Update your Personal Profile
         </p>
-        <div className="gap-5 grid grid-cols-2 mt-10">
+
+        <div className="gap-5 grid grid-cols-1 sm:grid-cols-2 mt-10">
           <Field label="First Name" placeholder="First Name" />
           <Field label="Last Name" placeholder="Last Name" />
         </div>
@@ -21,6 +22,7 @@ export const PersonalProfile = () => {
           placeholder="Email Address"
           type="email"
         />
+
         <div className="mt-7">
           <CustomFileInput label="ID Card" />
         </div>

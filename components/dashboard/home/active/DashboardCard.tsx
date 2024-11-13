@@ -1,4 +1,3 @@
-// components/ui/DashboardCard.tsx
 import { Button } from "@/components/ui/button";
 import { TiArrowRight } from "react-icons/ti";
 import React from "react";
@@ -23,31 +22,37 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
   <div
     className={`${
       title === "Active loan" ? "bg-[#69A7F4]" : "bg-[#D6EBC3]"
-    } py-5 h-full pl-5 rounded-lg w-full`}
+    } p-5 md:p-6 lg:p-8 rounded-lg w-full h-full`}
   >
-    <div className="text-[#565656] text-lg font-sans font-medium">{title}</div>
-    <p className="font-semibold text-3xl text-black mt-3">{amount}</p>
+    <div className="text-[#565656] text-lg md:text-xl font-sans font-medium">
+      {title}
+    </div>
+    <p className="font-semibold text-2xl md:text-3xl text-black mt-3">
+      {amount}
+    </p>
     {nextPaymentDate && (
-      <div className="flex items-center gap-1 mt-7 ">
-        <p className="font-sans text-md text-[#292826]">Next Payment:</p>
+      <div className="flex flex-wrap items-center gap-1 mt-4 md:mt-6">
+        <p className="font-sans text-sm md:text-md text-[#292826]">
+          Next Payment:
+        </p>
         <p className="text-black font-medium">{nextPaymentDate}</p>
       </div>
     )}
     {showButtons && (
-      <div className="flex items-center gap-3 mt-7">
+      <div className="flex flex-col md:flex-row sm:flex-row sm:items-center gap-3 mt-5 md:mt-7">
         <Button
-          className="w-fit h-8 text-sm flex bg-[#39498C] text-white rounded-md"
+          className="w-fit sm:w-fit h-10 text-xs md:text-sm flex justify-center items-center bg-[#39498C] text-white rounded-md px-4"
           onClick={onSendMoney}
         >
           Send Money
-          <TiArrowRight size="20" className="text-white" />
+          <TiArrowRight size="20" className="text-white ml-2" />
         </Button>
         <Button
-          className="w-fit h-8 text-sm text-black flex rounded-md"
+          className="w-fit sm:w-fit h-10 text-xs md:text-sm flex justify-center items-center text-black bg-transparent border border-gray-400 rounded-md px-4"
           onClick={onFundWallet}
         >
           Fund Wallet
-          <TiArrowRight size="20" className="text-black" />
+          <TiArrowRight size="20" className="text-black ml-2" />
         </Button>
       </div>
     )}

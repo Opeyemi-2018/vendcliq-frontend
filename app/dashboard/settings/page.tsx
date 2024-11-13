@@ -32,7 +32,7 @@ const Settings = () => {
     children: React.ReactNode;
   }) => (
     <TabsTrigger
-      className="data-[state=active]:border-b-2 data-[state=active]:border-[#39498C] pb-1 data-[state=active]:text-[#39498C] text-black rounded-none shadow-none"
+      className="data-[state=active]:border-b-2 data-[state=active]:border-[#39498C] pb-1 data-[state=active]:text-[#39498C] text-black rounded-none shadow-none text-sm sm:text-base"
       value={value}
     >
       {children}
@@ -41,12 +41,12 @@ const Settings = () => {
 
   return (
     <div className="h-screen">
-      <div className="py-5 px-10 space-y-5 h-full">
+      <div className="py-5 px-5 sm:px-10 space-y-5 h-full">
         <PageTitle className="border-b border-border" title="Settings" />
         <div className="font-sans">
           <Tabs defaultValue="business" className="w-full py-5">
             <TabsList className="w-full bg-inherit">
-              <div className="flex gap-5 border-b border-border font-medium w-full">
+              <div className="flex flex-wrap sm:flex-nowrap gap-3 sm:gap-5 border-b border-border font-medium w-full justify-center sm:justify-start">
                 <TabTrigger value="business">Business Profile</TabTrigger>
                 <TabTrigger value="personal">Personal Profile</TabTrigger>
                 <TabTrigger value="password">Password</TabTrigger>
@@ -55,21 +55,29 @@ const Settings = () => {
             </TabsList>
 
             <TabsContent value="business">
-              <BusinessProfile />
+              <div className="p-3 sm:p-5">
+                <BusinessProfile />
+              </div>
             </TabsContent>
             <TabsContent value="personal">
-              <PersonalProfile />
+              <div className="p-3 sm:p-5">
+                <PersonalProfile />
+              </div>
             </TabsContent>
             <TabsContent value="password">
-              <Password />
+              <div className="p-3 sm:p-5">
+                <Password />
+              </div>
             </TabsContent>
-
             <TabsContent value="pin">
-              {transferScreen === "create" && <CreatePin goNext={handleNext} />}
-
-              {transferScreen === "otp" && (
-                <Otp goNext={handleNext} goBack={handleBack} />
-              )}
+              <div className="p-3 sm:p-5">
+                {transferScreen === "create" && (
+                  <CreatePin goNext={handleNext} />
+                )}
+                {transferScreen === "otp" && (
+                  <Otp goNext={handleNext} goBack={handleBack} />
+                )}
+              </div>
             </TabsContent>
           </Tabs>
         </div>
