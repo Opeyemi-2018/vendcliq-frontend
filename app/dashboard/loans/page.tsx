@@ -4,6 +4,7 @@ import { SearchInput } from "@/components/ui/SearchInput";
 import { StatCard } from "@/components/ui/StatCard";
 import { SummaryCard } from "@/components/ui/SummaryCard";
 import { TableDocument, Wallet3 } from "iconsax-react";
+import Link from "next/link";
 import React from "react";
 import { CgNotes } from "react-icons/cg";
 import { FaArrowRightLong } from "react-icons/fa6";
@@ -32,11 +33,13 @@ const page = () => {
                   <br /> 24-48 hours of a working day
                 </p>
               </div>
-              <Button className="bg-inherit text-primary border border-primary flex items-center justify-center gap-2 mt-4">
-                <CgNotes />
-                Request Loan
-                <FaArrowRightLong />
-              </Button>
+              <Link href={"/request"}>
+                <Button className="bg-inherit hover:bg-inherit text-primary border border-primary flex items-center justify-center gap-2 mt-4">
+                  <CgNotes />
+                  Request Loan
+                  <FaArrowRightLong />
+                </Button>
+              </Link>
             </div>
           </div>
 

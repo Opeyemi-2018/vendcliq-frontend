@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { TiArrowRight } from "react-icons/ti";
 import React from "react";
+import Link from "next/link";
 
 interface DashboardCardProps {
   title: string;
@@ -16,7 +17,7 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
   amount,
   nextPaymentDate,
   showButtons,
-  onSendMoney,
+
   onFundWallet,
 }) => (
   <div
@@ -40,13 +41,12 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
     )}
     {showButtons && (
       <div className="flex flex-col md:flex-row sm:flex-row sm:items-center gap-3 mt-5 md:mt-7">
-        <Button
-          className="w-fit sm:w-fit h-10 text-xs md:text-sm flex justify-center items-center bg-[#39498C] text-white rounded-md px-4"
-          onClick={onSendMoney}
-        >
-          Send Money
-          <TiArrowRight size="20" className="text-white ml-2" />
-        </Button>
+        <Link href={"/transfer"}>
+          <Button className="w-fit sm:w-fit h-10 text-xs md:text-sm flex justify-center items-center bg-[#39498C] text-white rounded-md px-4">
+            Send Money
+            <TiArrowRight size="20" className="text-white ml-2" />
+          </Button>
+        </Link>
         <Button
           className="w-fit sm:w-fit h-10 text-xs md:text-sm flex justify-center items-center text-black bg-transparent border border-gray-400 rounded-md px-4"
           onClick={onFundWallet}
