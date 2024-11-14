@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 
-import { ArrowDown2, Filter } from "iconsax-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
-
+import { TbAdjustmentsHorizontal } from "react-icons/tb";
+import { BsSortUpAlt } from "react-icons/bs";
+import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 interface FilterSortDropdownProps {
   onFilterChange: (filter: string) => void;
   onSortChange: (sortOrder: "asc" | "desc") => void;
@@ -35,9 +36,9 @@ const FilterSortDropdown: React.FC<FilterSortDropdownProps> = ({
       {/* Filter Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center text-gray-700 text-sm font-medium px-2">
-          <Filter size="20" className="mr-1" />
+          <TbAdjustmentsHorizontal size="20" className="mr-1 text-black" />
           {selectedFilter}
-          <ArrowDown2 size="16" className="ml-1" />
+          <MdOutlineKeyboardArrowDown size="16" className="ml-1 text-black" />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-36 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
           <DropdownMenuItem onClick={() => handleFilterSelect("All")}>
@@ -57,9 +58,9 @@ const FilterSortDropdown: React.FC<FilterSortDropdownProps> = ({
       {/* Sort Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center text-gray-700 text-sm font-medium px-2">
-          <ArrowDown2 size="20" className="mr-1" />
+          <BsSortUpAlt size="20" className="mr-1 text-black" />
           {selectedSort}
-          <ArrowDown2 size="16" className="ml-1" />
+          <MdOutlineKeyboardArrowDown size="16" className="ml-1 text-black" />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-36 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
           <DropdownMenuItem onClick={() => handleSortSelect("asc")}>

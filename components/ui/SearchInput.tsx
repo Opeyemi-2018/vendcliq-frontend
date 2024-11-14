@@ -4,14 +4,19 @@ import { Input } from "./Input";
 
 export function SearchInput({
   className,
+  value,
+  onChange,
 }: {
   className?: string;
-  placeholder?: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
-    <div className="relative w-full ">
+    <div className="relative w-full">
       <Input
         type="text"
+        value={value}
+        onChange={onChange}
         placeholder="Search References"
         className={twMerge(
           "pl-10 pr-12 py-2 rounded-full border-gray-300 focus:border-green-500 focus:ring focus:ring-green-200 focus:ring-opacity-50",
@@ -19,7 +24,7 @@ export function SearchInput({
         )}
       />
       <div className="absolute inset-y-0 left-3 flex items-center pr-3">
-        <div className=" p-1 rounded-full">
+        <div className="p-1 rounded-full">
           <Search className="h-4 w-4 text-black" />
         </div>
       </div>

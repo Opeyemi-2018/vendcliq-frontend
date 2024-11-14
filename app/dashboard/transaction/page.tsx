@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import FormatCurrency from "@/components/ui/FormatCurrency";
 import { PageTitle } from "@/components/ui/pageTitle";
@@ -20,10 +21,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import React from "react";
+import React, { useState } from "react";
 import { RiFileDownloadFill } from "react-icons/ri";
 
-const page = () => {
+const Page = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+
   const transactions = [
     {
       id: "#0056757",
@@ -34,22 +37,32 @@ const page = () => {
       Details: 500000000,
     },
     {
-      id: "#0056757",
-      amount: 500000000,
-      narration: "4 Cretes of Cocacola",
+      id: "#0056758",
+      amount: 300000000,
+      narration: "Bulk order of T-Shirts",
       paymentType: "Transfer",
-      Date: "02/June/2024",
-      Details: 500000000,
+      Date: "03/June/2024",
+      Details: 300000000,
     },
     {
-      id: "#0056757",
-      amount: 500000000,
-      narration: "4 Cretes of Cocacola",
+      id: "#0056759",
+      amount: 150000000,
+      narration: "Purchase of Office Chairs",
       paymentType: "Transfer",
-      Date: "02/June/2024",
-      Details: 500000000,
+      Date: "04/June/2024",
+      Details: 150000000,
     },
   ];
+
+  const filteredTransactions = transactions.filter(
+    (transaction) =>
+      transaction.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      transaction.narration.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      transaction.amount.toString().includes(searchQuery) ||
+      transaction.Details.toString().includes(searchQuery) ||
+      transaction.Date.toString().includes(searchQuery) ||
+      transaction.paymentType.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const TabTrigger = ({
     value,
@@ -80,7 +93,11 @@ const page = () => {
                 <TabTrigger value="sales">Sales</TabTrigger>
               </div>
               <div className="md:flex md:w-auto w-full md:flex-row flex-col items-center gap-5 sm:gap-5 md:mt-0 mt-4">
-                <SearchInput className="rounded-lg py-2 w-full sm:w-auto" />
+                <SearchInput
+                  className="rounded-lg py-2 w-full sm:w-auto"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
                 <Button className="bg-black text-white flex items-center gap-2 w-full md:mt-0 mt-3 sm:w-auto">
                   <RiFileDownloadFill />
                   Export
@@ -88,7 +105,7 @@ const page = () => {
               </div>
             </TabsList>
             <TabsContent value="all">
-              {transactions.length > 0 ? (
+              {filteredTransactions.length > 0 ? (
                 <div className="overflow-x-auto">
                   <Table className="min-w-full">
                     <TableHeader>
@@ -102,7 +119,7 @@ const page = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {transactions.map((transaction, index) => (
+                      {filteredTransactions.map((transaction, index) => (
                         <TableRow key={index}>
                           <TableCell className="font-medium">
                             {transaction.id}
@@ -152,4 +169,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

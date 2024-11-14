@@ -7,49 +7,63 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MoveRight } from "lucide-react";
+import React, { useMemo } from "react";
 
-const transactions = [
-  {
-    id: "#0056757",
-    amount: 5000000.0,
-    maturityAmount: 6500000.0,
-    date: "02/May/2024",
-    dueDate: "02/June/2024",
-    status: "Active",
-  },
-  {
-    id: "#0056757",
-    amount: 5000000.0,
-    maturityAmount: 6500000.0,
-    date: "02/May/2024",
-    dueDate: "02/June/2024",
-    status: "Active",
-  },
-  {
-    id: "#0056757",
-    amount: 5000000.0,
-    maturityAmount: 6500000.0,
-    date: "02/May/2024",
-    dueDate: "02/June/2024",
-    status: "Active",
-  },
-  {
-    id: "#0056757",
-    amount: 5000000.0,
-    maturityAmount: 6500000.0,
-    date: "02/May/2024",
-    dueDate: "02/June/2024",
-    status: "Active",
-  },
-];
+type Transaction = {
+  id: string;
+  amount: number;
+  maturityAmount: number;
+  date: string;
+  dueDate: string;
+  status: string;
+};
 
-export default function LoanTransactionTable() {
+type LoanTransactionTableProps = {
+  transactions: Transaction[];
+  searchQuery: string;
+  filter: string | null;
+};
+
+export default function LoanTransactionTable({
+  transactions,
+  searchQuery,
+  filter,
+}: LoanTransactionTableProps) {
+  console.log("transactions:", transactions);
+  console.log("searchQuery:", searchQuery);
+  console.log("filter:", filter);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
   };
+
+  const filteredTransactions = useMemo(() => {
+    let data = [...transactions];
+
+    // Apply filter only if it's not null or undefined
+    if (filter !== null && filter !== undefined) {
+      data = data.filter((transaction) =>
+        filter === "active"
+          ? transaction.status === "Active"
+          : transaction.status !== "Active"
+      );
+    }
+
+    // Apply search query
+    if (searchQuery) {
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      data = data.filter(
+        (transaction) =>
+          transaction.id.toLowerCase().includes(lowerCaseQuery) ||
+          transaction.status.toLowerCase().includes(lowerCaseQuery)
+      );
+    }
+
+    return data;
+  }, [transactions, filter, searchQuery]);
 
   return (
     <div className="rounded-lg border">
@@ -66,7 +80,7 @@ export default function LoanTransactionTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {transactions.map((transaction, index) => (
+          {filteredTransactions.map((transaction, index) => (
             <TableRow key={index}>
               <TableCell className="font-medium">{transaction.id}</TableCell>
               <TableCell>{formatCurrency(transaction.amount)}</TableCell>
