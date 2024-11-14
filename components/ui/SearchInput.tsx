@@ -8,8 +8,8 @@ export function SearchInput({
   onChange,
 }: {
   className?: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
     <div className="relative w-full">

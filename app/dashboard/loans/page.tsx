@@ -11,7 +11,7 @@ import { CgNotes } from "react-icons/cg";
 import { FaArrowRightLong } from "react-icons/fa6";
 import { RiBankLine } from "react-icons/ri";
 
-const page = () => {
+const Page = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Handler to update the search query
@@ -104,4 +104,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
