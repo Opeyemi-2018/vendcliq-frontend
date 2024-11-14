@@ -1,6 +1,5 @@
 import { SearchInput } from "@/components/ui/SearchInput";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 import React, { useMemo, useState } from "react";
 
 import { DashboardCard } from "./DashboardCard";
@@ -15,8 +14,44 @@ import CopyToClipboard from "@/components/ui/CopyToClipboard";
 export const ActiveAccountDashboard: React.FC = () => {
   const [filter, setFilter] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Sample transactions data
+  const loanTransactions = [
+    {
+      id: "#0056757",
+      amount: 5000000.0,
+      maturityAmount: 6500000.0,
+      date: "02/May/2024",
+      dueDate: "02/June/2024",
+      status: "Active",
+    },
+    {
+      id: "#0056757",
+      amount: 5000000.0,
+      maturityAmount: 6500000.0,
+      date: "02/May/2024",
+      dueDate: "02/June/2024",
+      status: "Active",
+    },
+    {
+      id: "#0056757",
+      amount: 5000000.0,
+      maturityAmount: 6500000.0,
+      date: "02/May/2024",
+      dueDate: "02/June/2024",
+      status: "Active",
+    },
+    {
+      id: "#0056757",
+      amount: 5000000.0,
+      maturityAmount: 6500000.0,
+      date: "02/May/2024",
+      dueDate: "02/June/2024",
+      status: "Active",
+    },
+  ];
+
   const [transactions] = useState([
     {
       date: "7 Mar 2024 | 17:38:00",
@@ -60,9 +95,18 @@ export const ActiveAccountDashboard: React.FC = () => {
     },
   ]);
 
-  // Memoized filtered and sorted data
+  // Transformation to include additional required properties
+  const transformedTransactions = transactions.map((transaction, index) => ({
+    ...transaction,
+    id: index.toString(), // Generate an id if not available
+    maturityAmount: 0, // Placeholder for maturity amount
+    dueDate: "", // Placeholder for due date
+    status: "completed", // Placeholder status
+  }));
+
+  // Memoized filtered, sorted, and searched data
   const filteredAndSortedTransactions = useMemo(() => {
-    let data = [...transactions];
+    let data = [...transformedTransactions];
 
     // Apply filter
     if (filter) {
@@ -82,25 +126,38 @@ export const ActiveAccountDashboard: React.FC = () => {
       });
     }
 
-    return data;
-  }, [transactions, filter, sortOrder]);
+    // Apply search filter
+    if (searchQuery) {
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      data = data.filter(
+        (transaction) =>
+          transaction.description.toLowerCase().includes(lowerCaseQuery) ||
+          transaction.recipientInfo.toLowerCase().includes(lowerCaseQuery) ||
+          transaction.transactionId.toLowerCase().includes(lowerCaseQuery)
+      );
+    }
 
-  // Handle Filter and Sort selection
+    return data;
+  }, [transformedTransactions, filter, sortOrder, searchQuery]);
+
   const handleFilterChange = (newFilter: string) => setFilter(newFilter);
   const handleSortChange = (newSortOrder: "asc" | "desc") =>
     setSortOrder(newSortOrder);
-  const text = "904567892"; // Account number
-  const bankName = "Providus Bank"; // Bank name
-  const accountHolder = "Chukwudi & Sons"; // Account holder
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setSearchQuery(e.target.value);
+
+  const text = "904567892";
+  const bankName = "Providus Bank";
+  const accountHolder = "Chukwudi & Sons";
+
   return (
     <div className="h-screen">
-      <div className="py-5 px-5 lg:px-10  h-full">
+      <div className="py-5 px-5 lg:px-10 h-full">
         <h1 className="text-black font-medium text-xl">Hi Godwin</h1>
-        <div className="flex md:flex-row flex-row  text-xs md:text-md mt-3 bg-white items-center text-md text-black w-full md:w-fit gap-2 md:gap-5 py-1 md:px-5 p-2 font-sans border border-border rounded-lg">
+        <div className="flex md:flex-row flex-row text-xs md:text-md mt-3 bg-white items-center text-md text-black w-full md:w-fit gap-2 md:gap-5 py-1 md:px-5 p-2 font-sans border border-border rounded-lg">
           <p className="text-nowrap">{text}</p>
           <p className="border-x border-border text-nowrap px-3">{bankName}</p>
           <p className="text-nowrap">
-            {" "}
             {accountHolder?.length > 10
               ? `${accountHolder.slice(0, 5)}...`
               : accountHolder}
@@ -126,11 +183,10 @@ export const ActiveAccountDashboard: React.FC = () => {
               onFundWallet={() => alert("Fund Wallet Clicked")}
             />
           </div>
-
           <LoanLimitCard />
         </div>
 
-        <div className="bg-white w-full font-sans mt-12">
+        <div className="bg-white w-full font-sans mt-40 md:mt-12">
           <Tabs defaultValue="account" className="w-full p-5">
             <TabsList className="bg-white h-fit border-b border-border w-full pb-5 flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
               <div className="flex gap-5 md:flex-row flex-col">
@@ -138,7 +194,11 @@ export const ActiveAccountDashboard: React.FC = () => {
                 <TabsTrigger value="password">Loan Transactions</TabsTrigger>
               </div>
               <div className="flex gap-5 flex-col md:flex-row">
-                <SearchInput className="w-full md:w-64 lg:w-80 rounded-sm" />
+                <SearchInput
+                  className="w-full md:w-64 lg:w-80 rounded-sm"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                />
                 <FilterSortDropdown
                   onFilterChange={handleFilterChange}
                   onSortChange={handleSortChange}
@@ -157,14 +217,13 @@ export const ActiveAccountDashboard: React.FC = () => {
                       description={transaction.description}
                       recipientInfo={transaction.recipientInfo}
                       transactionId={transaction.transactionId}
-                      amount={`${transaction.isOutgoing ? "-" : "+"} ${Math.abs(
+                      amount={`${transaction.isOutgoing ? "-" : "+"} ${
                         transaction.amount
-                      ).toLocaleString()} NGN`}
+                      }`}
                       isOutgoing={transaction.isOutgoing}
                     />
                   ))}
                 </div>
-                {/* Transaction Summary */}
                 <div className="w-full md:w-[40%]">
                   <TransactionSummary />
                 </div>
@@ -172,7 +231,13 @@ export const ActiveAccountDashboard: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="password">
-              <LoanTransactionTable />
+              <div className="md:w-full md:h-full w-full">
+                <LoanTransactionTable
+                  transactions={loanTransactions}
+                  searchQuery={searchQuery}
+                  filter={filter}
+                />
+              </div>
             </TabsContent>
           </Tabs>
         </div>
@@ -180,5 +245,3 @@ export const ActiveAccountDashboard: React.FC = () => {
     </div>
   );
 };
-
-export default ActiveAccountDashboard;

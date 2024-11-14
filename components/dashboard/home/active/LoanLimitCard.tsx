@@ -23,7 +23,7 @@ const LoanLimitCard = () => (
         className="object-cover w-full h-20 sm:h-32 opacity-50 absolute z-0 right-0 bottom-0"
       />
     </div>
-    <div className="z-40 text-white">
+    <div className="z-40 min-h-72 md:h-full text-white">
       <p className="text-3xl sm:text-4xl">Your Loan Limit is</p>
       <p className="text-6xl sm:text-8xl text-primary">N10M</p>
       <div className="mt-4 sm:mt-5">

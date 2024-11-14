@@ -1,3 +1,4 @@
+"use client";
 import LoanTable from "@/components/dashboard/loan/LoanTable";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -5,12 +6,18 @@ import { StatCard } from "@/components/ui/StatCard";
 import { SummaryCard } from "@/components/ui/SummaryCard";
 import { TableDocument, Wallet3 } from "iconsax-react";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 import { CgNotes } from "react-icons/cg";
 import { FaArrowRightLong } from "react-icons/fa6";
 import { RiBankLine } from "react-icons/ri";
 
 const page = () => {
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Handler to update the search query
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
   return (
     <div className="h-screen">
       <div className="py-10 px-5 md:px-10 space-y-5 h-full">
@@ -83,10 +90,14 @@ const page = () => {
               <p>Loan Transactions</p>
             </div>
             <div className="flex gap-5 flex-col md:flex-row">
-              <SearchInput className="w-full md:w-64 lg:w-80 rounded-sm" />
+              <SearchInput
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full md:w-64 lg:w-80 rounded-sm"
+              />
             </div>
           </div>
-          <LoanTable />
+          <LoanTable searchQuery={searchQuery} />
         </div>
       </div>
     </div>
