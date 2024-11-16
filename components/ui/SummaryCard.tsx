@@ -30,7 +30,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
       {icon}
       {title}
     </div>
-    <p className="font-semibold text-2xl sm:text-3xl md:text-4xl text-black mt-3">
+    <p className="font-semibold text-xl md:text-2xl text-black mt-3">
       {amount}
     </p>
   </div>

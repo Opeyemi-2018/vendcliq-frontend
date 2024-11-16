@@ -9,8 +9,14 @@ import React, { useState } from "react";
 
 const Page = () => {
   const [step, setStep] = useState(1);
+  const [signupData, setSignupData] = useState({ businessType: "" });
+  const nextStep = (data?: object) => {
+    if (data) {
+      setSignupData({ ...signupData, ...data });
+    }
+    setStep((prevStep) => prevStep + 1);
+  };
 
-  const nextStep = () => setStep(step + 1);
   // const prevStep = () => setStep(step - 1);
 
   return (
@@ -25,7 +31,11 @@ const Page = () => {
             />
           )}
           {step === 2 && (
-            <SignupStepTwo title="Confirm your details" nextStep={nextStep} />
+            <SignupStepTwo
+              title="Confirm your details"
+              nextStep={nextStep}
+              previousData={signupData}
+            />
           )}
           {step === 3 && (
             <SignupStepThree title="Confirm your email" nextStep={nextStep} />

@@ -168,8 +168,8 @@ export const ActiveAccountDashboard: React.FC = () => {
             accountHolder={accountHolder}
           />
         </div>
-        <div className="flex flex-col md:flex-row my-5 gap-10 h-full lg:h-[390px]">
-          <div className="flex-1 flex flex-col h-full gap-5">
+        <div className="flex flex-col md:flex-row my-5 md:gap-10 h-fit md:h-full lg:h-full md:max-h-96">
+          <div className=" w-full flex md:justify-between flex-col h-full gap-5 ">
             <DashboardCard
               title="Active loan"
               amount="NGN4,000,000"
@@ -183,10 +183,14 @@ export const ActiveAccountDashboard: React.FC = () => {
               onFundWallet={() => alert("Fund Wallet Clicked")}
             />
           </div>
+          <div className="hidden md:flex">
+            <LoanLimitCard />
+          </div>
+        </div>
+        <div className="flex md:hidden mb-5">
           <LoanLimitCard />
         </div>
-
-        <div className="bg-white w-full font-sans mt-40 md:mt-12">
+        <div className="bg-white w-full font-sans  md:mt-12">
           <Tabs defaultValue="account" className="w-full p-5">
             <TabsList className="bg-white h-fit border-b border-border w-full pb-5 flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
               <div className="flex gap-5 md:flex-row flex-col">

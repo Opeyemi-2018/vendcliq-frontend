@@ -98,7 +98,7 @@ export default function InstructorLayout({
 
   return (
     <html lang="en">
-      <body className="min-h-screen h-full">
+      <body className="min-h-screen h-full ">
         <div className="h-14">
           <header className="fixed bg-white w-full z-40 flex justify-between items-center px-4 sm:px-6 lg:px-8 py-4">
             <Image
@@ -108,7 +108,7 @@ export default function InstructorLayout({
               height={80}
             />
             <button
-              className="md:hidden text-gray-700"
+              className="xl:hidden text-gray-700"
               onClick={() => setIsSidebarOpen(true)}
             >
               ☰
@@ -148,8 +148,8 @@ export default function InstructorLayout({
 
         <div className="flex flex-col md:flex-row h-screen">
           {/* Sidebar for desktop */}
-          <div className="hidden md:block h-full border-r w-[12%] border-[#BDBDBD]">
-            <aside className="fixed h-full z-50 bg-white w-[12%]">
+          <div className="hidden xl:block h-full border-r md:w-[25%] xl:w-[15%] border-[#BDBDBD]">
+            <aside className="fixed h-full z-50 bg-white  md:w-[25%] xl:w-[15%]">
               <nav className="h-full w-full px-5 mt-20">
                 {menuItems.map((item) => (
                   <SidebarButton
@@ -168,7 +168,7 @@ export default function InstructorLayout({
 
           {/* Sidebar for mobile */}
           {isSidebarOpen && (
-            <div className="fixed inset-0 z-50 bg-white p-5 md:hidden">
+            <div className="fixed inset-0 z-50 bg-white p-5 xl:hidden">
               <button
                 className="text-gray-700 text-xl font-bold mb-4"
                 onClick={() => setIsSidebarOpen(false)}
@@ -224,12 +224,12 @@ export default function InstructorLayout({
           {/* Overlay for mobile sidebar */}
           {isSidebarOpen && (
             <div
-              className="fixed inset-0 z-40 bg-black opacity-50 md:hidden"
+              className="fixed inset-0 z-40 bg-black opacity-50 xl:hidden"
               onClick={() => setIsSidebarOpen(false)}
             ></div>
           )}
 
-          <div className="flex-1 min-h-screen border-t border-border bg-background mt-5">
+          <div className="flex-1   min-h-screen border-t border-border bg-background mt-5">
             <main>{children}</main>
           </div>
         </div>

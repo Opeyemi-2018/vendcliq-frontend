@@ -2,17 +2,77 @@
 import BoxOption from "@/components/ui/BoxOption";
 import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/Field";
+import { poster } from "@/lib/utils/api/apiHelper";
+import { Label } from "@radix-ui/react-dropdown-menu";
 import { RadioGroup } from "@radix-ui/react-radio-group";
+import { AxiosError } from "axios";
 import Link from "next/link";
 import React, { useState } from "react";
+type SignupPayload = {
+  firstname: string;
+  lastname: string;
+  email: string;
+  password: string;
+  business: {
+    isRegistered: boolean;
+    type: string;
+  };
+  referral: string;
+};
 
 type SignupStepTwoProps = {
   nextStep: () => void;
   title: string;
+  previousData: { businessType: string };
 };
 
-const SignupStepTwo: React.FC<SignupStepTwoProps> = ({ nextStep, title }) => {
-  const [selectedValue, setSelectedValue] = useState("yes");
+const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
+  nextStep,
+  title,
+  previousData,
+}) => {
+  const [error, setError] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState({
+    firstname: "",
+    lastname: "",
+    email: "",
+    password: "",
+    isRegistered: true,
+    referral: "",
+  });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const handleSubmit = async () => {
+    try {
+      // Prepare data for POST request
+      const payload = {
+        ...formData,
+        business: {
+          isRegistered: formData.isRegistered,
+          type: previousData.businessType,
+        },
+      };
+      console.log(payload);
+      // Call the poster utility function to make the API request
+      const response = await poster<SignupPayload, typeof payload>(
+        "/auth/signup",
+        payload
+      );
+
+      console.log("Success:", response);
+
+      nextStep();
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        setError(error.response?.data?.message || "An error occurred");
+      } else {
+        setError("An unexpected error occurred");
+      }
+    }
+  };
+  const [selectedValue] = useState("yes");
   return (
     <div className="">
       <h2 className="text-xl font-semibold text-black text-center border-b border-border pb-2">
@@ -21,29 +81,69 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({ nextStep, title }) => {
 
       <div className="mt-5 font-sans">
         <div className="flex gap-5 ">
-          <Input label="First Name" className="flex-1 mb-0" />
-          <Input label="Last Name" className="flex-1 mb-0" />
+          <Input
+            label="First Name"
+            name="firstname"
+            onChange={handleChange}
+            value={formData.firstname}
+            className="flex-1 mb-0"
+          />
+          <Input
+            label="Last Name"
+            name="lastname"
+            onChange={handleChange}
+            value={formData.lastname}
+            className="flex-1 mb-0"
+          />
         </div>
         <p className="text-gray-400 text-sm">
           Please ensure this is first and last name on your Government ID
           document.
         </p>
-        <Input label="Email Address" type="email" className="flex-1  my-5" />
-        <RadioGroup
-          className=" flex gap-7"
-          value={selectedValue}
-          onValueChange={setSelectedValue}
-        >
-          <BoxOption value="yes" title="Yes" selectedValue={selectedValue} />
-          <BoxOption value="no" title="No" selectedValue={selectedValue} />
-        </RadioGroup>
+        <Input
+          label="Email Address"
+          name="email"
+          type="email"
+          onChange={handleChange}
+          value={formData.email}
+          className="flex-1  my-5"
+        />
+        <div>
+          <Label className="text-sm text-[#2F2F2F] pb-2">
+            Is your business incorporated with the Corporate Affairs Commission?
+          </Label>
+          <RadioGroup
+            className=" flex gap-7"
+            value={formData.isRegistered ? "yes" : "no"}
+            onValueChange={(value) =>
+              setFormData({ ...formData, isRegistered: value === "yes" })
+            }
+          >
+            <BoxOption value="yes" title="Yes" selectedValue={selectedValue} />
+            <BoxOption value="no" title="No" selectedValue={selectedValue} />
+          </RadioGroup>
+        </div>
 
-        <Input label="Password" type="password" className="flex-1  my-5" />
-        <Input label="Referal Code" type="text" className="flex-1  my-5" />
+        <Input
+          label="Password"
+          name="password"
+          type="password"
+          onChange={handleChange}
+          value={formData.password}
+          className="flex-1  my-5"
+        />
+        <Input
+          label="Referal Code"
+          name="referral"
+          onChange={handleChange}
+          value={formData.referral}
+          className="flex-1  my-5"
+        />
+        {error && <p className="text-red-500">{error}</p>}
       </div>
 
       <Button
-        onClick={nextStep}
+        onClick={handleSubmit}
         className="mt-6 w-full text-white rounded-none"
       >
         Continue

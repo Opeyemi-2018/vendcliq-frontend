@@ -23,7 +23,7 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
   <div
     className={`${
       title === "Active loan" ? "bg-[#69A7F4]" : "bg-[#D6EBC3]"
-    } p-5 md:p-6 lg:p-8 rounded-lg w-full h-full`}
+    } p-5 md:p-6 lg:p-8 rounded-lg w-full h-fit md:h-full`}
   >
     <div className="text-[#565656] text-lg md:text-xl font-sans font-medium">
       {title}
@@ -32,7 +32,7 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
       {amount}
     </p>
     {nextPaymentDate && (
-      <div className="flex flex-wrap items-center gap-1 mt-4 md:mt-6">
+      <div className="flex flex-wrap items-center gap-1 mt-4 md:mt-3">
         <p className="font-sans text-sm md:text-md text-[#292826]">
           Next Payment:
         </p>
@@ -40,15 +40,15 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
       </div>
     )}
     {showButtons && (
-      <div className="flex flex-col md:flex-row sm:flex-row sm:items-center gap-3 mt-5 md:mt-7">
+      <div className="flex flex-col md:flex-row sm:flex-row sm:items-center gap-3 mt-5 md:mt-3">
         <Link href={"/transfer"}>
-          <Button className="w-fit sm:w-fit h-10 text-xs md:text-sm flex justify-center items-center bg-[#39498C] text-white rounded-md px-4">
+          <Button className="w-fit sm:w-fit h-9 text-xs md:text-sm flex justify-center items-center bg-[#39498C] text-white rounded-md px-4">
             Send Money
             <TiArrowRight size="20" className="text-white ml-2" />
           </Button>
         </Link>
         <Button
-          className="w-fit sm:w-fit h-10 text-xs md:text-sm flex justify-center items-center text-black bg-transparent border border-gray-400 rounded-md px-4"
+          className="w-fit sm:w-fit h-9 text-xs md:text-sm flex justify-center items-center text-black bg-transparent border border-gray-400 rounded-md px-4"
           onClick={onFundWallet}
         >
           Fund Wallet

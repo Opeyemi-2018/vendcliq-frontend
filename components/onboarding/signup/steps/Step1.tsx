@@ -6,12 +6,16 @@ import Link from "next/link";
 import React, { useState } from "react";
 
 type SignupStepOneProps = {
-  nextStep: () => void;
+  nextStep: (data?: { businessType?: string }) => void;
   title: string;
 };
 
 const SignupStepOne: React.FC<SignupStepOneProps> = ({ nextStep, title }) => {
-  const [selectedValue, setSelectedValue] = useState("distributor");
+  const [businessType, setBusinessType] = useState("distributor");
+  const handleContinue = () => {
+    console.log("businessType", businessType);
+    nextStep({ businessType });
+  };
   return (
     <div className="">
       <h2 className="text-xl font-semibold text-black text-center border-b border-border pb-2">
@@ -23,35 +27,35 @@ const SignupStepOne: React.FC<SignupStepOneProps> = ({ nextStep, title }) => {
       <div className="mt-5">
         <RadioGroup
           className="space-y-6"
-          value={selectedValue}
-          onValueChange={setSelectedValue}
+          value={businessType}
+          onValueChange={setBusinessType}
         >
           <BoxOption
-            value="distributor"
+            value="DISTRIBUTOR"
             title="Distributor"
             description="For businesses that buy directly from manufacturers and sell to retailers"
             iconSrc="/assets/icon/streamline-emojis_delivery-truck.png"
-            selectedValue={selectedValue}
+            selectedValue={businessType}
           />
           <BoxOption
-            value="retailer"
+            value="RETAILER"
             title="Retailer"
             description="For businesses that buy from distributors and sell to final consumers"
             iconSrc="/assets/icon/noto-v1_shopping-cart.png"
-            selectedValue={selectedValue}
+            selectedValue={businessType}
           />
           <BoxOption
-            value="wholesaler"
+            value="WHOLESALER"
             title="Wholesaler"
             description="For businesses that buy from distributors and sell to final consumers"
             iconSrc="/assets/icon/wholesaler_10103180.png"
-            selectedValue={selectedValue}
+            selectedValue={businessType}
           />
         </RadioGroup>
       </div>
 
       <Button
-        onClick={nextStep}
+        onClick={handleContinue}
         className="mt-6 text-white w-full rounded-none"
       >
         Continue

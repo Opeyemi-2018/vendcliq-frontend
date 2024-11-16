@@ -34,7 +34,7 @@ const Page = () => {
                 <p className="font-semibold text-3xl md:text-5xl">0.00</p>
               </div>
               <hr className="border-muted-gray" />
-              <div className="border border-muted-gray rounded-xl p-5 text-center md:text-left">
+              <div className="border border-muted-gray rounded-xl p-5 text-left md:text-left">
                 <p className="text-dark-gray">
                   Your loan should be processed between
                   <br /> 24-48 hours of a working day
@@ -52,7 +52,7 @@ const Page = () => {
 
           {/* Summary and Stats Section */}
           <div className="flex-1 flex flex-col justify-between space-y-5 lg:space-y-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1  md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-5">
               <SummaryCard
                 title="Active Loan"
                 amount="NGN 20,000,000"
@@ -75,7 +75,7 @@ const Page = () => {
               />
             </div>
             <hr className="border-muted-gray my-5 lg:my-0" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 xl:gap-10">
               <StatCard color="black" title="Total Applications" count={20} />
               <StatCard color="#00C53A" title="Total Approved" count={20} />
               <StatCard color="#FF6242" title="Total Rejected" count={20} />
@@ -85,7 +85,7 @@ const Page = () => {
 
         {/* Loan Transaction Table */}
         <div className="bg-white overflow-x-auto mt-5 rounded-xl font-sans">
-          <div className="flex justify-between items-center py-5 px-5">
+          <div className="flex justify-between md:flex-row flex-col md:items-center items-start gap-2 py-5 px-5">
             <div className="flex gap-5 md:flex-row flex-col">
               <p>Loan Transactions</p>
             </div>
