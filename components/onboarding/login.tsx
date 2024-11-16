@@ -12,63 +12,62 @@ export const Login = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   return (
-    <div className=" h-screen">
-      <div className="flex h-full gap-10 px-5 md:px-20 py-24 relative">
-        <div className="flex-1">
-          <div className="text-black absolute top-10">
-            <Image
-              src={"/assets/logo/logo.png"}
-              alt=""
-              width={100}
-              height={70}
-              className="object-cover"
+    <div className="h-screen">
+      <div className="text-black  px-10 pt-5 pb-10">
+        <Image
+          src={"/assets/logo/logo.png"}
+          alt=""
+          width={100}
+          height={70}
+          className="object-cover"
+        />
+      </div>
+      <div className="flex justify-center items-center h-[80%] gap-10 px-5 md:px-20 ">
+        <div className="flex flex-col justify-center flex-1 h-full w-fit xl:w-full  bg-inherit md:bg-white  rounded-3xl  px-5 md:px-10">
+          <h1 className="font-semibold text-black text-2xl">Sign In</h1>
+          <div className="mt-10 space-y-5 font-sans">
+            <Input
+              label="Email"
+              placeholder="Enter your email"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+            />
+            <Input
+              label="Password"
+              type="password"
+              placeholder="Enter your password"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
             />
           </div>
-          <div className=" h-full w-full  md:min-w-[700px] bg-inherit md:bg-white rounded-3xl pt-24 px-5 md:px-20">
-            <h1 className="font-semibold text-black text-2xl">Sign In</h1>
-            <div className="mt-10 space-y-5 font-sans">
-              <Input
-                label="Email"
-                placeholder="Enter your email"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-              />
-              <Input
-                label="Password"
-                type="password"
-                placeholder="Enter your password"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-              />
-            </div>
-            <p className="text-primary underline font-semibold font-sans text-right mt-3">
-              Forget Password
-            </p>
-            <Link href={"/dashboard"}>
-              <Button className="mt-10 w-full text-white">Sign In</Button>
+          <p className="text-primary underline font-semibold font-sans text-right mt-3">
+            Forget Password
+          </p>
+          <Link href={"/dashboard"}>
+            <Button className="mt-10 w-full text-white">Sign In</Button>
+          </Link>
+          <Button className="flex items-center justify-center bg-white border rounded-sm border-border gap-3 w-full text-black hover:bg-inherit mt-5">
+            <FcGoogle size={"24"} />
+            Sign In With Google
+          </Button>
+          <div className="flex flex-col md:flex-row gap-1 items-center font-sans justify-center mt-3">
+            <p className="text-black">Don`t have an account?</p>
+            <Link href={"/signup"}>
+              <p className="text-primary">Create an account</p>
             </Link>
-            <Button className="flex items-center justify-center bg-white border rounded-sm border-border gap-3 w-full text-black hover:bg-inherit mt-5">
-              <FcGoogle size={"24"} />
-              Sign In With Google
-            </Button>
-            <div className="flex flex-col md:flex-row gap-1 items-center font-sans justify-center mt-3">
-              <p className="text-black">Don`t have an account?</p>
-              <Link href={"/signup"}>
-                <p className="text-primary">Create an account</p>
-              </Link>
-            </div>
           </div>
         </div>
-        <div className=" h-full hidden   md:flex flex-1 rounded-xl relative">
+        {/* </div> */}
+        <div className=" h-full hidden flex-1 xl:flex rounded-xl relative">
           <Image
-            src={"/assets/images/Subtract.png"}
+            src={"/assets/images/Subtract.svg"}
             alt=""
-            width={800}
-            height={800}
+            width={10000}
+            height={1000}
             className="object-fill h-full w-full"
           />
-          <div className=" hidden   md:flex flex-col absolute top-5 left-5 h-full w-full  text-white px-20 py-10">
-            <h1 className="text-6xl font-semibold">
+          <div className=" hidden   xl:flex flex-col justify-center absolute top-5 left-5   w-full h-full text-white px-10 py-10">
+            <h1 className="text-5xl font-semibold">
               What’s our <br></br>{" "}
               <span className="text-primary">Customers</span> Saying{" "}
             </h1>
@@ -84,14 +83,14 @@ export const Login = () => {
                 <p className="font-semibold">Adeshola Adewoye</p>
                 <p>Distributor</p>
               </div>
-              <div className="flex gap-5 mt-10">
-                <Button className="bg-pastel-blue w-fit px-10 py-7 rounded-lg">
-                  <GoArrowLeft color="#010C3B" size="28" />
-                </Button>
-                <Button className="bg-dark-blue w-fit px-10 py-7 rounded-lg">
-                  <GoArrowRight color="#DADFF6" size="28" />
-                </Button>
-              </div>
+            </div>
+            <div className="flex gap-5  mt-5">
+              <Button className="bg-pastel-blue w-fit px-10 py-7 rounded-lg">
+                <GoArrowLeft color="#010C3B" size="28" />
+              </Button>
+              <Button className="bg-dark-blue w-fit px-10 py-7 rounded-lg">
+                <GoArrowRight color="#DADFF6" size="28" />
+              </Button>
             </div>
           </div>
         </div>

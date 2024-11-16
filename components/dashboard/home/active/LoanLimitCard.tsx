@@ -7,7 +7,7 @@ import Link from "next/link";
 
 const LoanLimitCard = () => (
   <div className="bg-[#39498C] font-medium w-full md:w-[600px] h-full rounded-lg p-5 relative">
-    <div>
+    <div className="overflow-hidden rounded-b-lg">
       <Image
         src="/assets/images/lady.svg"
         alt="Lady illustration"
@@ -20,7 +20,7 @@ const LoanLimitCard = () => (
         alt="Pattern background"
         height={100}
         width={600}
-        className="object-cover w-full h-20 sm:h-32 opacity-50 absolute z-0 right-0 bottom-0"
+        className="object-cover w-full h-20 sm:h-32 opacity-50 absolute z-0 right-0 bottom-0 rounded-b-lg"
       />
     </div>
     <div className="z-40 min-h-72 md:h-full text-white">

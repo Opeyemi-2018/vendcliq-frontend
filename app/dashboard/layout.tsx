@@ -98,7 +98,7 @@ export default function InstructorLayout({
 
   return (
     <html lang="en">
-      <body className="min-h-screen h-full">
+      <body className="min-h-screen h-full ">
         <div className="h-14">
           <header className="fixed bg-white w-full z-40 flex justify-between items-center px-4 sm:px-6 lg:px-8 py-4">
             <Image
@@ -229,7 +229,7 @@ export default function InstructorLayout({
             ></div>
           )}
 
-          <div className="flex-1  min-h-screen border-t border-border bg-background mt-5">
+          <div className="flex-1   min-h-screen border-t border-border bg-background mt-5">
             <main>{children}</main>
           </div>
         </div>

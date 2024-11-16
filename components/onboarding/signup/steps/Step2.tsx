@@ -8,6 +8,17 @@ import { RadioGroup } from "@radix-ui/react-radio-group";
 import { AxiosError } from "axios";
 import Link from "next/link";
 import React, { useState } from "react";
+type SignupPayload = {
+  firstname: string;
+  lastname: string;
+  email: string;
+  password: string;
+  business: {
+    isRegistered: boolean;
+    type: string;
+  };
+  referral: string;
+};
 
 type SignupStepTwoProps = {
   nextStep: () => void;
@@ -45,7 +56,7 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
       };
       console.log(payload);
       // Call the poster utility function to make the API request
-      const response = await poster<any, typeof payload>(
+      const response = await poster<SignupPayload, typeof payload>(
         "/auth/signup",
         payload
       );
@@ -61,7 +72,7 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
       }
     }
   };
-  const [selectedValue, setSelectedValue] = useState("yes");
+  const [selectedValue] = useState("yes");
   return (
     <div className="">
       <h2 className="text-xl font-semibold text-black text-center border-b border-border pb-2">
