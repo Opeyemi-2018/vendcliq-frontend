@@ -1,8 +1,13 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/Field";
+import {
+  handleApiError,
+  handleConfirmPhoneNumber,
+} from "@/lib/utils/api/apiHelper";
+import { ConfirmPhoneNumberPayload } from "@/types";
 
-import React from "react";
+import React, { useState } from "react";
 
 type SignupStepFourProps = {
   nextStep: () => void;
@@ -10,8 +15,35 @@ type SignupStepFourProps = {
 };
 
 const SignupStepFour: React.FC<SignupStepFourProps> = ({ nextStep, title }) => {
+  const [phone, setPhone] = useState<string>("");
+  const [isWhatsappNo, setIsWhatsappNo] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const handleSubmit = async () => {
+    if (!phone) {
+      setError("Phone number is required.");
+      return;
+    }
+
+    const payload: ConfirmPhoneNumberPayload = {
+      phone,
+      isWhatsappNo,
+    };
+
+    setLoading(true);
+    try {
+      await handleConfirmPhoneNumber(payload);
+      nextStep();
+    } catch (error) {
+      handleApiError(error, setError);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="">
+    <div>
       <h2 className="text-xl font-semibold text-black text-center border-b border-border pb-2">
         {title}
       </h2>
@@ -20,15 +52,30 @@ const SignupStepFour: React.FC<SignupStepFourProps> = ({ nextStep, title }) => {
           <Input
             label="Phone Number"
             placeholder="Enter your phone number"
-            className="flex-1  my-5"
+            className="flex-1 my-5"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
           />
+          <div className="mt-5">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={isWhatsappNo}
+                onChange={(e) => setIsWhatsappNo(e.target.checked)}
+                className="form-checkbox"
+              />
+              Is this your WhatsApp number?
+            </label>
+          </div>
         </div>
 
+        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+
         <Button
-          onClick={nextStep}
+          onClick={handleSubmit}
           className="mt-6 w-full text-white rounded-none"
         >
-          Continue
+          {loading ? "Verifying..." : "Continue"}
         </Button>
       </div>
     </div>

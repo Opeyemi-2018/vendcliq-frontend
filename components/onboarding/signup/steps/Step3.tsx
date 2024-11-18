@@ -2,8 +2,16 @@
 
 import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/Field";
+import {
+  handleApiError,
+  handleEmailVerification,
+  poster,
+} from "@/lib/utils/api/apiHelper";
+import { EmailVerificationPayload } from "@/types";
+import { CONFIRM_PHONE_NUMBER } from "@/url/api-url";
+import { AxiosError } from "axios";
 
-import React from "react";
+import React, { useState } from "react";
 
 import { TbReload } from "react-icons/tb";
 
@@ -11,11 +19,39 @@ type SignupStepThreeProps = {
   nextStep: () => void;
   title: string;
 };
-
+type ConfirmationCodeProps = {
+  code: string;
+};
 const SignupStepThree: React.FC<SignupStepThreeProps> = ({
   nextStep,
   title,
 }) => {
+  const [code, setCode] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const handleSubmit = async () => {
+    // if (!code.trim()) {
+    //   setError("Confirmation code is required.");
+    //   return;
+    // }
+
+    const payload: EmailVerificationPayload = {
+      code,
+    };
+
+    setLoading(true);
+    try {
+      // await handleEmailVerification(payload);
+      nextStep();
+    } catch (error) {
+      handleApiError(error, setError);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {};
   return (
     <div className="">
       <h2 className="text-xl font-semibold text-black text-center border-b border-border pb-2">
@@ -31,7 +67,10 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
             label="Confirmation Code"
             placeholder="Enter Confirmation Code"
             className="flex-1  my-5"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
           />
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </div>
         <div className="flex gap-1 items-center justify-center mt-3 font-sans text-sm">
           <Button className=" flex  items-center justify-center bg-inherit hover:bg-inherit gap-2 font-medium text-secondary">
@@ -40,10 +79,11 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
           </Button>
         </div>
         <Button
-          onClick={nextStep}
+          onClick={handleSubmit}
+          disabled={loading}
           className="mt-6 text-white w-full rounded-none"
         >
-          Continue
+          {loading ? "Verifying..." : "Continue"}
         </Button>
       </div>
     </div>
