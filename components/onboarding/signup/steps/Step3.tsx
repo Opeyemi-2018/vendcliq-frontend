@@ -2,14 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/Field";
-import {
-  handleApiError,
-  handleEmailVerification,
-  poster,
-} from "@/lib/utils/api/apiHelper";
-import { EmailVerificationPayload } from "@/types";
-import { CONFIRM_PHONE_NUMBER } from "@/url/api-url";
-import { AxiosError } from "axios";
+import { handleApiError } from "@/lib/utils/api/apiHelper";
 
 import React, { useState } from "react";
 
@@ -19,9 +12,7 @@ type SignupStepThreeProps = {
   nextStep: () => void;
   title: string;
 };
-type ConfirmationCodeProps = {
-  code: string;
-};
+
 const SignupStepThree: React.FC<SignupStepThreeProps> = ({
   nextStep,
   title,
@@ -36,9 +27,9 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
     //   return;
     // }
 
-    const payload: EmailVerificationPayload = {
-      code,
-    };
+    // const payload: EmailVerificationPayload = {
+    //   code,
+    // };
 
     setLoading(true);
     try {
@@ -51,7 +42,7 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
     }
   };
 
-  const handleResend = async () => {};
+  // const handleResend = async () => {};
   return (
     <div className="">
       <h2 className="text-xl font-semibold text-black text-center border-b border-border pb-2">

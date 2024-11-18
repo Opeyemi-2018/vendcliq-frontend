@@ -24,14 +24,19 @@ export const Login = () => {
     }
 
     const payload: SignInPayload = {
-      password,
       email,
+      password,
     };
 
     setLoading(true);
     try {
+      setError("");
       const response = await handleSignIn(payload);
-      if (response.status === "success") router.push("/dashboard/home");
+      if (response.status === "success") {
+        router.push("/dashboard/home");
+      } else {
+        setError("Login failed. Please try again.");
+      }
     } catch (error) {
       handleApiError(error, setError);
     } finally {
@@ -53,6 +58,11 @@ export const Login = () => {
         <div className="flex flex-col justify-center flex-1 h-full w-fit xl:w-full  bg-inherit md:bg-white  rounded-3xl  px-5 md:px-10">
           <h1 className="font-semibold text-black text-2xl">Sign In</h1>
           <div className="mt-10 space-y-5 font-sans">
+            {error && (
+              <p className="text-red-600 text-sm mt-3 bg-red-100 p-2 rounded">
+                {error}
+              </p>
+            )}
             <Input
               label="Email"
               name="email"
@@ -72,9 +82,12 @@ export const Login = () => {
           <p className="text-primary underline font-semibold font-sans text-right mt-3">
             Forget Password
           </p>
-
-          <Button onClick={handleSubmit} className="mt-10 w-full text-white">
-            Sign In
+          <Button
+            disabled={loading}
+            onClick={handleSubmit}
+            className="mt-10 w-full text-white"
+          >
+            {loading ? "Signing In..." : "Sign In"}
           </Button>
 
           <Button className="flex items-center justify-center bg-white border rounded-sm border-border gap-3 w-full text-black hover:bg-inherit mt-5">
