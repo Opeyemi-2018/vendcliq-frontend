@@ -7,10 +7,37 @@ import Image from "next/image";
 import { FaQuoteLeft } from "react-icons/fa";
 import { GoArrowLeft, GoArrowRight } from "react-icons/go";
 import Link from "next/link";
+import { SignInPayload } from "@/types";
+import { useRouter } from "next/navigation";
+import { handleApiError, handleSignIn } from "@/lib/utils/api/apiHelper";
 
 export const Login = () => {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const router = useRouter();
+  const handleSubmit = async () => {
+    if (!email || !password) {
+      setError("Email and Password is required.");
+      return;
+    }
+
+    const payload: SignInPayload = {
+      password,
+      email,
+    };
+
+    setLoading(true);
+    try {
+      const response = await handleSignIn(payload);
+      if (response.status === "success") router.push("/dashboard/home");
+    } catch (error) {
+      handleApiError(error, setError);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="h-screen">
       <div className="text-black  px-10 pt-5 pb-10">
@@ -28,24 +55,28 @@ export const Login = () => {
           <div className="mt-10 space-y-5 font-sans">
             <Input
               label="Email"
+              name="email"
               placeholder="Enter your email"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
             <Input
               label="Password"
+              name="password"
               type="password"
               placeholder="Enter your password"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           <p className="text-primary underline font-semibold font-sans text-right mt-3">
             Forget Password
           </p>
-          <Link href={"/dashboard"}>
-            <Button className="mt-10 w-full text-white">Sign In</Button>
-          </Link>
+
+          <Button onClick={handleSubmit} className="mt-10 w-full text-white">
+            Sign In
+          </Button>
+
           <Button className="flex items-center justify-center bg-white border rounded-sm border-border gap-3 w-full text-black hover:bg-inherit mt-5">
             <FcGoogle size={"24"} />
             Sign In With Google

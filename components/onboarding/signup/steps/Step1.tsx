@@ -11,7 +11,7 @@ type SignupStepOneProps = {
 };
 
 const SignupStepOne: React.FC<SignupStepOneProps> = ({ nextStep, title }) => {
-  const [businessType, setBusinessType] = useState("distributor");
+  const [businessType, setBusinessType] = useState("DISTRIBUTOR");
   const handleContinue = () => {
     console.log("businessType", businessType);
     nextStep({ businessType });

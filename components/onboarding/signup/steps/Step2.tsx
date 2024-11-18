@@ -3,6 +3,7 @@ import BoxOption from "@/components/ui/BoxOption";
 import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/Field";
 import { poster } from "@/lib/utils/api/apiHelper";
+import { SIGN_UP } from "@/url/api-url";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { RadioGroup } from "@radix-ui/react-radio-group";
 import { AxiosError } from "axios";
@@ -45,19 +46,20 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   const handleSubmit = async () => {
+    const { isRegistered, ...rest } = formData;
     try {
       // Prepare data for POST request
       const payload = {
-        ...formData,
+        ...rest,
         business: {
-          isRegistered: formData.isRegistered,
+          isRegistered: true,
           type: previousData.businessType,
         },
       };
       console.log(payload);
       // Call the poster utility function to make the API request
       const response = await poster<SignupPayload, typeof payload>(
-        "/auth/signup",
+        SIGN_UP,
         payload
       );
 
@@ -72,7 +74,7 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
       }
     }
   };
-  const [selectedValue] = useState("yes");
+  const [registered, setRegistered] = useState("yes");
   return (
     <div className="">
       <h2 className="text-xl font-semibold text-black text-center border-b border-border pb-2">
@@ -114,13 +116,11 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
           </Label>
           <RadioGroup
             className=" flex gap-7"
-            value={formData.isRegistered ? "yes" : "no"}
-            onValueChange={(value) =>
-              setFormData({ ...formData, isRegistered: value === "yes" })
-            }
+            value={registered}
+            onValueChange={setRegistered}
           >
-            <BoxOption value="yes" title="Yes" selectedValue={selectedValue} />
-            <BoxOption value="no" title="No" selectedValue={selectedValue} />
+            <BoxOption value="yes" title="Yes" selectedValue={registered} />
+            <BoxOption value="no" title="No" selectedValue={registered} />
           </RadioGroup>
         </div>
 
