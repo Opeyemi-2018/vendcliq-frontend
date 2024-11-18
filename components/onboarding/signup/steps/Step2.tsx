@@ -46,7 +46,7 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   const handleSubmit = async () => {
-    const { isRegistered, ...rest } = formData;
+    const { ...rest } = formData;
     try {
       // Prepare data for POST request
       const payload = {
