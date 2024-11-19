@@ -55,7 +55,7 @@ const LoanApplication: React.FC = () => {
     <div>
       <div className="flex justify-between px-20 pt-10 w-full">
         <Image
-          src="/assets/logo/logo.svg"
+          src="/assets/logo/logo.png"
           alt="Vera logo"
           width={150}
           height={80}

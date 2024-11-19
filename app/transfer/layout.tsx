@@ -11,7 +11,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     <div>
       <div className="flex justify-between items-center px-5 md:px-20 pt-10 w-full">
         <Image
-          src="/assets/logo/logo.svg"
+          src="/assets/logo/logo.png"
           alt="Vera logo"
           width={150}
           height={80}

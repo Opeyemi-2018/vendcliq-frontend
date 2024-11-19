@@ -58,7 +58,7 @@ export const ActiveAccountDashboard: React.FC = () => {
       description: "OUTWARD TRANSFER (N) 2334647 To",
       recipientInfo: "WEMA BANK | EBUBE DRINKS LIMITED",
       transactionId: "/00003883383364YTHD647749904",
-      amount: -5000000,
+      amount: 5000000,
       isOutgoing: true,
     },
     {
@@ -74,7 +74,7 @@ export const ActiveAccountDashboard: React.FC = () => {
       description: "OUTWARD TRANSFER (N) 8765421 To",
       recipientInfo: "ZENITH BANK | AYOMIDE STORES",
       transactionId: "/00005675675674YTHD839458304",
-      amount: -250000,
+      amount: 250000,
       isOutgoing: true,
     },
     {
@@ -90,7 +90,7 @@ export const ActiveAccountDashboard: React.FC = () => {
       description: "OUTWARD TRANSFER (N) 2334667 To",
       recipientInfo: "UBA | OLA MARKET",
       transactionId: "/00003883383364YTHD647749905",
-      amount: -1000000,
+      amount: 1000000,
       isOutgoing: true,
     },
   ]);
