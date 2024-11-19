@@ -24,7 +24,7 @@ const Page = () => {
       type: "Credit",
       remarks: (
         <div>
-          <p>
+          <p className="max-w-80 text-wrap">
             INWARD RECEIVED PAYMENT (V) 2334647 From UNITED BANK FOR AFRICA |
             CHUKWU AND SONS LIMITED
             <strong> /00003883383364YTHD647749904</strong>

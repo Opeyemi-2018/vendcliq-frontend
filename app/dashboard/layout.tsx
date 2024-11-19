@@ -102,10 +102,10 @@ export default function InstructorLayout({
         <div className="h-14">
           <header className="fixed bg-white w-full z-40 flex justify-between items-center px-4 sm:px-6 lg:px-8 py-4">
             <Image
-              src="/assets/logo/logo.svg"
+              src="/assets/logo/logo.png"
               alt="Vera logo"
               width={150}
-              height={80}
+              height={100}
             />
             <button
               className="xl:hidden text-gray-700"

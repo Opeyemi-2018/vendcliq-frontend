@@ -11,8 +11,8 @@ export default function SignUpLayout({
         <Image
           src={"/assets/logo/logo.png"}
           alt=""
-          width={100}
-          height={70}
+          width={150}
+          height={100}
           className="object-cover"
         />
       </div>
