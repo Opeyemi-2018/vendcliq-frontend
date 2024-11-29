@@ -69,10 +69,10 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
         SIGN_UP,
         payload
       );
-
+      console.log(response);
       const token = response.data.token.token;
-
-      localStorage.setItem("getToken", token);
+      console.log("token step2", token);
+      localStorage.setItem("authToken", token);
       localStorage.setItem("email", payload.email);
       nextStep();
     } catch (error) {

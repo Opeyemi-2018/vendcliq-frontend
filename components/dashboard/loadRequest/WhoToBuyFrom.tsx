@@ -32,7 +32,9 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
   onNext,
   onPrevious,
 }) => {
-  const [bankOptions, setBankOptions] = useState<string[]>([]);
+  const [bankOptions, setBankOptions] = useState<
+    { bankCode: string; bankName: string }[]
+  >([]);
 
   useEffect(() => {
     const fetchBanks = async () => {
@@ -127,7 +129,7 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
                   </SelectLabel>
                   {bankOptions.map((bank) => (
                     <SelectItem
-                      key={bank.value}
+                      key={bank.bankCode}
                       value={bank.bankCode}
                       className="px-4 py-2 text-gray-700 hover:bg-gray-100 focus:bg-gray-100 cursor-pointer"
                     >

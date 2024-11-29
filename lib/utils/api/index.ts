@@ -1,5 +1,4 @@
 import axios from "axios";
-import { parseCookies } from "nookies";
 const baseURL = process.env.NEXT_PUBLIC_VERA_API_BASE_URL;
 
 const api = axios.create({
@@ -8,14 +7,13 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const cookies = parseCookies();
-    const Token = cookies.authToken;
-
+    const Token = localStorage.getItem("authToken");
+    console.log("Token>>>", Token);
     if (Token && Token !== "undefined" && Token !== "null") {
       console.log(Token);
       config.headers.Authorization = `Bearer ${Token}`;
     } else {
-      localStorage.removeItem("getToken");
+      localStorage.removeItem("authToken");
     }
     return config;
   },
@@ -47,7 +45,7 @@ api.interceptors.response.use(
 export const destroyToken = () => {
   try {
     // Remove token from localStorage
-    localStorage.removeItem("getToken");
+    localStorage.removeItem("authToken");
 
     // Clear Authorization header from axios instance
     api.defaults.headers.common["Authorization"] = "";

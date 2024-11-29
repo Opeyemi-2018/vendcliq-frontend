@@ -152,7 +152,7 @@ export default function InstructorLayout({
                     <DropdownMenuItem
                       onClick={() => {
                         destroyToken();
-                        localStorage.removeItem("getToken");
+                        localStorage.removeItem("authToken");
                         window.location.href = "/";
                       }}
                       className="cursor-pointer flex items-center gap-2"
@@ -179,7 +179,10 @@ export default function InstructorLayout({
                     icon={item.icon}
                     label={item.label}
                     isActive={
-                      pathname === item.href || pathname.startsWith(item.href)
+                      pathname
+                        ? pathname === item.href ||
+                          pathname.startsWith(item.href)
+                        : false
                     }
                   />
                 ))}
@@ -204,7 +207,10 @@ export default function InstructorLayout({
                     icon={item.icon}
                     label={item.label}
                     isActive={
-                      pathname === item.href || pathname.startsWith(item.href)
+                      pathname
+                        ? pathname === item.href ||
+                          pathname.startsWith(item.href)
+                        : false
                     }
                   />
                 ))}
@@ -239,7 +245,7 @@ export default function InstructorLayout({
                       <DropdownMenuItem
                         onClick={() => {
                           destroyToken();
-                          localStorage.removeItem("getToken");
+                          localStorage.removeItem("authToken");
                           window.location.href = "/";
                         }}
                         className="cursor-pointer flex items-center gap-2"

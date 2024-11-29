@@ -7,7 +7,7 @@ import {
   handleEmailVerification,
 } from "@/lib/utils/api/apiHelper";
 import { EmailVerificationPayload } from "@/types";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { TbReload } from "react-icons/tb";
 
 type SignupStepThreeProps = {
@@ -26,21 +26,21 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
   const [timerActive, setTimerActive] = useState(true);
   const email = localStorage.getItem("email");
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (timerActive && timeLeft > 0) {
-      timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-    } else if (timeLeft === 0) {
-      setTimerActive(false);
-    }
-    return () => clearTimeout(timer);
-  }, [timerActive, timeLeft]);
+  // useEffect(() => {
+  //   let timer: NodeJS.Timeout;
+  //   if (timerActive && timeLeft > 0) {
+  //     timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+  //   } else if (timeLeft === 0) {
+  //     setTimerActive(false);
+  //   }
+  //   return () => clearTimeout(timer);
+  // }, [timerActive, timeLeft]);
 
-  useEffect(() => {
-    // Start the timer when the component mounts
-    setTimerActive(true);
-    setTimeLeft(30);
-  }, []);
+  // useEffect(() => {
+  //   // Start the timer when the component mounts
+  //   setTimerActive(true);
+  //   setTimeLeft(30);
+  // }, []);
 
   const handleSubmit = async () => {
     if (!token.trim()) {

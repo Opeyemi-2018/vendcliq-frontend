@@ -152,7 +152,7 @@ export const handleUpdatePin = async (
 };
 
 export const handleRequestPinToken = async (): Promise<ApiResponse> => {
-  return await poster<ApiResponse, {}>(REQUEST_PIN_TOKEN, "");
+  return await poster<ApiResponse, object>(REQUEST_PIN_TOKEN, {});
 };
 
 export const handleApiError = (
