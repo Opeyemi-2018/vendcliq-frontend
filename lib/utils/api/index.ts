@@ -1,4 +1,5 @@
 import axios from "axios";
+import { parseCookies } from "nookies";
 const baseURL = process.env.NEXT_PUBLIC_VERA_API_BASE_URL;
 
 const api = axios.create({
@@ -7,12 +8,15 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    // TODO: Add token to the request
-    // const jwt = store.getState().auth.token
-    // if (jwt) {
-    // 	config.headers.Authorization = `Bearer ${jwt}`
-    // }
+    const cookies = parseCookies();
+    const Token = cookies.authToken;
 
+    if (Token && Token !== "undefined" && Token !== "null") {
+      console.log(Token);
+      config.headers.Authorization = `Bearer ${Token}`;
+    } else {
+      localStorage.removeItem("getToken");
+    }
     return config;
   },
   (error) => {
@@ -40,4 +44,38 @@ api.interceptors.response.use(
   }
 );
 
+export const destroyToken = () => {
+  try {
+    // Remove token from localStorage
+    localStorage.removeItem("getToken");
+
+    // Clear Authorization header from axios instance
+    api.defaults.headers.common["Authorization"] = "";
+
+    // Optional: Clear any other auth-related data you might have
+    // localStorage.removeItem("user");
+    // localStorage.removeItem("refreshToken");
+
+    return true;
+  } catch (error) {
+    console.error("Error during logout:", error);
+    return false;
+  }
+};
+
 export default api;
+
+export const startOtpTimer = (callback: (timeLeft: number) => void) => {
+  let timeLeft = 30;
+
+  const timer = setInterval(() => {
+    timeLeft--;
+    callback(timeLeft);
+
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+    }
+  }, 1000);
+
+  return () => clearInterval(timer);
+};

@@ -5,6 +5,7 @@ import LoanStepsSidebar from "@/components/dashboard/loadRequest/LoanStepsSideba
 import LoanStepOne from "@/components/dashboard/loadRequest/WhatToBuy";
 import LoanStepTwo from "@/components/dashboard/loadRequest/WhoToBuyFrom";
 import { Button } from "@/components/ui/button";
+import { handleCreateLoan } from "@/lib/utils/api/apiHelper";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -17,6 +18,16 @@ interface Item {
   amount: string;
 }
 
+export interface VendorDetails {
+  accountNumber: string;
+  accountName: string;
+  bankCode: string;
+  invoiceNo: string;
+  narration: string;
+  amount: string;
+  tenure: string;
+}
+
 const LoanApplication: React.FC = () => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
@@ -25,6 +36,15 @@ const LoanApplication: React.FC = () => {
   ]);
   const [vendor, setVendor] = useState("");
   const [selectedBank, setSelectedBank] = useState("");
+  const [vendorDetails, setVendorDetails] = useState<VendorDetails>({
+    accountNumber: "",
+    accountName: "",
+    bankCode: "",
+    invoiceNo: "",
+    narration: "",
+    amount: "",
+    tenure: "",
+  });
 
   const handleAddItem = () => {
     setItems([...items, { name: "", quantity: "", tenure: "", amount: "" }]);
@@ -43,8 +63,51 @@ const LoanApplication: React.FC = () => {
     setSelectedBank(value);
   };
 
+  const handleSubmitLoan = async () => {
+    try {
+      const payload = {
+        amount: parseFloat(vendorDetails.amount),
+        term: parseInt(vendorDetails.tenure),
+        purpose: "purchase",
+        items: items.map((item) => ({
+          name: item.name,
+          quantity: parseInt(item.quantity),
+          amount: parseFloat(item.amount),
+        })),
+        vendor: {
+          name: vendor,
+          bank: selectedBank,
+          ...vendorDetails,
+        },
+      };
+      console.log("payload", payload);
+      await handleCreateLoan(payload);
+      handleNextStep(); // Automatically move to status page after submission
+    } catch (error) {
+      console.error("Failed to submit loan:", error);
+      // You might want to add error handling UI here
+    }
+  };
+
+  const validateStep = (step: number): boolean => {
+    switch (step) {
+      case 1:
+        return items.every((item) => item.name && item.quantity && item.amount);
+      case 2:
+        return !!vendor && !!selectedBank;
+      case 3:
+        return !!vendorDetails.amount && !!vendorDetails.tenure;
+      default:
+        return true;
+    }
+  };
+
   const handleNextStep = () => {
-    setCurrentStep((prevStep) => prevStep + 1);
+    console.log("clicked");
+    if (validateStep(currentStep)) {
+      console.log(items);
+      setCurrentStep((prevStep) => prevStep + 1);
+    }
   };
 
   const handlePreviousStep = () => {
@@ -97,8 +160,19 @@ const LoanApplication: React.FC = () => {
           )}
           {currentStep === 3 && (
             <ItemDetails
-              onNext={handleNextStep}
+              onNext={handleSubmitLoan}
               onPrevious={handlePreviousStep}
+              vendorDetails={{
+                amount: parseFloat(vendorDetails.amount),
+                tenure: vendorDetails.tenure,
+              }}
+              setVendorDetails={(details) =>
+                setVendorDetails({
+                  ...vendorDetails,
+                  amount: details.amount?.toString() || "",
+                  tenure: details.tenure || "",
+                })
+              }
             />
           )}
           {currentStep === 4 && <LoanStatus />}

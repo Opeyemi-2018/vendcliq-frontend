@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
-import { ChevronDown, Headphones } from "lucide-react";
+import { ChevronDown, Headphones, LogOut } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,6 +13,7 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuItem,
 } from "@/components/ui/DropdownMenu";
 import cn from "@/lib/utils/cn";
 import {
@@ -24,6 +25,8 @@ import {
   TableDocument,
   Wallet2,
 } from "iconsax-react";
+import { useDashboardData } from "@/services/home/home";
+import { destroyToken } from "@/lib/utils/api";
 
 const SidebarButton = ({
   href,
@@ -92,9 +95,15 @@ export default function InstructorLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
-  const firstName = "Awuya";
-  const lastName = "Godwin";
-  const initials = `${firstName[0]}${lastName[0]}`;
+  const { data } = useDashboardData();
+  console.log("dashboardData", data?.data);
+  // Sample transactions data
+
+  const customer = data?.data.customer;
+
+  const firstName = customer?.firstname;
+  const lastName = customer?.lastname;
+  const initials = `${firstName?.[0]}${lastName?.[0]}`;
 
   return (
     <html lang="en">
@@ -139,7 +148,19 @@ export default function InstructorLayout({
                   <DropdownMenuTrigger className="px-4 py-2 text-white rounded-md">
                     <ChevronDown className="h-4 w-4 text-gray-500" />
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-fit mt-2 px-5 mr-5 py-5"></DropdownMenuContent>
+                  <DropdownMenuContent className="w-fit mt-2 px-5 mr-5 py-5">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        destroyToken();
+                        localStorage.removeItem("getToken");
+                        window.location.href = "/";
+                      }}
+                      className="cursor-pointer flex items-center gap-2"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Logout</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             </div>
@@ -214,7 +235,19 @@ export default function InstructorLayout({
                     <DropdownMenuTrigger className="px-4 py-2 text-white rounded-md">
                       <ChevronDown className="h-4 w-4 text-gray-500" />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-fit mt-2 px-5 mr-5 py-5"></DropdownMenuContent>
+                    <DropdownMenuContent className="w-fit mt-2 px-5 mr-5 py-5">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          destroyToken();
+                          localStorage.removeItem("getToken");
+                          window.location.href = "/";
+                        }}
+                        className="cursor-pointer flex items-center gap-2"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Logout</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
               </div>

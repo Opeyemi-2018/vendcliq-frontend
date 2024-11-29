@@ -9,6 +9,7 @@ import { RadioGroup } from "@radix-ui/react-radio-group";
 import { AxiosError } from "axios";
 import Link from "next/link";
 import React, { useState } from "react";
+import { parseCookies, setCookie } from "nookies";
 type SignupPayload = {
   firstname: string;
   lastname: string;
@@ -19,6 +20,12 @@ type SignupPayload = {
     type: string;
   };
   referral: string;
+  token: string;
+  data: {
+    token: {
+      token: string;
+    };
+  };
 };
 
 type SignupStepTwoProps = {
@@ -63,8 +70,10 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
         payload
       );
 
-      console.log("Success:", response);
+      const token = response.data.token.token;
 
+      localStorage.setItem("getToken", token);
+      localStorage.setItem("email", payload.email);
       nextStep();
     } catch (error) {
       if (error instanceof AxiosError) {

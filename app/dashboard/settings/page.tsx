@@ -5,6 +5,7 @@ import { Password } from "@/components/dashboard/settings/tabContent/Password";
 import { PersonalProfile } from "@/components/dashboard/settings/tabContent/PersonalProfile";
 import { CreatePin } from "@/components/dashboard/settings/tabContent/pin/CreatePin";
 import { Otp } from "@/components/dashboard/settings/tabContent/pin/Otp";
+import { VerifyBankAccount } from "@/components/dashboard/settings/tabContent/VerifyBankAccount";
 import { PageTitle } from "@/components/ui/pageTitle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React, { useState } from "react";
@@ -51,6 +52,7 @@ const Settings = () => {
                 <TabTrigger value="personal">Personal Profile</TabTrigger>
                 <TabTrigger value="password">Password</TabTrigger>
                 <TabTrigger value="pin">Pin</TabTrigger>
+                <TabTrigger value="bank">Bank Account</TabTrigger>
               </div>
             </TabsList>
 
@@ -77,6 +79,11 @@ const Settings = () => {
                 {transferScreen === "otp" && (
                   <Otp goNext={handleNext} goBack={handleBack} />
                 )}
+              </div>
+            </TabsContent>
+            <TabsContent value="bank">
+              <div className="p-3 sm:p-5">
+                <VerifyBankAccount />
               </div>
             </TabsContent>
           </Tabs>
