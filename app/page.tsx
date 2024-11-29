@@ -1,4 +1,4 @@
-import { Login } from "@/components/onboarding/login";
+import Login from "./login/page";
 
 export default function Home() {
   return (
@@ -7,5 +7,3 @@ export default function Home() {
     </div>
   );
 }
-
-

@@ -5,7 +5,7 @@ import Image from "next/image";
 import React from "react";
 import Link from "next/link";
 
-const LoanLimitCard = () => (
+const LoanLimitCard = ({ limit }: { limit: number }) => (
   <div className="bg-[#39498C] font-medium w-full md:w-[600px] h-full rounded-lg p-5 relative">
     <div className="overflow-hidden rounded-b-lg">
       <Image
@@ -25,7 +25,7 @@ const LoanLimitCard = () => (
     </div>
     <div className="z-40 min-h-72 md:h-full text-white">
       <p className="text-3xl sm:text-4xl">Your Loan Limit is</p>
-      <p className="text-6xl sm:text-8xl text-primary">N10M</p>
+      <p className="text-6xl sm:text-8xl text-primary">N{limit}</p>
       <div className="mt-4 sm:mt-5">
         <div className="flex items-center gap-2">
           <FaCheck className="text-white" />

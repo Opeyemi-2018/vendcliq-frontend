@@ -10,13 +10,24 @@ import LoanLimitCard from "./LoanLimitCard";
 import FilterSortDropdown from "@/components/ui/FilterSortDropdown";
 
 import CopyToClipboard from "@/components/ui/CopyToClipboard";
+import { useDashboardData } from "@/services/home/home";
+import { useGetProfile } from "@/services/profile/Profile";
 
 export const ActiveAccountDashboard: React.FC = () => {
   const [filter, setFilter] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
+  const { data } = useDashboardData();
+  const { profile } = useGetProfile();
+  console.log("dashboardData", data?.data);
+  console.log("profile", profile);
   // Sample transactions data
+  const account = data?.data.account;
+  const customer = data?.data.customer;
+  const loan = data?.data.loan;
+  const nextPaymentDate = data?.data.nextRepayment;
+
   const loanTransactions = [
     {
       id: "#0056757",
@@ -153,7 +164,9 @@ export const ActiveAccountDashboard: React.FC = () => {
   return (
     <div className="h-screen">
       <div className="py-5 px-5 lg:px-10 h-full">
-        <h1 className="text-black font-medium text-xl">Hi Godwin</h1>
+        <h1 className="text-black font-medium text-xl">
+          Hi {customer?.firstname}
+        </h1>
         <div className="flex md:flex-row flex-row text-xs md:text-md mt-3 bg-white items-center text-md text-black w-full md:w-fit gap-2 md:gap-5 py-1 md:px-5 p-2 font-sans border border-border rounded-lg">
           <p className="text-nowrap">{text}</p>
           <p className="border-x border-border text-nowrap px-3">{bankName}</p>
@@ -172,23 +185,23 @@ export const ActiveAccountDashboard: React.FC = () => {
           <div className=" w-full flex md:justify-between flex-col h-full gap-5 ">
             <DashboardCard
               title="Active loan"
-              amount="NGN4,000,000"
-              nextPaymentDate="20-05-2023"
+              amount={`NGN${loan?.length ? loan[0].amount : "0.00"}`}
+              nextPaymentDate={nextPaymentDate || ""}
             />
             <DashboardCard
               title="Wallet balance"
-              amount="NGN20,000,000.00"
+              amount={`NGN${account?.balance || "0.00"}`}
               showButtons
               onSendMoney={() => alert("Send Money Clicked")}
               onFundWallet={() => alert("Fund Wallet Clicked")}
             />
           </div>
           <div className="hidden md:flex">
-            <LoanLimitCard />
+            <LoanLimitCard limit={profile?.business.creditLimit || 0} />
           </div>
         </div>
         <div className="flex md:hidden mb-5">
-          <LoanLimitCard />
+          <LoanLimitCard limit={profile?.business.creditLimit || 0} />
         </div>
         <div className="bg-white w-full font-sans  md:mt-12">
           <Tabs defaultValue="account" className="w-full p-5">

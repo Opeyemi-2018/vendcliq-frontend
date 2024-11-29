@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import Input from "../ui/Field";
-import { Button } from "../ui/button";
+import Input from "../../components/ui/Field";
+import { Button } from "../../components/ui/button";
 import { FcGoogle } from "react-icons/fc";
 import Image from "next/image";
 import { FaQuoteLeft } from "react-icons/fa";
@@ -10,8 +10,9 @@ import Link from "next/link";
 import { SignInPayload } from "@/types";
 import { useRouter } from "next/navigation";
 import { handleApiError, handleSignIn } from "@/lib/utils/api/apiHelper";
+import { setCookie } from "nookies";
 
-export const Login = () => {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -27,12 +28,21 @@ export const Login = () => {
       email,
       password,
     };
-
-    setLoading(true);
+    console.log(payload);
     try {
+      setLoading(true);
       setError("");
       const response = await handleSignIn(payload);
+      console.log("response");
+
       if (response.status === "success") {
+        setLoading(true);
+
+        setCookie(null, "authToken", response.data.token.token, {
+          path: "/",
+          maxAge: 60 * 60 * 24,
+        });
+
         router.push("/dashboard/home");
       } else {
         setError("Login failed. Please try again.");
@@ -142,3 +152,4 @@ export const Login = () => {
     </div>
   );
 };
+export default Login;

@@ -12,6 +12,9 @@ export interface IReusableInputProps {
   className?: string;
   name?: string;
   required?: boolean;
+  disabled?: boolean;
+  error?: string;
+  accept?: string;
 }
 export interface ISidebarButtonProps {
   href: string;
@@ -58,12 +61,19 @@ export interface SignupResponse {
 }
 
 export interface EmailVerificationPayload {
-  code: string;
+  token: string;
 }
 
 export interface EmailVerificationResponse {
   message: string;
   status: string;
+  data: {
+    email: string;
+  };
+  token: {
+    token: string;
+    type: string;
+  };
 }
 export interface ConfirmPhoneNumberPayload {
   phone: string;
@@ -79,6 +89,30 @@ export interface VerifyPhoneNumberPayload {
 }
 export interface VerifyPhoneNumberResponse {
   token: string;
+}
+export interface DashboardPayload {}
+export interface DashboardResponse {
+  status: string;
+  msg: string;
+  data: {
+    customer: {
+      id: number;
+      firstname: string;
+      lastname: string;
+      email: string;
+      status: string;
+    };
+    account: {
+      number: string | null;
+      bank: string | null;
+      name: string | null;
+      currency: string;
+      balance: number;
+    };
+    loan: [];
+    nextRepayment: string | null;
+    cashReward: number;
+  };
 }
 export interface SignInPayload {
   email: string;
@@ -139,4 +173,81 @@ export interface SignInResponse {
       };
     };
   };
+}
+
+export interface CreateLoanPayload {
+  items: Array<{
+    name: string;
+    quantity: string;
+    tenure: string;
+    amount: string;
+  }>;
+  vendor: string;
+  bankCode: string;
+  accountName: string;
+  narration: string;
+  invoiceNumber: string;
+}
+
+export interface CreateLoanResponse {
+  status: string;
+  msg: string;
+  data: any;
+}
+
+export interface ListBanksResponse {
+  status: string;
+  msg: string;
+  data: {
+    banks: Array<{
+      bankCode: string;
+      bankName: string;
+    }>;
+    responseMessage: string;
+    responseCode: string;
+  };
+}
+
+export interface VerifyBankAccountPayload {
+  accountNumber: string;
+  bankCode: string;
+}
+
+export interface VerifyBankAccountResponse {
+  status: boolean;
+  message: string;
+  // Add any other properties that should be in the response
+}
+
+export interface ResendEmailOtpPayload {
+  email: string;
+}
+
+export interface ResendEmailOtpResponse {
+  message: string;
+  success: boolean;
+}
+
+export interface ApiResponse {
+  status: number;
+  message: string;
+  data?: any; // or be more specific with the data type if known
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface PinPayload {
+  otp: string;
+  pin: string;
+  confirmPin: string;
+}
+
+export interface UpdatePinPayload {
+  currentPin: string;
+  newPin: string;
+  confirmPin: string;
 }

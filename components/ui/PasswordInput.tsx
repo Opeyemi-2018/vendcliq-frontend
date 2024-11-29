@@ -12,11 +12,13 @@ export default function PasswordInput({
   disabled,
   value,
   onChange,
+  required,
 }: {
   placeholder: string;
   label: string;
   disabled?: boolean;
   value: string;
+  required?: boolean;
   onChange: (value: string) => void;
 }) {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -36,6 +38,7 @@ export default function PasswordInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
+          required={required}
           className="pr-10 border rounded-sm w-full border-input-border h-12 text-sm text-black bg-light-gray"
         />
         <Button

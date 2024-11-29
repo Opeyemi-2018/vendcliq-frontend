@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
 import CustomFileInput from "@/components/ui/CustomFileInput";
 import Field from "@/components/ui/Field";
+import { useGetProfile } from "@/services/profile/Profile";
 import React from "react";
 
 export const PersonalProfile = () => {
+  const { profile } = useGetProfile();
+
   return (
     <div className="flex">
       <div className="md:mt-0 mt-10 bg-white w-full max-w-[800px] p-5 sm:p-10">
@@ -12,8 +15,16 @@ export const PersonalProfile = () => {
         </p>
 
         <div className="gap-5 grid grid-cols-1 sm:grid-cols-2 mt-10">
-          <Field label="First Name" placeholder="First Name" />
-          <Field label="Last Name" placeholder="Last Name" />
+          <Field
+            label="First Name"
+            placeholder="First Name"
+            value={profile?.firstname}
+          />
+          <Field
+            label="Last Name"
+            placeholder="Last Name"
+            value={profile?.lastname}
+          />
         </div>
 
         <Field
@@ -21,6 +32,7 @@ export const PersonalProfile = () => {
           className="mt-5"
           placeholder="Email Address"
           type="email"
+          value={profile?.business.email}
         />
 
         <div className="mt-7">

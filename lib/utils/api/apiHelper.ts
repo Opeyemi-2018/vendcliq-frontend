@@ -1,17 +1,39 @@
 import {
   ConfirmPhoneNumberPayload,
   ConfirmPhoneNumberResponse,
+  CreateLoanPayload,
+  CreateLoanResponse,
+  DashboardResponse,
   EmailVerificationPayload,
   EmailVerificationResponse,
+  ListBanksResponse,
   SignInPayload,
   SignInResponse,
   VerifyPhoneNumberPayload,
   VerifyPhoneNumberResponse,
+  VerifyBankAccountResponse,
+  VerifyBankAccountPayload,
+  ResendEmailOtpPayload,
+  ResendEmailOtpResponse,
+  ChangePasswordPayload,
+  ApiResponse,
+  PinPayload,
+  UpdatePinPayload,
 } from "@/types";
 import axiosInstance from ".";
 import {
+  CHANGE_PASSWORD,
   CONFIRM_PHONE_NUMBER,
+  CREATE_LOAN,
+  CREATE_PIN,
+  DASHBOARD,
+  LIST_BANKS,
+  REQUEST_PIN_TOKEN,
+  RESEND_EMAIL_OTP,
   SIGN_IN,
+  UPDATE_PIN,
+  VERIFY_BANK_ACCOUNT,
+  VERIFY_EMAIL,
   VERIFY_PHONE_NUMBER,
 } from "@/url/api-url";
 import { AxiosError } from "axios";
@@ -22,6 +44,7 @@ export const fetcher = async <T>(
   params?: Record<string, unknown>
 ): Promise<T> => {
   const response = await axiosInstance.get<T>(url, { params });
+  console.log("Response Data:", response.data);
   return response.data;
 };
 export const poster = async <T, U>(url: string, data: U): Promise<T> => {
@@ -30,6 +53,7 @@ export const poster = async <T, U>(url: string, data: U): Promise<T> => {
 
   const response = await axiosInstance.post<T>(url, data);
   console.log("Response Data:", response.data);
+
   return response.data;
 };
 
@@ -48,8 +72,10 @@ export const handleGetProfile = async (
 export const handleEmailVerification = async (
   payload: EmailVerificationPayload
 ): Promise<EmailVerificationResponse> => {
+  console.log("payload", payload);
   return await poster<EmailVerificationResponse, EmailVerificationPayload>(
-    CONFIRM_PHONE_NUMBER,
+    VERIFY_EMAIL,
+
     payload
   );
 };
@@ -63,14 +89,72 @@ export const handleConfirmPhoneNumber = async (
   );
 };
 
+export const handleCreateLoan = async (
+  payload: CreateLoanPayload
+): Promise<CreateLoanResponse> => {
+  return await poster<CreateLoanResponse, CreateLoanPayload>(
+    CREATE_LOAN,
+    payload
+  );
+};
 export const handleVerifyPhoneNumber = async (
-  payload: VerifyPhoneNumberResponse
+  payload: VerifyPhoneNumberPayload
 ): Promise<VerifyPhoneNumberResponse> => {
   return await poster<VerifyPhoneNumberResponse, VerifyPhoneNumberPayload>(
     VERIFY_PHONE_NUMBER,
     payload
   );
 };
+
+export const handleResendEmailOtp = async (
+  payload: ResendEmailOtpPayload
+): Promise<ResendEmailOtpResponse> => {
+  return await poster<ResendEmailOtpResponse, ResendEmailOtpPayload>(
+    RESEND_EMAIL_OTP,
+    payload
+  );
+};
+
+export const handleListBanks = async (): Promise<ListBanksResponse> => {
+  return await fetcher<ListBanksResponse>(LIST_BANKS);
+};
+export const handleDashboard = async (): Promise<DashboardResponse> => {
+  return await fetcher<DashboardResponse>(DASHBOARD);
+};
+
+export const handleVerifyBankAccount = async (
+  payload: VerifyBankAccountPayload
+): Promise<VerifyBankAccountResponse> => {
+  return await poster<VerifyBankAccountResponse, VerifyBankAccountPayload>(
+    VERIFY_BANK_ACCOUNT,
+    payload
+  );
+};
+export const handleChangePassword = async (
+  payload: ChangePasswordPayload
+): Promise<ApiResponse> => {
+  return await poster<ApiResponse, ChangePasswordPayload>(
+    CHANGE_PASSWORD,
+    payload
+  );
+};
+
+export const handleCreatePin = async (
+  payload: PinPayload
+): Promise<ApiResponse> => {
+  return await poster<ApiResponse, PinPayload>(CREATE_PIN, payload);
+};
+
+export const handleUpdatePin = async (
+  payload: UpdatePinPayload
+): Promise<ApiResponse> => {
+  return await poster<ApiResponse, UpdatePinPayload>(UPDATE_PIN, payload);
+};
+
+export const handleRequestPinToken = async (): Promise<ApiResponse> => {
+  return await poster<ApiResponse, {}>(REQUEST_PIN_TOKEN, "");
+};
+
 export const handleApiError = (
   error: unknown,
   setError: (msg: string) => void

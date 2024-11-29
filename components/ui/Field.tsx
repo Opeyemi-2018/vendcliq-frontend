@@ -12,9 +12,12 @@ const Field: React.FC<IReusableInputProps> = ({
   className = "",
   name,
   required,
+  disabled,
+  error,
+  accept,
 }) => {
   return (
-    <div className={cn(`flex flex-col mb-4`, className)}>
+    <div className={cn(`flex flex-col`, className)}>
       <label className="mb-2 font-medium text-sm text-black">{label}</label>
       <Input
         name={name}
@@ -23,8 +26,11 @@ const Field: React.FC<IReusableInputProps> = ({
         value={value}
         onChange={onChange}
         required={required}
-        className="border rounded-sm border-input-border h-12 text-sm text-black bg-light-gray px-3 py-2 focus:outline-none focus:border-0"
+        disabled={disabled}
+        accept={accept}
+        className="border rounded-sm border-input-border h-12 text-sm text-black bg-light-gray px-3 py-2 focus:outline-none focus:border-primary"
       />
+      {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
     </div>
   );
 };

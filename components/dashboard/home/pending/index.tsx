@@ -2,8 +2,10 @@ import { WarningAlert } from "@/components/ui/WarningAlert";
 import React from "react";
 import RequestCard from "../RequestCard";
 import { Landmark } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export const PendingAccountDashboard = () => {
+  const router = useRouter();
   return (
     <div>
       <WarningAlert />
@@ -19,8 +21,7 @@ export const PendingAccountDashboard = () => {
             buttonText="Request loan"
             icon={<Landmark size={44} />}
             primaryColor="bg-primary"
-
-            // onRequestLoan={() => console.log("Loan Requested")}
+            onRequestLoan={() => router.push("/request")}
           />
 
           <RequestCard
@@ -29,8 +30,8 @@ export const PendingAccountDashboard = () => {
             buttonText="Receive money"
             icon={<Landmark size={44} />}
             primaryColor="bg-primary"
-
             // onRequestLoan={() => console.log("Loan Requested")}
+            onRequestLoan={() => router.push("/receive")}
           />
         </div>
       </div>

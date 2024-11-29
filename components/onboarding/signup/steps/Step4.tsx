@@ -31,9 +31,11 @@ const SignupStepFour: React.FC<SignupStepFourProps> = ({ nextStep, title }) => {
       isWhatsappNo,
     };
 
-    setLoading(true);
     try {
-      await handleConfirmPhoneNumber(payload);
+      setLoading(true);
+      localStorage.setItem("phone", phone);
+      const response = await handleConfirmPhoneNumber(payload);
+      console.log("response>>>", response);
       nextStep();
     } catch (error) {
       handleApiError(error, setError);
