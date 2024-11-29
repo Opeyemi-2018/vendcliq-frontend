@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/Field";
-import { startOtpTimer } from "@/lib/utils/api";
 import {
   handleApiError,
   handleEmailVerification,

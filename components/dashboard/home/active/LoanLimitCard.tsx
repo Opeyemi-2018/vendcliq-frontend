@@ -4,7 +4,6 @@ import { FaCheck } from "react-icons/fa";
 import Image from "next/image";
 import React from "react";
 import Link from "next/link";
-import FormatCurrency from "@/components/ui/FormatCurrency";
 
 const LoanLimitCard = ({ limit }: { limit: number }) => (
   <div className="bg-[#39498C] font-medium w-full md:w-[600px] h-full rounded-lg p-5 relative">

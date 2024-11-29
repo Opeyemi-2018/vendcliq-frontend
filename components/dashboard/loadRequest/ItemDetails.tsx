@@ -26,6 +26,15 @@ interface ScheduleItem {
   totalRepayment: string;
 }
 
+interface RepaymentSchedule {
+  schedule: ScheduleItem[];
+  totalPrincipal: number;
+  totalInterest: string;
+  totalRepayment: string;
+  managementFee: string;
+  insurance: string;
+}
+
 export const ItemDetails: React.FC<{
   onNext: () => void;
   onPrevious: () => void;
@@ -33,7 +42,8 @@ export const ItemDetails: React.FC<{
   setVendorDetails: (vendorDetails: VendorDetails) => void;
 }> = ({ onNext, onPrevious, vendorDetails, setVendorDetails }) => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [repaymentSchedule, setRepaymentSchedule] = useState<any>(null);
+  const [repaymentSchedule, setRepaymentSchedule] =
+    useState<RepaymentSchedule | null>(null);
 
   const Detail: React.FC<{ label: string; value: string }> = ({
     label,
@@ -116,7 +126,7 @@ export const ItemDetails: React.FC<{
   useEffect(() => {
     const schedule = calculateRepaymentSchedule();
     setRepaymentSchedule(schedule);
-  }, [vendorDetails.amount, vendorDetails.tenure]);
+  }, [vendorDetails.amount, vendorDetails.tenure, calculateRepaymentSchedule]);
 
   const isStepValid = () => {
     return (

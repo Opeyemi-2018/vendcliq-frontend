@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import Field from "@/components/ui/Field";
 import MultiValueInput from "@/components/ui/MultiValueInput";
-import { useDashboardData } from "@/services/home/home";
 import { useGetProfile } from "@/services/profile/Profile";
+import Image from "next/image";
 import React from "react";
 
 export const BusinessProfile = () => {
@@ -53,9 +53,11 @@ export const BusinessProfile = () => {
             />
             {business?.address?.proofOfAddress && (
               <div className="border rounded p-2">
-                <img
+                <Image
                   src={business?.address?.proofOfAddress}
                   alt="Proof of Address"
+                  width={100}
+                  height={100}
                   className="max-w-[200px] h-auto"
                 />
               </div>

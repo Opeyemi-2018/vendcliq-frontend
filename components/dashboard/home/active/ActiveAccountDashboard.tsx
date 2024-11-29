@@ -1,7 +1,6 @@
 import { SearchInput } from "@/components/ui/SearchInput";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import React, { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 
 import { DashboardCard } from "./DashboardCard";
 import { TransactionListItem } from "./TransactionListItem";

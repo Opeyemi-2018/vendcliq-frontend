@@ -9,7 +9,7 @@ import {
   handleBusinessSetup,
   handleBusinessSetupStepTwo,
 } from "@/services/setup/Setup";
-import { Input } from "@/components/ui/Input";
+
 import { useRouter } from "next/navigation";
 
 interface Shareholder {
@@ -151,7 +151,7 @@ const AccountSetup = () => {
 
   const updatePayload = (
     key: keyof IdentityPayload | keyof StepOnePayload | keyof StepTwoPayload,
-    value: any
+    value: string | File | null | Shareholder[]
   ) => {
     if (currentStep === 0) {
       setIdentityPayload({ ...identityPayload, [key]: value });

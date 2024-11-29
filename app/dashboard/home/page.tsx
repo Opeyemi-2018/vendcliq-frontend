@@ -3,8 +3,7 @@ import { ActiveAccountDashboard } from "@/components/dashboard/home/active/Activ
 import { PendingAccountDashboard } from "@/components/dashboard/home/pending";
 import { fetcher } from "@/lib/utils/api/apiHelper";
 import { GET_PROFILE } from "@/url/api-url";
-import { jwtDecode } from "jwt-decode";
-import { parseCookies } from "nookies";
+
 import React, { useState, useEffect } from "react";
 
 interface UserProfile {

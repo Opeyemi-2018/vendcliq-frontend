@@ -26,13 +26,13 @@ interface LoanStepTwoProps {
 
 const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
   vendor,
-  onVendorChange,
+
   selectedBank,
   onBankChange,
   onNext,
   onPrevious,
 }) => {
-  const [bankOptions, setBankOptions] = useState<any[]>([]);
+  const [bankOptions, setBankOptions] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchBanks = async () => {

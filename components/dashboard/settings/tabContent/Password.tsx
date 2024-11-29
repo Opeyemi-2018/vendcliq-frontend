@@ -8,7 +8,7 @@ export const Password = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const { changePassword, isLoading, isError, error } = useChangePassword();
+  const { changePassword, isLoading } = useChangePassword();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

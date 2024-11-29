@@ -17,7 +17,7 @@ import { handleVerifyBankAccount } from "@/services/verifyBankAccount/VerifyBank
 export const VerifyBankAccount = () => {
   const [accountNumber, setAccountNumber] = useState("");
   const [selectedBank, setSelectedBank] = useState("");
-  const [bankOptions, setBankOptions] = useState<any[]>([]);
+  const [bankOptions, setBankOptions] = useState<string[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [accountName, setAccountName] = useState("");

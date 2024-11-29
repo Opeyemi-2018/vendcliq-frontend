@@ -17,10 +17,10 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-const metadata: Metadata = {
-  title: "vendcliq",
-  description: "",
-};
+// const metadata: Metadata = {
+//   title: "vendcliq",
+//   description: "",
+// };
 
 export default function RootLayout({
   children,

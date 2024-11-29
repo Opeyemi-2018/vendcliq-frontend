@@ -1,9 +1,9 @@
 "use client";
-import { cookies } from "next/headers";
+
 import { parseCookies } from "nookies";
 import React, { useEffect } from "react";
 
-const page = () => {
+const Page = () => {
   useEffect(() => {
     const cookies = parseCookies();
     const Token = cookies.authToken;
@@ -19,4 +19,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

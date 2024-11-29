@@ -37,7 +37,6 @@ import {
   VERIFY_PHONE_NUMBER,
 } from "@/url/api-url";
 import { AxiosError } from "axios";
-import { parseCookies } from "nookies";
 
 // Generic GET Request
 export const fetcher = async <T>(
@@ -153,7 +152,7 @@ export const handleUpdatePin = async (
 };
 
 export const handleRequestPinToken = async (): Promise<ApiResponse> => {
-  return await poster<ApiResponse, {}>(REQUEST_PIN_TOKEN, {});
+  return await poster<ApiResponse, {}>(REQUEST_PIN_TOKEN, "");
 };
 
 export const handleApiError = (

@@ -9,7 +9,7 @@ import { RadioGroup } from "@radix-ui/react-radio-group";
 import { AxiosError } from "axios";
 import Link from "next/link";
 import React, { useState } from "react";
-import { parseCookies, setCookie } from "nookies";
+
 type SignupPayload = {
   firstname: string;
   lastname: string;

@@ -14,7 +14,7 @@ type SignupStepFiveProps = {
   title: string;
 };
 
-const SignupStepFive: React.FC<SignupStepFiveProps> = ({ nextStep, title }) => {
+const SignupStepFive: React.FC<SignupStepFiveProps> = ({ title }) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
