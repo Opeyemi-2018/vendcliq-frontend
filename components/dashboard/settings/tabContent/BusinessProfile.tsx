@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import Field from "@/components/ui/Field";
 import MultiValueInput from "@/components/ui/MultiValueInput";
 import { useGetProfile } from "@/services/profile/Profile";
-import Image from "next/image";
+
 import React from "react";
 
 export const BusinessProfile = () => {
@@ -37,7 +37,7 @@ export const BusinessProfile = () => {
             value={business?.address?.address}
             placeholder="Business Address"
           />
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Field
               label="Proof of Address"
               placeholder="Proof of Address"
@@ -62,7 +62,7 @@ export const BusinessProfile = () => {
                 />
               </div>
             )}
-          </div>
+          </div> */}
           <Field
             label="Memo"
             placeholder="Memo"

@@ -83,50 +83,53 @@ export const ItemDetails: React.FC<{
     </div>
   );
 
-  const calculateRepaymentSchedule = () => {
-    console.log(vendorDetails.amount?.toString());
-    if (!vendorDetails.amount || !vendorDetails.tenure) return null;
-
-    const principal = vendorDetails.amount;
-    const interestRate = 0.15; // 15% interest rate
-    const tenureInMonths = parseInt(vendorDetails.tenure);
-
-    const monthlyInterest = (principal * interestRate) / 12;
-    const monthlyPayment =
-      (principal + monthlyInterest * tenureInMonths) / tenureInMonths;
-
-    const schedule = [];
-    let remainingPrincipal = principal;
-
-    for (let i = 1; i <= tenureInMonths; i++) {
-      const interest = (remainingPrincipal * interestRate) / 12;
-      const principalPayment = monthlyPayment - interest;
-      remainingPrincipal -= principalPayment;
-
-      schedule.push({
-        date: new Date(
-          Date.now() + i * 30 * 24 * 60 * 60 * 1000
-        ).toLocaleDateString(),
-        principal: principalPayment.toFixed(2),
-        interest: interest.toFixed(2),
-        totalRepayment: monthlyPayment.toFixed(2),
-      });
-    }
-
-    return {
-      schedule,
-      totalPrincipal: principal,
-      totalInterest: (monthlyPayment * tenureInMonths - principal).toFixed(2),
-      totalRepayment: (monthlyPayment * tenureInMonths).toFixed(2),
-      managementFee: (principal * 0.01).toFixed(2),
-      insurance: (principal * 0.006).toFixed(2),
-    };
-  };
-
   useEffect(() => {
-    const schedule = calculateRepaymentSchedule();
+    const calculateRepaymentSchedule = (amount: number, duration: number) => {
+      console.log(amount?.toString());
+      if (!amount || !duration) return null;
+
+      const principal = amount;
+      const interestRate = 0.15; // 15% interest rate
+      const tenureInMonths = parseInt(duration.toString());
+
+      const monthlyInterest = (principal * interestRate) / 12;
+      const monthlyPayment =
+        (principal + monthlyInterest * tenureInMonths) / tenureInMonths;
+
+      const schedule = [];
+      let remainingPrincipal = principal;
+
+      for (let i = 1; i <= tenureInMonths; i++) {
+        const interest = (remainingPrincipal * interestRate) / 12;
+        const principalPayment = monthlyPayment - interest;
+        remainingPrincipal -= principalPayment;
+
+        schedule.push({
+          date: new Date(
+            Date.now() + i * 30 * 24 * 60 * 60 * 1000
+          ).toLocaleDateString(),
+          principal: principalPayment.toFixed(2),
+          interest: interest.toFixed(2),
+          totalRepayment: monthlyPayment.toFixed(2),
+        });
+      }
+
+      return {
+        schedule,
+        totalPrincipal: principal,
+        totalInterest: (monthlyPayment * tenureInMonths - principal).toFixed(2),
+        totalRepayment: (monthlyPayment * tenureInMonths).toFixed(2),
+        managementFee: (principal * 0.01).toFixed(2),
+        insurance: (principal * 0.006).toFixed(2),
+      };
+    };
+
+    const schedule = calculateRepaymentSchedule(
+      vendorDetails.amount ?? 0,
+      parseInt(vendorDetails.tenure ?? "0")
+    );
     setRepaymentSchedule(schedule);
-  }, [vendorDetails.amount, vendorDetails.tenure, calculateRepaymentSchedule]);
+  }, [vendorDetails.amount, vendorDetails.tenure]);
 
   const isStepValid = () => {
     return (

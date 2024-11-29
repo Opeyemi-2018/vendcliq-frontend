@@ -25,7 +25,7 @@ export const ActiveAccountDashboard: React.FC = () => {
   // Sample transactions data
   const account = data?.data.account;
   const customer = data?.data.customer;
-  const loan = data?.data.loan;
+
   const nextPaymentDate = data?.data.nextRepayment;
 
   const loanTransactions = [
@@ -185,7 +185,7 @@ export const ActiveAccountDashboard: React.FC = () => {
           <div className=" w-full flex md:justify-between flex-col h-full gap-5 ">
             <DashboardCard
               title="Active loan"
-              amount={`NGN${loan?.length ? loan[0].amount : "0.00"}`}
+              amount={`NGN0.00`}
               nextPaymentDate={nextPaymentDate || ""}
             />
             <DashboardCard

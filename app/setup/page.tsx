@@ -43,6 +43,9 @@ interface StepTwoPayload {
 
 const steps = ["Upload Identity", "Business Information", "Upload CAC"];
 
+// Add type for form events
+type FormInputEvent = React.ChangeEvent<HTMLInputElement>;
+
 const AccountSetup = () => {
   const router = useRouter();
 
@@ -229,7 +232,7 @@ const AccountSetup = () => {
                   type={type}
                   placeholder={placeholder}
                   value={value}
-                  onChange={(e) =>
+                  onChange={(e: FormInputEvent) =>
                     updatePayload(key as keyof StepOnePayload, e.target.value)
                   }
                 />

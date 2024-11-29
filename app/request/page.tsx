@@ -71,18 +71,19 @@ const LoanApplication: React.FC = () => {
         purpose: "purchase",
         items: items.map((item) => ({
           name: item.name,
-          quantity: parseInt(item.quantity),
-          amount: parseFloat(item.amount),
+          quantity: item.quantity,
+          amount: item.amount,
+          tenure: item.tenure,
         })),
-        vendor: {
-          name: vendor,
-          bank: selectedBank,
-          ...vendorDetails,
-        },
+        vendor: vendor,
+        bankCode: selectedBank,
+        accountName: vendorDetails.accountName,
+        narration: vendorDetails.narration,
+        invoiceNumber: vendorDetails.invoiceNo,
       };
       console.log("payload", payload);
       await handleCreateLoan(payload);
-      handleNextStep(); // Automatically move to status page after submission
+      handleNextStep();
     } catch (error) {
       console.error("Failed to submit loan:", error);
       // You might want to add error handling UI here

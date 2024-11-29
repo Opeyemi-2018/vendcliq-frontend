@@ -17,7 +17,9 @@ import { handleVerifyBankAccount } from "@/services/verifyBankAccount/VerifyBank
 export const VerifyBankAccount = () => {
   const [accountNumber, setAccountNumber] = useState("");
   const [selectedBank, setSelectedBank] = useState("");
-  const [bankOptions, setBankOptions] = useState<string[]>([]);
+  const [bankOptions, setBankOptions] = useState<
+    { bankCode: string; bankName: string }[]
+  >([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [accountName, setAccountName] = useState("");
@@ -41,6 +43,7 @@ export const VerifyBankAccount = () => {
         setAccountVerified(false);
       }
     } catch (error) {
+      console.log("error>>>", error);
       setVerificationError("Failed to verify account. Please try again.");
       setAccountVerified(false);
     } finally {
@@ -68,6 +71,14 @@ export const VerifyBankAccount = () => {
         <p className="font-medium text-lg font-clash border-l-4 border-primary pl-3">
           Verify Your Bank Account
         </p>
+
+        {verificationError && (
+          <p className="text-red-500 mt-4">{verificationError}</p>
+        )}
+
+        {accountVerified && (
+          <p className="text-green-500 mt-4">Account Name: {accountName}</p>
+        )}
 
         <div className="gap-5 grid grid-cols-1 mt-10">
           <div>
@@ -114,9 +125,9 @@ export const VerifyBankAccount = () => {
           <Button
             onClick={handleVerification}
             className="rounded-none text-black"
-            disabled={!selectedBank || !accountNumber}
+            disabled={!selectedBank || !accountNumber || isLoading}
           >
-            Verify Account
+            {isLoading ? "Verifying..." : "Verify Account"}
           </Button>
         </div>
       </div>
