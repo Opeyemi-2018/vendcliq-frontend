@@ -229,7 +229,8 @@ export interface ResendEmailOtpResponse {
 }
 
 export interface ApiResponse {
-  status: number;
+  status: number | string;
+
   message: string;
   data?: any; // or be more specific with the data type if known
 }
@@ -241,7 +242,7 @@ export interface ChangePasswordPayload {
 }
 
 export interface PinPayload {
-  otp: string;
+  otp?: string;
   pin: string;
   confirmPin: string;
 }

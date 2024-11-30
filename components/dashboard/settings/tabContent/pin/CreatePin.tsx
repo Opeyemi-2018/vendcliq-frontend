@@ -1,12 +1,41 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { handleRequestPinToken } from "@/lib/utils/api/apiHelper";
 import React, { useState } from "react";
 import { IoIosLock } from "react-icons/io";
+import { toast } from "react-toastify";
 
 export const CreatePin = ({ goNext }: { goNext: () => void }) => {
   const [newpassword, setNewPassword] = useState("");
   const [confirmpassword, setConfirmPassword] = useState("");
+
+  const handleSubmitCreatePin = async () => {
+    try {
+      if (newpassword.length !== 4) {
+        return toast.error("Pin must be exactly 4 digits");
+      }
+
+      if (!/^\d{4}$/.test(newpassword)) {
+        return toast.error("Pin must contain only numbers");
+      }
+
+      if (newpassword === confirmpassword) {
+        localStorage.setItem("pin", newpassword);
+        localStorage.setItem("confirmPin", confirmpassword);
+        const response = await handleRequestPinToken();
+        console.log(response);
+        if (response.status === "success") {
+          toast.success("OTP sent successfully");
+          goNext();
+        }
+      } else {
+        return toast.error("Pin does not match");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="flex">
@@ -22,14 +51,12 @@ export const CreatePin = ({ goNext }: { goNext: () => void }) => {
 
         <div className="mb-5 mt-10 space-y-5">
           <PasswordInput
-            disabled={true}
             label="New pin"
             placeholder="Enter new pin"
             value={newpassword}
             onChange={setNewPassword}
           />
           <PasswordInput
-            disabled={true}
             label="Confirm new pin"
             placeholder="Confirm new pin"
             value={confirmpassword}
@@ -38,7 +65,10 @@ export const CreatePin = ({ goNext }: { goNext: () => void }) => {
         </div>
 
         <div className="flex mt-10 gap-5 justify-end">
-          <Button onClick={goNext} className="rounded-none text-black">
+          <Button
+            onClick={handleSubmitCreatePin}
+            className="rounded-none text-black"
+          >
             Create Pin
           </Button>
         </div>

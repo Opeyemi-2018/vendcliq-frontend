@@ -1,8 +1,11 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { handleCreatePin } from "@/lib/utils/api/apiHelper";
+import { PinPayload } from "@/types";
 import React, { useState } from "react";
 import { IoIosLock } from "react-icons/io";
+import { toast } from "react-toastify";
 
 export const Otp = ({
   goNext,
@@ -11,9 +14,30 @@ export const Otp = ({
   goNext: () => void;
   goBack: () => void;
 }) => {
-  const [newpassword, setNewPassword] = useState("");
-  const [confirmpassword, setConfirmPassword] = useState("");
+  const pin = localStorage.getItem("pin") || "";
+  const confirmPin = localStorage.getItem("confirmPin") || "";
+
   const [otp, setOtp] = useState("");
+  const handleSubmitCreatePin = async () => {
+    try {
+      const payload: PinPayload = {
+        otp: otp,
+        pin: pin,
+        confirmPin: confirmPin,
+      };
+      const response = await handleCreatePin(payload);
+      console.log("response", response);
+      if (response.status === "success") {
+        toast.success("PIN created successfully");
+        goNext();
+      }
+    } catch (error) {
+      console.error("Error creating pin:", error);
+      toast.error(
+        "Failed to create PIN. Please try again or contact support if the issue persists."
+      );
+    }
+  };
 
   return (
     <div className="flex">
@@ -33,15 +57,13 @@ export const Otp = ({
             disabled={true}
             label="New pin"
             placeholder="Enter new pin"
-            value={newpassword}
-            onChange={setNewPassword}
+            value={pin}
           />
           <PasswordInput
             disabled={true}
             label="Confirm new pin"
             placeholder="Confirm new pin"
-            value={confirmpassword}
-            onChange={setConfirmPassword}
+            value={confirmPin}
           />
 
           <div className="pt-10 space-y-5">
@@ -66,7 +88,10 @@ export const Otp = ({
           >
             Cancel
           </Button>
-          <Button onClick={goNext} className="rounded-none text-black">
+          <Button
+            onClick={handleSubmitCreatePin}
+            className="rounded-none text-black"
+          >
             Save Changes
           </Button>
         </div>

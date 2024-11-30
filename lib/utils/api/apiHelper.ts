@@ -27,6 +27,7 @@ import {
   CREATE_LOAN,
   CREATE_PIN,
   DASHBOARD,
+  GET_PROFILE,
   LIST_BANKS,
   REQUEST_PIN_TOKEN,
   RESEND_EMAIL_OTP,
@@ -37,7 +38,16 @@ import {
   VERIFY_PHONE_NUMBER,
 } from "@/url/api-url";
 import { AxiosError } from "axios";
-
+interface UserProfile {
+  data: {
+    business: {
+      profileCompletionStep: string;
+    };
+    account: {
+      status: string;
+    };
+  };
+}
 // Generic GET Request
 export const fetcher = async <T>(
   url: string,
@@ -47,7 +57,7 @@ export const fetcher = async <T>(
   console.log("Response Data:", response.data);
   return response.data;
 };
-export const poster = async <T, U>(url: string, data: U): Promise<T> => {
+export const poster = async <T, U>(url: string, data?: U): Promise<T> => {
   console.log("POST Request URL:", url);
   console.log("POST Data:", data);
 
@@ -57,6 +67,11 @@ export const poster = async <T, U>(url: string, data: U): Promise<T> => {
   return response.data;
 };
 
+export const handleGetDashboard = async (): Promise<UserProfile> => {
+  const response = await fetcher<UserProfile>(GET_PROFILE);
+  console.log(response);
+  return response;
+};
 export const handleSignIn = async (
   payload: SignInPayload
 ): Promise<SignInResponse> => {
@@ -152,7 +167,7 @@ export const handleUpdatePin = async (
 };
 
 export const handleRequestPinToken = async (): Promise<ApiResponse> => {
-  return await poster<ApiResponse, object>(REQUEST_PIN_TOKEN, {});
+  return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
 };
 
 export const handleApiError = (
