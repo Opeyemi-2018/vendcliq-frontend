@@ -5,6 +5,8 @@ import "./globals.css";
 import Head from "next/head";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -43,6 +45,7 @@ export default function RootLayout({
       >
         <QueryClientProvider client={queryClient}>
           {children}
+          <ToastContainer />
         </QueryClientProvider>
       </body>
     </html>

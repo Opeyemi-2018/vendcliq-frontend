@@ -1,21 +1,9 @@
 "use client";
 import { ActiveAccountDashboard } from "@/components/dashboard/home/active/ActiveAccountDashboard";
 import { PendingAccountDashboard } from "@/components/dashboard/home/pending";
-import { fetcher } from "@/lib/utils/api/apiHelper";
-import { GET_PROFILE } from "@/url/api-url";
+import { handleGetDashboard } from "@/lib/utils/api/apiHelper";
 
 import React, { useState, useEffect } from "react";
-
-interface UserProfile {
-  data: {
-    business: {
-      profileCompletionStep: string;
-    };
-    account: {
-      status: string;
-    };
-  };
-}
 
 const Page = () => {
   const [isFinishedSetup, setIsFinishedSetup] = useState<boolean | null>(null);
@@ -23,14 +11,21 @@ const Page = () => {
   useEffect(() => {
     const checkRegistrationStatus = async () => {
       try {
-        const response = await fetcher<UserProfile>(GET_PROFILE);
-        const data = response.data;
-        console.log(data);
+        console.log("checking registration status");
+        const response = await handleGetDashboard();
+        const profileCompletionStep =
+          response.data.business.profileCompletionStep;
+        const accountStatus = response.data.account.status;
+        console.log(
+          "checking registration status",
+          profileCompletionStep,
+          accountStatus
+        );
 
         // Assuming final step is not "0" and account status is "ACTIVE"
         const isComplete =
-          data.business.profileCompletionStep !== "0" &&
-          data.account.status === "ACTIVE";
+          profileCompletionStep !== "0" &&
+          response.data.account.status === "ACTIVE";
 
         setIsFinishedSetup(isComplete);
       } catch (error) {

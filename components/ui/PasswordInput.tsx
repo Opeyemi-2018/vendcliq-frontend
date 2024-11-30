@@ -19,7 +19,7 @@ export default function PasswordInput({
   disabled?: boolean;
   value: string;
   required?: boolean;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
 }) {
   const [showPassword, setShowPassword] = React.useState(false);
 
@@ -36,7 +36,7 @@ export default function PasswordInput({
           id="password"
           placeholder={placeholder}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange?.(e.target.value)}
           disabled={disabled}
           required={required}
           className="pr-10 border rounded-sm w-full border-input-border h-12 text-sm text-black bg-light-gray"
