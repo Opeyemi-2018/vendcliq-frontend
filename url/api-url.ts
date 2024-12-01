@@ -22,6 +22,9 @@ const CHANGE_PASSWORD = "/client/v1/auth/change-password";
 const CREATE_PIN = "/client/v1/auth/pin";
 const UPDATE_PIN = "/client/v1/auth/pin-update";
 const REQUEST_PIN_TOKEN = "client/v1/auth/request-pin-token";
+const GET_TENURES = "/client/v1/loans/list/tenures";
+const REPAYMENT_PATTERN = (tenure: string) =>
+  `/client/v1/loans/list/repayment-pattern?tenure=${tenure}`;
 // EXPORT URLS
 export {
   VERIFY_EMAIL,
@@ -42,4 +45,6 @@ export {
   CREATE_PIN,
   UPDATE_PIN,
   REQUEST_PIN_TOKEN,
+  GET_TENURES,
+  REPAYMENT_PATTERN,
 };

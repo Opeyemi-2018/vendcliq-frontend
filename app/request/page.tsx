@@ -5,16 +5,16 @@ import LoanStepsSidebar from "@/components/dashboard/loadRequest/LoanStepsSideba
 import LoanStepOne from "@/components/dashboard/loadRequest/WhatToBuy";
 import LoanStepTwo from "@/components/dashboard/loadRequest/WhoToBuyFrom";
 import { Button } from "@/components/ui/button";
-import { handleCreateLoan } from "@/lib/utils/api/apiHelper";
+
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { IoCloseOutline } from "react-icons/io5";
 
 interface Item {
   name: string;
   quantity: string;
-  tenure: string;
+  tenure?: string;
   amount: string;
 }
 
@@ -32,7 +32,7 @@ const LoanApplication: React.FC = () => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [items, setItems] = useState<Item[]>([
-    { name: "", quantity: "", tenure: "", amount: "" },
+    { name: "", quantity: "", amount: "" },
   ]);
   const [vendor, setVendor] = useState("");
   const [selectedBank, setSelectedBank] = useState("");
@@ -46,8 +46,23 @@ const LoanApplication: React.FC = () => {
     tenure: "",
   });
 
+  useEffect(() => {
+    console.log("LoanApplication mounted");
+    return () => {
+      console.log("LoanApplication unmounted");
+    };
+  }, []);
+
   const handleAddItem = () => {
-    setItems([...items, { name: "", quantity: "", tenure: "", amount: "" }]);
+    setItems([
+      ...items,
+      {
+        name: "",
+        quantity: "",
+
+        amount: "",
+      },
+    ]);
   };
 
   const handleInputChange = (
@@ -82,11 +97,10 @@ const LoanApplication: React.FC = () => {
         invoiceNumber: vendorDetails.invoiceNo,
       };
       console.log("payload", payload);
-      await handleCreateLoan(payload);
+      // await handleCreateLoan(payload);
       handleNextStep();
     } catch (error) {
       console.error("Failed to submit loan:", error);
-      // You might want to add error handling UI here
     }
   };
 
@@ -95,7 +109,7 @@ const LoanApplication: React.FC = () => {
       case 1:
         return items.every((item) => item.name && item.quantity && item.amount);
       case 2:
-        return !!vendor && !!selectedBank;
+        return !!selectedBank;
       case 3:
         return !!vendorDetails.amount && !!vendorDetails.tenure;
       default:
@@ -104,15 +118,13 @@ const LoanApplication: React.FC = () => {
   };
 
   const handleNextStep = () => {
-    console.log("clicked");
     if (validateStep(currentStep)) {
-      console.log(items);
-      setCurrentStep((prevStep) => prevStep + 1);
+      setCurrentStep((prevStep) => Math.min(prevStep + 1, 4));
     }
   };
 
   const handlePreviousStep = () => {
-    setCurrentStep((prevStep) => prevStep - 1);
+    setCurrentStep((prevStep) => Math.max(prevStep - 1, 1));
   };
 
   return (
@@ -125,7 +137,7 @@ const LoanApplication: React.FC = () => {
           height={80}
         />
         <Button
-          className=" text-black bg-inherit hover:bg-inherit"
+          className="text-black bg-inherit hover:bg-inherit"
           onClick={() => router.back()}
         >
           <IoCloseOutline size="28" />
@@ -135,13 +147,16 @@ const LoanApplication: React.FC = () => {
         <div className="w-[40%] md:flex hidden">
           <LoanStepsSidebar
             currentStep={currentStep}
-            onStepClick={setCurrentStep}
+            onStepClick={(step) => {
+              if (step >= 1 && step <= 4) setCurrentStep(step);
+            }}
           />
         </div>
 
-        <div className=" w-full md:w-full h-screen px-5 py-10 md:p-16 bg-white">
+        <div className="w-full md:w-full h-screen px-5 py-10 md:p-16 bg-white">
           {currentStep === 1 && (
             <LoanStepOne
+              key={1}
               items={items}
               onAddItem={handleAddItem}
               onNext={handleNextStep}
@@ -151,7 +166,7 @@ const LoanApplication: React.FC = () => {
 
           {currentStep === 2 && (
             <LoanStepTwo
-              vendor={vendor}
+              key={2}
               onVendorChange={(e) => setVendor(e.target.value)}
               selectedBank={selectedBank}
               onBankChange={handleBankChange}
@@ -161,6 +176,7 @@ const LoanApplication: React.FC = () => {
           )}
           {currentStep === 3 && (
             <ItemDetails
+              key={3}
               onNext={handleSubmitLoan}
               onPrevious={handlePreviousStep}
               vendorDetails={{

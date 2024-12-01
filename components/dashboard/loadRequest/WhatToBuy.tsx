@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useContext } from "react";
 import Field from "@/components/ui/Field";
+import { RequestContext } from "./RequestContext";
 
 interface Item {
   name: string;
   quantity: string;
-  tenure: string;
   amount: string;
 }
 
@@ -24,6 +24,8 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
   onNext,
   onInputChange,
 }) => {
+  const { setItems } = useContext(RequestContext);
+
   const calculateTotal = () => {
     return items
       .reduce((sum, item) => {
@@ -42,9 +44,16 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
   };
 
   const handleNext = () => {
+    if (setItems) {
+      const transformedItems = items.map((item) => ({
+        item: item.name,
+        quantity: parseInt(item.quantity) || 0,
+        amount: parseFloat(item.amount) || 0,
+      }));
+      setItems(transformedItems);
+    }
     console.log(items);
     onNext();
-    localStorage.setItem("loanItems", JSON.stringify(items));
   };
 
   return (

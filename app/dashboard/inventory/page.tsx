@@ -7,7 +7,7 @@ const Page = () => {
   useEffect(() => {
     const cookies = parseCookies();
     const Token = cookies.authToken;
-    console.log(Token);
+    // console.log(Token);
     if (Token) {
       window.location.href = `https://erp.vendcliq.com/version-test/main?&page=Dashboard&token=${Token}`;
     }

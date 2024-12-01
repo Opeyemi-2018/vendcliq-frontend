@@ -7,13 +7,22 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const Token = localStorage.getItem("authToken");
+    const localToken = localStorage.getItem("authToken");
+    const cookieToken = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("authToken="))
+      ?.split("=")[1];
+    // console.log("cookieToken>>>", cookieToken);
+    // console.log("localToken>>>", localToken);
+    const Token = localToken || cookieToken;
     console.log("Token>>>", Token);
     if (Token && Token !== "undefined" && Token !== "null") {
-      console.log(Token);
+      // console.log(Token);
       config.headers.Authorization = `Bearer ${Token}`;
     } else {
       localStorage.removeItem("authToken");
+      document.cookie =
+        "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     }
     return config;
   },
@@ -46,6 +55,9 @@ export const destroyToken = () => {
   try {
     // Remove token from localStorage
     localStorage.removeItem("authToken");
+    // Remove token from cookies
+    document.cookie =
+      "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
     // Clear Authorization header from axios instance
     api.defaults.headers.common["Authorization"] = "";
