@@ -15,6 +15,16 @@ export interface IReusableInputProps {
   disabled?: boolean;
   error?: string;
   accept?: string;
+  readOnly?: boolean;
+}
+
+export interface RepaymentPatternResponse {
+  status: string;
+  msg: string;
+  data: {
+    key: string;
+    value: string;
+  }[];
 }
 export interface ISidebarButtonProps {
   href: string;
@@ -177,16 +187,21 @@ export interface SignInResponse {
 
 export interface CreateLoanPayload {
   items: Array<{
-    name: string;
-    quantity: string;
-    tenure: string;
-    amount: string;
+    item: string;
+    quantity: number;
+    amount: number;
   }>;
-  vendor: string;
-  bankCode: string;
-  accountName: string;
-  narration: string;
-  invoiceNumber: string;
+  vendorDetails: {
+    accountNumber: string;
+    accountName: string;
+    bankCode: string;
+    invoiceNo: string;
+    narration: string;
+  };
+
+  tenure: string;
+  repaymentPattern: string;
+  termsAccepted: boolean;
 }
 
 export interface CreateLoanResponse {
@@ -251,4 +266,10 @@ export interface UpdatePinPayload {
   currentPin: string;
   newPin: string;
   confirmPin: string;
+}
+
+export interface GetTenuresResponse {
+  status: string;
+  msg: string;
+  data: string[];
 }

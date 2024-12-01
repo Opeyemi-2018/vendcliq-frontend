@@ -8,15 +8,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Field from "@/components/ui/Field";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { handleCreateLoan, handleListBanks } from "@/lib/utils/api/apiHelper";
+import { handleListBanks } from "@/lib/utils/api/apiHelper";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { RequestContext } from "./RequestContext";
 
 interface LoanStepTwoProps {
-  vendor: string;
   onVendorChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   selectedBank: string;
   onBankChange: (value: string) => void;
@@ -25,13 +25,12 @@ interface LoanStepTwoProps {
 }
 
 const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
-  vendor,
-
   selectedBank,
   onBankChange,
   onNext,
   onPrevious,
 }) => {
+  const { setVendorDetails } = useContext(RequestContext);
   const [bankOptions, setBankOptions] = useState<
     { bankCode: string; bankName: string }[]
   >([]);
@@ -41,53 +40,47 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
       try {
         const response = await handleListBanks();
         if (response?.data?.banks) {
+          console.log(response);
           setBankOptions(response.data.banks);
         }
+        console.log("bank", bankOptions);
       } catch (error) {
         console.error("Error fetching banks:", error);
       }
     };
 
     fetchBanks();
-  }, []);
+  }, [bankOptions]);
 
   const validationSchema = Yup.object({
-    vendor: Yup.string().required("Vendor name is required"),
+    accountNumber: Yup.string().required("Account number is required"),
     selectedBank: Yup.string().required("Bank selection is required"),
     accountName: Yup.string().required("Account name is required"),
     narration: Yup.string().required("Narration is required"),
-    invoiceNumber: Yup.number()
-      .typeError("Invoice number must be a valid number")
-      .required("Invoice number is required"),
+    invoiceNo: Yup.string().required("Invoice number is required"),
   });
 
   const formik = useFormik({
     initialValues: {
-      vendor: vendor,
-      selectedBank: selectedBank,
+      selectedBank: selectedBank.toString(),
+      accountNumber: "",
       accountName: "",
       narration: "",
-      invoiceNumber: "",
+      invoiceNo: "",
     },
     validationSchema: validationSchema,
-    onSubmit: async (values) => {
-      console.log("Form values:", values);
-      try {
-        const loanItems = JSON.parse(localStorage.getItem("loanItems") || "[]");
-        const payload = {
-          items: loanItems,
-          vendor: values.vendor,
-          bankCode: values.selectedBank,
-          accountName: values.accountName,
-          narration: values.narration,
-          invoiceNumber: values.invoiceNumber,
-        };
-        console.log(payload);
-        await handleCreateLoan(payload);
-        onNext();
-      } catch (error) {
-        console.error("Error creating loan:", error);
-      }
+    onSubmit: (values) => {
+      console.log("Form submission started");
+      const vendorDetails = {
+        accountName: values.accountName,
+        bankCode: values.selectedBank,
+        accountNumber: values.accountNumber,
+        narration: values.narration,
+        invoiceNo: values.invoiceNo,
+      };
+      console.log("Vendor details prepared:", vendorDetails);
+      setVendorDetails(vendorDetails);
+      onNext();
     },
   });
 
@@ -100,13 +93,17 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
       <form onSubmit={formik.handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field
-            label="Vendor Name"
+            label="Account Number"
             required
             type="text"
-            placeholder="Enter vendor name"
-            {...formik.getFieldProps("vendor")}
+            placeholder="Enter Account Number"
+            {...formik.getFieldProps("accountNumber")}
             className="h-full"
-            error={formik.touched.vendor ? formik.errors.vendor : undefined}
+            error={
+              formik.touched.accountNumber
+                ? formik.errors.accountNumber
+                : undefined
+            }
           />
           <div>
             <Label className="block text-sm font-medium text-gray-700 mb-2">
@@ -117,7 +114,7 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
                 formik.setFieldValue("selectedBank", value);
                 onBankChange(value);
               }}
-              value={formik.values.selectedBank}
+              value={formik.values.selectedBank.toString()}
             >
               <SelectTrigger className="w-full h-12 bg-gray-100 border border-gray-300 rounded-sm px-3 text-left focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 <SelectValue placeholder="Select Bank" />
@@ -174,14 +171,12 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
           <Field
             label="Invoice number"
             required
-            type="number"
+            type="text"
             placeholder="Enter invoice number"
-            {...formik.getFieldProps("invoiceNumber")}
+            {...formik.getFieldProps("invoiceNo")}
             className="h-full"
             error={
-              formik.touched.invoiceNumber
-                ? formik.errors.invoiceNumber
-                : undefined
+              formik.touched.invoiceNo ? formik.errors.invoiceNo : undefined
             }
           />
         </div>

@@ -19,6 +19,8 @@ import {
   ApiResponse,
   PinPayload,
   UpdatePinPayload,
+  GetTenuresResponse,
+  RepaymentPatternResponse,
 } from "@/types";
 import axiosInstance from ".";
 import {
@@ -28,6 +30,7 @@ import {
   CREATE_PIN,
   DASHBOARD,
   GET_PROFILE,
+  GET_TENURES,
   LIST_BANKS,
   REQUEST_PIN_TOKEN,
   RESEND_EMAIL_OTP,
@@ -112,6 +115,17 @@ export const handleCreateLoan = async (
     payload
   );
 };
+
+export const handleGetRepaymentPattern = async (
+  tenure: string
+): Promise<RepaymentPatternResponse> => {
+  return await fetcher<RepaymentPatternResponse>(
+    `/client/v1/loans/list/repayment_pattern?tenure=${encodeURIComponent(
+      tenure
+    )}`
+  );
+};
+
 export const handleVerifyPhoneNumber = async (
   payload: VerifyPhoneNumberPayload
 ): Promise<VerifyPhoneNumberResponse> => {
@@ -119,6 +133,10 @@ export const handleVerifyPhoneNumber = async (
     VERIFY_PHONE_NUMBER,
     payload
   );
+};
+
+export const handleGetTenures = async (): Promise<GetTenuresResponse> => {
+  return await fetcher<GetTenuresResponse>(GET_TENURES);
 };
 
 export const handleResendEmailOtp = async (
