@@ -5,6 +5,7 @@ import { RequestContext } from "./RequestContext";
 import {
   handleCreateLoan,
   handleGetRepaymentPattern,
+  handlePostRepaymentPattern,
 } from "@/lib/utils/api/apiHelper";
 import { getTenures } from "@/services/Tenure";
 import {
@@ -15,6 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Formik, Form } from "formik";
+import { PostRepaymentPatternResponse } from "@/types";
+import { toast } from "react-toastify";
 
 interface VendorDetails {
   amount?: number;
@@ -33,22 +36,6 @@ interface VendorDetails {
   termsAccepted?: boolean;
 }
 
-// interface ScheduleItem {
-//   date: string;
-//   principal: string;
-//   interest: string;
-//   totalRepayment: string;
-// }
-
-// interface RepaymentSchedule {
-//   schedule: ScheduleItem[];
-//   totalPrincipal: number;
-//   totalInterest: string;
-//   totalRepayment: string;
-//   managementFee: string;
-//   insurance: string;
-// }
-
 interface RepaymentPattern {
   value: string;
   key: string;
@@ -59,67 +46,25 @@ export const ItemDetails: React.FC<{
   onPrevious: () => void;
   vendorDetails: VendorDetails;
   setVendorDetails: (vendorDetails: VendorDetails) => void;
-}> = ({ onNext, onPrevious }) => {
-  const { items, vendorDetails, tenure, setTenure } =
-    useContext(RequestContext);
+}> = ({ onNext }) => {
+  const { items, vendorDetails, tenure } = useContext(RequestContext);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [tenureOptions, setTenureOptions] = useState<string[]>([]);
   const [repaymentPatternOptions, setRepaymentPatternOptions] = useState<
     RepaymentPattern[]
   >([]);
+  const [isScheduleLoading, setIsScheduleLoading] = useState(false);
 
-  // const Detail: React.FC<{ label: string; value?: string }> = ({
-  //   label,
-  //   value,
-  // }) => (
-  //   <div className="flex justify-between">
-  //     <span className="text-[#39498C] font-semibold">{label}:</span>
-  //     <span className="font-medium">{value}</span>
-  //   </div>
-  // );
-
-  useEffect(() => {
-    // const calculateRepaymentSchedule = (amount: number, duration: number) => {
-    //   console.log(amount?.toString());
-    //   if (!amount || !duration) return null;
-    //   const principal = amount;
-    //   const interestRate = 0.15; // 15% interest rate
-    //   const tenureInMonths = parseInt(duration.toString());
-    //   const monthlyInterest = (principal * interestRate) / 12;
-    //   const monthlyPayment =
-    //     (principal + monthlyInterest * tenureInMonths) / tenureInMonths;
-    //   const schedule = [];
-    //   let remainingPrincipal = principal;
-    //   for (let i = 1; i <= tenureInMonths; i++) {
-    //     const interest = (remainingPrincipal * interestRate) / 12;
-    //     const principalPayment = monthlyPayment - interest;
-    //     remainingPrincipal -= principalPayment;
-    //     schedule.push({
-    //       date: new Date(
-    //         Date.now() + i * 30 * 24 * 60 * 60 * 1000
-    //       ).toLocaleDateString(),
-    //       principal: principalPayment.toFixed(2),
-    //       interest: interest.toFixed(2),
-    //       totalRepayment: monthlyPayment.toFixed(2),
-    //     });
-    //   }
-    //   return {
-    //     schedule,
-    //     totalPrincipal: principal,
-    //     totalInterest: (monthlyPayment * tenureInMonths - principal).toFixed(2),
-    //     totalRepayment: (monthlyPayment * tenureInMonths).toFixed(2),
-    //     managementFee: (principal * 0.01).toFixed(2),
-    //     insurance: (principal * 0.006).toFixed(2),
-    //   };
-    // };
-    // console.log(totalAmount);
-    // const schedule = calculateRepaymentSchedule(
-    //   items?.amount ?? 0,
-    //   parseInt(vendorDetails.tenure ?? "0")
-    // );
-    // setRepaymentSchedule(schedule);
-  }, []);
+  const Detail: React.FC<{ label: string; value?: string }> = ({
+    label,
+    value,
+  }) => (
+    <div className="flex justify-between">
+      <span className="text-[#39498C] font-semibold">{label}:</span>
+      <span className="font-medium">{value}</span>
+    </div>
+  );
 
   useEffect(() => {
     const fetchTenures = async () => {
@@ -128,28 +73,42 @@ export const ItemDetails: React.FC<{
         setTenureOptions(tenures);
       } catch (error) {
         console.error("Error getting tenures:", error);
+        toast.error("Failed to fetch tenures");
       }
     };
 
     fetchTenures();
   }, []);
+
   const [selectedTenure, setSelectedTenure] = useState<string>("");
   const [repaymentPattern, setRepaymentPattern] = useState<string>("");
+  const [loanRepaymentPattern, setLoanRepaymentPattern] =
+    useState<PostRepaymentPatternResponse>({
+      status: "",
+      msg: "",
+      data: {
+        repaymentPattern: [],
+        principal: 0,
+        interest: 0,
+        totalAmount: 0,
+      },
+    });
+
   useEffect(() => {
     const fetchRepaymentPatterns = async () => {
       if (selectedTenure) {
         try {
-          const patterns = await handleGetRepaymentPattern(selectedTenure);
-          setRepaymentPatternOptions(patterns.data);
-          console.log("repaymentPatternOptions", repaymentPatternOptions);
+          const response = await handleGetRepaymentPattern(selectedTenure);
+          setRepaymentPatternOptions(response.data);
         } catch (error) {
           console.error("Error getting repayment patterns:", error);
+          toast.error("Failed to fetch repayment patterns");
         }
       }
     };
 
     fetchRepaymentPatterns();
-  }, [repaymentPatternOptions]);
+  }, [selectedTenure]);
 
   const totalAmount = items
     .reduce((sum, item) => {
@@ -160,45 +119,84 @@ export const ItemDetails: React.FC<{
       currency: "NGN",
     });
 
-  useEffect(() => {
-    const isStepValid = () => {
-      return (
-        items.length > 0 &&
-        selectedTenure &&
-        acceptedTerms === true &&
-        repaymentPattern
+  const getRepaymentSchedule = async () => {
+    if (!selectedTenure || !repaymentPattern) {
+      toast.error("Please select tenure and repayment pattern first");
+      return;
+    }
+
+    setIsScheduleLoading(true);
+    try {
+      const loanPatternData = {
+        tenure: selectedTenure,
+        items: items,
+        repaymentPattern: repaymentPattern,
+      };
+
+      const repaymentPatternResponse = await handlePostRepaymentPattern(
+        loanPatternData
       );
-    };
 
-    // Auto-submit when all conditions are met
-    const autoSubmit = async () => {
-      if (isStepValid()) {
-        try {
-          const loanData = {
-            tenure: selectedTenure,
-            items: items,
-            repaymentPattern: repaymentPattern,
-            vendorDetails: vendorDetails,
-            termsAccepted: acceptedTerms,
-          };
-          console.log("loanData", loanData);
-          await handleCreateLoan(loanData);
-          onNext();
-        } catch (error) {
-          console.error("Error creating loan:", error);
-        }
+      if (repaymentPatternResponse.status === "success") {
+        setLoanRepaymentPattern({
+          status: repaymentPatternResponse.status,
+          msg: repaymentPatternResponse.msg,
+          data: repaymentPatternResponse.data,
+        });
+        toast.success("Repayment schedule calculated successfully");
+      } else {
+        toast.error(
+          repaymentPatternResponse.msg || "Failed to get repayment pattern"
+        );
       }
-    };
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Failed to calculate repayment schedule");
+    } finally {
+      setIsScheduleLoading(false);
+    }
+  };
 
-    autoSubmit();
-  }, [items, selectedTenure, acceptedTerms, repaymentPattern]);
+  const handleSubmit = async () => {
+    if (!selectedTenure || !repaymentPattern || !acceptedTerms) {
+      toast.error("Please fill all required fields and accept terms");
+      return;
+    }
 
-  // const formatCurrency = (value: number) => {
-  //   return new Intl.NumberFormat("en-NG", {
-  //     style: "currency",
-  //     currency: "NGN",
-  //   }).format(value);
-  // };
+    if (loanRepaymentPattern.status !== "success") {
+      toast.error("Please calculate repayment schedule first");
+      return;
+    }
+
+    try {
+      const loanData = {
+        tenure: selectedTenure,
+        items: items,
+        repaymentPattern: repaymentPattern,
+        vendorDetails: vendorDetails,
+        termsAccepted: acceptedTerms,
+      };
+
+      const loanResponse = await handleCreateLoan(loanData);
+
+      if (loanResponse.status === "success") {
+        toast.success("Loan created successfully");
+        onNext();
+      } else {
+        toast.error(loanResponse.msg || "Failed to create loan");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("An error occurred while creating the loan");
+    }
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+    }).format(value);
+  };
 
   return (
     <div className="w-full min-h-screen">
@@ -213,11 +211,7 @@ export const ItemDetails: React.FC<{
             repaymentPattern: repaymentPattern || "",
             acceptedTerms: false,
           }}
-          onSubmit={async (values) => {
-            setTenure(values.tenure);
-            setRepaymentPattern(values.repaymentPattern);
-            setAcceptedTerms(values.acceptedTerms);
-          }}
+          onSubmit={handleSubmit}
         >
           {({ values, setFieldValue }) => (
             <Form>
@@ -270,53 +264,49 @@ export const ItemDetails: React.FC<{
                   </SelectTrigger>
                   <SelectContent>
                     {repaymentPatternOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.key}
+                      <SelectItem key={option.key} value={option.key}>
+                        {option.value}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
+              <div className="mb-6">
+                <Button
+                  type="button"
+                  onClick={getRepaymentSchedule}
+                  disabled={isScheduleLoading}
+                  className="w-full py-2 px-8 bg-indigo-600 text-white rounded-sm hover:bg-indigo-700"
+                >
+                  {isScheduleLoading
+                    ? "Calculating..."
+                    : "Calculate Repayment Schedule"}
+                </Button>
+              </div>
+
               {/* Loan Details */}
-              {/* {repaymentSchedule && (
+              {loanRepaymentPattern.status === "success" && (
                 <div className="mb-6">
                   <h3 className="text-sm font-semibold mb-2">Loan Details</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm border p-5">
                     <Detail
                       label="Principal"
-                      value={formatCurrency(repaymentSchedule.totalPrincipal)}
+                      value={formatCurrency(
+                        loanRepaymentPattern.data.principal
+                      )}
                     />
                     <Detail
                       label="Interest"
-                      value={formatCurrency(
-                        parseFloat(repaymentSchedule.totalInterest)
-                      )}
+                      value={formatCurrency(loanRepaymentPattern.data.interest)}
                     />
-                    <Detail
-                      label="Tenure"
-                      value={`${tenure} month${
-                        vendorDetails.tenure !== "1" ? "s" : ""
-                      }`}
-                    />
-                    <Detail
-                      label="Mgt fee"
-                      value={formatCurrency(
-                        parseFloat(repaymentSchedule.managementFee)
-                      )}
-                    />
-                    <Detail
-                      label="Credit Insurance"
-                      value={formatCurrency(
-                        parseFloat(repaymentSchedule.insurance)
-                      )}
-                    />
+                    <Detail label="Tenure" value={`${selectedTenure}`} />
                   </div>
                 </div>
-              )} */}
+              )}
 
               {/* Repayment Schedule */}
-              {/* {repaymentSchedule && (
+              {loanRepaymentPattern.status === "success" && (
                 <>
                   <h3 className="text-sm font-semibold mb-2">
                     Your Potential Loan Repayment Schedule
@@ -332,20 +322,27 @@ export const ItemDetails: React.FC<{
                         </tr>
                       </thead>
                       <tbody>
-                        {repaymentSchedule.schedule.map(
-                          (item: ScheduleItem, index: number) => (
+                        {loanRepaymentPattern.data.repaymentPattern.map(
+                          (item, index) => (
                             <tr key={index}>
-                              <td className="p-2 border">{item.date}</td>
-                              <td className="p-2 border font-clash">
-                                {formatCurrency(parseFloat(item.principal))}
-                              </td>
-                              <td className="p-2 border font-clash">
-                                {formatCurrency(parseFloat(item.interest))}
-                              </td>
-                              <td className="p-2 border font-clash">
-                                {formatCurrency(
-                                  parseFloat(item.totalRepayment)
+                              <td className="p-2 border">
+                                {new Date(item.due_date).toLocaleDateString(
+                                  "en-GB",
+                                  {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  }
                                 )}
+                              </td>
+                              <td className="p-2 border font-clash">
+                                {formatCurrency(item.principal)}
+                              </td>
+                              <td className="p-2 border font-clash">
+                                {formatCurrency(item.interest)}
+                              </td>
+                              <td className="p-2 border font-clash">
+                                {formatCurrency(item.repayment_amount)}
                               </td>
                             </tr>
                           )
@@ -353,16 +350,16 @@ export const ItemDetails: React.FC<{
                         <tr className="bg-[#39498C] font-semibold text-white">
                           <td className="p-2 border">Total</td>
                           <td className="p-2 border">
-                            {formatCurrency(repaymentSchedule.totalPrincipal)}
-                          </td>
-                          <td className="p-2 border">
                             {formatCurrency(
-                              parseFloat(repaymentSchedule.totalInterest)
+                              loanRepaymentPattern.data.principal
                             )}
                           </td>
                           <td className="p-2 border">
+                            {formatCurrency(loanRepaymentPattern.data.interest)}
+                          </td>
+                          <td className="p-2 border">
                             {formatCurrency(
-                              parseFloat(repaymentSchedule.totalRepayment)
+                              loanRepaymentPattern.data.totalAmount
                             )}
                           </td>
                         </tr>
@@ -370,7 +367,7 @@ export const ItemDetails: React.FC<{
                     </table>
                   </div>
                 </>
-              )} */}
+              )}
 
               {/* Terms & Save */}
               <div className="flex items-center mb-4">
@@ -394,10 +391,10 @@ export const ItemDetails: React.FC<{
 
               <div className="flex flex-col sm:flex-row gap-4 mt-8">
                 <Button
-                  onClick={onPrevious}
-                  className="w-full sm:w-fit py-2 px-8 bg-gray-300 text-gray-700 rounded-sm hover:bg-gray-400"
+                  type="submit"
+                  className="w-full py-2 px-8 bg-yellow-500 text-white rounded-sm hover:bg-yellow-600"
                 >
-                  Previous
+                  Create Loan
                 </Button>
               </div>
             </Form>

@@ -6,56 +6,35 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import { MoveRight } from "lucide-react";
 import Link from "next/link";
 
-// Type for the transaction object
-interface Transaction {
-  id: string;
-  amount: number;
-  maturityAmount: number;
-  date: string;
-  dueDate: string;
-  status: string;
-}
-
 interface LoanTableProps {
   searchQuery: string;
+  data: Array<{
+    id: number;
+    amount: string;
+    status: string;
+    createdAt: string;
+    interestAmount: string;
+    expiringDate: string;
+  }>;
 }
 
-const transactions: Transaction[] = [
-  {
-    id: "0056757",
-    amount: 5000000.0,
-    maturityAmount: 6500000.0,
-    date: "02/May/2024",
-    dueDate: "02/June/2024",
-    status: "Active",
-  },
-  {
-    id: "0056758",
-    amount: 1000000.0,
-    maturityAmount: 1200000.0,
-    date: "10/May/2024",
-    dueDate: "10/June/2024",
-    status: "Paid",
-  },
-  // More transactions
-];
-
-const LoanTable = ({ searchQuery }: LoanTableProps) => {
+const LoanTable = ({ searchQuery, data }: LoanTableProps) => {
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
     }).format(amount);
   };
 
-  // Filter transactions based on the search query
-  const filteredTransactions = transactions.filter(
-    (transaction) =>
-      transaction.id.includes(searchQuery) ||
-      transaction.status.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter data based on the search query
+  const filteredData = data.filter(
+    (loan) =>
+      loan.id.toString().includes(searchQuery) ||
+      loan.status.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -73,26 +52,51 @@ const LoanTable = ({ searchQuery }: LoanTableProps) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredTransactions.length > 0 ? (
-            filteredTransactions.map((transaction, index) => (
+          {filteredData.length > 0 ? (
+            filteredData.map((loan, index) => (
               <TableRow key={index}>
-                <TableCell className="font-medium">{transaction.id}</TableCell>
-                <TableCell>{formatCurrency(transaction.amount)}</TableCell>
+                <TableCell className="font-medium">{loan.id}</TableCell>
+                <TableCell>{formatCurrency(Number(loan.amount))}</TableCell>
                 <TableCell>
-                  {formatCurrency(transaction.maturityAmount)}
+                  {formatCurrency(Number(loan.interestAmount))}
                 </TableCell>
-                <TableCell>{transaction.date}</TableCell>
-                <TableCell>{transaction.dueDate}</TableCell>
+                <TableCell>
+                  {new Date(loan.createdAt).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  {new Date(loan.expiringDate).toLocaleDateString()}
+                </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <span className="flex h-2.5 w-2.5 rounded-full bg-green-500" />
-                    <span className="font-medium text-green-700 bg-green-50 px-3 py-1 rounded-full text-sm">
-                      {transaction.status}
+                    <span
+                      className={`flex h-2.5 w-2.5 rounded-full ${
+                        loan.status === "active"
+                          ? "bg-green-500"
+                          : loan.status === "rejected"
+                          ? "bg-red-500"
+                          : loan.status === "approved"
+                          ? "bg-blue-500"
+                          : "bg-gray-500"
+                      }`}
+                    />
+                    <span
+                      className={`font-medium px-3 py-1 rounded-full text-sm ${
+                        loan.status === "active"
+                          ? "text-green-700 bg-green-50"
+                          : loan.status === "rejected"
+                          ? "text-red-700 bg-red-50"
+                          : loan.status === "approved"
+                          ? "text-blue-700 bg-blue-50"
+                          : "text-gray-700 bg-gray-50"
+                      }`}
+                    >
+                      {loan.status.charAt(0).toUpperCase() +
+                        loan.status.slice(1)}
                     </span>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Link href={`loans/${transaction.id}`}>
+                  <Link href={`loans/${loan.id}`}>
                     <MoveRight className="h-4 w-4 text-muted-foreground" />
                   </Link>
                 </TableCell>
@@ -100,8 +104,8 @@ const LoanTable = ({ searchQuery }: LoanTableProps) => {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={7} className="text-center">
-                No transactions found.
+              <TableCell colSpan={5} className="text-center">
+                No loans found.
               </TableCell>
             </TableRow>
           )}
@@ -110,4 +114,5 @@ const LoanTable = ({ searchQuery }: LoanTableProps) => {
     </div>
   );
 };
+
 export default LoanTable;

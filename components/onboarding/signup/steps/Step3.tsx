@@ -9,6 +9,7 @@ import {
 import { EmailVerificationPayload } from "@/types";
 import React, { useState } from "react";
 import { TbReload } from "react-icons/tb";
+import { toast } from "react-toastify";
 
 type SignupStepThreeProps = {
   nextStep: () => void;
@@ -54,8 +55,10 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
     try {
       console.log("payload");
       const response = await handleEmailVerification(payload);
-      console.log(response);
-      nextStep();
+      if (response.status === "success") {
+        toast.success(response.msg);
+        nextStep();
+      }
     } catch (error) {
       handleApiError(error, setError);
     } finally {

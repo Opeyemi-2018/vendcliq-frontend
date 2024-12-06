@@ -14,6 +14,8 @@ const BUSINESS_INFORMATION_SETUP_STEP_TWO =
   "/client/v1/auth/business-information-step2";
 const IDENTITY_UPLOAD = "/client/v1/auth/upload-identity";
 const CREATE_LOAN = "/client/v1/loans";
+const GET_LOAN = "/client/v1/loans";
+const GET_LOAN_DETAILS = (id: string) => `/client/v1/loans/${id}`;
 const LIST_BANKS = "/client/v1/bank-accounts/banks/all";
 const VERIFY_BANK_ACCOUNT =
   "/client/v1/bank-accounts/banks/verify-bank-account";
@@ -25,6 +27,7 @@ const REQUEST_PIN_TOKEN = "client/v1/auth/request-pin-token";
 const GET_TENURES = "/client/v1/loans/list/tenures";
 const REPAYMENT_PATTERN = (tenure: string) =>
   `/client/v1/loans/list/repayment-pattern?tenure=${tenure}`;
+const POST_REPAYMENT_PATTERN = "/client/v1/loans/repayment/pattern";
 // EXPORT URLS
 export {
   VERIFY_EMAIL,
@@ -47,4 +50,7 @@ export {
   REQUEST_PIN_TOKEN,
   GET_TENURES,
   REPAYMENT_PATTERN,
+  POST_REPAYMENT_PATTERN,
+  GET_LOAN_DETAILS,
+  GET_LOAN,
 };
