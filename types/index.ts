@@ -76,6 +76,7 @@ export interface EmailVerificationPayload {
 
 export interface EmailVerificationResponse {
   message: string;
+  msg: string;
   status: string;
   data: {
     email: string;
@@ -92,6 +93,8 @@ export interface ConfirmPhoneNumberPayload {
 export interface ConfirmPhoneNumberResponse {
   phone: string;
   isWhatsappNo: boolean;
+  status?: string;
+  msg?: string;
 }
 
 export interface VerifyPhoneNumberPayload {
@@ -99,6 +102,8 @@ export interface VerifyPhoneNumberPayload {
 }
 export interface VerifyPhoneNumberResponse {
   token: string;
+  status?: string;
+  msg?: string;
 }
 export interface DashboardPayload {}
 export interface DashboardResponse {
@@ -272,4 +277,135 @@ export interface GetTenuresResponse {
   status: string;
   msg: string;
   data: string[];
+}
+
+export interface RepaymentPatternPayload {
+  items: Array<{
+    item: string;
+    quantity: number;
+    amount: number;
+  }>;
+  tenure: string;
+  repaymentPattern: string;
+}
+
+export interface PostRepaymentPatternResponse {
+  status: string;
+  msg: string;
+  data: {
+    repaymentPattern: Array<{
+      due_date: string;
+      principal: number;
+      interest: number;
+      amount: number;
+      repayment_amount: number;
+    }>;
+    principal: number;
+    interest: number;
+    totalAmount: number;
+  };
+}
+
+export interface LoanDetailsResponse {
+  status: string;
+  msg: string;
+  data: {
+    id: number;
+    profileId: number;
+    reference: string;
+    loanTenure: number;
+    repaymentPattern: string;
+    amount: string;
+    interestRate: string;
+    interestAmount: string;
+    expiringDate: string;
+    items: Array<{
+      item: string;
+      quantity: number;
+      amount: number;
+      totalAmount: number;
+    }>;
+    attributes: {
+      termsAccepted: boolean;
+    };
+    meta: {
+      ip_address: string;
+    };
+    vendorDetails: {
+      bankCode: string;
+      invoiceNo: string;
+      accountName: string;
+      accountNumber: string;
+    };
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+    repayments: Array<{
+      id: string;
+      reference: string;
+      repayment_date: string;
+      due_date: string;
+      principal: number;
+      interest: number;
+      amount: number;
+      repayment_amount: number;
+      status: string;
+    }>;
+    files: any[];
+    reviewDate: string;
+    disburseDate: string;
+    interestFrequency: string;
+    duration: number;
+    interestDueToday: number;
+    amountDueToday: number;
+    purpose: string;
+  };
+}
+
+export interface LoanResponse {
+  status: string;
+  msg: string;
+  data: {
+    meta: {
+      total: number;
+      perPage: number;
+      currentPage: number;
+      lastPage: number;
+      firstPage: number;
+      firstPageUrl: string;
+      lastPageUrl: string;
+      nextPageUrl: string | null;
+      previousPageUrl: string | null;
+    };
+    data: Array<{
+      id: number;
+      profileId: number;
+      reference: string;
+      loanTenure: number;
+      repaymentPattern: string;
+      amount: string;
+      interestRate: string;
+      interestAmount: string;
+      expiringDate: string;
+      items: string;
+      attributes: {
+        termsAccepted: boolean;
+      };
+      meta: {
+        ip_address: string;
+      };
+      vendorDetails: {
+        bankCode: string;
+        invoiceNo: string;
+        accountName: string;
+        accountNumber: string;
+      };
+      status: string;
+      createdAt: string;
+      updatedAt: string;
+      deletedAt: string | null;
+      repayments: Array<any>;
+    }>;
+  };
 }

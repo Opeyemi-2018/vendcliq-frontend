@@ -1,8 +1,34 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { handleGetLoanDetails } from "@/lib/utils/api/apiHelper";
+import { useParams } from "next/navigation";
 
 const LoanDetailsScreen = () => {
+  const { id } = useParams() as { id: string };
+  const loanId = Array.isArray(id) ? id[0] : id;
+
+  const { data: loanDetails, isLoading } = useQuery({
+    queryKey: ["loanDetails", loanId],
+    queryFn: () => handleGetLoanDetails(loanId as string),
+    enabled: !!loanId,
+  });
+
+  if (isLoading || !loanId) {
+    return <div>Loading...</div>;
+  }
+
+  const loan = loanDetails?.data;
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+    }).format(amount);
+  };
+
   return (
     <div className="w-full min-h-screen p-4 sm:p-6 md:p-8">
       <div className="rounded-lg w-full font-sans mx-auto p-4 sm:p-6 md:p-8">
@@ -24,19 +50,39 @@ const LoanDetailsScreen = () => {
               value={
                 <span className="flex items-center bg-[#D8DFFF] w-fit px-3 rounded-2xl font-medium text-sm text-[#39498C] gap-2">
                   <span className="w-2 h-2 bg-[#39498C] rounded-full"></span>{" "}
-                  Active
+                  {loan?.status || "Active"}
                 </span>
               }
             />
-            <Detail label="Loan Amount" value="10,000,000.00" />
-            <Detail label="Reference" value="VERA-AF-74679" />
-            <Detail label="Interest" value="10% (10,200,000.00)" />
-            <Detail label="Interest Frequency" value="Weekly" />
-            <Detail label="Duration" value="30 Days" />
-            <Detail label="Interest Due Today" value="50,000.00" />
-            <Detail label="Amount Due Today" value="10,050,000.00" />
-            <Detail label="RepaymentType" value="Principal + Interest" />
-            <Detail label="Purpose" value="50 Crates of Fanta" />
+            <Detail
+              label="Loan Amount"
+              value={formatCurrency(Number(loan?.amount) || 0)}
+            />
+            <Detail label="Reference" value={loan?.reference || "-"} />
+            <Detail
+              label="Interest"
+              value={`${loan?.interestRate || 0}% (${formatCurrency(
+                Number(loan?.interestAmount) || 0
+              )})`}
+            />
+            <Detail
+              label="Interest Frequency"
+              value={loan?.interestFrequency || "-"}
+            />
+            <Detail label="Duration" value={`${loan?.duration || 0} Days`} />
+            <Detail
+              label="Interest Due Today"
+              value={formatCurrency(Number(loan?.interestDueToday) || 0)}
+            />
+            <Detail
+              label="Amount Due Today"
+              value={formatCurrency(Number(loan?.amountDueToday) || 0)}
+            />
+            <Detail
+              label="RepaymentType"
+              value={loan?.repaymentPattern || "-"}
+            />
+            <Detail label="Purpose" value={loan?.purpose || "-"} />
           </div>
         </div>
 
@@ -57,29 +103,27 @@ const LoanDetailsScreen = () => {
                 </tr>
               </thead>
               <tbody>
-                {Array(6)
-                  .fill(null)
-                  .map((_, i) => (
-                    <tr key={i} className="border-t">
-                      <td className="p-2 border">#0056757</td>
-                      <td className="p-2 border">NGN400,000</td>
-                      <td className="p-2 border">02/June/2024</td>
-                      <td className="p-2 border">
-                        <StatusBadge
-                          status={
-                            i === 3 ? "Upcoming" : i === 4 ? "Over Due" : "Paid"
-                          }
-                        />
-                      </td>
-                      <td className="p-2 border">
-                        <Link href={"/payloan"}>
-                          <Button className="px-3 h-fit bg-yellow-500 text-black rounded-md hover:bg-yellow-600">
-                            + Pay Loan
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
+                {loan?.repayments?.map((repayment) => (
+                  <tr key={repayment.id} className="border-t">
+                    <td className="p-2 border">{repayment.reference}</td>
+                    <td className="p-2 border">
+                      {formatCurrency(Number(repayment.amount))}
+                    </td>
+                    <td className="p-2 border">
+                      {new Date(repayment.due_date).toLocaleDateString()}
+                    </td>
+                    <td className="p-2 border">
+                      <StatusBadge status={repayment.status} />
+                    </td>
+                    <td className="p-2 border">
+                      <Link href={"/payloan"}>
+                        <Button className="px-3 h-fit bg-yellow-500 text-black rounded-md hover:bg-yellow-600">
+                          + Pay Loan
+                        </Button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -93,13 +137,21 @@ const LoanDetailsScreen = () => {
               <span className="text-[#39498C] font-semibold">
                 Loan Review Date
               </span>
-              <span className="font-medium">20th May 2024</span>
+              <span className="font-medium">
+                {loan?.reviewDate
+                  ? new Date(loan.reviewDate).toLocaleDateString()
+                  : "-"}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-[#39498C] font-semibold">
                 Loan Disburse Date
               </span>
-              <span className="font-medium">24th May 2024</span>
+              <span className="font-medium">
+                {loan?.disburseDate
+                  ? new Date(loan.disburseDate).toLocaleDateString()
+                  : "-"}
+              </span>
             </div>
           </div>
         </div>
@@ -122,12 +174,12 @@ const Detail: React.FC<{ label: string; value: React.ReactNode }> = ({
 // Status Badge Component
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   let color = "bg-green-200 text-green-800"; // Default to "Paid"
-  if (status === "Upcoming") color = "bg-gray-200 text-gray-800";
-  else if (status === "Over Due") color = "bg-red-200 text-red-800";
+  if (status === "upcoming") color = "bg-gray-200 text-gray-800";
+  else if (status === "overdue") color = "bg-red-200 text-red-800";
 
   return (
     <span className={`px-2 py-1 rounded-full text-xs font-semibold ${color}`}>
-      {status}
+      {status?.charAt(0).toUpperCase() + status?.slice(1)}
     </span>
   );
 };

@@ -8,6 +8,7 @@ import {
 import { ConfirmPhoneNumberPayload } from "@/types";
 
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 
 type SignupStepFourProps = {
   nextStep: () => void;
@@ -35,8 +36,10 @@ const SignupStepFour: React.FC<SignupStepFourProps> = ({ nextStep, title }) => {
       setLoading(true);
       localStorage.setItem("phone", phone);
       const response = await handleConfirmPhoneNumber(payload);
-      console.log("response>>>", response);
-      nextStep();
+      if (response.status === "success") {
+        toast.success(response.msg);
+        nextStep();
+      }
     } catch (error) {
       handleApiError(error, setError);
     } finally {

@@ -2,6 +2,7 @@
 import BoxOption from "@/components/ui/BoxOption";
 import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/Field";
+import PasswordInput from "@/components/ui/PasswordInput";
 import { poster } from "@/lib/utils/api/apiHelper";
 import { SIGN_UP } from "@/url/api-url";
 import { Label } from "@radix-ui/react-dropdown-menu";
@@ -9,12 +10,14 @@ import { RadioGroup } from "@radix-ui/react-radio-group";
 import { AxiosError } from "axios";
 import Link from "next/link";
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 
 type SignupPayload = {
   firstname: string;
   lastname: string;
   email: string;
   password: string;
+  status: string;
   business: {
     isRegistered: boolean;
     type: string;
@@ -70,11 +73,14 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
         payload
       );
       console.log(response);
-      const token = response.data.token.token;
-      console.log("token step2", token);
-      localStorage.setItem("authToken", token);
-      localStorage.setItem("email", payload.email);
-      nextStep();
+      if (response.status === "success") {
+        toast.success("Account created successfully");
+        const token = response.data.token.token;
+        console.log("token step2", token);
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("email", payload.email);
+        nextStep();
+      }
     } catch (error) {
       if (error instanceof AxiosError) {
         setError(error.response?.data?.message || "An error occurred");
@@ -133,13 +139,11 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
           </RadioGroup>
         </div>
 
-        <Input
+        <PasswordInput
           label="Password"
-          name="password"
-          type="password"
-          onChange={handleChange}
+          placeholder="Enter your password"
+          onChange={(value) => setFormData({ ...formData, password: value })}
           value={formData.password}
-          className="flex-1  my-5"
         />
         <Input
           label="Referal Code"

@@ -21,6 +21,10 @@ import {
   UpdatePinPayload,
   GetTenuresResponse,
   RepaymentPatternResponse,
+  RepaymentPatternPayload,
+  PostRepaymentPatternResponse,
+  LoanDetailsResponse,
+  LoanResponse,
 } from "@/types";
 import axiosInstance from ".";
 import {
@@ -29,9 +33,12 @@ import {
   CREATE_LOAN,
   CREATE_PIN,
   DASHBOARD,
+  GET_LOAN,
+  GET_LOAN_DETAILS,
   GET_PROFILE,
   GET_TENURES,
   LIST_BANKS,
+  POST_REPAYMENT_PATTERN,
   REQUEST_PIN_TOKEN,
   RESEND_EMAIL_OTP,
   SIGN_IN,
@@ -123,6 +130,25 @@ export const handleGetRepaymentPattern = async (
     `/client/v1/loans/list/repayment_pattern?tenure=${encodeURIComponent(
       tenure
     )}`
+  );
+};
+
+export const handleGetLoanDetails = async (
+  id: string
+): Promise<LoanDetailsResponse> => {
+  return await fetcher<LoanDetailsResponse>(GET_LOAN_DETAILS(id));
+};
+
+export const handleGetLoan = async (): Promise<LoanResponse> => {
+  return await fetcher<LoanResponse>(GET_LOAN);
+};
+
+export const handlePostRepaymentPattern = async (
+  payload: RepaymentPatternPayload
+): Promise<PostRepaymentPatternResponse> => {
+  return await poster<PostRepaymentPatternResponse, RepaymentPatternPayload>(
+    POST_REPAYMENT_PATTERN,
+    payload
   );
 };
 

@@ -8,6 +8,7 @@ import {
 } from "@/lib/utils/api/apiHelper";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 
 type SignupStepFiveProps = {
   nextStep: () => void;
@@ -29,8 +30,11 @@ const SignupStepFive: React.FC<SignupStepFiveProps> = ({ title }) => {
 
     try {
       setLoading(true);
-      await handleVerifyPhoneNumber({ token: code });
-      router.push("/dashboard/home");
+      const response = await handleVerifyPhoneNumber({ token: code });
+      if (response.status === "success") {
+        toast.success(response.msg);
+        router.push("/dashboard/home");
+      }
     } catch (error) {
       handleApiError(error, setError);
     } finally {
