@@ -19,17 +19,16 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
+
   const handleSubmit = async () => {
     if (!email || !password) {
-      setError("Email and Password is required.");
+      setError("Email and Password are required.");
       return;
     }
 
-    const payload: SignInPayload = {
-      email,
-      password,
-    };
+    const payload: SignInPayload = { email, password };
     console.log(payload);
+
     try {
       setLoading(true);
       setError("");
@@ -44,7 +43,6 @@ const Login = () => {
         });
 
         router.push("/dashboard/home");
-        // Keep loading state true until the next page loads
       } else {
         setError("Login failed. Please try again.");
         setLoading(false);
@@ -54,19 +52,21 @@ const Login = () => {
       setLoading(false);
     }
   };
+
   return (
     <div className="h-screen">
-      <div className="text-black  px-10 pt-5 pb-10">
+      <div className="text-black px-10 pt-5 pb-10">
         <Image
           src={"/assets/logo/logo.png"}
-          alt=""
+          alt="Logo"
           width={150}
           height={100}
           className="object-cover"
         />
       </div>
-      <div className="flex justify-center items-center h-[80%] gap-10 px-5 md:px-20 ">
-        <div className="flex flex-col justify-center flex-1 h-full w-fit xl:w-full  bg-inherit md:bg-white  rounded-3xl  px-5 md:px-10">
+
+      <div className="flex justify-center items-center h-[80%] gap-10 px-5 md:px-20">
+        <div className="flex flex-col justify-center flex-1 h-full w-fit xl:w-full bg-inherit md:bg-white rounded-3xl px-5 md:px-10">
           <h1 className="font-semibold text-black text-2xl">Sign In</h1>
           <div className="mt-10 space-y-5 font-sans">
             {error && (
@@ -134,9 +134,11 @@ const Login = () => {
               </button>
             </div>
           </div>
+
           <p className="text-primary underline font-semibold font-sans text-right mt-3">
-            Forget Password
+            Forgot Password?
           </p>
+
           <Button
             disabled={loading}
             onClick={handleSubmit}
@@ -146,34 +148,33 @@ const Login = () => {
           </Button>
 
           <Button className="flex items-center justify-center bg-white border rounded-sm border-border gap-3 w-full text-black hover:bg-inherit mt-5">
-            <FcGoogle size={"24"} />
+            <FcGoogle size={24} />
             Sign In With Google
           </Button>
+
           <div className="flex flex-col md:flex-row gap-1 items-center font-sans justify-center mt-3">
             <p className="text-black">Don&apos;t have an account?</p>
-            <Link href={"/signup"}>
+            <Link href="/signup">
               <p className="text-primary">Create an account</p>
             </Link>
           </div>
         </div>
-        {/* </div> */}
-        <div className=" h-full hidden flex-1 xl:flex rounded-xl relative">
-          <Image
-            src={"/assets/images/Subtract.svg"}
-            alt=""
-            width={10000}
-            height={1000}
-            className="object-fill h-full w-full"
-          />
-          <div className=" hidden   xl:flex flex-col justify-center absolute top-5 left-5   w-full h-full text-white px-10 py-10">
-            <h1 className="text-5xl font-semibold">
-              What&apos;s our <br></br>{" "}
-              <span className="text-primary">Customers</span> Saying{" "}
-            </h1>
-            <div className=" mt-10 font-sans">
-              <FaQuoteLeft className=" " size="32" />
 
-              <p className="w-full mt-5 text-xl ">
+        <div className="hidden xl:flex flex-1 relative rounded-xl h-full w-full ">
+          <Image
+            src="/assets/images/Subtract.png"
+            alt="Background Image"
+            fill
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute top-5 left-5 w-full h-full text-white px-10 py-10 flex flex-col justify-center">
+            <h1 className="text-5xl font-semibold">
+              What&apos;s our <br />
+              <span className="text-primary">Customers</span> Saying
+            </h1>
+            <div className="mt-10">
+              <FaQuoteLeft size={32} />
+              <p className="mt-5 text-xl">
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non
                 risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing
                 nec, ultricies sed, dolor.
@@ -183,12 +184,13 @@ const Login = () => {
                 <p>Distributor</p>
               </div>
             </div>
-            <div className="flex gap-5  mt-5">
+
+            <div className="flex gap-5 mt-5">
               <Button className="bg-pastel-blue w-fit px-10 py-7 rounded-lg">
-                <GoArrowLeft color="#010C3B" size="28" />
+                <GoArrowLeft color="#010C3B" size={28} />
               </Button>
               <Button className="bg-dark-blue w-fit px-10 py-7 rounded-lg">
-                <GoArrowRight color="#DADFF6" size="28" />
+                <GoArrowRight color="#DADFF6" size={28} />
               </Button>
             </div>
           </div>
@@ -197,4 +199,5 @@ const Login = () => {
     </div>
   );
 };
+
 export default Login;
