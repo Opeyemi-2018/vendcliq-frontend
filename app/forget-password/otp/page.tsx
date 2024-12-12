@@ -63,7 +63,7 @@ const Page = () => {
   //   };
 
   return (
-    <div className="max-w-xl mx-auto bg-white mt-40 px-10 py-6">
+    <div className="max-w-xl mx-auto bg-inherit md:bg-white mt-40 px-10 py-6">
       <h2 className="text-xl font-semibold text-black text-left  pb-2">
         Did you forget your password?
       </h2>
@@ -71,7 +71,6 @@ const Page = () => {
         Enter your email address and we&apos;ll send you a token to reset your
         <br />
         password.
-        <span className="text-primary block mt-1">{email}</span>
       </p>
       <div className="font-sans mt-5">
         <div className="mt-6">
@@ -85,7 +84,10 @@ const Page = () => {
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </div>
 
-        <p className="text-sm text-primary font-bold mt-2 text-right">
+        <p
+          className="text-sm text-primary font-bold mt-2 text-right cursor-pointer"
+          onClick={() => router.push("/login")}
+        >
           Back to Login
         </p>
         <Button
