@@ -15,6 +15,7 @@ import { handleListBanks } from "@/lib/utils/api/apiHelper";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { RequestContext } from "./RequestContext";
+import { useVerifyBankAccount } from "@/services/loan/loan";
 
 interface LoanStepTwoProps {
   onVendorChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -24,33 +25,42 @@ interface LoanStepTwoProps {
   onPrevious: () => void;
 }
 
+interface VerifyResponse {
+  status: string;
+  data: {
+    accountName: string;
+  };
+  msg?: string;
+}
+
 const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
   selectedBank,
   onBankChange,
   onNext,
-  onPrevious,
 }) => {
   const { setVendorDetails } = useContext(RequestContext);
   const [bankOptions, setBankOptions] = useState<
     { bankCode: string; bankName: string }[]
   >([]);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationError, setVerificationError] = useState("");
+
+  const { verifyBankAccount } = useVerifyBankAccount();
 
   useEffect(() => {
     const fetchBanks = async () => {
       try {
         const response = await handleListBanks();
         if (response?.data?.banks) {
-          console.log(response);
           setBankOptions(response.data.banks);
         }
-        console.log("bank", bankOptions);
       } catch (error) {
         console.error("Error fetching banks:", error);
       }
     };
 
     fetchBanks();
-  }, [bankOptions]);
+  }, []);
 
   const validationSchema = Yup.object({
     accountNumber: Yup.string().required("Account number is required"),
@@ -69,7 +79,7 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
       invoiceNo: "",
     },
     validationSchema: validationSchema,
-    onSubmit: (values) => {
+    onSubmit: async (values) => {
       console.log("Form submission started");
       const vendorDetails = {
         accountName: values.accountName,
@@ -84,8 +94,48 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
     },
   });
 
+  useEffect(() => {
+    const handleVerifyAccount = async () => {
+      if (!formik.values.accountNumber || !formik.values.selectedBank) {
+        setVerificationError("Please enter account number and select bank");
+        return;
+      }
+
+      setIsVerifying(true);
+      setVerificationError("");
+
+      try {
+        const response = (await verifyBankAccount({
+          accountNumber: formik.values.accountNumber,
+          bankCode: formik.values.selectedBank,
+        })) as VerifyResponse;
+        console.log("response verify", response);
+        if (response.status === "success") {
+          formik.setFieldValue("accountName", response.data.accountName);
+        } else {
+          setVerificationError(response.msg || "Failed to verify account");
+        }
+      } catch (error) {
+        console.log("error verify", error);
+        setVerificationError("An error occurred while verifying account");
+      } finally {
+        setIsVerifying(false);
+      }
+    };
+
+    if (formik.values.accountNumber && formik.values.selectedBank) {
+      handleVerifyAccount();
+    }
+  }, [
+    formik.values.accountNumber,
+    formik.values.selectedBank,
+    verifyBankAccount,
+    formik.setFieldValue,
+    formik,
+  ]);
+
   return (
-    <>
+    <div className="w-full bg-white p-6 ">
       <h3 className="text-lg sm:text-xl font-medium border-b border-border pb-2 font-clash mb-4 sm:mb-8">
         Who are you buying from?
       </h3>
@@ -144,6 +194,10 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
           </div>
         </div>
 
+        {verificationError && (
+          <p className="text-red-500 text-sm">{verificationError}</p>
+        )}
+
         <Field
           label="Vendor name / Account name"
           required
@@ -154,6 +208,8 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
           error={
             formik.touched.accountName ? formik.errors.accountName : undefined
           }
+          disabled={isVerifying}
+          readOnly
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -188,16 +244,9 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
           >
             Save
           </Button>
-          <Button
-            type="button"
-            onClick={onPrevious}
-            className="w-full sm:w-auto py-2 px-8 bg-gray-300 text-gray-700 rounded-sm hover:bg-gray-400"
-          >
-            Previous
-          </Button>
         </div>
       </form>
-    </>
+    </div>
   );
 };
 

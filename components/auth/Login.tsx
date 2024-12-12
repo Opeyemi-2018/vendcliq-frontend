@@ -2,15 +2,24 @@
 import React, { useState } from "react";
 import Input from "../../components/ui/Field";
 import { Button } from "../../components/ui/button";
-import { FcGoogle } from "react-icons/fc";
+
 import Image from "next/image";
 import { FaQuoteLeft } from "react-icons/fa";
-import { GoArrowLeft, GoArrowRight } from "react-icons/go";
+
 import Link from "next/link";
 import { SignInPayload } from "@/types";
 import { useRouter } from "next/navigation";
-import { handleApiError, handleSignIn } from "@/lib/utils/api/apiHelper";
+import { handleSignIn } from "@/lib/utils/api/apiHelper";
 import { setCookie } from "nookies";
+import { AxiosError } from "axios";
+import Logo from "@/components/Logo";
+import {
+  Carousel,
+  CarouselItem,
+  CarouselContent,
+  CarouselNext,
+  CarouselPrevious,
+} from "../ui/carousel";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -19,7 +28,26 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
-
+  const testimonials = [
+    {
+      quote:
+        "This incredible company has been an absolute game-changer for me. With each infusion of funds, I find myself effortlessly navigating the marketplace, securing an array of goods at just the right quantity and price. It's like having a personal guide through the network of shopping, ensuring every purchase is not just a transaction, but a triumph.",
+      name: "Adeyemi Jackson, ",
+      role: "Distributor",
+    },
+    {
+      quote:
+        "Your service has been an invaluable asset to my business endeavours. Your unwavering presence and prompt responses to my needs have been instrumental in navigating various situations. Thank you for being a steadfast partner in my journey towards success.",
+      name: "JNneka Okafor, ",
+      role: "Retailer",
+    },
+    {
+      quote:
+        "vendcliq has been instrumental in enabling me to keep my inventory well-stocked, ensuring that I can consistently meet the demands of my valued customers.",
+      name: "Frankly Enterprises, ",
+      role: "Store Owner",
+    },
+  ];
   const handleSubmit = async () => {
     if (!email || !password) {
       setError("Email and Password are required.");
@@ -27,46 +55,54 @@ const Login = () => {
     }
 
     const payload: SignInPayload = { email, password };
-    console.log(payload);
 
     try {
       setLoading(true);
       setError("");
-      const response = await handleSignIn(payload);
-      console.log("response");
+
+      // Handle sign in and token storage in parallel
+      const [response] = await Promise.all([
+        handleSignIn(payload),
+        // Pre-fetch dashboard data while signing in
+        router.prefetch("/dashboard/home"),
+      ]);
 
       if (response.status === "success") {
-        localStorage.setItem("authToken", response.data.token.token);
-        setCookie(null, "authToken", response.data.token.token, {
-          path: "/",
-          maxAge: 60 * 60 * 24,
-        });
+        const token = response.data.token.token;
 
+        // Set token in localStorage and cookie simultaneously
+        await Promise.all([
+          Promise.resolve(localStorage.setItem("authToken", token)),
+          Promise.resolve(
+            setCookie(null, "authToken", token, {
+              path: "/",
+              maxAge: 60 * 60 * 24,
+            })
+          ),
+        ]);
+
+        // Navigate immediately after token is set
         router.push("/dashboard/home");
       } else {
         setError("Login failed. Please try again.");
         setLoading(false);
       }
     } catch (error) {
-      handleApiError(error, setError);
-      setLoading(false);
+      if (error instanceof AxiosError) {
+        setError(error.response?.data.msg || "An error occurred");
+        setLoading(false);
+      }
     }
   };
 
   return (
     <div className="h-screen">
       <div className="text-black px-10 pt-5 pb-10">
-        <Image
-          src={"/assets/logo/logo.png"}
-          alt="Logo"
-          width={150}
-          height={100}
-          className="object-cover"
-        />
+        <Logo />
       </div>
 
       <div className="flex justify-center items-center h-[80%] gap-10 px-5 md:px-20">
-        <div className="flex flex-col justify-center flex-1 h-full w-fit xl:w-full bg-inherit md:bg-white rounded-3xl px-5 md:px-10">
+        <div className="flex flex-col justify-center h-full w-fit xl:w-[600px] bg-inherit md:bg-white rounded-3xl px-5 md:px-10">
           <h1 className="font-semibold text-black text-2xl">Sign In</h1>
           <div className="mt-10 space-y-5 font-sans">
             {error && (
@@ -93,7 +129,7 @@ const Login = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[38px] text-gray-500"
+                className="absolute right-3 top-[43px] text-gray-500"
               >
                 {showPassword ? (
                   <svg
@@ -135,7 +171,10 @@ const Login = () => {
             </div>
           </div>
 
-          <p className="text-primary underline font-semibold font-sans text-right mt-3">
+          <p
+            className="text-primary underline font-semibold font-sans text-right mt-3 cursor-pointer hover:cursor-pointer"
+            onClick={() => router.push("/forget-password/otp")}
+          >
             Forgot Password?
           </p>
 
@@ -147,11 +186,6 @@ const Login = () => {
             {loading ? "Signing In..." : "Sign In"}
           </Button>
 
-          <Button className="flex items-center justify-center bg-white border rounded-sm border-border gap-3 w-full text-black hover:bg-inherit mt-5">
-            <FcGoogle size={24} />
-            Sign In With Google
-          </Button>
-
           <div className="flex flex-col md:flex-row gap-1 items-center font-sans justify-center mt-3">
             <p className="text-black">Don&apos;t have an account?</p>
             <Link href="/signup">
@@ -160,39 +194,38 @@ const Login = () => {
           </div>
         </div>
 
-        <div className="hidden xl:flex flex-1 relative rounded-xl h-full w-full ">
+        <div className="hidden xl:flex flex-1 relative rounded-xl h-full w-full">
           <Image
             src="/assets/images/Subtract.png"
             alt="Background Image"
             fill
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover rounded-xl"
           />
-          <div className="absolute top-5 left-5 w-full h-full text-white px-10 py-10 flex flex-col justify-center">
+          <div className="absolute top-0 left-5 w-full h-full text-white px-10 py-10 gap-10 flex flex-col justify-center">
             <h1 className="text-5xl font-semibold">
-              What&apos;s our <br />
-              <span className="text-primary">Customers</span> Saying
+              What our <br />
+              <span className="text-primary">Customers</span> are Saying
             </h1>
-            <div className="mt-10">
-              <FaQuoteLeft size={32} />
-              <p className="mt-5 text-xl">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non
-                risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing
-                nec, ultricies sed, dolor.
-              </p>
-              <div className="mt-10 text-xl">
-                <p className="font-semibold">Adeshola Adewoye</p>
-                <p>Distributor</p>
+            <Carousel className="w-full mt-0 relative font-sans">
+              <CarouselContent>
+                {testimonials.map((testimonial, index) => (
+                  <CarouselItem key={index}>
+                    <div>
+                      <FaQuoteLeft size={32} />
+                      <p className="mt-5 text-xl ">{testimonial.quote}</p>
+                      <div className="mt-10 text-xl">
+                        <p className="font-semibold">{testimonial.name}</p>
+                        <p className="text-[16px]">{testimonial.role}</p>
+                      </div>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <div className="flex absolute w-36 left-10 mt-20 gap-5 ">
+                <CarouselPrevious className="bg-pastel-blue w-fit px-10 py-7 rounded-lg" />
+                <CarouselNext className="bg-dark-blue w-fit px-10 py-7 rounded-lg" />
               </div>
-            </div>
-
-            <div className="flex gap-5 mt-5">
-              <Button className="bg-pastel-blue w-fit px-10 py-7 rounded-lg">
-                <GoArrowLeft color="#010C3B" size={28} />
-              </Button>
-              <Button className="bg-dark-blue w-fit px-10 py-7 rounded-lg">
-                <GoArrowRight color="#DADFF6" size={28} />
-              </Button>
-            </div>
+            </Carousel>
           </div>
         </div>
       </div>

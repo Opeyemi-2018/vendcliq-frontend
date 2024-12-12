@@ -43,7 +43,7 @@ const Page = () => {
         <div className="flex flex-col lg:flex-row gap-5 lg:gap-10">
           {/* Loan Details Section */}
           <div className="w-full lg:w-[35%]">
-            <div className="bg-white h-auto w-full rounded-3xl p-5 md:p-10 font-sans space-y-5 md:space-y-7">
+            <div className="bg-white border border-[#DBDBDB] h-auto w-full rounded-3xl p-5 md:p-10 font-sans space-y-5 md:space-y-7">
               <p className="bg-muted-gray w-fit rounded-3xl py-2 px-5 text-center md:text-left">
                 {activeLoan ? "Active Loan" : "No Active Loan"}
               </p>

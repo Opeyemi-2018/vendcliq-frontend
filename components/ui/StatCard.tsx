@@ -16,7 +16,7 @@ export const StatCard = ({
   return (
     <div
       className={cn(
-        "flex items-start bg-white flex-1 p-5 gap-2 font-sans rounded-xl",
+        "flex items-start bg-white flex-1 p-5 gap-2 font-sans rounded-xl border  border-[#DBDBDB]",
         className
       )}
     >

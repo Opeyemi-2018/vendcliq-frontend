@@ -1,11 +1,16 @@
 import { Button } from "@/components/ui/button";
+import { useGetProfile } from "@/services/profile/Profile";
 import Link from "next/link";
 import React from "react";
 
 const LoanStatus: React.FC = () => {
+  const { profile } = useGetProfile();
+
+  console.log("email", profile?.email.email);
+  const email = profile?.email.email;
   return (
-    <div className="flex min-h-screen">
-      <div className="bg-white w-full  mx-auto">
+    <div className="flex bg-white p-6">
+      <div className=" w-full  mx-auto">
         <h3 className="text-xl font-medium border-b border-border pb-2 font-clash mb-8">
           Loan Status
         </h3>
@@ -21,9 +26,9 @@ const LoanStatus: React.FC = () => {
           <h3 className="text-md font-semibold mb-2">Congratulations</h3>
           <p className="text-sm text-gray-700">
             Your loan is currently under review. <br />
-            An email will be sent to <strong>awuyagodwin@gmail.com</strong> on
-            the status of your application, usually within 24–48hrs. Go to your
-            loan dashboard to monitor your loans.
+            An email will be sent to <strong>{email}</strong> on the status of
+            your application, usually within 24–48hrs. Go to your loan dashboard
+            to monitor your loans.
           </p>
         </div>
 

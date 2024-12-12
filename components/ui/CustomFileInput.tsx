@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { Check } from "lucide-react";
 import { Input } from "./Input";
 
 export default function CustomFileInput({ label }: { label: string }) {
@@ -27,16 +26,13 @@ export default function CustomFileInput({ label }: { label: string }) {
       >
         <div className="flex items-center  bg-light-gray px-3   gap-2 h-12  text-muted-foreground justify-between w-full">
           {file ? file.name : "Driver's License"}
-          <p className="text-[#146421] bg-[#00C53A] py-0.5 rounded-md px-3">
-            uploaded
-          </p>
+          {file && (
+            <p className="text-[#146421] bg-[#00C53A] py-0.5 rounded-md px-3">
+              uploaded
+            </p>
+          )}
         </div>
-        {file && (
-          <div className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium text-green-600 bg-green-100 rounded">
-            <Check className="w-3 h-3" />
-            Uploaded
-          </div>
-        )}
+
         <Input
           ref={inputRef}
           type="file"

@@ -25,6 +25,10 @@ import {
   PostRepaymentPatternResponse,
   LoanDetailsResponse,
   LoanResponse,
+  SendOtpForForgetPasswordResponse,
+  SendOtpForForgetPasswordPayload,
+  ResetPasswordResponse,
+  ResetPasswordPayload,
 } from "@/types";
 import axiosInstance from ".";
 import {
@@ -37,10 +41,13 @@ import {
   GET_LOAN_DETAILS,
   GET_PROFILE,
   GET_TENURES,
+  INVENTORY_LIST,
   LIST_BANKS,
   POST_REPAYMENT_PATTERN,
   REQUEST_PIN_TOKEN,
   RESEND_EMAIL_OTP,
+  RESET_PASSWORD,
+  SEND_OTP_FOR_FORGET_PASSWORD,
   SIGN_IN,
   UPDATE_PIN,
   VERIFY_BANK_ACCOUNT,
@@ -58,6 +65,20 @@ interface UserProfile {
     };
   };
 }
+
+interface InventoryItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  quantity: number;
+  category: string;
+}
+
+interface InventoryResponse {
+  data: InventoryItem[];
+}
+
 // Generic GET Request
 export const fetcher = async <T>(
   url: string,
@@ -92,6 +113,10 @@ export const handleGetProfile = async (
   payload: SignInPayload
 ): Promise<SignInResponse> => {
   return await poster<SignInResponse, SignInPayload>(SIGN_IN, payload);
+};
+
+export const handleGetInventory = async (): Promise<InventoryResponse> => {
+  return await fetcher<InventoryResponse>(INVENTORY_LIST);
 };
 
 export const handleEmailVerification = async (
@@ -212,6 +237,24 @@ export const handleUpdatePin = async (
 
 export const handleRequestPinToken = async (): Promise<ApiResponse> => {
   return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
+};
+
+export const handleResetPassword = async (
+  payload: ResetPasswordPayload
+): Promise<ResetPasswordResponse> => {
+  return await poster<ResetPasswordResponse, ResetPasswordPayload>(
+    RESET_PASSWORD,
+    payload
+  );
+};
+
+export const handleSendOtpForForgetPassword = async (
+  payload: SendOtpForForgetPasswordPayload
+): Promise<SendOtpForForgetPasswordResponse> => {
+  return await poster<
+    SendOtpForForgetPasswordResponse,
+    SendOtpForForgetPasswordPayload
+  >(SEND_OTP_FOR_FORGET_PASSWORD, payload);
 };
 
 export const handleApiError = (

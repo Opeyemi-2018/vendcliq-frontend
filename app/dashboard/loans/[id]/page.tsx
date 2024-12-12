@@ -4,11 +4,12 @@ import Link from "next/link";
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { handleGetLoanDetails } from "@/lib/utils/api/apiHelper";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 const LoanDetailsScreen = () => {
   const { id } = useParams() as { id: string };
   const loanId = Array.isArray(id) ? id[0] : id;
+  const router = useRouter();
 
   const { data: loanDetails, isLoading } = useQuery({
     queryKey: ["loanDetails", loanId],
@@ -28,7 +29,7 @@ const LoanDetailsScreen = () => {
       currency: "NGN",
     }).format(amount);
   };
-
+  console.log(loan);
   return (
     <div className="w-full min-h-screen p-4 sm:p-6 md:p-8">
       <div className="rounded-lg w-full font-sans mx-auto p-4 sm:p-6 md:p-8">
@@ -67,7 +68,7 @@ const LoanDetailsScreen = () => {
             />
             <Detail
               label="Interest Frequency"
-              value={loan?.interestFrequency || "-"}
+              value={formatCurrency(Number(loan?.interestRate) || 0)}
             />
             <Detail label="Duration" value={`${loan?.duration || 0} Days`} />
             <Detail
@@ -105,7 +106,7 @@ const LoanDetailsScreen = () => {
               <tbody>
                 {loan?.repayments?.map((repayment) => (
                   <tr key={repayment.id} className="border-t">
-                    <td className="p-2 border">{repayment.reference}</td>
+                    <td className="p-2 border">{loan.reference}</td>
                     <td className="p-2 border">
                       {formatCurrency(Number(repayment.amount))}
                     </td>
@@ -115,13 +116,19 @@ const LoanDetailsScreen = () => {
                     <td className="p-2 border">
                       <StatusBadge status={repayment.status} />
                     </td>
-                    <td className="p-2 border">
-                      <Link href={"/payloan"}>
-                        <Button className="px-3 h-fit bg-yellow-500 text-black rounded-md hover:bg-yellow-600">
+                    {repayment && (
+                      <td className="p-2 border">
+                        <Button
+                          onClick={() => {
+                            router.push(`/payloan/${repayment.id}`);
+                          }}
+                          disabled={repayment.status !== "EQUIRIED"}
+                          className="px-3 h-fit bg-yellow-500 text-black rounded-md hover:bg-yellow-600"
+                        >
                           + Pay Loan
                         </Button>
-                      </Link>
-                    </td>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
