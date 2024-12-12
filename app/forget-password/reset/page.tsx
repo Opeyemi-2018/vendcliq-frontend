@@ -72,7 +72,7 @@ const Page = () => {
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-white mt-40 px-10 py-6">
+    <div className="max-w-xl mx-auto bg-inherit md:bg-white mt-40 px-10 py-6">
       <h2 className="text-xl font-semibold text-black text-left pb-2">
         Reset Your Password
       </h2>
@@ -111,7 +111,12 @@ const Page = () => {
         />
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
-
+        <p
+          className="text-sm text-primary font-bold mt-2 text-right cursor-pointer"
+          onClick={() => router.push("/login")}
+        >
+          Back to Login
+        </p>
         <Button
           onClick={handleSubmit}
           disabled={loading}

@@ -102,7 +102,7 @@ const Login = () => {
       </div>
 
       <div className="flex justify-center items-center h-[80%] gap-10 px-5 md:px-20">
-        <div className="flex flex-col justify-center h-full w-fit xl:w-[600px] bg-inherit md:bg-white rounded-3xl px-5 md:px-10">
+        <div className="flex flex-col justify-center h-full w-full xl:w-[600px] bg-inherit md:bg-white rounded-3xl px-5 md:px-10">
           <h1 className="font-semibold text-black text-2xl">Sign In</h1>
           <div className="mt-10 space-y-5 font-sans">
             {error && (
