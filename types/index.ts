@@ -32,6 +32,7 @@ export interface ISidebarButtonProps {
   label: string;
   isActive: boolean;
   className?: string;
+  onClick?: () => void;
 }
 export interface IRequestCardProps {
   title: string;
@@ -234,9 +235,11 @@ export interface VerifyBankAccountPayload {
 }
 
 export interface VerifyBankAccountResponse {
-  status: boolean;
-  message: string;
-  // Add any other properties that should be in the response
+  status: string;
+  msg: string;
+  data: {
+    accountName: string;
+  };
 }
 
 export interface ResendEmailOtpPayload {
@@ -408,4 +411,25 @@ export interface LoanResponse {
       repayments: Array<any>;
     }>;
   };
+}
+
+export interface SendOtpForForgetPasswordPayload {
+  email: string;
+}
+
+export interface SendOtpForForgetPasswordResponse {
+  status: string;
+  msg: string;
+  data: [];
+}
+
+export interface ResetPasswordPayload {
+  otp: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  status: string;
+  msg: string;
 }

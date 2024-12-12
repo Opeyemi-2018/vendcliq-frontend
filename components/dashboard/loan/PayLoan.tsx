@@ -11,9 +11,8 @@ export const PayLoan = () => {
           Pay Loan
         </h2>
 
-        <div className="mt-5">
+        <div className="mt-5  flex flex-col gap-3 font-sans">
           <Field label="Amount" />
-          <Field label="Select Amount" />
         </div>
 
         <Button className="mt-6 text-white w-full rounded-none">

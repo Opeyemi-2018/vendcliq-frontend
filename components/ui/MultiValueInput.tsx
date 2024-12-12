@@ -45,6 +45,7 @@ export default function MultiValueInput({
     phone: "",
     bank_verification_number: "",
   });
+  const [open, setOpen] = useState(false);
 
   const addShareholder = () => {
     setShareholders([...shareholders, newShareholder]);
@@ -57,6 +58,7 @@ export default function MultiValueInput({
       bank_verification_number: "",
     });
     onChange?.([...shareholders, newShareholder]);
+    setOpen(false);
   };
 
   const removeShareholder = (index: number) => {
@@ -86,7 +88,7 @@ export default function MultiValueInput({
             </Button>
           </div>
         ))}
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button variant="ghost" size="sm" className="text-muted-foreground">
               <Plus className="h-4 w-4 mr-2" />

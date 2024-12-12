@@ -1,6 +1,15 @@
 import React, { useContext } from "react";
 import Field from "@/components/ui/Field";
 import { RequestContext } from "./RequestContext";
+import {
+  Select,
+  SelectItem,
+  SelectContent,
+  SelectValue,
+  SelectTrigger,
+} from "@/components/ui/select";
+
+import { useGetInventory } from "@/services/loan/loan";
 
 interface Item {
   name: string;
@@ -55,22 +64,38 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
     console.log(items);
     onNext();
   };
-
+  const inventory = useGetInventory();
+  console.log(inventory.results);
   return (
-    <div className="w-full ">
+    <div className="w-full bg-white p-6 ">
       <h3 className="text-lg sm:text-xl font-medium border-b border-border pb-2 font-clash mb-4 sm:mb-8">
         What do you want to buy?
       </h3>
 
       {items.map((item, index) => (
         <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-          <Field
-            name="name"
-            label="Item"
-            placeholder="Item name"
-            type="text"
-            onChange={(e) => onInputChange(index, e)}
-          />
+          <div className=" flex flex-col gap-2">
+            <label className="font-medium text-sm text-black">Item</label>
+            <Select
+              onValueChange={(value) =>
+                onInputChange(index, {
+                  target: { name: "name", value },
+                } as React.ChangeEvent<HTMLSelectElement>)
+              }
+            >
+              <SelectTrigger className="h-12">
+                <SelectValue placeholder="Select an item" />
+              </SelectTrigger>
+              <SelectContent>
+                {inventory.results?.map((item) => (
+                  <SelectItem key={item.id} value={item.name}>
+                    {item.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <Field
             name="quantity"
             label="Quantity"

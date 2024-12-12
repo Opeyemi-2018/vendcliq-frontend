@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Logo from "@/components/Logo";
 
 export default function SignUpLayout({
   children,
@@ -8,13 +8,7 @@ export default function SignUpLayout({
   return (
     <div className="scroll-smooth relative">
       <div className="text-black absolute left-20 top-10">
-        <Image
-          src={"/assets/logo/logo.png"}
-          alt=""
-          width={150}
-          height={100}
-          className="object-cover"
-        />
+        <Logo />
       </div>
       <div className="">
         <main className="">{children}</main>

@@ -9,7 +9,13 @@ export default function middleware(request: NextRequest) {
   const token = request.cookies.get("authToken")?.value;
   // console.log(token);
   // Define public routes (e.g., login or signup pages)
-  const publicRoutes = ["/", "/login", "/signup"];
+  const publicRoutes = [
+    "/",
+    "/login",
+    "/signup",
+    "/forget-password/otp",
+    "/forget-password/reset",
+  ];
 
   // Skip middleware for public routes
   if (publicRoutes.includes(request.nextUrl.pathname)) {

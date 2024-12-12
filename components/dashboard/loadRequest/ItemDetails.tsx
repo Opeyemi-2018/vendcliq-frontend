@@ -44,6 +44,7 @@ interface RepaymentPattern {
 export const ItemDetails: React.FC<{
   onNext: () => void;
   onPrevious: () => void;
+  onSubmit: () => void;
   vendorDetails: VendorDetails;
   setVendorDetails: (vendorDetails: VendorDetails) => void;
 }> = ({ onNext }) => {
@@ -187,7 +188,6 @@ export const ItemDetails: React.FC<{
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("An error occurred while creating the loan");
     }
   };
 
@@ -199,8 +199,8 @@ export const ItemDetails: React.FC<{
   };
 
   return (
-    <div className="w-full min-h-screen">
-      <div className="rounded-lg w-full max-w-5xl mx-auto p-0 md:p-8">
+    <div className="w-full bg-white p-6 ">
+      <div className="">
         <h3 className="text-xl font-medium border-b border-border pb-2 font-clash mb-8">
           Loan Application
         </h3>
@@ -276,8 +276,10 @@ export const ItemDetails: React.FC<{
                 <Button
                   type="button"
                   onClick={getRepaymentSchedule}
-                  disabled={isScheduleLoading}
-                  className="w-full py-2 px-8 bg-indigo-600 text-white rounded-sm hover:bg-indigo-700"
+                  disabled={
+                    isScheduleLoading || !selectedTenure || !repaymentPattern
+                  }
+                  className="w-fit py-2 px-8 0 text-white rounded-sm "
                 >
                   {isScheduleLoading
                     ? "Calculating..."

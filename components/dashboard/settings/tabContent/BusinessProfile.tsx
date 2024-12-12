@@ -17,6 +17,7 @@ export const BusinessProfile = () => {
   });
 
   useEffect(() => {
+    console.log(profile);
     if (profile?.business) {
       setBusinessData({
         name: profile.business.name || "",
@@ -84,6 +85,7 @@ export const BusinessProfile = () => {
           <Field
             label="Memo"
             name="memo"
+            type="file"
             value={businessData.memo}
             placeholder="Memo"
             onChange={handleInputChange}
@@ -91,6 +93,7 @@ export const BusinessProfile = () => {
           <Field
             label="Date of Incorporation"
             name="dateOfIncorporation"
+            type="date"
             value={businessData.dateOfIncorporation}
             placeholder="Date of Incorporation"
             onChange={handleInputChange}

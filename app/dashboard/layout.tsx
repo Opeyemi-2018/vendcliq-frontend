@@ -3,10 +3,9 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
-import { ChevronDown, Headphones, LogOut } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { ChevronDown, Headphones, LogOut, Menu, X } from "lucide-react";
+
+import { usePathname, useRouter } from "next/navigation";
 import { ISidebarButtonProps } from "@/types";
 import "../globals.css";
 import {
@@ -19,71 +18,51 @@ import cn from "@/lib/utils/cn";
 import {
   Bill,
   Book1,
-  DocumentText1,
   Home2,
+  PercentageSquare,
   Setting2,
   TableDocument,
   Wallet2,
 } from "iconsax-react";
 import { useDashboardData } from "@/services/home/home";
 import { destroyToken } from "@/lib/utils/api";
-
-const SidebarButton = ({
-  href,
-  icon,
-  label,
-  isActive,
-  className,
-}: ISidebarButtonProps) => (
-  <Link href={href} className="w-full">
-    <Button
-      className={cn(
-        `w-full flex justify-start text-black font-sans text-md items-center pl-5 my-2 py-5 h-14 rounded-none bg-inherit hover:bg-active ${
-          isActive ? "bg-active text-black border-r-4 border-primary" : ""
-        }`,
-        className
-      )}
-    >
-      <div className="text-neutral-gray">{icon}</div>
-      {label}
-    </Button>
-  </Link>
-);
+// import { handleGetDashboard } from "@/lib/utils/api/apiHelper";
+import Logo from "@/components/Logo";
 
 const menuItems = [
   {
     href: "/dashboard/home",
-    icon: <Home2 size="80" color="black" />,
+    icon: <Home2 size="28" color="black" />,
     label: "Home",
   },
   {
     href: "/dashboard/loans",
-    icon: <TableDocument size="60" color="black" />,
+    icon: <TableDocument size="28" color="black" />,
     label: "Loans",
   },
   {
     href: "/dashboard/inventory",
-    icon: <Book1 size="60" color="#000000" />,
+    icon: <Book1 size="28" color="#000000" />,
     label: "Inventory",
   },
   {
     href: "/dashboard/bill",
-    icon: <DocumentText1 size="60" color="#000000" />,
+    icon: <Bill size="28" color="#000000" />,
     label: "Bill Payment",
   },
   {
     href: "/dashboard/account",
-    icon: <Bill size="60" color="#000000" />,
+    icon: <Wallet2 size="28" color="#000000" />,
     label: "Account",
   },
   {
     href: "/dashboard/transaction",
-    icon: <Wallet2 size="60" color="#000000" />,
+    icon: <PercentageSquare size="28" color="#000000" />,
     label: "Transaction",
   },
   {
     href: "/dashboard/settings",
-    icon: <Setting2 size="60" color="#000000" />,
+    icon: <Setting2 size="28" color="#000000" />,
     label: "Settings",
   },
 ];
@@ -94,33 +73,79 @@ export default function InstructorLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // const [isFinishedSetup, setIsFinishedSetup] = useState<boolean | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const { data } = useDashboardData();
-  console.log("dashboardData", data?.data);
-  // Sample transactions data
+
+  // useEffect(() => {
+  //   const checkRegistrationStatus = async () => {
+  //     try {
+  //       const response = await handleGetDashboard();
+  //       const profileCompletionStep =
+  //         response.data.business.profileCompletionStep;
+  //       const accountStatus = response.data.account.status;
+
+  //       const isComplete =
+  //         profileCompletionStep !== "0" &&
+  //         response.data.account.status === "ACTIVE";
+
+  //       setIsFinishedSetup(isComplete);
+  //     } catch (error) {
+  //       console.error("Failed to fetch profile:", error);
+  //       setIsFinishedSetup(false);
+  //     }
+  //   };
+
+  //   checkRegistrationStatus();
+  // }, []);
 
   const customer = data?.data.customer;
-
   const firstName = customer?.firstname;
   const lastName = customer?.lastname;
   const initials = `${firstName?.[0]}${lastName?.[0]}`;
 
+  const ModifiedSidebarButton = ({
+    href,
+    icon,
+    label,
+    isActive,
+    className,
+  }: ISidebarButtonProps) => (
+    <button
+      onClick={() => {
+        // handleNavigation(href);
+        router.push(href);
+        setIsSidebarOpen(false);
+      }}
+      className={cn(
+        `w-full flex justify-start text-black   font-sans text-[16px] items-center pl-5 my-5 py-5 h-12 rounded-none bg-inherit hover:bg-active ${
+          isActive ? "bg-active text-black border-r-4 border-primary" : ""
+        }`,
+        className
+      )}
+    >
+      <div className="text-neutral-gray">{icon}</div>
+      <div
+        className={cn(
+          `w-full flex justify-start text-black   font-[500] text-[16px] items-center pl-5 my-5 py-5 h-12 `
+        )}
+      >
+        {label}
+      </div>
+    </button>
+  );
+
   return (
     <html lang="en">
-      <body className="min-h-screen h-full ">
-        <div className="h-14">
-          <header className="fixed bg-white w-full z-40 flex justify-between items-center px-4 sm:px-6 lg:px-8 py-4">
-            <Image
-              src="/assets/logo/logo.png"
-              alt="Vera logo"
-              width={150}
-              height={100}
-            />
+      <body className="min-h-screen h-full">
+        <div className="">
+          <header className="fixed bg-white w-full  flex justify-between items-center px-4 sm:px-6 lg:px-8 py-4 border-b  border-[#BDBDBD]">
             <button
               className="xl:hidden text-gray-700"
               onClick={() => setIsSidebarOpen(true)}
             >
-              ☰
+              <Menu size={20} />
             </button>
             <div className="hidden md:flex justify-end w-full items-center space-x-4">
               <Button
@@ -167,13 +192,16 @@ export default function InstructorLayout({
           </header>
         </div>
 
-        <div className="flex flex-col md:flex-row h-screen">
+        <div className="flex flex-col md:flex-row h-screen ">
           {/* Sidebar for desktop */}
-          <div className="hidden xl:block h-full border-r md:w-[25%] xl:w-[15%] border-[#BDBDBD]">
-            <aside className="fixed h-full z-50 bg-white  md:w-[25%] xl:w-[15%]">
-              <nav className="h-full w-full px-5 mt-20">
+          <div className="hidden xl:block h-full  md:w-[25%] xl:w-[15%]">
+            <aside className="fixed h-full z-50 bg-white border-r  border-[#BDBDBD] md:w-[25%] xl:w-[15%]">
+              <div className="absolute top-5 left-5 z-50">
+                <Logo />
+              </div>
+              <nav className="h-full w-full px-5 mt-28">
                 {menuItems.map((item) => (
-                  <SidebarButton
+                  <ModifiedSidebarButton
                     key={item.href}
                     href={item.href}
                     icon={item.icon}
@@ -197,11 +225,11 @@ export default function InstructorLayout({
                 className="text-gray-700 text-xl font-bold mb-4"
                 onClick={() => setIsSidebarOpen(false)}
               >
-                ×
+                <X size={20} />
               </button>
               <nav>
                 {menuItems.map((item) => (
-                  <SidebarButton
+                  <ModifiedSidebarButton
                     key={item.href}
                     href={item.href}
                     icon={item.icon}
@@ -268,7 +296,7 @@ export default function InstructorLayout({
             ></div>
           )}
 
-          <div className="flex-1   min-h-screen border-t border-border bg-background mt-5">
+          <div className="flex-1   min-h-screen  bg-background mt-[75px]">
             <main>{children}</main>
           </div>
         </div>

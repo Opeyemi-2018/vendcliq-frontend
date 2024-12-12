@@ -11,8 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { handleListBanks } from "@/lib/utils/api/apiHelper";
-import { handleVerifyBankAccount } from "@/services/verifyBankAccount/VerifyBankAccount";
+import {
+  handleListBanks,
+  handleVerifyBankAccount,
+} from "@/lib/utils/api/apiHelper";
 
 export const VerifyBankAccount = () => {
   const [accountNumber, setAccountNumber] = useState("");
@@ -25,7 +27,13 @@ export const VerifyBankAccount = () => {
   const [accountName, setAccountName] = useState("");
   const [accountVerified, setAccountVerified] = useState(false);
   const [verificationError, setVerificationError] = useState("");
+
   const handleVerification = async () => {
+    if (!selectedBank || !accountNumber) {
+      setVerificationError("Please select a bank and enter account number");
+      return;
+    }
+
     try {
       setIsLoading(true);
       setVerificationError("");
@@ -36,10 +44,10 @@ export const VerifyBankAccount = () => {
       });
 
       if (response.status) {
-        setAccountName(response.message);
+        setAccountName(response.data.accountName);
         setAccountVerified(true);
       } else {
-        setVerificationError(response.message);
+        setVerificationError(response.msg);
         setAccountVerified(false);
       }
     } catch (error) {
@@ -108,14 +116,24 @@ export const VerifyBankAccount = () => {
             </Select>
           </div>
 
-          <Field
-            label="Account Number"
-            required
-            type="text"
-            placeholder="Enter account number"
-            value={accountNumber}
-            onChange={(e) => setAccountNumber(e.target.value)}
-          />
+          <div className="flex gap-4">
+            <Field
+              label="Account Number"
+              required
+              type="text"
+              placeholder="Enter account number"
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              className="flex-1"
+            />
+            <Button
+              onClick={handleVerification}
+              className="self-end h-12 rounded-none bg-primary text-white hover:bg-primary/90"
+              disabled={!selectedBank || !accountNumber || isLoading}
+            >
+              {isLoading ? "Verifying..." : "Check Account"}
+            </Button>
+          </div>
         </div>
 
         <div className="flex mt-10 gap-5 justify-end">
@@ -123,11 +141,10 @@ export const VerifyBankAccount = () => {
             Cancel
           </Button>
           <Button
-            onClick={handleVerification}
             className="rounded-none text-black"
-            disabled={!selectedBank || !accountNumber || isLoading}
+            disabled={!accountVerified || isLoading}
           >
-            {isLoading ? "Verifying..." : "Verify Account"}
+            Save Changes
           </Button>
         </div>
       </div>

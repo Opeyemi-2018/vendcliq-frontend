@@ -28,6 +28,10 @@ const GET_TENURES = "/client/v1/loans/list/tenures";
 const REPAYMENT_PATTERN = (tenure: string) =>
   `/client/v1/loans/list/repayment-pattern?tenure=${tenure}`;
 const POST_REPAYMENT_PATTERN = "/client/v1/loans/repayment/pattern";
+const INVENTORY_LIST = "/v1/inventory/search";
+const SEND_OTP_FOR_FORGET_PASSWORD = "/client/v1/auth/forgot-password";
+const RESET_PASSWORD = "/client/v1/auth/reset-password";
+const GET_BANK_ACCOUNT = "/client/v1/bank-accounts";
 // EXPORT URLS
 export {
   VERIFY_EMAIL,
@@ -53,4 +57,8 @@ export {
   POST_REPAYMENT_PATTERN,
   GET_LOAN_DETAILS,
   GET_LOAN,
+  INVENTORY_LIST,
+  SEND_OTP_FOR_FORGET_PASSWORD,
+  RESET_PASSWORD,
+  GET_BANK_ACCOUNT,
 };
