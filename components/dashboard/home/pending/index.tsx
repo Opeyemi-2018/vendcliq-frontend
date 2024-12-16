@@ -21,7 +21,7 @@ export const PendingAccountDashboard = () => {
             buttonText="Request loan"
             icon={<Landmark size={44} />}
             primaryColor="bg-primary"
-            onRequestLoan={() => router.push("/request")}
+            onRequestLoan={() => router.push("/dashboard/request")}
           />
 
           <RequestCard
@@ -30,7 +30,7 @@ export const PendingAccountDashboard = () => {
             buttonText="Receive money"
             icon={<Landmark size={44} />}
             primaryColor="bg-primary"
-            onRequestLoan={() => router.push("/receive")}
+            onRequestLoan={() => router.push("/dashboard/receive")}
           />
         </div>
       </div>

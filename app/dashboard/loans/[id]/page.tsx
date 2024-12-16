@@ -39,7 +39,7 @@ const LoanDetailsScreen = () => {
             Loan Details
           </h3>
           <div className="text-right mb-4">
-            <Link href={"/payloan"}>
+            <Link href={"/dashboard/payloan"}>
               <Button className="px-4 py-1 bg-yellow-500 text-black font-semibold rounded hover:bg-yellow-600">
                 + Pay Loan
               </Button>
@@ -47,6 +47,7 @@ const LoanDetailsScreen = () => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4 border border-gray-200 rounded-md bg-gray-50">
             <Detail
+              key="status"
               label="Status"
               value={
                 <span className="flex items-center bg-[#D8DFFF] w-fit px-3 rounded-2xl font-medium text-sm text-[#39498C] gap-2">
@@ -56,34 +57,52 @@ const LoanDetailsScreen = () => {
               }
             />
             <Detail
+              key="loan-amount"
               label="Loan Amount"
               value={formatCurrency(Number(loan?.amount) || 0)}
             />
-            <Detail label="Reference" value={loan?.reference || "-"} />
             <Detail
+              key="reference"
+              label="Reference"
+              value={loan?.reference || "-"}
+            />
+            <Detail
+              key="interest"
               label="Interest"
               value={`${loan?.interestRate || 0}% (${formatCurrency(
                 Number(loan?.interestAmount) || 0
               )})`}
             />
             <Detail
+              key="interest-frequency"
               label="Interest Frequency"
               value={formatCurrency(Number(loan?.interestRate) || 0)}
             />
-            <Detail label="Duration" value={`${loan?.duration || 0} Days`} />
             <Detail
+              key="duration"
+              label="Duration"
+              value={`${loan?.duration || 0} Days`}
+            />
+            <Detail
+              key="interest-due-today"
               label="Interest Due Today"
               value={formatCurrency(Number(loan?.interestDueToday) || 0)}
             />
             <Detail
+              key="amount-due-today"
               label="Amount Due Today"
               value={formatCurrency(Number(loan?.amountDueToday) || 0)}
             />
             <Detail
+              key="repayment-type"
               label="RepaymentType"
               value={loan?.repaymentPattern || "-"}
             />
-            <Detail label="Purpose" value={loan?.purpose || "-"} />
+            <Detail
+              key="purpose"
+              label="Purpose"
+              value={loan?.purpose || "-"}
+            />
           </div>
         </div>
 
@@ -120,7 +139,7 @@ const LoanDetailsScreen = () => {
                       <td className="p-2 border">
                         <Button
                           onClick={() => {
-                            router.push(`/payloan/${repayment.id}`);
+                            router.push(`/dashboard/payloan/${repayment.id}`);
                           }}
                           disabled={repayment.status !== "EQUIRIED"}
                           className="px-3 h-fit bg-yellow-500 text-black rounded-md hover:bg-yellow-600"

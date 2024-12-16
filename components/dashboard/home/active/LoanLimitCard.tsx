@@ -36,7 +36,7 @@ const LoanLimitCard = ({ limit }: { limit: number }) => (
           <p className="text-sm sm:text-base">Pay small small</p>
         </div>
       </div>
-      <Link href={"/request"}>
+      <Link href={"/dashboard/request"}>
         <Button className="w-fit z-30 h-10 mt-5 sm:mt-0 text-sm flex text-black rounded-md absolute bottom-5 sm:bottom-10">
           Request loan
           <TiArrowRight size="20" className="text-black ml-2" />

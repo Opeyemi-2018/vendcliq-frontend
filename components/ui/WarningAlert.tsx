@@ -14,7 +14,7 @@ export const WarningAlert = () => {
       <p className="text-black text-center sm:text-left">
         Click here to complete your business account setup
       </p>
-      <Link href="/setup" className="w-full sm:w-auto">
+      <Link href="/dashboard/setup" className="w-full sm:w-auto">
         <Button className="w-full sm:w-fit h-8 justify-center items-center text-[#292826] font-[500] flex px-5 rounded-md">
           Complete profile
           <ArrowRight size={16} />

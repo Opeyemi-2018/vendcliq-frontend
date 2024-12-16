@@ -28,7 +28,13 @@ interface RequestContextType {
 export const RequestContext = createContext<RequestContextType>({
   items: [],
   setItems: () => {},
-  vendorDetails: {} as VendorDetail,
+  vendorDetails: {
+    bankCode: "",
+    accountName: "",
+    narration: "",
+    invoiceNo: "",
+    accountNumber: "",
+  }, // Initializing with default empty values to avoid issues
   setVendorDetails: () => {},
   tenure: "",
   setTenure: () => {},
@@ -40,9 +46,13 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [items, setItems] = useState<ItemDetails[]>([]);
-  const [vendorDetails, setVendorDetails] = useState<VendorDetail>(
-    {} as VendorDetail
-  );
+  const [vendorDetails, setVendorDetails] = useState<VendorDetail>({
+    bankCode: "",
+    accountName: "",
+    narration: "",
+    invoiceNo: "",
+    accountNumber: "",
+  }); // Initializing with an empty structure
   const [tenure, setTenure] = useState<string>("");
   const [repaymentPattern, setRepaymentPattern] = useState<string>("");
 
