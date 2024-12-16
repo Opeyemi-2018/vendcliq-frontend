@@ -100,6 +100,16 @@ export default function InstructorLayout({
   //   checkRegistrationStatus();
   // }, []);
 
+  // Check if current path should exclude the dashboard layout
+  const excludedPaths = [
+    "/dashboard/payloan",
+    "/dashboard/request",
+    "/dashboard/setup",
+  ];
+  if (excludedPaths.some((path) => pathname?.startsWith(path))) {
+    return <>{children}</>;
+  }
+
   const customer = data?.data.customer;
   const firstName = customer?.firstname;
   const lastName = customer?.lastname;
@@ -137,27 +147,120 @@ export default function InstructorLayout({
   );
 
   return (
-    <html lang="en">
-      <body className="min-h-screen h-full">
-        <div className="">
-          <header className="fixed bg-white w-full  flex justify-between items-center px-4 sm:px-6 lg:px-8 py-4 border-b  border-[#BDBDBD]">
-            <button
-              className="xl:hidden text-gray-700"
-              onClick={() => setIsSidebarOpen(true)}
+    <>
+      <div className="">
+        <header className="fixed bg-white w-full  flex justify-between items-center px-4 sm:px-6 lg:px-8 py-4 border-b  border-[#BDBDBD]">
+          <button
+            className="xl:hidden text-gray-700"
+            onClick={() => setIsSidebarOpen(true)}
+          >
+            <Menu size={20} />
+          </button>
+          <div className="hidden md:flex justify-end w-full items-center space-x-4">
+            <Button
+              aria-label="support"
+              className="bg-inherit flex items-center gap-2"
             >
-              <Menu size={20} />
+              <Headphones size={20} />
+              <span className="font-medium text-nowrap text-gray-700">
+                Support
+              </span>
+            </Button>
+            <div className="border-r-2 border-border h-7"></div>
+            <div className="flex items-center gap-5 rounded-full">
+              <span className="font-medium text-nowrap text-gray-700">{`${firstName} ${lastName}`}</span>
+              <Avatar>
+                <AvatarFallback className="bg-active border-2 text-black">
+                  {initials}
+                </AvatarFallback>
+                <AvatarImage
+                  src="/placeholder.svg?height=32&width=32"
+                  alt={`${firstName} ${lastName}`}
+                />
+              </Avatar>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="px-4 py-2 text-white rounded-md">
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-fit mt-2 px-5 mr-5 py-5">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      destroyToken();
+                      localStorage.removeItem("authToken");
+                      window.location.href = "/";
+                    }}
+                    className="cursor-pointer flex items-center gap-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Logout</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </header>
+      </div>
+
+      <div className="flex flex-col md:flex-row h-screen ">
+        {/* Sidebar for desktop */}
+        <div className="hidden xl:block h-full  md:w-[25%] xl:w-[15%]">
+          <aside className="fixed h-full z-50 bg-white border-r  border-[#BDBDBD] md:w-[25%] xl:w-[15%]">
+            <div className="absolute top-5 left-5 z-50">
+              <Logo />
+            </div>
+            <nav className="h-full w-full px-5 mt-28">
+              {menuItems.map((item) => (
+                <ModifiedSidebarButton
+                  key={item.href}
+                  href={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  isActive={
+                    pathname
+                      ? pathname === item.href || pathname.startsWith(item.href)
+                      : false
+                  }
+                />
+              ))}
+            </nav>
+          </aside>
+        </div>
+
+        {/* Sidebar for mobile */}
+        {isSidebarOpen && (
+          <div className="fixed inset-0 z-50 bg-white p-5 xl:hidden">
+            <button
+              className="text-gray-700 text-xl font-bold mb-4"
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              <X size={20} />
             </button>
-            <div className="hidden md:flex justify-end w-full items-center space-x-4">
+            <nav>
+              {menuItems.map((item) => (
+                <ModifiedSidebarButton
+                  key={item.href}
+                  href={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  isActive={
+                    pathname
+                      ? pathname === item.href || pathname.startsWith(item.href)
+                      : false
+                  }
+                />
+              ))}
+            </nav>
+            <div className="flex  justify-start w-full items-left space-x-4">
               <Button
                 aria-label="support"
-                className="bg-inherit flex items-center gap-2"
+                className="bg-inherit flex w-fit items-center gap-2"
               >
                 <Headphones size={20} />
-                <span className="font-medium text-nowrap text-gray-700">
+                <span className="font-medium text-nowrap  text-gray-700">
                   Support
                 </span>
               </Button>
-              <div className="border-r-2 border-border h-7"></div>
+
               <div className="flex items-center gap-5 rounded-full">
                 <span className="font-medium text-nowrap text-gray-700">{`${firstName} ${lastName}`}</span>
                 <Avatar>
@@ -189,118 +292,21 @@ export default function InstructorLayout({
                 </DropdownMenu>
               </div>
             </div>
-          </header>
-        </div>
-
-        <div className="flex flex-col md:flex-row h-screen ">
-          {/* Sidebar for desktop */}
-          <div className="hidden xl:block h-full  md:w-[25%] xl:w-[15%]">
-            <aside className="fixed h-full z-50 bg-white border-r  border-[#BDBDBD] md:w-[25%] xl:w-[15%]">
-              <div className="absolute top-5 left-5 z-50">
-                <Logo />
-              </div>
-              <nav className="h-full w-full px-5 mt-28">
-                {menuItems.map((item) => (
-                  <ModifiedSidebarButton
-                    key={item.href}
-                    href={item.href}
-                    icon={item.icon}
-                    label={item.label}
-                    isActive={
-                      pathname
-                        ? pathname === item.href ||
-                          pathname.startsWith(item.href)
-                        : false
-                    }
-                  />
-                ))}
-              </nav>
-            </aside>
           </div>
+        )}
 
-          {/* Sidebar for mobile */}
-          {isSidebarOpen && (
-            <div className="fixed inset-0 z-50 bg-white p-5 xl:hidden">
-              <button
-                className="text-gray-700 text-xl font-bold mb-4"
-                onClick={() => setIsSidebarOpen(false)}
-              >
-                <X size={20} />
-              </button>
-              <nav>
-                {menuItems.map((item) => (
-                  <ModifiedSidebarButton
-                    key={item.href}
-                    href={item.href}
-                    icon={item.icon}
-                    label={item.label}
-                    isActive={
-                      pathname
-                        ? pathname === item.href ||
-                          pathname.startsWith(item.href)
-                        : false
-                    }
-                  />
-                ))}
-              </nav>
-              <div className="flex  justify-start w-full items-left space-x-4">
-                <Button
-                  aria-label="support"
-                  className="bg-inherit flex w-fit items-center gap-2"
-                >
-                  <Headphones size={20} />
-                  <span className="font-medium text-nowrap  text-gray-700">
-                    Support
-                  </span>
-                </Button>
+        {/* Overlay for mobile sidebar */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black opacity-50 xl:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          ></div>
+        )}
 
-                <div className="flex items-center gap-5 rounded-full">
-                  <span className="font-medium text-nowrap text-gray-700">{`${firstName} ${lastName}`}</span>
-                  <Avatar>
-                    <AvatarFallback className="bg-active border-2 text-black">
-                      {initials}
-                    </AvatarFallback>
-                    <AvatarImage
-                      src="/placeholder.svg?height=32&width=32"
-                      alt={`${firstName} ${lastName}`}
-                    />
-                  </Avatar>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="px-4 py-2 text-white rounded-md">
-                      <ChevronDown className="h-4 w-4 text-gray-500" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-fit mt-2 px-5 mr-5 py-5">
-                      <DropdownMenuItem
-                        onClick={() => {
-                          destroyToken();
-                          localStorage.removeItem("authToken");
-                          window.location.href = "/";
-                        }}
-                        className="cursor-pointer flex items-center gap-2"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        <span>Logout</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Overlay for mobile sidebar */}
-          {isSidebarOpen && (
-            <div
-              className="fixed inset-0 z-40 bg-black opacity-50 xl:hidden"
-              onClick={() => setIsSidebarOpen(false)}
-            ></div>
-          )}
-
-          <div className="flex-1   min-h-screen  bg-background mt-[75px]">
-            <main>{children}</main>
-          </div>
+        <div className="flex-1   min-h-screen  bg-background mt-[75px]">
+          <main>{children}</main>
         </div>
-      </body>
-    </html>
+      </div>
+    </>
   );
 }

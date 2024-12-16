@@ -63,7 +63,7 @@ const Page = () => {
                   <br /> 24-48 hours of a working day
                 </p>
               </div>
-              <Link href={"/request"}>
+              <Link href={"/dashboard/request"}>
                 <Button className="bg-inherit hover:bg-inherit text-primary border border-primary flex items-center justify-center gap-2 mt-4">
                   <CgNotes />
                   Request Loan

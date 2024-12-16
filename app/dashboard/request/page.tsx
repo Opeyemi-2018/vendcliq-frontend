@@ -1,13 +1,13 @@
 "use client";
+
 import { ItemDetails } from "@/components/dashboard/loadRequest/ItemDetails";
 import LoanStatus from "@/components/dashboard/loadRequest/LoadStatus";
 import LoanStepsSidebar from "@/components/dashboard/loadRequest/LoanStepsSidebar";
 import LoanStepOne from "@/components/dashboard/loadRequest/WhatToBuy";
 import LoanStepTwo from "@/components/dashboard/loadRequest/WhoToBuyFrom";
 import Logo from "@/components/Logo";
-
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { IoCloseOutline } from "react-icons/io5";
 
 interface Item {
@@ -27,7 +27,7 @@ export interface VendorDetails {
   tenure: string;
 }
 
-const LoanApplication: React.FC = () => {
+const LoanApplication = () => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [items, setItems] = useState<Item[]>([
@@ -45,13 +45,6 @@ const LoanApplication: React.FC = () => {
     tenure: "",
   });
 
-  useEffect(() => {
-    console.log("LoanApplication mounted");
-    return () => {
-      console.log("LoanApplication unmounted");
-    };
-  }, []);
-
   const handleAddItem = () => {
     setItems([
       ...items,
@@ -67,9 +60,15 @@ const LoanApplication: React.FC = () => {
     index: number,
     event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const newItems = [...items];
-    newItems[index][event.target.name as keyof Item] = event.target.value;
-    setItems(newItems);
+    const { name, value } = event.target;
+    if (name && name in items[index]) {
+      const newItems = [...items];
+      newItems[index] = {
+        ...newItems[index],
+        [name]: value,
+      };
+      setItems(newItems);
+    }
   };
 
   const handleBankChange = (value: string) => {
@@ -150,7 +149,7 @@ const LoanApplication: React.FC = () => {
         <div className="w-full md:w-full h-screen">
           {currentStep === 1 && (
             <LoanStepOne
-              key={1}
+              key="step-1"
               items={items}
               onAddItem={handleAddItem}
               onNext={handleNextStep}
@@ -160,7 +159,7 @@ const LoanApplication: React.FC = () => {
 
           {currentStep === 2 && (
             <LoanStepTwo
-              key={2}
+              key="step-2"
               onVendorChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setVendor(e.target.value)
               }
@@ -170,15 +169,18 @@ const LoanApplication: React.FC = () => {
               onPrevious={handlePreviousStep}
             />
           )}
+
           {currentStep === 3 && (
             <ItemDetails
-              key={3}
+              key="step-3"
               onNext={handleNextStep}
               onSubmit={handleSubmitLoan}
               onPrevious={handlePreviousStep}
               vendorDetails={{
-                amount: parseFloat(vendorDetails.amount),
-                tenure: vendorDetails.tenure,
+                amount: vendorDetails.amount
+                  ? parseFloat(vendorDetails.amount)
+                  : 0,
+                tenure: vendorDetails.tenure || "",
               }}
               setVendorDetails={(details) =>
                 setVendorDetails({
@@ -189,7 +191,8 @@ const LoanApplication: React.FC = () => {
               }
             />
           )}
-          {currentStep === 4 && <LoanStatus />}
+
+          {currentStep === 4 && <LoanStatus key="step-4" />}
         </div>
       </div>
     </div>
