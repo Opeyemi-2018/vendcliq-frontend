@@ -75,7 +75,9 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
       {items.map((item, index) => (
         <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div className=" flex flex-col gap-2">
-            <label className="font-medium text-sm text-black">Item</label>
+            <label className="font-medium text-sm text-black">
+              Item {index + 1}
+            </label>
             <Select
               onValueChange={(value) =>
                 onInputChange(index, {

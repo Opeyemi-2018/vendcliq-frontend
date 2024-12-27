@@ -33,11 +33,19 @@ export const BusinessProfile = () => {
   }, [profile]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setBusinessData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    const { name, value, type } = e.target;
+    if (type === "file") {
+      const file = e.target.files?.[0];
+      setBusinessData((prevData) => ({
+        ...prevData,
+        [name]: file || null,
+      }));
+    } else {
+      setBusinessData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSave = () => {
@@ -86,7 +94,6 @@ export const BusinessProfile = () => {
             label="Memo"
             name="memo"
             type="file"
-            value={businessData.memo}
             placeholder="Memo"
             onChange={handleInputChange}
           />

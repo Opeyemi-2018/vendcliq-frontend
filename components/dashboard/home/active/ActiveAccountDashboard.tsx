@@ -12,6 +12,11 @@ import FilterSortDropdown from "@/components/ui/FilterSortDropdown";
 import CopyToClipboard from "@/components/ui/CopyToClipboard";
 import { useDashboardData } from "@/services/home/home";
 import { useGetProfile } from "@/services/profile/Profile";
+import {
+  handleGetLoan,
+  handleGetTransactionHistory,
+} from "@/lib/utils/api/apiHelper";
+import { useQuery } from "@tanstack/react-query";
 
 export const ActiveAccountDashboard: React.FC = () => {
   const [filter, setFilter] = useState<string | null>(null);
@@ -20,115 +25,57 @@ export const ActiveAccountDashboard: React.FC = () => {
 
   const { data } = useDashboardData();
   const { profile } = useGetProfile();
-  console.log("dashboardData", data?.data);
-  console.log("profile", profile);
-  // Sample transactions data
+
+  const { data: loanData } = useQuery({
+    queryKey: ["loans"],
+    queryFn: handleGetLoan,
+  });
+
+  const [currentPage] = useState(1);
+
+  const {
+    data: allTransactions,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["transactionHistory", currentPage],
+    queryFn: () => handleGetTransactionHistory(currentPage),
+  });
+
+  const loanTransactions = loanData?.data?.data || [];
   const account = data?.data.account;
   const customer = data?.data.customer;
-
   const nextPaymentDate = data?.data.nextRepayment;
 
-  const loanTransactions = [
-    {
-      id: "#0056757",
-      amount: 5000000.0,
-      maturityAmount: 6500000.0,
-      date: "02/May/2024",
-      dueDate: "02/June/2024",
-      status: "Active",
-    },
-    {
-      id: "#0056757",
-      amount: 5000000.0,
-      maturityAmount: 6500000.0,
-      date: "02/May/2024",
-      dueDate: "02/June/2024",
-      status: "Active",
-    },
-    {
-      id: "#0056757",
-      amount: 5000000.0,
-      maturityAmount: 6500000.0,
-      date: "02/May/2024",
-      dueDate: "02/June/2024",
-      status: "Active",
-    },
-    {
-      id: "#0056757",
-      amount: 5000000.0,
-      maturityAmount: 6500000.0,
-      date: "02/May/2024",
-      dueDate: "02/June/2024",
-      status: "Active",
-    },
-  ];
+  // Get active loan amount
+  const activeLoan = loanTransactions.find(
+    (loan) => loan.status.toLowerCase() === "active"
+  );
+  const activeLoanAmount = activeLoan ? activeLoan.amount : "0.00";
 
-  const [transactions] = useState([
-    {
-      date: "7 Mar 2024 | 17:38:00",
-      description: "OUTWARD TRANSFER (N) 2334647 To",
-      recipientInfo: "WEMA BANK | EBUBE DRINKS LIMITED",
-      transactionId: "/00003883383364YTHD647749904",
-      amount: 5000000,
-      isOutgoing: true,
-    },
-    {
-      date: "8 Mar 2024 | 12:30:00",
-      description: "INWARD TRANSFER (N) 5463747 From",
-      recipientInfo: "GTBANK | CHUKWUDI FOODS",
-      transactionId: "/00003453453345YTHD754560123",
-      amount: 1500000,
-      isOutgoing: false,
-    },
-    {
-      date: "9 Mar 2024 | 15:45:00",
-      description: "OUTWARD TRANSFER (N) 8765421 To",
-      recipientInfo: "ZENITH BANK | AYOMIDE STORES",
-      transactionId: "/00005675675674YTHD839458304",
-      amount: 250000,
-      isOutgoing: true,
-    },
-    {
-      date: "10 Mar 2024 | 09:15:00",
-      description: "INWARD TRANSFER (N) 3647534 From",
-      recipientInfo: "ACCESS BANK | JIDE ENTERPRISE",
-      transactionId: "/00008374747484YTHD846464848",
-      amount: 300000,
-      isOutgoing: false,
-    },
-    {
-      date: "11 Mar 2024 | 10:20:00",
-      description: "OUTWARD TRANSFER (N) 2334667 To",
-      recipientInfo: "UBA | OLA MARKET",
-      transactionId: "/00003883383364YTHD647749905",
-      amount: 1000000,
-      isOutgoing: true,
-    },
-  ]);
-
-  // Transformation to include additional required properties
-  const transformedTransactions = transactions.map((transaction, index) => ({
-    ...transaction,
-    id: index.toString(), // Generate an id if not available
-    maturityAmount: 0, // Placeholder for maturity amount
-    dueDate: "", // Placeholder for due date
-    status: "completed", // Placeholder status
-  }));
+  // Transform transactions data
+  const transformedTransactions = allTransactions?.data.data.map(
+    (transaction, index) => ({
+      ...transaction,
+      id: index.toString(),
+      maturityAmount: 0,
+      dueDate: "",
+      status: "completed",
+    })
+  );
 
   // Memoized filtered, sorted, and searched data
   const filteredAndSortedTransactions = useMemo(() => {
-    let data = [...transformedTransactions];
+    let data = transformedTransactions || [];
 
-    // Apply filter
     if (filter) {
       data = data.filter((transaction) => {
-        if (filter === "incoming") return !transaction.isOutgoing;
-        if (filter === "outgoing") return transaction.isOutgoing;
+        if (filter === "credit") return transaction.type === "credit";
+        if (filter === "debit") return transaction.type === "debit";
         return true;
       });
     }
 
-    // Apply sorting by amount
     if (sortOrder) {
       data.sort((a, b) => {
         if (sortOrder === "asc") return a.amount - b.amount;
@@ -137,13 +84,12 @@ export const ActiveAccountDashboard: React.FC = () => {
       });
     }
 
-    // Apply search filter
     if (searchQuery) {
       const lowerCaseQuery = searchQuery.toLowerCase();
       data = data.filter(
         (transaction) =>
-          transaction.description.toLowerCase().includes(lowerCaseQuery) ||
-          transaction.recipientInfo.toLowerCase().includes(lowerCaseQuery) ||
+          transaction.reference.toLowerCase().includes(lowerCaseQuery) ||
+          transaction.narration.toLowerCase().includes(lowerCaseQuery) ||
           transaction.transactionId.toLowerCase().includes(lowerCaseQuery)
       );
     }
@@ -185,7 +131,7 @@ export const ActiveAccountDashboard: React.FC = () => {
           <div className=" w-full flex md:justify-between flex-col h-full gap-5 ">
             <DashboardCard
               title="Active loan"
-              amount={`NGN0.00`}
+              amount={`NGN${activeLoanAmount}`}
               nextPaymentDate={nextPaymentDate || ""}
             />
             <DashboardCard
@@ -225,21 +171,29 @@ export const ActiveAccountDashboard: React.FC = () => {
 
             <TabsContent value="account">
               <div className="flex flex-col md:flex-row gap-5 md:px-3">
-                {/* Transaction List */}
                 <div className="flex-1 w-full md:w-[60%]">
-                  {filteredAndSortedTransactions.map((transaction, index) => (
-                    <TransactionListItem
-                      key={index}
-                      date={transaction.date}
-                      description={transaction.description}
-                      recipientInfo={transaction.recipientInfo}
-                      transactionId={transaction.transactionId}
-                      amount={`${transaction.isOutgoing ? "-" : "+"} ${
-                        transaction.amount
-                      }`}
-                      isOutgoing={transaction.isOutgoing}
-                    />
-                  ))}
+                  {isLoading ? (
+                    <div>Loading transactions...</div>
+                  ) : error ? (
+                    <div>Error loading transactions</div>
+                  ) : filteredAndSortedTransactions?.length === 0 ? (
+                    <div>No transactions found</div>
+                  ) : (
+                    filteredAndSortedTransactions.map((transaction, index) => (
+                      <TransactionListItem
+                        key={index}
+                        date={transaction.date}
+                        description={transaction.narration}
+                        recipientInfo={transaction.reference}
+                        transactionId={transaction.transactionId}
+                        amount={`${transaction.type === "debit" ? "-" : "+"} ${
+                          transaction.amount
+                        }`}
+                        isOutgoing={transaction.type === "DEBIT"}
+                        isCredit={transaction.type === "CREDIT"}
+                      />
+                    ))
+                  )}
                 </div>
                 <div className="w-full md:w-[40%]">
                   <TransactionSummary />

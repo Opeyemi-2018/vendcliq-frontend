@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { StatCard } from "@/components/ui/StatCard";
 import { SummaryCard } from "@/components/ui/SummaryCard";
-import { handleGetLoan } from "@/lib/utils/api/apiHelper";
-import { LoanResponse } from "@/types";
+import {
+  handleGetLoan,
+  handleGetLoanStatDetails,
+} from "@/lib/utils/api/apiHelper";
+import { LoanResponse, LoanStatDetailsResponse } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { TableDocument, Wallet3 } from "iconsax-react";
 import Link from "next/link";
@@ -22,16 +25,16 @@ const Page = () => {
     queryFn: () => handleGetLoan(),
   });
 
+  const { data: loanStatDetails } = useQuery<LoanStatDetailsResponse>({
+    queryKey: ["loanStatDetails"],
+    queryFn: () => handleGetLoanStatDetails(),
+  });
+  console.log(loanStatDetails);
   const loans = loan?.data?.data || [];
 
-  const activeLoan = loans.find((loan) => loan.status === "active");
+  const activeLoan = loanStatDetails?.data.total_active_loan_sum;
+  console.log(activeLoan);
   const totalAmount = loans.reduce((sum, loan) => sum + Number(loan.amount), 0);
-  const totalApproved = loans.filter(
-    (loan) => loan.status === "approved"
-  ).length;
-  const totalRejected = loans.filter(
-    (loan) => loan.status === "rejected"
-  ).length;
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -45,14 +48,18 @@ const Page = () => {
           <div className="w-full lg:w-[35%]">
             <div className="bg-white border border-[#DBDBDB] h-auto w-full rounded-3xl p-5 md:p-10 font-sans space-y-5 md:space-y-7">
               <p className="bg-muted-gray w-fit rounded-3xl py-2 px-5 text-center md:text-left">
-                {activeLoan ? "Active Loan" : "No Active Loan"}
+                {loanStatDetails?.data?.total_active_loan_sum
+                  ? "Active Loan"
+                  : "No Active Loan"}
               </p>
               <hr className="border-muted-gray" />
               <div>
                 <p>Loan Amount</p>
                 <p className="font-semibold text-3xl md:text-5xl">
-                  {activeLoan
-                    ? `NGN ${Number(activeLoan.amount).toFixed(2)}`
+                  {loanStatDetails
+                    ? `NGN ${Number(
+                        loanStatDetails?.data?.total_active_loan_sum
+                      ).toFixed(2)}`
                     : "NGN 0.00"}
                 </p>
               </div>
@@ -80,7 +87,7 @@ const Page = () => {
                 title="Active Loan"
                 amount={
                   activeLoan
-                    ? `NGN ${Number(activeLoan.amount).toFixed(2)}`
+                    ? `NGN ${Number(activeLoan).toFixed(2)}`
                     : "NGN 0.00"
                 }
                 icon={<TableDocument color="#39498C" size={24} />}
@@ -92,12 +99,14 @@ const Page = () => {
               />
               <SummaryCard
                 title="Total Outstanding"
-                amount="NGN 0.00"
+                amount={`NGN ${
+                  loanStatDetails?.data?.total_active_loan_sum || 0
+                }`}
                 icon={<Wallet3 color="#39498C" size={24} />}
               />
               <SummaryCard
                 title="Loan Limit"
-                amount="NGN 0.00"
+                amount={`NGN ${loanStatDetails?.data?.loan_limit || 0}`}
                 icon={<RiBankLine className="text-[#39498C] text-2xl" />}
               />
             </div>
@@ -106,17 +115,17 @@ const Page = () => {
               <StatCard
                 color="black"
                 title="Total Applications"
-                count={loans.length}
+                count={loanStatDetails?.data?.total_applications || 0}
               />
               <StatCard
                 color="#00C53A"
                 title="Total Approved"
-                count={totalApproved}
+                count={loanStatDetails?.data?.total_approved || 0}
               />
               <StatCard
                 color="#FF6242"
                 title="Total Rejected"
-                count={totalRejected}
+                count={loanStatDetails?.data?.total_rejected || 0}
               />
             </div>
           </div>

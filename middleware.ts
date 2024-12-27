@@ -5,9 +5,10 @@ export default function middleware(request: NextRequest) {
   // Log middleware invocation
   console.log("Middleware invoked");
 
-  // Get token from cookies
-  const token = request.cookies.get("authToken")?.value;
-  // console.log(token);
+  // Get tokens from cookies
+  const accessToken = request.cookies.get("authToken")?.value;
+  const refreshToken = request.cookies.get("refreshToken")?.value;
+
   // Define public routes (e.g., login or signup pages)
   const publicRoutes = [
     "/",
@@ -23,13 +24,29 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect to login page if no token is found
-  if (!token) {
-    console.log("No token found. Redirecting to login.");
+  // If no tokens found, redirect to login
+  if (!accessToken && !refreshToken) {
+    console.log("No tokens found. Redirecting to login.");
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Proceed to the requested route
+  // If access token expired but refresh token exists
+  if (!accessToken && refreshToken) {
+    // Call refresh token endpoint
+    try {
+      const response = NextResponse.next();
+      response.cookies.set("authToken", "new_access_token"); // Set new access token
+      return response;
+    } catch (error) {
+      // If refresh fails, redirect to login
+      console.log("Token refresh failed. Redirecting to login.");
+      const response = NextResponse.redirect(new URL("/login", request.url));
+      response.cookies.delete("refreshToken");
+      return response;
+    }
+  }
+
+  // Proceed with valid access token
   return NextResponse.next();
 }
 

@@ -8,21 +8,31 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const localToken = localStorage.getItem("authToken");
+    const localRefreshToken = localStorage.getItem("refreshToken");
     const cookieToken = document.cookie
       .split("; ")
       .find((row) => row.startsWith("authToken="))
       ?.split("=")[1];
-    // console.log("cookieToken>>>", cookieToken);
-    // console.log("localToken>>>", localToken);
+    const cookieRefreshToken = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("refreshToken="))
+      ?.split("=")[1];
+
     const Token = localToken || cookieToken;
-    console.log("Token>>>", Token);
+    const RefreshToken = localRefreshToken || cookieRefreshToken;
+
     if (Token && Token !== "undefined" && Token !== "null") {
-      // console.log(Token);
       config.headers.Authorization = `Bearer ${Token}`;
+      config.headers["Content-Type"] = "application/json";
+    } else if (
+      RefreshToken &&
+      RefreshToken !== "undefined" &&
+      RefreshToken !== "null"
+    ) {
+      // If no valid auth token but have refresh token, try to refresh
+      refreshAuthToken(RefreshToken);
     } else {
-      localStorage.removeItem("authToken");
-      document.cookie =
-        "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      clearAuthTokens();
     }
     return config;
   },
@@ -36,14 +46,42 @@ api.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
     if (error.response) {
       const { status, data } = error.response;
+
+      // Handle token expiration
       if (
         status === 401 &&
-        data.message === "An error occurred - Token Expired"
+        data.message === "An error occurred - Token Expired" &&
+        !originalRequest._retry
       ) {
-        // Token has expired, redirect to the login page
+        originalRequest._retry = true;
+
+        const refreshToken =
+          localStorage.getItem("refreshToken") ||
+          document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("refreshToken="))
+            ?.split("=")[1];
+
+        if (refreshToken) {
+          try {
+            const newToken = await refreshAuthToken(refreshToken);
+            if (newToken) {
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+              return api(originalRequest);
+            }
+          } catch (refreshError) {
+            clearAuthTokens();
+            window.location.href = "/auth/login";
+            return Promise.reject(refreshError);
+          }
+        }
+
+        clearAuthTokens();
         window.location.href = "/auth/login";
       }
     }
@@ -51,27 +89,36 @@ api.interceptors.response.use(
   }
 );
 
-export const destroyToken = () => {
+const refreshAuthToken = async (refreshToken: string) => {
   try {
-    // Remove token from localStorage
-    localStorage.removeItem("authToken");
-    // Remove token from cookies
-    document.cookie =
-      "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    const response = await axios.post(`${baseURL}/auth/refresh`, {
+      refreshToken,
+    });
 
-    // Clear Authorization header from axios instance
-    api.defaults.headers.common["Authorization"] = "";
+    const newToken = response.data.token;
 
-    // Optional: Clear any other auth-related data you might have
-    // localStorage.removeItem("user");
-    // localStorage.removeItem("refreshToken");
+    // Update tokens in storage
+    localStorage.setItem("authToken", newToken);
+    document.cookie = `authToken=${newToken}; path=/`;
 
-    return true;
+    return newToken;
   } catch (error) {
-    console.error("Error during logout:", error);
-    return false;
+    clearAuthTokens();
+    throw error;
   }
 };
+
+const clearAuthTokens = () => {
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("refreshToken");
+  document.cookie =
+    "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  document.cookie =
+    "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  api.defaults.headers.common["Authorization"] = "";
+};
+
+export const destroyToken = clearAuthTokens;
 
 export default api;
 

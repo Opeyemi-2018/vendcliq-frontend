@@ -4,16 +4,13 @@ import { Button } from "@/components/ui/button";
 import Field from "@/components/ui/Field";
 import { FileUpload } from "@/components/ui/Fileupload";
 import MultiValueInput from "@/components/ui/MultiValueInput";
-import {
-  handleIdentityUpload,
-  handleBusinessSetup,
-  handleBusinessSetupStepTwo,
-} from "@/services/setup/Setup";
 
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import Logo from "@/components/Logo";
 import Step from "@/components/ui/Step";
+
+import axios from "axios";
 
 interface Shareholder {
   firstname: string;
@@ -34,6 +31,7 @@ interface StepOnePayload {
   businessPhone: string;
   businessAddress: string;
   businessProofOfAddress: File | null;
+  bvn: string;
 }
 
 interface StepTwoPayload {
@@ -51,6 +49,7 @@ type FormInputEvent = React.ChangeEvent<HTMLInputElement>;
 
 const AccountSetup = () => {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const [identityPayload, setIdentityPayload] = useState<IdentityPayload>({
     file: null,
@@ -62,6 +61,7 @@ const AccountSetup = () => {
     businessPhone: "",
     businessAddress: "",
     businessProofOfAddress: null as File | null,
+    bvn: "",
   });
 
   const [stepTwoPayload, setStepTwoPayload] = useState<StepTwoPayload>({
@@ -82,6 +82,7 @@ const AccountSetup = () => {
   });
 
   const [currentStep, setCurrentStep] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) setCurrentStep((prev) => prev + 1);
@@ -92,66 +93,128 @@ const AccountSetup = () => {
   };
 
   const handleSubmit = async () => {
+    setLoading(true);
     const formData = new FormData();
 
-    if (currentStep === 0) {
-      console.log("file", identityPayload.file);
-      if (identityPayload.file) {
+    try {
+      if (currentStep === 0) {
+        if (!identityPayload.file) {
+          setError("Please upload an identity document");
+          return;
+        }
         formData.append("file", identityPayload.file);
-        console.log("identityPayload", identityPayload.file);
-      }
-      const response = await handleIdentityUpload({
-        file: identityPayload.file,
-      });
-      console.log("Identity upload response", response);
-      if (response.status === "success") handleNext();
-    } else if (currentStep === 1) {
-      formData.append("businessName", stepOnePayload.businessName);
-      formData.append("businessEmail", stepOnePayload.businessEmail);
-      formData.append("businessPhone", stepOnePayload.businessPhone);
-      formData.append("businessAddress", stepOnePayload.businessAddress);
-      if (stepOnePayload.businessProofOfAddress) {
-        formData.append(
-          "businessProofOfAddress",
-          stepOnePayload.businessProofOfAddress
-        );
-      }
-      const response = await handleBusinessSetup(formData);
-      console.log("Business setup response", response);
-      if (response.status === "success") handleNext();
-    } else if (currentStep === 2) {
-      formData.append("rcNumber", stepTwoPayload.rcNumber);
-      formData.append(
-        "dateOfIncorporation",
-        stepTwoPayload.dateOfIncorporation
-      );
-      formData.append(
-        "shareholders",
-        JSON.stringify(stepTwoPayload.shareholders)
-      );
 
-      if (stepTwoPayload.businessCACCertificate) {
-        formData.append(
-          "businessCACCertificate",
-          stepTwoPayload.businessCACCertificate
+        const token = localStorage.getItem("authToken");
+        const response = await axios.post(
+          "https://api.vendcliq.com/client/v1/auth/upload-identity",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
         );
-      }
-      if (stepTwoPayload.businessMemoOfAssociation) {
-        formData.append(
-          "businessMemoOfAssociation",
-          stepTwoPayload.businessMemoOfAssociation
+        console.log(response);
+        if (response.status === 200) {
+          setError(null);
+          handleNext();
+        }
+      } else if (currentStep === 1) {
+        if (
+          !stepOnePayload.businessName ||
+          !stepOnePayload.businessEmail ||
+          !stepOnePayload.businessPhone ||
+          !stepOnePayload.businessAddress ||
+          !stepOnePayload.bvn ||
+          !stepOnePayload.businessProofOfAddress
+        ) {
+          setError(
+            "Please fill in all required fields including proof of address"
+          );
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("businessName", stepOnePayload.businessName);
+        formData.append("businessEmail", stepOnePayload.businessEmail);
+        formData.append("businessPhone", stepOnePayload.businessPhone);
+        formData.append("businessAddress", stepOnePayload.businessAddress);
+        formData.append("bvn", stepOnePayload.bvn);
+
+        if (stepOnePayload.businessProofOfAddress instanceof File) {
+          formData.append(
+            "businessProofOfAddress",
+            stepOnePayload.businessProofOfAddress
+          );
+        }
+
+        const token = localStorage.getItem("authToken");
+        const response = await axios.post(
+          "https://api.vendcliq.com/client/v1/auth/business-information",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
         );
+        console.log(response);
+        if (response.status === 200) {
+          setError(null);
+          handleNext();
+        }
+      } else if (currentStep === 2) {
+        formData.append("rcNumber", stepTwoPayload.rcNumber);
+        formData.append(
+          "dateOfIncorporation",
+          stepTwoPayload.dateOfIncorporation
+        );
+        formData.append(
+          "shareholders",
+          JSON.stringify(stepTwoPayload.shareholders)
+        );
+
+        if (stepTwoPayload.businessCACCertificate instanceof File) {
+          formData.append(
+            "businessCACCertificate",
+            stepTwoPayload.businessCACCertificate
+          );
+        }
+        if (stepTwoPayload.businessMemoOfAssociation instanceof File) {
+          formData.append(
+            "businessMemoOfAssociation",
+            stepTwoPayload.businessMemoOfAssociation
+          );
+        }
+        // /client/1v / auth / business - information - step2;
+        // const response = await handleBusinessSetupStepTwo(formData);
+        const token = localStorage.getItem("authToken");
+        const response = await axios.post(
+          "https://api.vendcliq.com/client/v1/auth/business-information-step2",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        if (response.status === 200) {
+          router.push("/dashboard/home");
+        }
       }
-      // Log each key-value pair in formData
-      for (const [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        setError(
+          error.response?.data?.message || "Failed to upload identity document"
+        );
+      } else {
+        setError("An unexpected error occurred");
       }
-      console.log("jjjj");
-      const response = await handleBusinessSetupStepTwo(formData);
-      if (response.status === "success") {
-        router.push("/dashboard/home");
-      }
-      console.log("Business setup step two response", response);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -159,6 +222,7 @@ const AccountSetup = () => {
     key: keyof IdentityPayload | keyof StepOnePayload | keyof StepTwoPayload,
     value: string | File | null | Shareholder[]
   ) => {
+    setError(null);
     if (currentStep === 0) {
       setIdentityPayload({ ...identityPayload, [key]: value });
     } else if (currentStep === 1) {
@@ -195,6 +259,12 @@ const AccountSetup = () => {
               ? "Please upload your identity document"
               : "Kindly enter your business details"}
           </p>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+              {error}
+            </div>
+          )}
 
           {/* Step Form */}
           {currentStep === 0 && (
@@ -242,6 +312,13 @@ const AccountSetup = () => {
                   placeholder: "Enter address",
                   value: stepOnePayload.businessAddress,
                   key: "businessAddress",
+                },
+                {
+                  label: "BVN",
+                  type: "text",
+                  placeholder: "Enter BVN",
+                  value: stepOnePayload.bvn,
+                  key: "bvn",
                 },
               ].map(({ label, type, placeholder, value, key }, index) => (
                 <div key={index}>
@@ -344,6 +421,7 @@ const AccountSetup = () => {
               <Button
                 className="px-6 py-2 font-sans bg-gray-200 text-gray-700 rounded-none"
                 onClick={handleBack}
+                disabled={loading}
               >
                 Back
               </Button>
@@ -351,8 +429,13 @@ const AccountSetup = () => {
             <Button
               className="px-6 py-2 w-full lg:w-auto font-sans bg-yellow-500 text-black rounded-none"
               onClick={handleSubmit}
+              disabled={loading}
             >
-              {currentStep === steps.length - 1 ? "Finish" : "Next"}
+              {loading
+                ? "Processing..."
+                : currentStep === steps.length - 1
+                ? "Finish"
+                : "Next"}
             </Button>
           </div>
         </div>

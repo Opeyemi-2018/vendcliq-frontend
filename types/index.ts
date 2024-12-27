@@ -403,12 +403,23 @@ export interface LoanResponse {
         invoiceNo: string;
         accountName: string;
         accountNumber: string;
+        narration: string;
       };
       status: string;
       createdAt: string;
       updatedAt: string;
       deletedAt: string | null;
-      repayments: Array<any>;
+      repayments: Array<{
+        id: number;
+        loanId: number;
+        status: string;
+        repaymentAmount: number;
+        repaymentAmountCollected: number;
+      }>;
+      loanDisburseBy?: number;
+      loanDisburseDate?: string;
+      loanReviewBy?: number;
+      loanReviewDate?: string;
     }>;
   };
 }
@@ -432,4 +443,160 @@ export interface ResetPasswordPayload {
 export interface ResetPasswordResponse {
   status: string;
   msg: string;
+}
+
+export interface LoanItem {
+  item: string;
+  quantity: number;
+  amount: number;
+  tenure?: string;
+}
+
+export interface ResendVerificationPayload {
+  channel: "email" | "phone";
+}
+
+export interface ResendVerificationResponse {
+  status: string;
+  msg: string;
+}
+
+export interface TransactionHistoryResponse {
+  status: string;
+  msg: string;
+  data: {
+    meta: {
+      total: number;
+      perPage: number;
+      currentPage: number;
+      lastPage: number;
+      firstPage: number;
+      firstPageUrl: string;
+      lastPageUrl: string;
+      nextPageUrl: string | null;
+      previousPageUrl: string | null;
+    };
+    data: Array<{
+      id: number;
+      accountId: number;
+      reference: string;
+      transactionId: string;
+      amount: number;
+      type: string;
+      currency: string;
+      status: string;
+      narration: string;
+      date: string;
+      createdAt: string;
+      updatedAt: string;
+      accountBalance: number | null;
+      fee: number;
+      provider: string;
+      action: string;
+      meta: {
+        session: string;
+        vatAmount: number;
+        settledAmount: number;
+        sourceBankName: string;
+        initiationTranRef: string | null;
+      };
+    }>;
+  };
+}
+
+export interface AccountResponse {
+  status: string;
+  msg: string;
+  data: {
+    accounts: Array<{
+      id: number;
+      accountNumber: string;
+      accountName: string;
+      bankName: string;
+      accountBalance: number;
+      transactionCount: number;
+    }>;
+    totalBalance: string;
+  };
+}
+
+export interface AccountByIdResponse {
+  status: string;
+  msg: string;
+  data: {
+    accounts_details: Array<{
+      accountNumber: string;
+      accountName: string;
+      openingBalance: number;
+    }>;
+    account_transactions: {
+      meta: {
+        total: number;
+        perPage: number;
+        currentPage: number;
+        lastPage: number;
+        firstPage: number;
+        firstPageUrl: string;
+        lastPageUrl: string;
+        nextPageUrl: string | null;
+        previousPageUrl: string | null;
+      };
+      data: Array<{
+        id: number;
+        accountId: number;
+        reference: string;
+        transactionId: string;
+        amount: number;
+        type: string;
+        currency: string;
+        status: string;
+        narration: string;
+        date: string;
+        createdAt: string;
+        updatedAt: string;
+        accountBalance: number | null;
+        fee: number;
+        provider: string;
+        action: string;
+        meta: {
+          session: string;
+          vatAmount: number;
+          settledAmount: number;
+          sourceBankName: string;
+          initiationTranRef: string | null;
+        };
+      }>;
+    };
+  };
+}
+
+export interface AccountDetailsByIdResponse {
+  status: string;
+  msg: string;
+  data: {
+    id: number;
+    profileId: number;
+    accountNumber: string;
+    accountName: string;
+    bankName: string;
+    bankCode: string;
+    partnerCode: string;
+    createdAt: string;
+    updatedAt: string;
+    accountBalance: number;
+  };
+}
+
+export interface LoanStatDetailsResponse {
+  status: string;
+  msg: string;
+  data: {
+    total_applications: number;
+    total_approved: number;
+    total_rejected: number;
+    total_loan_repaid: number | null;
+    total_active_loan_sum: string;
+    loan_limit: number;
+    currently_processing_amount: number;
+  };
 }

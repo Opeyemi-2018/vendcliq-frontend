@@ -83,7 +83,12 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
       }
     } catch (error) {
       if (error instanceof AxiosError) {
-        setError(error.response?.data?.message || "An error occurred");
+        const errorData = error.response?.data;
+        if (errorData?.data?.[0]?.message) {
+          setError(errorData.data[0].message);
+        } else {
+          setError(errorData?.msg || "An error occurred");
+        }
       } else {
         setError("An unexpected error occurred");
       }

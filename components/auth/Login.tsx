@@ -64,7 +64,7 @@ const Login = () => {
       const [response] = await Promise.all([
         handleSignIn(payload),
         // Pre-fetch dashboard data while signing in
-        router.prefetch("/dashboard/home"),
+        // router.prefetch("/dashboard/home"),
       ]);
 
       if (response.status === "success") {
@@ -80,9 +80,16 @@ const Login = () => {
             })
           ),
         ]);
-
+        console.log("response>>>", response);
+        if (response.data.user.email.verified === null) {
+          router.push("/signup?step=3");
+        } else if (response.data.user.phone.verified === null) {
+          router.push("/signup?step=4");
+        } else {
+          router.push("/dashboard/home");
+        }
         // Navigate immediately after token is set
-        router.push("/dashboard/home");
+        // router.push("/dashboard/home");
       } else {
         setError("Login failed. Please try again.");
         setLoading(false);

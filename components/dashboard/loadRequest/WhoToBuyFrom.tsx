@@ -214,7 +214,7 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field
-            label="Narration"
+            label="Narration / Dealer Code"
             required
             type="text"
             placeholder="Input narration"

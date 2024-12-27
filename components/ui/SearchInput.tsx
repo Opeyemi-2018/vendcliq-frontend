@@ -6,10 +6,12 @@ export function SearchInput({
   className,
   value,
   onChange,
+  placeholder,
 }: {
   className?: string;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
 }) {
   return (
     <div className="relative w-full">
@@ -17,7 +19,7 @@ export function SearchInput({
         type="text"
         value={value}
         onChange={onChange}
-        placeholder="Search References"
+        placeholder={placeholder || "Search References"}
         className={twMerge(
           "pl-10 pr-12 py-2 rounded-full border-gray-300 focus:border-green-500 focus:ring focus:ring-green-200 focus:ring-opacity-50",
           className

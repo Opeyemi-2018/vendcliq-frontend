@@ -5,11 +5,15 @@ import SignupStepThree from "@/components/onboarding/signup/steps/Step3";
 import SignupStepFour from "@/components/onboarding/signup/steps/Step4";
 import SignupStepFive from "@/components/onboarding/signup/steps/Step5";
 import { Progress } from "@/components/ui/Progress";
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
-const Page = () => {
-  const [step, setStep] = useState(1);
+const SignupContent = () => {
+  const searchParams = useSearchParams();
+  const stepParam = searchParams?.get("step") ?? null;
+  const [step, setStep] = useState(stepParam ? parseInt(stepParam) : 1);
   const [signupData, setSignupData] = useState({ businessType: "" });
+
   const nextStep = (data?: object) => {
     if (data) {
       setSignupData({ ...signupData, ...data });
@@ -49,6 +53,14 @@ const Page = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const Page = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignupContent />
+    </Suspense>
   );
 };
 
