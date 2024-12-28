@@ -13,7 +13,7 @@ export interface IReusableInputProps {
   name?: string;
   required?: boolean;
   disabled?: boolean;
-  error?: string;
+  error?: string | boolean | undefined;
   accept?: string;
   readOnly?: boolean;
 }

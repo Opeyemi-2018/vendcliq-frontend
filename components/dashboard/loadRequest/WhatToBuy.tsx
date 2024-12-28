@@ -67,35 +67,37 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
   const inventory = useGetInventory();
   console.log(inventory.results);
   return (
-    <div className="w-full bg-white p-6 ">
+    <div className="w-full bg-white p-6">
       <h3 className="text-lg sm:text-xl font-medium border-b border-border pb-2 font-clash mb-4 sm:mb-8">
         What do you want to buy?
       </h3>
 
       {items.map((item, index) => (
         <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-          <div className=" flex flex-col gap-2">
-            <label className="font-medium text-sm text-black">
+          <div className="flex flex-col ">
+            <label className="font-medium text-sm text-black pb-1">
               Item {index + 1}
             </label>
-            <Select
-              onValueChange={(value) =>
-                onInputChange(index, {
-                  target: { name: "name", value },
-                } as React.ChangeEvent<HTMLSelectElement>)
-              }
-            >
-              <SelectTrigger className="h-12">
-                <SelectValue placeholder="Select an item" />
-              </SelectTrigger>
-              <SelectContent>
-                {inventory.results?.map((item) => (
-                  <SelectItem key={item.id} value={item.name}>
-                    {item.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="h-12">
+              <Select
+                onValueChange={(value) =>
+                  onInputChange(index, {
+                    target: { name: "name", value },
+                  } as React.ChangeEvent<HTMLSelectElement>)
+                }
+              >
+                <SelectTrigger className="w-full h-full border border-input bg-background px-3 py-2 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                  <SelectValue placeholder="Select an item" />
+                </SelectTrigger>
+                <SelectContent>
+                  {inventory.results?.map((item) => (
+                    <SelectItem key={item.id} value={item.name}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <Field

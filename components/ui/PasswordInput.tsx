@@ -5,6 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 export default function PasswordInput({
   placeholder,
@@ -13,6 +14,8 @@ export default function PasswordInput({
   value,
   onChange,
   required,
+  error,
+  className,
 }: {
   placeholder: string;
   label: string;
@@ -20,6 +23,8 @@ export default function PasswordInput({
   value: string;
   required?: boolean;
   onChange?: (value: string) => void;
+  error?: string;
+  className?: string;
 }) {
   const [showPassword, setShowPassword] = React.useState(false);
 
@@ -28,7 +33,7 @@ export default function PasswordInput({
   };
 
   return (
-    <div className="w-full space-y-2">
+    <div className={cn("w-full space-y-2", className)}>
       <Label htmlFor="password">{label}</Label>
       <div className="relative">
         <Input
@@ -56,6 +61,7 @@ export default function PasswordInput({
           )}
         </Button>
       </div>
+      {error && <span className="text-red-500 text-sm mt-1">{error}</span>}
     </div>
   );
 }

@@ -8,9 +8,11 @@ import { SIGN_UP } from "@/url/api-url";
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { RadioGroup } from "@radix-ui/react-radio-group";
 import { AxiosError } from "axios";
+import { Formik, Form } from "formik";
 import Link from "next/link";
-import React, { useState } from "react";
+import React from "react";
 import { toast } from "react-toastify";
+import * as Yup from "yup";
 
 type SignupPayload = {
   firstname: string;
@@ -37,46 +39,59 @@ type SignupStepTwoProps = {
   previousData: { businessType: string };
 };
 
+const validationSchema = Yup.object({
+  firstname: Yup.string().required("First name is required"),
+  lastname: Yup.string().required("Last name is required"),
+  email: Yup.string().email("Invalid email").required("Email is required"),
+  password: Yup.string()
+    .min(8, "Password must be at least 8 characters")
+    .required("Password is required"),
+  referral: Yup.string(),
+  submit: Yup.string(),
+});
+
 const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
   nextStep,
   title,
   previousData,
 }) => {
-  const [error, setError] = useState<string | null>(null);
-
-  const [formData, setFormData] = useState({
+  const initialValues = {
     firstname: "",
     lastname: "",
     email: "",
     password: "",
     isRegistered: true,
     referral: "",
-  });
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    submit: "",
   };
-  const handleSubmit = async () => {
-    const { ...rest } = formData;
+
+  const handleSubmit = async (
+    values: typeof initialValues,
+    {
+      setSubmitting,
+      setFieldError,
+    }: {
+      setSubmitting: (isSubmitting: boolean) => void;
+      setFieldError: (field: string, message: string) => void;
+    }
+  ) => {
     try {
-      // Prepare data for POST request
       const payload = {
-        ...rest,
+        ...values,
         business: {
-          isRegistered: true,
+          isRegistered: values.isRegistered,
           type: previousData.businessType,
         },
       };
-      console.log(payload);
-      // Call the poster utility function to make the API request
+
       const response = await poster<SignupPayload, typeof payload>(
         SIGN_UP,
         payload
       );
-      console.log(response);
+
       if (response.status === "success") {
         toast.success("Account created successfully");
         const token = response.data.token.token;
-        console.log("token step2", token);
         localStorage.setItem("authToken", token);
         localStorage.setItem("email", payload.email);
         nextStep();
@@ -85,87 +100,122 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
       if (error instanceof AxiosError) {
         const errorData = error.response?.data;
         if (errorData?.data?.[0]?.message) {
-          setError(errorData.data[0].message);
+          setFieldError("submit", errorData.data[0].message);
         } else {
-          setError(errorData?.msg || "An error occurred");
+          setFieldError("submit", errorData?.msg || "An error occurred");
         }
       } else {
-        setError("An unexpected error occurred");
+        setFieldError("submit", "An unexpected error occurred");
       }
+    } finally {
+      setSubmitting(false);
     }
   };
-  const [registered, setRegistered] = useState("yes");
+
   return (
     <div className="">
       <h2 className="text-xl font-semibold text-black text-center border-b border-border pb-2">
         {title}
       </h2>
 
-      <div className="mt-5 font-sans">
-        <div className="flex gap-5 ">
-          <Input
-            label="First Name"
-            name="firstname"
-            onChange={handleChange}
-            value={formData.firstname}
-            className="flex-1 mb-0"
-          />
-          <Input
-            label="Last Name"
-            name="lastname"
-            onChange={handleChange}
-            value={formData.lastname}
-            className="flex-1 mb-0"
-          />
-        </div>
-        <p className="text-gray-400 text-sm">
-          Please ensure this is first and last name on your Government ID
-          document.
-        </p>
-        <Input
-          label="Email Address"
-          name="email"
-          type="email"
-          onChange={handleChange}
-          value={formData.email}
-          className="flex-1  my-5"
-        />
-        <div>
-          <Label className="text-sm text-[#2F2F2F] pb-2">
-            Is your business incorporated with the Corporate Affairs Commission?
-          </Label>
-          <RadioGroup
-            className=" flex gap-7"
-            value={registered}
-            onValueChange={setRegistered}
-          >
-            <BoxOption value="yes" title="Yes" selectedValue={registered} />
-            <BoxOption value="no" title="No" selectedValue={registered} />
-          </RadioGroup>
-        </div>
-
-        <PasswordInput
-          label="Password"
-          placeholder="Enter your password"
-          onChange={(value) => setFormData({ ...formData, password: value })}
-          value={formData.password}
-        />
-        <Input
-          label="Referal Code"
-          name="referral"
-          onChange={handleChange}
-          value={formData.referral}
-          className="flex-1  my-5"
-        />
-        {error && <p className="text-red-500">{error}</p>}
-      </div>
-
-      <Button
-        onClick={handleSubmit}
-        className="mt-6 w-full text-white rounded-none"
+      <Formik
+        initialValues={initialValues}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
       >
-        Continue
-      </Button>
+        {({
+          values,
+          errors,
+          touched,
+          handleChange,
+          setFieldValue,
+          isSubmitting,
+        }) => (
+          <Form className="mt-5 font-sans">
+            <div className="flex gap-5">
+              <Input
+                label="First Name"
+                name="firstname"
+                onChange={handleChange}
+                value={values.firstname}
+                className="flex-1 mb-0"
+                error={touched.firstname ? errors.firstname : undefined}
+              />
+              <Input
+                label="Last Name"
+                name="lastname"
+                onChange={handleChange}
+                value={values.lastname}
+                className="flex-1 mb-0"
+                error={touched.lastname ? errors.lastname : undefined}
+              />
+            </div>
+
+            <Input
+              label="Email Address"
+              name="email"
+              type="email"
+              onChange={handleChange}
+              value={values.email}
+              className="flex-1 my-5"
+              error={touched.email ? errors.email : undefined}
+            />
+
+            <div>
+              <Label className="text-sm text-[#2F2F2F] pb-2">
+                Is your business incorporated with the Corporate Affairs
+                Commission?
+              </Label>
+              <RadioGroup
+                className="flex gap-7"
+                value={values.isRegistered ? "yes" : "no"}
+                onValueChange={(value) =>
+                  setFieldValue("isRegistered", value === "yes")
+                }
+              >
+                <BoxOption
+                  value="yes"
+                  title="Yes"
+                  selectedValue={values.isRegistered ? "yes" : "no"}
+                />
+                <BoxOption
+                  value="no"
+                  title="No"
+                  selectedValue={values.isRegistered ? "yes" : "no"}
+                />
+              </RadioGroup>
+            </div>
+
+            <PasswordInput
+              label="Password"
+              placeholder="Enter your password"
+              className="mt-4"
+              onChange={(value) => setFieldValue("password", value)}
+              value={values.password}
+              error={touched.password ? errors.password : undefined}
+            />
+
+            <Input
+              label="Referral Code"
+              name="referral"
+              onChange={handleChange}
+              value={values.referral}
+              className="flex-1 my-5"
+              error={touched.referral ? errors.referral : undefined}
+            />
+
+            {errors.submit && <p className="text-red-500">{errors.submit}</p>}
+
+            <Button
+              type="submit"
+              className="mt-6 w-full text-white rounded-none"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Processing..." : "Continue"}
+            </Button>
+          </Form>
+        )}
+      </Formik>
 
       <div className="flex gap-1 items-center justify-center mt-3 font-sans text-sm">
         <p className="text-black">I already have an account?</p>

@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import Field from "@/components/ui/Field";
 import { FileUpload } from "@/components/ui/Fileupload";
 import MultiValueInput from "@/components/ui/MultiValueInput";
+import { Formik, Form } from "formik";
+import * as Yup from "yup";
 
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
@@ -11,6 +13,9 @@ import Logo from "@/components/Logo";
 import Step from "@/components/ui/Step";
 
 import axios from "axios";
+
+import { useGetProfile } from "@/services/profile/Profile";
+import { useDashboardData } from "@/services/home/home";
 
 interface Shareholder {
   firstname: string;
@@ -42,15 +47,78 @@ interface StepTwoPayload {
   businessMemoOfAssociation: File | null;
 }
 
-const steps = ["Upload Identity", "Business Information", "Upload CAC"];
+interface FormValues {
+  file: File | null;
+  businessName: string;
+  businessEmail: string;
+  businessPhone: string;
+  businessAddress: string;
+  bvn: string;
+  rcNumber: string;
+  dateOfIncorporation: string;
+  shareholders: Shareholder[];
+  businessProofOfAddress: File | null;
+  businessCACCertificate: File | null;
+  businessMemoOfAssociation: File | null;
+  [key: string]: string | File | null | Shareholder[] | undefined;
+}
 
-// Add type for form events
-type FormInputEvent = React.ChangeEvent<HTMLInputElement>;
+const validationSchemas = [
+  // Step 0 validation
+  Yup.object({
+    file: Yup.mixed().required("Identity document is required"),
+  }),
+
+  // Step 1 validation
+  Yup.object({
+    businessName: Yup.string().required("Business name is required"),
+    businessEmail: Yup.string()
+      .email("Invalid email")
+      .required("Business email is required"),
+    businessPhone: Yup.string().required("Business phone is required"),
+    businessAddress: Yup.string().required("Business address is required"),
+    bvn: Yup.string()
+      .min(11, "BVN must be 11 digits")
+      .required("BVN is required"),
+    businessProofOfAddress: Yup.mixed().required(
+      "Proof of address is required"
+    ),
+  }),
+
+  // Step 2 validation
+  Yup.object({
+    rcNumber: Yup.string().required("RC number is required"),
+    dateOfIncorporation: Yup.string().required(
+      "Date of incorporation is required"
+    ),
+    shareholders: Yup.array()
+      .of(
+        Yup.object({
+          firstname: Yup.string().required("First name is required"),
+          lastname: Yup.string().required("Last name is required"),
+          gender: Yup.string().required("Gender is required"),
+          date_of_birth: Yup.string().required("Date of birth is required"),
+          phone: Yup.string().required("Phone is required"),
+          bank_verification_number: Yup.string().required("BVN is required"),
+        })
+      )
+      .min(1, "At least one shareholder is required"),
+    businessCACCertificate: Yup.mixed().required("CAC certificate is required"),
+    businessMemoOfAssociation: Yup.mixed().required(
+      "Memo of association is required"
+    ),
+  }),
+];
+
+const steps = ["Upload Identity", "Business Information", "Upload CAC"];
 
 const AccountSetup = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
+  const { data } = useDashboardData();
+  const {} = useGetProfile();
+  console.log(data);
   const [identityPayload, setIdentityPayload] = useState<IdentityPayload>({
     file: null,
   });
@@ -92,7 +160,7 @@ const AccountSetup = () => {
     if (currentStep > 0) setCurrentStep((prev) => prev - 1);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (values: FormValues) => {
     setLoading(true);
     const formData = new FormData();
 
@@ -122,11 +190,11 @@ const AccountSetup = () => {
         }
       } else if (currentStep === 1) {
         if (
-          !stepOnePayload.businessName ||
-          !stepOnePayload.businessEmail ||
-          !stepOnePayload.businessPhone ||
-          !stepOnePayload.businessAddress ||
-          !stepOnePayload.bvn ||
+          !values.businessName ||
+          !values.businessEmail ||
+          !values.businessPhone ||
+          !values.businessAddress ||
+          !values.bvn ||
           !stepOnePayload.businessProofOfAddress
         ) {
           setError(
@@ -136,11 +204,11 @@ const AccountSetup = () => {
         }
 
         const formData = new FormData();
-        formData.append("businessName", stepOnePayload.businessName);
-        formData.append("businessEmail", stepOnePayload.businessEmail);
-        formData.append("businessPhone", stepOnePayload.businessPhone);
-        formData.append("businessAddress", stepOnePayload.businessAddress);
-        formData.append("bvn", stepOnePayload.bvn);
+        formData.append("businessName", values.businessName);
+        formData.append("businessEmail", values.businessEmail);
+        formData.append("businessPhone", values.businessPhone);
+        formData.append("businessAddress", values.businessAddress);
+        formData.append("bvn", values.bvn);
 
         if (stepOnePayload.businessProofOfAddress instanceof File) {
           formData.append(
@@ -166,15 +234,9 @@ const AccountSetup = () => {
           handleNext();
         }
       } else if (currentStep === 2) {
-        formData.append("rcNumber", stepTwoPayload.rcNumber);
-        formData.append(
-          "dateOfIncorporation",
-          stepTwoPayload.dateOfIncorporation
-        );
-        formData.append(
-          "shareholders",
-          JSON.stringify(stepTwoPayload.shareholders)
-        );
+        formData.append("rcNumber", values.rcNumber);
+        formData.append("dateOfIncorporation", values.dateOfIncorporation);
+        formData.append("shareholders", JSON.stringify(values.shareholders));
 
         if (stepTwoPayload.businessCACCertificate instanceof File) {
           formData.append(
@@ -188,8 +250,7 @@ const AccountSetup = () => {
             stepTwoPayload.businessMemoOfAssociation
           );
         }
-        // /client/1v / auth / business - information - step2;
-        // const response = await handleBusinessSetupStepTwo(formData);
+
         const token = localStorage.getItem("authToken");
         const response = await axios.post(
           "https://api.vendcliq.com/client/v1/auth/business-information-step2",
@@ -232,6 +293,19 @@ const AccountSetup = () => {
     }
   };
 
+  const getInitialValues = () => {
+    switch (currentStep) {
+      case 0:
+        return identityPayload;
+      case 1:
+        return stepOnePayload;
+      case 2:
+        return stepTwoPayload;
+      default:
+        return {};
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between px-4 md:px-20 pt-10 w-full">
@@ -266,178 +340,185 @@ const AccountSetup = () => {
             </div>
           )}
 
-          {/* Step Form */}
-          {currentStep === 0 && (
-            <form className="grid grid-cols-1 gap-4 lg:gap-6 font-sans">
-              <div className="col-span-1">
-                <FileUpload
-                  id="identity-document"
-                  label="Upload Identity Document"
-                  accept=".png,.jpg,.jpeg,.pdf"
-                  maxSize={5 * 1024 * 1024} // 5MB
-                  onChange={(file) => updatePayload("file", file)}
-                  name="file"
-                />
-              </div>
-            </form>
-          )}
+          <Formik<FormValues>
+            initialValues={getInitialValues() as FormValues}
+            validationSchema={validationSchemas[currentStep]}
+            onSubmit={handleSubmit}
+            enableReinitialize
+          >
+            {({ values, errors, touched, handleChange }) => (
+              <Form>
+                {/* Step Form */}
+                {currentStep === 0 && (
+                  <div className="grid grid-cols-1 gap-4 lg:gap-6 font-sans">
+                    <div className="col-span-1">
+                      <FileUpload
+                        id="identity-document"
+                        label="Upload Identity Document"
+                        accept=".png,.jpg,.jpeg,.pdf"
+                        maxSize={5 * 1024 * 1024} // 5MB
+                        onChange={(file) => updatePayload("file", file)}
+                        name="file"
+                      />
+                      {touched?.file && errors?.file && (
+                        <div className="text-red-500 text-sm mt-1">
+                          {errors.file as string}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
-          {currentStep === 1 && (
-            <form className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 font-sans">
-              {[
-                {
-                  label: "Business Name",
-                  type: "text",
-                  placeholder: "Enter name",
-                  value: stepOnePayload.businessName,
-                  key: "businessName",
-                },
-                {
-                  label: "Business Email",
-                  type: "email",
-                  placeholder: "Enter email",
-                  value: stepOnePayload.businessEmail,
-                  key: "businessEmail",
-                },
-                {
-                  label: "Business Phone Number",
-                  type: "text",
-                  placeholder: "Enter phone number",
-                  value: stepOnePayload.businessPhone,
-                  key: "businessPhone",
-                },
-                {
-                  label: "Business Address",
-                  type: "text",
-                  placeholder: "Enter address",
-                  value: stepOnePayload.businessAddress,
-                  key: "businessAddress",
-                },
-                {
-                  label: "BVN",
-                  type: "text",
-                  placeholder: "Enter BVN",
-                  value: stepOnePayload.bvn,
-                  key: "bvn",
-                },
-              ].map(({ label, type, placeholder, value, key }, index) => (
-                <div key={index}>
-                  <Field
-                    label={label}
-                    type={type}
-                    placeholder={placeholder}
-                    value={value}
-                    onChange={(e: FormInputEvent) =>
-                      updatePayload(key as keyof StepOnePayload, e.target.value)
-                    }
-                  />
+                {currentStep === 1 && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 font-sans">
+                    {[
+                      {
+                        label: "Business Name",
+                        type: "text",
+                        placeholder: "Enter name",
+                        name: "businessName",
+                      },
+                      {
+                        label: "Business Email",
+                        type: "email",
+                        placeholder: "Enter email",
+                        name: "businessEmail",
+                      },
+                      {
+                        label: "Business Phone Number",
+                        type: "text",
+                        placeholder: "Enter phone number",
+                        name: "businessPhone",
+                      },
+                      {
+                        label: "Business Address",
+                        type: "text",
+                        placeholder: "Enter address",
+                        name: "businessAddress",
+                      },
+                      {
+                        label: "BVN",
+                        type: "text",
+                        placeholder: "Enter BVN",
+                        name: "bvn",
+                      },
+                    ].map(({ label, type, placeholder, name }, index) => (
+                      <div key={index}>
+                        <Field
+                          label={label}
+                          type={type}
+                          placeholder={placeholder}
+                          name={name}
+                          onChange={handleChange}
+                          value={values[name]?.toString() ?? ""}
+                          error={
+                            touched[name] && errors[name]
+                              ? String(errors[name])
+                              : undefined
+                          }
+                        />
+                      </div>
+                    ))}
+                    <div className="col-span-1 lg:col-span-2">
+                      <FileUpload
+                        id="business-proof-of-address"
+                        label="Attach Proof Of Address"
+                        accept=".png,.jpg,.jpeg,.pdf"
+                        maxSize={5 * 1024 * 1024} // 5MB
+                        onChange={(file) =>
+                          updatePayload("businessProofOfAddress", file)
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {currentStep === 2 && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 font-sans">
+                    <div>
+                      <Field
+                        label="RC Number"
+                        type="text"
+                        placeholder="Enter number"
+                        name="rcNumber"
+                        onChange={handleChange}
+                        value={values.rcNumber}
+                        error={touched.rcNumber && errors.rcNumber}
+                      />
+                    </div>
+                    <div>
+                      <Field
+                        label="Date of Incorporation"
+                        type="date"
+                        name="dateOfIncorporation"
+                        onChange={handleChange}
+                        value={values.dateOfIncorporation}
+                        error={
+                          touched.dateOfIncorporation &&
+                          errors.dateOfIncorporation
+                        }
+                      />
+                    </div>
+                    <div className="col-span-1 lg:col-span-2">
+                      <MultiValueInput
+                        label="Add shareholders"
+                        onChange={(shareholders: Shareholder[]) =>
+                          updatePayload("shareholders", shareholders)
+                        }
+                      />
+                    </div>
+                    <div className="col-span-1 lg:col-span-2">
+                      <FileUpload
+                        id="business-cac-certificate"
+                        label="CAC Certificate"
+                        accept=".png,.jpg,.jpeg,.pdf"
+                        maxSize={5 * 1024 * 1024}
+                        onChange={(file) =>
+                          updatePayload("businessCACCertificate", file)
+                        }
+                      />
+                    </div>
+                    <div className="col-span-1 lg:col-span-2">
+                      <FileUpload
+                        id="business-memo"
+                        label="Business Memo of Association"
+                        accept=".png,.jpg,.jpeg,.pdf"
+                        maxSize={5 * 1024 * 1024}
+                        onChange={(file) =>
+                          updatePayload("businessMemoOfAssociation", file)
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Navigation Buttons */}
+                <div className="flex flex-col lg:flex-row justify-between mt-6 lg:mt-8 gap-3 lg:gap-5">
+                  {currentStep > 0 && (
+                    <Button
+                      className="px-6 py-2 font-sans bg-gray-200 text-gray-700 rounded-none"
+                      onClick={handleBack}
+                      disabled={loading}
+                      type="button"
+                    >
+                      Back
+                    </Button>
+                  )}
+                  <Button
+                    className="px-6 py-2 w-full lg:w-auto font-sans bg-yellow-500 text-black rounded-none"
+                    type="submit"
+                    disabled={loading}
+                  >
+                    {loading
+                      ? "Processing..."
+                      : currentStep === steps.length - 1
+                      ? "Finish"
+                      : "Next"}
+                  </Button>
                 </div>
-              ))}
-              <div className="col-span-1 lg:col-span-2">
-                <FileUpload
-                  id="business-proof-of-address"
-                  label="Attach Proof Of Address"
-                  accept=".png,.jpg,.jpeg,.pdf"
-                  maxSize={5 * 1024 * 1024} // 5MB
-                  onChange={(file) =>
-                    updatePayload("businessProofOfAddress", file)
-                  }
-                />
-              </div>
-            </form>
-          )}
-
-          {currentStep === 2 && (
-            <form
-              className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 font-sans"
-              onSubmit={(e) => e.preventDefault()}
-            >
-              <div>
-                <Field
-                  label="RC Number"
-                  type="text"
-                  placeholder="Enter number"
-                  value={stepTwoPayload.rcNumber}
-                  onChange={(e) => updatePayload("rcNumber", e.target.value)}
-                />
-              </div>
-              <div>
-                <Field
-                  label="Date of Incorporation"
-                  type="date"
-                  value={stepTwoPayload.dateOfIncorporation}
-                  onChange={(e) =>
-                    updatePayload("dateOfIncorporation", e.target.value)
-                  }
-                />
-              </div>
-              <div className="col-span-1 lg:col-span-2">
-                <MultiValueInput
-                  label="Add shareholders"
-                  onChange={(shareholders: Shareholder[]) =>
-                    updatePayload(
-                      "shareholders",
-                      shareholders.map((shareholder) => ({
-                        firstname: shareholder.firstname,
-                        lastname: shareholder.lastname,
-                        gender: shareholder.gender,
-                        date_of_birth: shareholder.date_of_birth,
-                        phone: shareholder.phone,
-                        bank_verification_number:
-                          shareholder.bank_verification_number,
-                      }))
-                    )
-                  }
-                />
-              </div>
-              <div className="col-span-1 lg:col-span-2">
-                <FileUpload
-                  id="business-cac-certificate"
-                  label="CAC Certificate"
-                  accept=".png,.jpg,.jpeg,.pdf"
-                  maxSize={5 * 1024 * 1024}
-                  onChange={(file) =>
-                    updatePayload("businessCACCertificate", file)
-                  }
-                />
-              </div>
-              <div className="col-span-1 lg:col-span-2">
-                <FileUpload
-                  id="business-memo"
-                  label="Business Memo of Association"
-                  accept=".png,.jpg,.jpeg,.pdf"
-                  maxSize={5 * 1024 * 1024}
-                  onChange={(file) =>
-                    updatePayload("businessMemoOfAssociation", file)
-                  }
-                />
-              </div>
-            </form>
-          )}
-
-          {/* Navigation Buttons */}
-          <div className="flex flex-col lg:flex-row justify-between mt-6 lg:mt-8 gap-3 lg:gap-5">
-            {currentStep > 0 && (
-              <Button
-                className="px-6 py-2 font-sans bg-gray-200 text-gray-700 rounded-none"
-                onClick={handleBack}
-                disabled={loading}
-              >
-                Back
-              </Button>
+              </Form>
             )}
-            <Button
-              className="px-6 py-2 w-full lg:w-auto font-sans bg-yellow-500 text-black rounded-none"
-              onClick={handleSubmit}
-              disabled={loading}
-            >
-              {loading
-                ? "Processing..."
-                : currentStep === steps.length - 1
-                ? "Finish"
-                : "Next"}
-            </Button>
-          </div>
+          </Formik>
         </div>
 
         {/* Right Steps Sidebar */}

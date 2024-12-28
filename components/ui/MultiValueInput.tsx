@@ -19,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Formik, Form, Field } from "formik";
+import * as Yup from "yup";
 
 interface Shareholder {
   firstname: string;
@@ -29,6 +31,28 @@ interface Shareholder {
   bank_verification_number: string;
 }
 
+const ShareholderSchema = Yup.object().shape({
+  firstname: Yup.string().required("First name is required"),
+  lastname: Yup.string().required("Last name is required"),
+  gender: Yup.string().required("Gender is required"),
+  date_of_birth: Yup.string().required("Date of birth is required"),
+  phone: Yup.string().required("Phone number is required"),
+  bank_verification_number: Yup.string()
+    .required("BVN is required")
+    .min(11, "BVN must be 11 digits")
+    .max(11, "BVN must be 11 digits"),
+});
+
+// Add this interface for the Field render prop
+interface FieldProps {
+  field: {
+    name: string;
+    value: string;
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onBlur: (e: React.FocusEvent<HTMLInputElement>) => void;
+  };
+}
+
 export default function MultiValueInput({
   label,
   onChange,
@@ -37,27 +61,21 @@ export default function MultiValueInput({
   onChange?: (shareholders: Shareholder[]) => void;
 }) {
   const [shareholders, setShareholders] = useState<Shareholder[]>([]);
-  const [newShareholder, setNewShareholder] = useState<Shareholder>({
+  const [open, setOpen] = useState(false);
+
+  const initialValues: Shareholder = {
     firstname: "",
     lastname: "",
     gender: "",
     date_of_birth: "",
     phone: "",
     bank_verification_number: "",
-  });
-  const [open, setOpen] = useState(false);
+  };
 
-  const addShareholder = () => {
-    setShareholders([...shareholders, newShareholder]);
-    setNewShareholder({
-      firstname: "",
-      lastname: "",
-      gender: "",
-      date_of_birth: "",
-      phone: "",
-      bank_verification_number: "",
-    });
-    onChange?.([...shareholders, newShareholder]);
+  const addShareholder = (values: Shareholder) => {
+    const updatedShareholders = [...shareholders, values];
+    setShareholders(updatedShareholders);
+    onChange?.(updatedShareholders);
     setOpen(false);
   };
 
@@ -99,65 +117,59 @@ export default function MultiValueInput({
             <DialogHeader>
               <DialogTitle>Add New Shareholder</DialogTitle>
             </DialogHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                addShareholder();
+            <Formik
+              initialValues={initialValues}
+              validationSchema={ShareholderSchema}
+              onSubmit={(values) => {
+                addShareholder(values);
               }}
-              className="space-y-4"
             >
-              {Object.keys(newShareholder).map((key) => (
-                <div key={key} className="space-y-2">
-                  <Label htmlFor={key}>
-                    {key
-                      .replace(/_/g, " ")
-                      .replace(/\b\w/g, (l) => l.toUpperCase())}
-                  </Label>
-                  {key === "gender" ? (
-                    <Select
-                      value={newShareholder.gender}
-                      onValueChange={(value) =>
-                        setNewShareholder({ ...newShareholder, gender: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  ) : key === "date_of_birth" ? (
-                    <Input
-                      id={key}
-                      type="date"
-                      value={newShareholder[key as keyof Shareholder]}
-                      onChange={(e) =>
-                        setNewShareholder({
-                          ...newShareholder,
-                          [key]: e.target.value,
-                        })
-                      }
-                      required
-                    />
-                  ) : (
-                    <Input
-                      id={key}
-                      value={newShareholder[key as keyof Shareholder]}
-                      onChange={(e) =>
-                        setNewShareholder({
-                          ...newShareholder,
-                          [key]: e.target.value,
-                        })
-                      }
-                      required
-                    />
-                  )}
-                </div>
-              ))}
-              <Button type="submit">Add Shareholder</Button>
-            </form>
+              {({ errors, touched, setFieldValue }) => (
+                <Form className="space-y-4">
+                  {Object.keys(initialValues).map((key) => (
+                    <div key={key} className="space-y-2">
+                      <Label htmlFor={key}>
+                        {key
+                          .replace(/_/g, " ")
+                          .replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </Label>
+                      {key === "gender" ? (
+                        <Select
+                          onValueChange={(value) => setFieldValue(key, value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Male">Male</SelectItem>
+                            <SelectItem value="Female">Female</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : key === "date_of_birth" ? (
+                        <Field name={key}>
+                          {({ field }: FieldProps) => (
+                            <Input type="date" {...field} id={key} required />
+                          )}
+                        </Field>
+                      ) : (
+                        <Field name={key}>
+                          {({ field }: FieldProps) => (
+                            <Input {...field} id={key} required />
+                          )}
+                        </Field>
+                      )}
+                      {errors[key as keyof Shareholder] &&
+                        touched[key as keyof Shareholder] && (
+                          <div className="text-red-500 text-sm">
+                            {errors[key as keyof Shareholder]}
+                          </div>
+                        )}
+                    </div>
+                  ))}
+                  <Button type="submit">Add Shareholder</Button>
+                </Form>
+              )}
+            </Formik>
           </DialogContent>
         </Dialog>
       </div>
