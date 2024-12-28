@@ -8,54 +8,74 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useGetBankAccount } from "@/services/loan/loan";
+import { handleGetAccount } from "@/lib/utils/api/apiHelper";
+import FormatCurrency from "@/components/ui/FormatCurrency";
 import Link from "next/link";
 import React from "react";
+import { useQuery } from "@tanstack/react-query";
 
 const Page = () => {
-  const { data, isLoading } = useGetBankAccount();
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["account"],
+    queryFn: handleGetAccount,
+  });
 
-  console.log("bankAccounts", data);
+  if (error) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        Error loading accounts
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen">
       <div className="py-5 px-5 md:px-10 space-y-5 h-full">
         <PageTitle className="border-b border-border" title="Account" />
 
-        <div className="border font-sans bg-white ">
+        <div className="border font-sans bg-white rounded-lg">
           {isLoading ? (
             <div className="p-4 text-center">Loading...</div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>Bank</TableHead>
-                  <TableHead>Account Number</TableHead>
-                  <TableHead>Account Name</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data?.accounts?.map((account, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">
-                      {account.bankName}
-                    </TableCell>
-                    <TableCell>{account.accountNumber}</TableCell>
-                    <TableCell>
-                      <p className="md:max-w-52">{account.accountName}</p>
-                    </TableCell>
-                    <TableCell>
-                      <Link
-                        href={`/dashboard/account/${account.accountNumber}`}
-                        className="text-primary hover:underline"
-                      >
-                        View Details
-                      </Link>
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead>Bank</TableHead>
+                    <TableHead>Account Number</TableHead>
+                    <TableHead>Account Name</TableHead>
+                    <TableHead>Total Transaction Count</TableHead>
+                    <TableHead>Account Balance</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {data?.data?.accounts?.map((account) => (
+                    <TableRow key={account.id}>
+                      <TableCell className="font-medium">
+                        {account.bankName}
+                      </TableCell>
+                      <TableCell>{account.accountNumber}</TableCell>
+                      <TableCell>
+                        <p className="md:max-w-52">{account.accountName}</p>
+                      </TableCell>
+                      <TableCell>{account.transactionCount}</TableCell>
+                      <TableCell>
+                        <FormatCurrency amount={account.accountBalance} />
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          href={`/dashboard/account/${account.id}`}
+                          className="text-primary hover:underline"
+                        >
+                          View Details
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </>
           )}
         </div>
       </div>

@@ -1,15 +1,13 @@
 "use client";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { handleGetLoanDetails } from "@/lib/utils/api/apiHelper";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 
 const LoanDetailsScreen = () => {
   const { id } = useParams() as { id: string };
   const loanId = Array.isArray(id) ? id[0] : id;
-  const router = useRouter();
 
   const { data: loanDetails, isLoading } = useQuery({
     queryKey: ["loanDetails", loanId],
@@ -38,13 +36,13 @@ const LoanDetailsScreen = () => {
           <h3 className="text-lg font-semibold mb-4 font-clash">
             Loan Details
           </h3>
-          <div className="text-right mb-4">
+          {/* <div className="text-right mb-4">
             <Link href={"/dashboard/payloan"}>
               <Button className="px-4 py-1 bg-yellow-500 text-black font-semibold rounded hover:bg-yellow-600">
                 + Pay Loan
               </Button>
             </Link>
-          </div>
+          </div> */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4 border border-gray-200 rounded-md bg-gray-50">
             <Detail
               key="status"
@@ -119,7 +117,7 @@ const LoanDetailsScreen = () => {
                   <th className="p-2 border">Total Repayment</th>
                   <th className="p-2 border">Payment Date</th>
                   <th className="p-2 border">Status</th>
-                  <th className="p-2 border">Action</th>
+                  {/* <th className="p-2 border">Action</th> */}
                 </tr>
               </thead>
               <tbody>
@@ -133,21 +131,21 @@ const LoanDetailsScreen = () => {
                       {new Date(repayment.due_date).toLocaleDateString()}
                     </td>
                     <td className="p-2 border">
-                      <StatusBadge status={repayment.status} />
+                      <StatusBadge status={loan.status} />
                     </td>
-                    {repayment && (
+                    {/* {repayment && (
                       <td className="p-2 border">
                         <Button
                           onClick={() => {
-                            router.push(`/dashboard/payloan/${repayment.id}`);
+                            router.push(`/dashboard/payloan/${loan.id}`);
                           }}
-                          disabled={repayment.status !== "EQUIRIED"}
+                          disabled={loan.status !== "ACTIVE"}
                           className="px-3 h-fit bg-yellow-500 text-black rounded-md hover:bg-yellow-600"
                         >
                           + Pay Loan
                         </Button>
                       </td>
-                    )}
+                    )} */}
                   </tr>
                 ))}
               </tbody>

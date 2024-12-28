@@ -29,6 +29,12 @@ import {
   SendOtpForForgetPasswordPayload,
   ResetPasswordResponse,
   ResetPasswordPayload,
+  ResendVerificationResponse,
+  TransactionHistoryResponse,
+  AccountResponse,
+  AccountByIdResponse,
+  AccountDetailsByIdResponse,
+  LoanStatDetailsResponse,
 } from "@/types";
 import axiosInstance from ".";
 import {
@@ -37,24 +43,31 @@ import {
   CREATE_LOAN,
   CREATE_PIN,
   DASHBOARD,
+  GET_ACCOUNT,
+  GET_ACCOUNT_BY_ID,
+  GET_ACCOUNT_DETAILS_BY_ID,
   GET_LOAN,
   GET_LOAN_DETAILS,
   GET_PROFILE,
   GET_TENURES,
   INVENTORY_LIST,
   LIST_BANKS,
+  LOAN_STAT_DETAILS,
   POST_REPAYMENT_PATTERN,
   REQUEST_PIN_TOKEN,
   RESEND_EMAIL_OTP,
+  RESEND_VERIFICATION_TOKEN,
   RESET_PASSWORD,
   SEND_OTP_FOR_FORGET_PASSWORD,
   SIGN_IN,
+  TRANSACTION_HISTORY,
   UPDATE_PIN,
   VERIFY_BANK_ACCOUNT,
   VERIFY_EMAIL,
   VERIFY_PHONE_NUMBER,
 } from "@/url/api-url";
 import { AxiosError } from "axios";
+
 interface UserProfile {
   data: {
     business: {
@@ -88,11 +101,43 @@ export const fetcher = async <T>(
   console.log("Response Data:", response.data);
   return response.data;
 };
-export const poster = async <T, U>(url: string, data?: U): Promise<T> => {
+export const poster = async <T, U>(
+  url: string,
+  data?: U,
+  headers?: Record<string, string>
+): Promise<T> => {
   console.log("POST Request URL:", url);
   console.log("POST Data:", data);
 
-  const response = await axiosInstance.post<T>(url, data);
+  const response = await axiosInstance.post<T>(url, data, {
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...headers,
+    },
+  });
+  console.log("Response Data:", response.data);
+
+  return response.data;
+};
+// Generic POST Request with multipart/form-data
+export const posterWithMultipart = async <T>(
+  url: string,
+  formData: FormData,
+  headers?: Record<string, string>
+): Promise<T> => {
+  console.log("POST Multipart Request URL:", url);
+  console.log("POST FormData:", formData);
+
+  // Let browser set Content-Type header automatically with boundary
+  const response = await axiosInstance.post<T>(url, formData, {
+    headers: {
+      // Let browser set Content-Type automatically for files like png, jpg etc
+      "Content-Type": "multipart/form-data",
+      Accept: "*/*",
+      ...headers,
+    },
+  });
   console.log("Response Data:", response.data);
 
   return response.data;
@@ -248,6 +293,22 @@ export const handleResetPassword = async (
   );
 };
 
+export const handleResendEmailVerificationToken =
+  async (): Promise<ResendVerificationResponse> => {
+    return await fetcher<ResendVerificationResponse>(
+      RESEND_VERIFICATION_TOKEN,
+      { channel: "email" }
+    );
+  };
+
+export const handleResendPhoneVerificationToken =
+  async (): Promise<ResendVerificationResponse> => {
+    return await fetcher<ResendVerificationResponse>(
+      RESEND_VERIFICATION_TOKEN,
+      { channel: "phone" }
+    );
+  };
+
 export const handleSendOtpForForgetPassword = async (
   payload: SendOtpForForgetPasswordPayload
 ): Promise<SendOtpForForgetPasswordResponse> => {
@@ -257,6 +318,36 @@ export const handleSendOtpForForgetPassword = async (
   >(SEND_OTP_FOR_FORGET_PASSWORD, payload);
 };
 
+export const handleGetTransactionHistory = async (
+  page?: number
+): Promise<TransactionHistoryResponse> => {
+  return await fetcher<TransactionHistoryResponse>(
+    `${TRANSACTION_HISTORY}?page=${page || 1}`
+  );
+};
+
+export const handleGetAccount = async (): Promise<AccountResponse> => {
+  return await fetcher<AccountResponse>(GET_ACCOUNT);
+};
+
+export const handleGetAccountById = async (
+  id: string
+): Promise<AccountByIdResponse> => {
+  return await fetcher<AccountByIdResponse>(GET_ACCOUNT_BY_ID(id));
+};
+
+export const handleGetAccountDetailsById = async (
+  id: string
+): Promise<AccountDetailsByIdResponse> => {
+  return await fetcher<AccountDetailsByIdResponse>(
+    GET_ACCOUNT_DETAILS_BY_ID(id)
+  );
+};
+
+export const handleGetLoanStatDetails =
+  async (): Promise<LoanStatDetailsResponse> => {
+    return await fetcher<LoanStatDetailsResponse>(LOAN_STAT_DETAILS);
+  };
 export const handleApiError = (
   error: unknown,
   setError: (msg: string) => void

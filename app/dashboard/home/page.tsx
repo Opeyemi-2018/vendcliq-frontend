@@ -18,6 +18,7 @@ const Page = () => {
 
         const isComplete =
           profileCompletionStep !== "0" &&
+          profileCompletionStep !== "1" &&
           response.data.account.status === "ACTIVE";
 
         setIsFinishedSetup(isComplete);

@@ -41,6 +41,12 @@ interface RepaymentPattern {
   key: string;
 }
 
+interface FormValues {
+  tenure: string;
+  repaymentPattern: string;
+  acceptedTerms: boolean;
+}
+
 export const ItemDetails: React.FC<{
   onNext: () => void;
   onPrevious: () => void;
@@ -49,7 +55,6 @@ export const ItemDetails: React.FC<{
   setVendorDetails: (vendorDetails: VendorDetails) => void;
 }> = ({ onNext }) => {
   const { items, vendorDetails, tenure } = useContext(RequestContext);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [tenureOptions, setTenureOptions] = useState<string[]>([]);
   const [repaymentPatternOptions, setRepaymentPatternOptions] = useState<
@@ -158,8 +163,8 @@ export const ItemDetails: React.FC<{
     }
   };
 
-  const handleSubmit = async () => {
-    if (!selectedTenure || !repaymentPattern || !acceptedTerms) {
+  const handleSubmit = async (values: FormValues) => {
+    if (!selectedTenure || !repaymentPattern || !values.acceptedTerms) {
       toast.error("Please fill all required fields and accept terms");
       return;
     }
@@ -175,9 +180,9 @@ export const ItemDetails: React.FC<{
         items: items,
         repaymentPattern: repaymentPattern,
         vendorDetails: vendorDetails,
-        termsAccepted: acceptedTerms,
+        termsAccepted: values.acceptedTerms,
       };
-
+      console.log(loanData);
       const loanResponse = await handleCreateLoan(loanData);
 
       if (loanResponse.status === "success") {
@@ -188,6 +193,7 @@ export const ItemDetails: React.FC<{
       }
     } catch (error) {
       console.error("Error:", error);
+      toast.error("Failed to create loan");
     }
   };
 
@@ -379,7 +385,6 @@ export const ItemDetails: React.FC<{
                   checked={values.acceptedTerms}
                   onChange={(e) => {
                     setFieldValue("acceptedTerms", e.target.checked);
-                    setAcceptedTerms(e.target.checked);
                   }}
                   className="mr-2"
                 />
@@ -394,6 +399,7 @@ export const ItemDetails: React.FC<{
               <div className="flex flex-col sm:flex-row gap-4 mt-8">
                 <Button
                   type="submit"
+                  disabled={!values.acceptedTerms}
                   className="w-full py-2 px-8 bg-yellow-500 text-white rounded-sm hover:bg-yellow-600"
                 >
                   Create Loan

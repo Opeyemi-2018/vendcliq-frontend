@@ -1,4 +1,4 @@
-import { poster } from "@/lib/utils/api/apiHelper";
+import { poster, posterWithMultipart } from "@/lib/utils/api/apiHelper";
 import {
   BUSINESS_INFORMATION_SETUP_STEP_ONE,
   BUSINESS_INFORMATION_SETUP_STEP_TWO,
@@ -55,18 +55,28 @@ const appendToFormData = (
 export const handleBusinessSetup = async (
   formData: FormData
 ): Promise<BusinessSetupResponse> => {
+  console.log("Form Data>>", formData.get("businessProofOfAddress"));
   return await poster<BusinessSetupResponse, FormData>(
     BUSINESS_INFORMATION_SETUP_STEP_ONE,
-    formData
+    formData,
+    {
+      "Content-Type": "application/json",
+      Accept: "multipart/form-data",
+    }
   );
 };
 
 export const handleBusinessSetupStepTwo = async (
   formData: FormData
 ): Promise<BusinessSetupResponse> => {
+  const token = localStorage.getItem("authToken");
   return await poster<BusinessSetupResponse, FormData>(
     BUSINESS_INFORMATION_SETUP_STEP_TWO,
-    formData
+    formData,
+    {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "multipart/form-data",
+    }
   );
 };
 
@@ -75,7 +85,7 @@ export const handleIdentityUpload = async (payload: IdentityPayload) => {
 
   appendToFormData(formData, "file", payload.file);
 
-  return await poster<BusinessSetupResponse, FormData>(
+  return await posterWithMultipart<{ status: string }>(
     IDENTITY_UPLOAD,
     formData
   );

@@ -32,6 +32,13 @@ const INVENTORY_LIST = "/v1/inventory/search";
 const SEND_OTP_FOR_FORGET_PASSWORD = "/client/v1/auth/forgot-password";
 const RESET_PASSWORD = "/client/v1/auth/reset-password";
 const GET_BANK_ACCOUNT = "/client/v1/bank-accounts";
+const RESEND_VERIFICATION_TOKEN = "/client/v1/auth/re-send-verification-token";
+const TRANSACTION_HISTORY = "/client/v1/transactions";
+const GET_ACCOUNT = "/client/v1/bank-accounts";
+const GET_ACCOUNT_BY_ID = (id: string) => `/client/v1/bank-accounts/${id}`;
+const GET_ACCOUNT_DETAILS_BY_ID = (id: string) =>
+  `client/v1/bank-accounts/accounts/${id}`;
+const LOAN_STAT_DETAILS = "/client/v1/loans/dashboard";
 // EXPORT URLS
 export {
   VERIFY_EMAIL,
@@ -61,4 +68,10 @@ export {
   SEND_OTP_FOR_FORGET_PASSWORD,
   RESET_PASSWORD,
   GET_BANK_ACCOUNT,
+  RESEND_VERIFICATION_TOKEN,
+  TRANSACTION_HISTORY,
+  GET_ACCOUNT,
+  GET_ACCOUNT_BY_ID,
+  GET_ACCOUNT_DETAILS_BY_ID,
+  LOAN_STAT_DETAILS,
 };

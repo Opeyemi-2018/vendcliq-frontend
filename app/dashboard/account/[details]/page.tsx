@@ -10,31 +10,46 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  handleGetAccountById,
+  handleGetAccountDetailsById,
+} from "@/lib/utils/api/apiHelper";
 import { CalendarDays } from "lucide-react";
-import React from "react";
+import * as React from "react";
 import { IoCloseOutline } from "react-icons/io5";
 import { TbCopyCheck } from "react-icons/tb";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { useParams } from "next/navigation";
 
 const Page = () => {
-  const data = [
-    {
-      reference: "74645673887645637635",
-      date: "June 4th 2023",
-      amount: 1300000,
-      type: "Credit",
-      remarks: (
-        <div>
-          <p className="max-w-80 text-wrap">
-            INWARD RECEIVED PAYMENT (V) 2334647 From UNITED BANK FOR AFRICA |
-            CHUKWU AND SONS LIMITED
-            <strong> /00003883383364YTHD647749904</strong>
-          </p>
-        </div>
-      ),
-      balance: "5,000,000.00",
-    },
-    // Add more transactions as needed...
-  ];
+  const params = useParams() as { details: string };
+  const { details } = params;
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const itemsPerPage = 10;
+
+  const { data: accountData, isLoading: accountLoading } = useQuery({
+    queryKey: ["account", details, currentPage],
+    queryFn: () => handleGetAccountById(details as string),
+  });
+
+  const { data: accountDetails, isLoading: detailsLoading } = useQuery({
+    queryKey: ["accountDetails", details],
+    queryFn: () => handleGetAccountDetailsById(details as string),
+  });
+
+  const transactions = accountData?.data?.account_transactions?.data || [];
+  const totalPages = Math.ceil(
+    (accountData?.data?.account_transactions?.meta?.total || 0) / itemsPerPage
+  );
 
   const Calender = ({ date }: { date: string }) => {
     return (
@@ -45,6 +60,14 @@ const Page = () => {
       </div>
     );
   };
+
+  if (accountLoading || detailsLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen px-4 md:px-10 py-5">
@@ -70,19 +93,25 @@ const Page = () => {
           <div>
             <p className="text-[#5D5D5D] text-sm">Account Number</p>
             <div className="flex items-center gap-1">
-              <p className="text-xl md:text-3xl font-medium">0135678573</p>
+              <p className="text-xl md:text-3xl font-medium">
+                {accountDetails?.data?.accountNumber}
+              </p>
               <TbCopyCheck size="20" className="text-gray-700" />
             </div>
           </div>
           <div>
             <p className="text-[#5D5D5D] text-sm">Account Name</p>
             <p className="text-xl md:text-3xl font-medium">
-              Chukwudi and Sons LTD
+              {accountDetails?.data?.accountName}
             </p>
           </div>
           <div>
             <p className="text-[#5D5D5D] text-sm">Opening Balance (NGN)</p>
-            <p className="text-xl md:text-3xl font-medium">5,000,000.88</p>
+            <p className="text-xl md:text-3xl font-medium">
+              <FormatCurrency
+                amount={accountDetails?.data?.accountBalance ?? 0}
+              />
+            </p>
           </div>
         </div>
 
@@ -100,33 +129,117 @@ const Page = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((item, index) => (
-                <TableRow key={index}>
+              {transactions.map((transaction) => (
+                <TableRow key={transaction.id}>
                   <TableCell className="font-medium whitespace-nowrap">
-                    {item.reference}
+                    {transaction.reference}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    {item.date}
+                    {new Date(transaction.date).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <span className="flex h-2.5 w-2.5 rounded-full bg-green-500" />
-                      <span className="font-medium text-green-700 bg-green-50 px-3 py-1 rounded-full text-sm">
-                        {item.type}
+                      <span
+                        className={`flex h-2.5 w-2.5 rounded-full ${
+                          transaction.type === "credit"
+                            ? "bg-green-500"
+                            : "bg-red-500"
+                        }`}
+                      />
+                      <span
+                        className={`font-medium ${
+                          transaction.type === "credit"
+                            ? "text-green-700 bg-green-50"
+                            : "text-red-700 bg-red-50"
+                        } px-3 py-1 rounded-full text-sm`}
+                      >
+                        {transaction.type.charAt(0).toUpperCase() +
+                          transaction.type.slice(1)}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    <FormatCurrency amount={item.amount} />
+                    <FormatCurrency amount={transaction.amount} />
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    {item.balance}
+                    <FormatCurrency amount={transaction.accountBalance || 0} />
                   </TableCell>
-                  <TableCell>{item.remarks}</TableCell>
+                  <TableCell>
+                    <div>
+                      <p className="max-w-80 text-wrap">
+                        {transaction.narration}
+                      </p>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+
+          {/* Pagination */}
+          <div className="py-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    className={
+                      currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                    }
+                  />
+                </PaginationItem>
+
+                {[...Array(totalPages)].map((_, index) => {
+                  const pageNumber = index + 1;
+
+                  // Show first page, current page, last page and one page before and after current
+                  if (
+                    pageNumber === 1 ||
+                    pageNumber === totalPages ||
+                    (pageNumber >= currentPage - 1 &&
+                      pageNumber <= currentPage + 1)
+                  ) {
+                    return (
+                      <PaginationItem key={pageNumber}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(pageNumber)}
+                          isActive={currentPage === pageNumber}
+                        >
+                          {pageNumber}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }
+
+                  // Show ellipsis for gaps
+                  if (pageNumber === 2 || pageNumber === totalPages - 1) {
+                    return (
+                      <PaginationItem key={pageNumber}>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    );
+                  }
+
+                  return null;
+                })}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    className={
+                      currentPage === totalPages
+                        ? "pointer-events-none opacity-50"
+                        : ""
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
         </div>
       </div>
     </div>

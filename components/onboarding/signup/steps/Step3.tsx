@@ -6,9 +6,11 @@ import {
   handleApiError,
   handleEmailVerification,
 } from "@/lib/utils/api/apiHelper";
+import { ResendEmailVerificationToken } from "@/services/verification/Verification";
 import { EmailVerificationPayload } from "@/types";
-import React, { useState } from "react";
-import { TbReload } from "react-icons/tb";
+import React, { useState, useEffect } from "react";
+import { Formik, Form } from "formik";
+import * as Yup from "yup";
 import { toast } from "react-toastify";
 
 type SignupStepThreeProps = {
@@ -16,44 +18,55 @@ type SignupStepThreeProps = {
   title: string;
 };
 
+const validationSchema = Yup.object({
+  token: Yup.string().required("Confirmation code is required"),
+});
+
 const SignupStepThree: React.FC<SignupStepThreeProps> = ({
   nextStep,
   title,
 }) => {
-  const [token, setToken] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState(30);
   const [timerActive, setTimerActive] = useState(true);
   const email = localStorage.getItem("email");
 
-  // useEffect(() => {
-  //   let timer: NodeJS.Timeout;
-  //   if (timerActive && timeLeft > 0) {
-  //     timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-  //   } else if (timeLeft === 0) {
-  //     setTimerActive(false);
-  //   }
-  //   return () => clearTimeout(timer);
-  // }, [timerActive, timeLeft]);
-
-  // useEffect(() => {
-  //   // Start the timer when the component mounts
-  //   setTimerActive(true);
-  //   setTimeLeft(30);
-  // }, []);
-
-  const handleSubmit = async () => {
-    if (!token.trim()) {
-      setError("Confirmation code is required.");
-      return;
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (timerActive && timeLeft > 0) {
+      timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+    } else if (timeLeft === 0) {
+      setTimerActive(false);
     }
+    return () => clearTimeout(timer);
+  }, [timerActive, timeLeft]);
 
-    const payload: EmailVerificationPayload = { token };
+  useEffect(() => {
+    setTimerActive(true);
+    setTimeLeft(30);
+  }, []);
+
+  const handleResendVerificationToken = async () => {
+    try {
+      setLoading(true);
+      const response = await ResendEmailVerificationToken();
+      if (response.status === "success") {
+        toast.success(response.msg);
+        handleStartTimer();
+      }
+    } catch (error) {
+      handleApiError(error, setError);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (values: { token: string }) => {
+    const payload: EmailVerificationPayload = { token: values.token };
 
     setLoading(true);
     try {
-      console.log("payload");
       const response = await handleEmailVerification(payload);
       if (response.status === "success") {
         toast.success(response.msg);
@@ -69,7 +82,6 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
   const handleStartTimer = () => {
     setTimerActive(true);
     setTimeLeft(30);
-    // TODO: Implement resend OTP logic here
   };
 
   return (
@@ -82,45 +94,51 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
           A confirmation code has been sent to your email address:
           <span className="text-primary block mt-1">{email}</span>
         </p>
-        <div className="mt-6">
-          <Input
-            label="Confirmation Code"
-            placeholder="Enter Confirmation Code"
-            className="w-full"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-          />
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        </div>
-        <div className="flex justify-between items-center mt-4 text-sm">
-          {timerActive ? (
-            <p>Time remaining: {timeLeft} seconds</p>
-          ) : (
-            <Button
-              onClick={handleStartTimer}
-              variant="ghost"
-              className="text-primary hover:text-primary-dark"
-            >
-              Resend OTP
-            </Button>
-          )}
-          <Button
-            onClick={handleStartTimer}
-            variant="ghost"
-            className="flex items-center gap-2 text-secondary hover:text-secondary-dark"
-            disabled={timerActive}
-          >
-            <TbReload size="16" />
-            <span>Resend code</span>
-          </Button>
-        </div>
-        <Button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="mt-6 w-full"
+
+        <Formik
+          initialValues={{ token: "" }}
+          validationSchema={validationSchema}
+          onSubmit={handleSubmit}
         >
-          {loading ? "Verifying..." : "Continue"}
-        </Button>
+          {({ values, errors, touched, handleChange, isSubmitting }) => (
+            <Form className="mt-6">
+              <Input
+                label="Confirmation Code"
+                name="token"
+                placeholder="Enter Confirmation Code"
+                className="w-full"
+                value={values.token}
+                onChange={handleChange}
+                error={touched.token ? errors.token : undefined}
+              />
+              {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+
+              <div className="flex justify-between items-center mt-4 text-sm">
+                {timerActive ? (
+                  <p>Time remaining: {timeLeft} seconds</p>
+                ) : (
+                  <Button
+                    onClick={handleResendVerificationToken}
+                    variant="ghost"
+                    className="text-primary hover:text-primary-dark"
+                    disabled={loading}
+                    type="button"
+                  >
+                    Resend OTP
+                  </Button>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isSubmitting || loading}
+                className="mt-6 w-full"
+              >
+                {isSubmitting || loading ? "Verifying..." : "Continue"}
+              </Button>
+            </Form>
+          )}
+        </Formik>
       </div>
     </div>
   );

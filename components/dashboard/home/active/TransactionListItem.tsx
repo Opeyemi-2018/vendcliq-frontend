@@ -8,6 +8,7 @@ interface TransactionListItemProps {
   transactionId: string;
   amount: string;
   isOutgoing: boolean;
+  isCredit: boolean;
 }
 
 export const TransactionListItem: React.FC<TransactionListItemProps> = ({
@@ -16,7 +17,8 @@ export const TransactionListItem: React.FC<TransactionListItemProps> = ({
   recipientInfo,
   transactionId,
   amount,
-  isOutgoing,
+
+  isCredit,
 }) => (
   <div className="flex flex-col gap-4 font-medium mt-6 py-4 px-4 sm:px-6 border-b border-border text-sm sm:text-base">
     {/* Date */}
@@ -26,12 +28,12 @@ export const TransactionListItem: React.FC<TransactionListItemProps> = ({
     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
       <div className="flex flex-col md:flex-row gap-3 sm:gap-6 items-start">
         {/* Icon */}
-        {isOutgoing ? (
-          <RouteSquare size="44" color="#E33629" />
+        {isCredit ? (
+          <RouteSquare size="44" color="#00C53A" />
         ) : (
           <RouteSquare
             size="44"
-            color="#00C53A"
+            color="#E33629"
             style={{ transform: "rotate(90deg)" }}
           />
         )}
@@ -51,7 +53,7 @@ export const TransactionListItem: React.FC<TransactionListItemProps> = ({
       {/* Amount */}
       <p
         className={`text-xs sm:text-sm md:text-base ${
-          isOutgoing ? "text-destructive" : "text-[#00C53A]"
+          isCredit ? "text-[#00C53A]" : "text-destructive"
         }`}
       >
         {amount}
