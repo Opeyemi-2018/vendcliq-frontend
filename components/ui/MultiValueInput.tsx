@@ -36,7 +36,9 @@ const ShareholderSchema = Yup.object().shape({
   lastname: Yup.string().required("Last name is required"),
   gender: Yup.string().required("Gender is required"),
   date_of_birth: Yup.string().required("Date of birth is required"),
-  phone: Yup.string().required("Phone number is required"),
+  phone: Yup.string()
+    .matches(/^(0|234|\+234)\d{10}$/, "Invalid phone number")
+    .required("Phone number is required"),
   bank_verification_number: Yup.string()
     .required("BVN is required")
     .min(11, "BVN must be 11 digits")

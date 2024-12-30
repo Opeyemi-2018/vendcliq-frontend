@@ -39,6 +39,8 @@ const GET_ACCOUNT_BY_ID = (id: string) => `/client/v1/bank-accounts/${id}`;
 const GET_ACCOUNT_DETAILS_BY_ID = (id: string) =>
   `client/v1/bank-accounts/accounts/${id}`;
 const LOAN_STAT_DETAILS = "/client/v1/loans/dashboard";
+const OUTSIDE_TRANSFER = "/client/v1/transfer/outside";
+const LOCAL_TRANSFER = "/client/v1/transfer/local";
 // EXPORT URLS
 export {
   VERIFY_EMAIL,
@@ -74,4 +76,6 @@ export {
   GET_ACCOUNT_BY_ID,
   GET_ACCOUNT_DETAILS_BY_ID,
   LOAN_STAT_DETAILS,
+  OUTSIDE_TRANSFER,
+  LOCAL_TRANSFER,
 };

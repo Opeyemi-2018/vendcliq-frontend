@@ -1,9 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
-import { ChevronDown, Headphones, LogOut, Menu, X } from "lucide-react";
+import {
+  ChevronDown,
+  Headphones,
+  Loader2,
+  LogOut,
+  Menu,
+  X,
+} from "lucide-react";
 
 import { usePathname, useRouter } from "next/navigation";
 import { ISidebarButtonProps } from "@/types";
@@ -26,8 +33,10 @@ import {
 } from "iconsax-react";
 import { useDashboardData } from "@/services/home/home";
 import { destroyToken } from "@/lib/utils/api";
-// import { handleGetDashboard } from "@/lib/utils/api/apiHelper";
 import Logo from "@/components/Logo";
+import Link from "next/link";
+import { handleGetDashboard } from "@/lib/utils/api/apiHelper";
+import { toast } from "react-toastify";
 
 const menuItems = [
   {
@@ -73,32 +82,31 @@ export default function InstructorLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // const [isFinishedSetup, setIsFinishedSetup] = useState<boolean | null>(null);
+  const [isFinishedSetup, setIsFinishedSetup] = useState<boolean | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const { data } = useDashboardData();
 
-  // useEffect(() => {
-  //   const checkRegistrationStatus = async () => {
-  //     try {
-  //       const response = await handleGetDashboard();
-  //       const profileCompletionStep =
-  //         response.data.business.profileCompletionStep;
-  //       const accountStatus = response.data.account.status;
+  useEffect(() => {
+    const checkRegistrationStatus = async () => {
+      try {
+        const response = await handleGetDashboard();
+        const profileCompletionStep =
+          response.data.business.profileCompletionStep;
 
-  //       const isComplete =
-  //         profileCompletionStep !== "0" &&
-  //         response.data.account.status === "ACTIVE";
+        const isComplete =
+          profileCompletionStep !== "0" &&
+          response.data.account.status === "ACTIVE";
 
-  //       setIsFinishedSetup(isComplete);
-  //     } catch (error) {
-  //       console.error("Failed to fetch profile:", error);
-  //       setIsFinishedSetup(false);
-  //     }
-  //   };
+        setIsFinishedSetup(isComplete);
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+        setIsFinishedSetup(false);
+      }
+    };
 
-  //   checkRegistrationStatus();
-  // }, []);
+    checkRegistrationStatus();
+  }, []);
 
   // Check if current path should exclude the dashboard layout
   const excludedPaths = [
@@ -124,9 +132,13 @@ export default function InstructorLayout({
   }: ISidebarButtonProps) => (
     <button
       onClick={() => {
-        // handleNavigation(href);
-        router.push(href);
-        setIsSidebarOpen(false);
+        if (isFinishedSetup) {
+          router.push(href);
+          setIsSidebarOpen(false);
+        } else {
+          toast.error("Please complete the setup process first.");
+          router.push("/dashboard/setup");
+        }
       }}
       className={cn(
         `w-full flex justify-start text-black   font-sans text-[16px] items-center pl-5 my-5 py-5 h-12 rounded-none bg-inherit hover:bg-active ${
@@ -149,7 +161,7 @@ export default function InstructorLayout({
   return (
     <>
       <div className="">
-        <header className="fixed bg-white w-full  flex justify-between items-center px-4 sm:px-6 lg:px-8 py-4 border-b  border-[#BDBDBD]">
+        <header className="fixed bg-white w-full  flex justify-between items-center px-4 sm:px-6 lg:px-8 py-4 border-b  border-[#BDBDBD] z-40">
           <button
             className="xl:hidden text-gray-700"
             onClick={() => setIsSidebarOpen(true)}
@@ -157,15 +169,18 @@ export default function InstructorLayout({
             <Menu size={20} />
           </button>
           <div className="hidden md:flex justify-end w-full items-center space-x-4">
-            <Button
+            <Link
               aria-label="support"
+              href="https://vendcliq.com/contact"
+              target="_blank"
+              rel="noopener noreferrer"
               className="bg-inherit flex items-center gap-2"
             >
               <Headphones size={20} />
               <span className="font-medium text-nowrap text-gray-700">
                 Support
               </span>
-            </Button>
+            </Link>
             <div className="border-r-2 border-border h-7"></div>
             <div className="flex items-center gap-5 rounded-full">
               <span className="font-medium text-nowrap text-gray-700">{`${firstName} ${lastName}`}</span>
@@ -260,37 +275,43 @@ export default function InstructorLayout({
                   Support
                 </span>
               </Button>
-
-              <div className="flex items-center gap-5 rounded-full">
-                <span className="font-medium text-nowrap text-gray-700">{`${firstName} ${lastName}`}</span>
-                <Avatar>
-                  <AvatarFallback className="bg-active border-2 text-black">
-                    {initials}
-                  </AvatarFallback>
-                  <AvatarImage
-                    src="/placeholder.svg?height=32&width=32"
-                    alt={`${firstName} ${lastName}`}
-                  />
-                </Avatar>
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="px-4 py-2 text-white rounded-md">
-                    <ChevronDown className="h-4 w-4 text-gray-500" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-fit mt-2 px-5 mr-5 py-5">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        destroyToken();
-                        localStorage.removeItem("authToken");
-                        window.location.href = "/";
-                      }}
-                      className="cursor-pointer flex items-center gap-2"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Logout</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              {firstName ||
+              (lastName &&
+                firstName !== "undefined" &&
+                lastName !== "undefined") ? (
+                <div className="flex items-center gap-5 rounded-full">
+                  <span className="font-medium text-nowrap text-gray-700">{`${firstName} ${lastName}`}</span>
+                  <Avatar>
+                    <AvatarFallback className="bg-active border-2 text-black">
+                      {initials}
+                    </AvatarFallback>
+                    <AvatarImage
+                      src="/placeholder.svg?height=32&width=32"
+                      alt={`${firstName} ${lastName}`}
+                    />
+                  </Avatar>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="px-4 py-2 text-white rounded-md">
+                      <ChevronDown className="h-4 w-4 text-gray-500" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-fit mt-2 px-5 mr-5 py-5">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          destroyToken();
+                          localStorage.removeItem("authToken");
+                          window.location.href = "/";
+                        }}
+                        className="cursor-pointer flex items-center gap-2"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Logout</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ) : (
+                <Loader2 className="h-4 w-4 text-gray-500 animate-spin" />
+              )}
             </div>
           </div>
         )}

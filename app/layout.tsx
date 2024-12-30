@@ -38,7 +38,7 @@ export default function RootLayout({
         <link
           rel="apple-touch-icon"
           sizes="180x180"
-          href="/assets/logo/apple-touch-icon.png"
+          href="assets/favicon_io/apple-touch-icon.png"
         />
       </Head>
       <body

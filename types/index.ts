@@ -600,3 +600,39 @@ export interface LoanStatDetailsResponse {
     currently_processing_amount: number;
   };
 }
+
+export interface OutsideTransferPayload {
+  senderAccountId: number;
+  receiverAccountNo: string;
+  receiverAccountName?: string;
+  receiverBankCode?: string;
+  amount: number;
+  narration: string;
+  saveAsBeneficiary: boolean;
+}
+
+export interface OutsideTransferResponse {
+  status: string;
+  msg: string;
+  data: {
+    reference: string;
+  };
+}
+
+export interface LocalTransferPayload {
+  senderAccountId: number;
+  receiverAccountNo: string;
+  receiverAccountName?: string;
+  amount: number;
+  narration: string;
+  saveAsBeneficiary: boolean;
+  receiverBankCode?: string;
+}
+
+export interface LocalTransferResponse {
+  status: string;
+  msg: string;
+  data: {
+    reference: string;
+  };
+}

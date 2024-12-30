@@ -11,7 +11,10 @@ interface FileUploadProps {
   accept?: string;
   maxSize?: number;
   name?: string;
-  onChange?: (file: File | null) => void;
+  onChange: (
+    file: File | null,
+    e?: React.ChangeEvent<HTMLInputElement>
+  ) => void;
 }
 
 export function FileUpload({

@@ -52,7 +52,7 @@ export const TransactionListItem: React.FC<TransactionListItemProps> = ({
 
       {/* Amount */}
       <p
-        className={`text-xs sm:text-sm md:text-base ${
+        className={`text-nowrap text-xs sm:text-sm md:text-base ${
           isCredit ? "text-[#00C53A]" : "text-destructive"
         }`}
       >

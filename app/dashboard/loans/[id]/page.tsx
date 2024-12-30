@@ -4,6 +4,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { handleGetLoanDetails } from "@/lib/utils/api/apiHelper";
 import { useParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 const LoanDetailsScreen = () => {
   const { id } = useParams() as { id: string };
@@ -131,7 +132,14 @@ const LoanDetailsScreen = () => {
                       {new Date(repayment.due_date).toLocaleDateString()}
                     </td>
                     <td className="p-2 border">
-                      <StatusBadge status={loan.status} />
+                      {loan.status === "ACTIVE" ? (
+                        <StatusBadge
+                          className="bg-green-500 text-black"
+                          status={loan.status}
+                        />
+                      ) : (
+                        <StatusBadge status={loan.status} />
+                      )}
                     </td>
                     {/* {repayment && (
                       <td className="p-2 border">
@@ -196,13 +204,21 @@ const Detail: React.FC<{ label: string; value: React.ReactNode }> = ({
 );
 
 // Status Badge Component
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+const StatusBadge: React.FC<{ status: string; className?: string }> = ({
+  status,
+  className,
+}) => {
   let color = "bg-green-200 text-green-800"; // Default to "Paid"
   if (status === "upcoming") color = "bg-gray-200 text-gray-800";
   else if (status === "overdue") color = "bg-red-200 text-red-800";
 
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${color}`}>
+    <span
+      className={cn(
+        `px-2 py-1 rounded-full text-xs font-semibold ${color}`,
+        className
+      )}
+    >
       {status?.charAt(0).toUpperCase() + status?.slice(1)}
     </span>
   );

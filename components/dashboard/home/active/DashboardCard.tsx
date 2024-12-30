@@ -17,8 +17,6 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
   amount,
   nextPaymentDate,
   showButtons,
-
-  onFundWallet,
 }) => (
   <div
     className={`${
@@ -47,13 +45,12 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
             <TiArrowRight size="20" className="text-white ml-2" />
           </Button>
         </Link>
-        <Button
-          className="w-fit sm:w-fit h-9 text-xs md:text-sm flex justify-center items-center text-black bg-transparent border border-gray-400 rounded-md px-4"
-          onClick={onFundWallet}
-        >
-          Fund Wallet
-          <TiArrowRight size="20" className="text-black ml-2" />
-        </Button>
+        <Link href={"/transfer"}>
+          <Button className="w-fit sm:w-fit h-9 text-xs md:text-sm flex justify-center items-center text-black bg-transparent border border-gray-400 rounded-md px-4">
+            Fund Wallet
+            <TiArrowRight size="20" className="text-black ml-2" />
+          </Button>
+        </Link>
       </div>
     )}
   </div>

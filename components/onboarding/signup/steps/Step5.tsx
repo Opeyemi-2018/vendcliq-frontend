@@ -8,14 +8,16 @@ import {
 } from "@/lib/utils/api/apiHelper";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { IoArrowBack } from "react-icons/io5";
 import { toast } from "react-toastify";
 
 type SignupStepFiveProps = {
   nextStep: () => void;
   title: string;
+  prevStep: () => void;
 };
 
-const SignupStepFive: React.FC<SignupStepFiveProps> = ({ title }) => {
+const SignupStepFive: React.FC<SignupStepFiveProps> = ({ title, prevStep }) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +46,13 @@ const SignupStepFive: React.FC<SignupStepFiveProps> = ({ title }) => {
 
   return (
     <div className="">
+      <button
+        onClick={() => prevStep()}
+        className="flex items-center gap-2 text-gray-600 mb-6 hover:text-gray-800"
+      >
+        <IoArrowBack size={20} />
+        <span>Back</span>
+      </button>
       <h2 className="text-xl font-semibold text-black text-center border-b border-border pb-2">
         {title}
       </h2>

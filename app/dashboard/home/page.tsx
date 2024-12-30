@@ -2,7 +2,7 @@
 import { ActiveAccountDashboard } from "@/components/dashboard/home/active/ActiveAccountDashboard";
 import { PendingAccountDashboard } from "@/components/dashboard/home/pending";
 import { handleGetDashboard } from "@/lib/utils/api/apiHelper";
-
+import { ClipLoader } from "react-spinners";
 import React, { useState, useEffect } from "react";
 
 const Page = () => {
@@ -40,7 +40,11 @@ const Page = () => {
   }, []);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <ClipLoader color="#000" size={50} />
+      </div>
+    );
   }
 
   return (
