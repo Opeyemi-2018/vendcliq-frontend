@@ -8,11 +8,13 @@ import {
 import { ConfirmPhoneNumberPayload } from "@/types";
 
 import React, { useState } from "react";
+
 import { toast } from "react-toastify";
 
 type SignupStepFourProps = {
   nextStep: () => void;
   title: string;
+  prevStep: () => void;
 };
 
 const SignupStepFour: React.FC<SignupStepFourProps> = ({ nextStep, title }) => {

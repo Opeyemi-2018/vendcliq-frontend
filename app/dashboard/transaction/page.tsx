@@ -23,9 +23,20 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { handleGetTransactionHistory } from "@/lib/utils/api/apiHelper";
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
 import React, { useState } from "react";
 import { RiFileDownloadFill } from "react-icons/ri";
+import { ClipLoader } from "react-spinners";
+import * as XLSX from "xlsx";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+
+// Add an interface for the transaction type
+interface Transaction {
+  id: number;
+  amount: number;
+  narration: string;
+  type: string;
+  date: string;
+}
 
 const Page = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,6 +69,30 @@ const Page = () => {
     );
   });
 
+  const exportToExcel = () => {
+    // Prepare the data
+    const data = filteredTransactions.map((transaction) => ({
+      ID: transaction.id,
+      Amount: new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+      }).format(transaction.amount),
+      Narration: transaction.narration,
+      "Payment Type": transaction.type,
+      Date: new Date(transaction.date).toLocaleDateString(),
+    }));
+
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(data);
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+
+    // Generate Excel file and trigger download
+    XLSX.writeFile(workbook, "transactions.xlsx");
+  };
+
   const TabTrigger = ({
     value,
     children,
@@ -74,6 +109,53 @@ const Page = () => {
     </TabsTrigger>
   );
 
+  const TransactionReceipt = ({
+    transaction,
+  }: {
+    transaction: Transaction;
+  }) => {
+    return (
+      <DialogContent className="max-w-2xl font-sans">
+        <div className="p-6 space-y-4">
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <h3 className="font-bold text-xl">Transaction Receipt</h3>
+            <p className="text-gray-500">#{transaction.id}</p>
+          </div>
+
+          {/* Transaction Details */}
+          <div className="space-y-3">
+            {/* Amount */}
+            <div className="flex justify-between">
+              <span className="text-gray-600">Amount</span>
+              <FormatCurrency amount={transaction.amount} />
+            </div>
+
+            {/* Date */}
+            <div className="flex justify-between">
+              <span className="text-gray-600">Date</span>
+              <span>{new Date(transaction.date).toLocaleDateString()}</span>
+            </div>
+
+            {/* Type */}
+            <div className="flex justify-between">
+              <span className="text-gray-600">Type</span>
+              <span>{transaction.type}</span>
+            </div>
+
+            {/* Narration */}
+            <div className="flex justify-between">
+              <span className="text-gray-600">Narration</span>
+              <span className="text-right max-w-auto">
+                {transaction.narration}
+              </span>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -84,8 +166,8 @@ const Page = () => {
 
   if (error) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        Error loading transactions
+      <div className="flex justify-center items-center h-screen">
+        <ClipLoader color="#000" size={50} />
       </div>
     );
   }
@@ -99,9 +181,6 @@ const Page = () => {
             <TabsList className="bg-white border-b border-border h-fit w-full flex flex-col md:flex-row justify-between pb-5">
               <div className="flex md:flex-row w-full flex-col gap-2 sm:gap-5">
                 <TabTrigger value="all">All Transactions</TabTrigger>
-                <TabTrigger value="transfer">Transfer</TabTrigger>
-                <TabTrigger value="funding">Funding</TabTrigger>
-                <TabTrigger value="sales">Sales</TabTrigger>
               </div>
               <div className="md:flex md:w-auto w-full md:flex-row flex-col items-center gap-5 sm:gap-5 md:mt-0 mt-4">
                 <SearchInput
@@ -110,7 +189,10 @@ const Page = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search transactions..."
                 />
-                <Button className="bg-black text-white flex items-center gap-2 w-full md:mt-0 mt-3 sm:w-auto">
+                <Button
+                  className="bg-black text-white flex items-center gap-2 w-full md:mt-0 mt-3 sm:w-auto"
+                  onClick={exportToExcel}
+                >
                   <RiFileDownloadFill />
                   Export
                 </Button>
@@ -140,7 +222,19 @@ const Page = () => {
                             <FormatCurrency amount={transaction.amount} />
                           </TableCell>
                           <TableCell>{transaction.narration}</TableCell>
-                          <TableCell>{transaction.type}</TableCell>
+                          <TableCell>
+                            <div>
+                              {transaction.type === "CREDIT" ? (
+                                <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm">
+                                  {transaction.type}
+                                </span>
+                              ) : (
+                                <span className="bg-primary text-white px-4 py-1 rounded-full text-sm">
+                                  {transaction.type}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             {new Date(transaction.date).toLocaleDateString()}
                           </TableCell>
@@ -158,12 +252,14 @@ const Page = () => {
                             </span>
                           </TableCell> */}
                           <TableCell>
-                            <Link
-                              href={`/dashboard/transaction/${transaction.id}`}
-                              className="text-black bg-[#E7F4EB] py-2 px-6 rounded-2xl hover:underline"
-                            >
-                              View
-                            </Link>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <button className="text-black hover:underline">
+                                  View Receipt
+                                </button>
+                              </DialogTrigger>
+                              <TransactionReceipt transaction={transaction} />
+                            </Dialog>
                           </TableCell>
                         </TableRow>
                       ))}

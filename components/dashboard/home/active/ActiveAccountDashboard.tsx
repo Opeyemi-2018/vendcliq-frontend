@@ -103,22 +103,23 @@ export const ActiveAccountDashboard: React.FC = () => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setSearchQuery(e.target.value);
 
-  const text = "904567892";
-  const bankName = "Providus Bank";
-  const accountHolder = "Chukwudi & Sons";
+  const text = account?.number || "No account number";
+  const bankName = account?.bank || "No bank";
+  const accountHolder =
+    account?.name || `${customer?.firstname || ""} ${customer?.lastname || ""}`;
 
   return (
     <div className="h-screen">
       <div className="py-5 px-5 lg:px-10 h-full">
         <h1 className="text-black font-medium text-xl">
-          Hi {customer?.firstname}
+          Hi {customer?.firstname || "there"}
         </h1>
         <div className="flex md:flex-row flex-row text-xs md:text-md mt-3 bg-white items-center text-md text-black w-full md:w-fit gap-2 md:gap-5 py-1 md:px-5 p-2 font-sans border border-border rounded-lg">
           <p className="text-nowrap">{text}</p>
           <p className="border-x border-border text-nowrap px-3">{bankName}</p>
           <p className="text-nowrap">
             {accountHolder?.length > 10
-              ? `${accountHolder.slice(0, 5)}...`
+              ? `${accountHolder.slice(0, 10)}...`
               : accountHolder}
           </p>
           <CopyToClipboard
@@ -138,15 +139,13 @@ export const ActiveAccountDashboard: React.FC = () => {
               title="Wallet balance"
               amount={`NGN${account?.balance || "0.00"}`}
               showButtons
-              onSendMoney={() => alert("Send Money Clicked")}
-              onFundWallet={() => alert("Fund Wallet Clicked")}
             />
           </div>
-          <div className="hidden md:flex">
+          <div className="hidden md:flex z-0">
             <LoanLimitCard limit={profile?.business.creditLimit || 0} />
           </div>
         </div>
-        <div className="flex md:hidden mb-5">
+        <div className="flex md:hidden mb-5 z-0">
           <LoanLimitCard limit={profile?.business.creditLimit || 0} />
         </div>
         <div className="bg-white w-full font-sans  md:mt-12">

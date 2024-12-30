@@ -21,7 +21,7 @@ const SignupContent = () => {
     setStep((prevStep) => prevStep + 1);
   };
 
-  // const prevStep = () => setStep(step - 1);
+  const prevStep = () => setStep(step - 1);
 
   return (
     <div className="h-screen flex flex-col justify-center items-center">
@@ -39,16 +39,29 @@ const SignupContent = () => {
               title="Confirm your details"
               nextStep={nextStep}
               previousData={signupData}
+              prevStep={prevStep}
             />
           )}
           {step === 3 && (
-            <SignupStepThree title="Confirm your email" nextStep={nextStep} />
+            <SignupStepThree
+              title="Confirm your email"
+              nextStep={nextStep}
+              prevStep={prevStep}
+            />
           )}
           {step === 4 && (
-            <SignupStepFour title="Confirm phone number" nextStep={nextStep} />
+            <SignupStepFour
+              title="Confirm phone number"
+              nextStep={nextStep}
+              prevStep={prevStep}
+            />
           )}
           {step === 5 && (
-            <SignupStepFive title="Confirm phone number" nextStep={nextStep} />
+            <SignupStepFive
+              title="Confirm phone number"
+              nextStep={nextStep}
+              prevStep={prevStep}
+            />
           )}
         </div>
       </div>

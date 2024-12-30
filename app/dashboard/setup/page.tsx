@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Field from "@/components/ui/Field";
 import { FileUpload } from "@/components/ui/Fileupload";
@@ -16,6 +16,7 @@ import axios from "axios";
 
 import { useGetProfile } from "@/services/profile/Profile";
 import { useDashboardData } from "@/services/home/home";
+import { ClipLoader } from "react-spinners";
 
 interface Shareholder {
   firstname: string;
@@ -71,14 +72,19 @@ const validationSchemas = [
 
   // Step 1 validation
   Yup.object({
-    businessName: Yup.string().required("Business name is required"),
+    businessName: Yup.string()
+      .min(3, "Business name must have at least 3 characters")
+      .required("Business name is required"),
     businessEmail: Yup.string()
       .email("Invalid email")
       .required("Business email is required"),
-    businessPhone: Yup.string().required("Business phone is required"),
+    businessPhone: Yup.string()
+      .matches(/^(0|234|\+234)\d{10}$/, "Invalid phone number")
+      .required("Business phone is required"),
     businessAddress: Yup.string().required("Business address is required"),
     bvn: Yup.string()
       .min(11, "BVN must be 11 digits")
+      .max(11, "BVN must be 11 digits")
       .required("BVN is required"),
     businessProofOfAddress: Yup.mixed().required(
       "Proof of address is required"
@@ -116,9 +122,9 @@ const AccountSetup = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const { data } = useDashboardData();
-  const {} = useGetProfile();
-  console.log(data);
+  const { isLoading: isDashboardLoading } = useDashboardData();
+  const { profile, isLoading: isProfileLoading } = useGetProfile();
+  console.log("profile>>>>", profile);
   const [identityPayload, setIdentityPayload] = useState<IdentityPayload>({
     file: null,
   });
@@ -152,6 +158,40 @@ const AccountSetup = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!isProfileLoading && profile) {
+      setCurrentStep(Number(profile?.business?.profileCompletionStep || 0));
+
+      setStepOnePayload({
+        businessName: "",
+        businessEmail: profile.business?.email || profile.email?.email || "",
+        businessPhone: "",
+        businessAddress: "",
+        businessProofOfAddress: null,
+        bvn: "",
+      });
+
+      setStepTwoPayload({
+        rcNumber: profile.business?.registration?.rcNumber || "",
+        dateOfIncorporation:
+          profile.business?.registration?.dateOfIncorporation || "",
+        shareholders: [
+          {
+            firstname: profile.firstname || "",
+            lastname: profile.lastname || "",
+            gender: "",
+            date_of_birth: "",
+            phone: profile.phone?.number || "",
+            bank_verification_number: "",
+          },
+        ],
+        businessCACCertificate: null,
+        businessMemoOfAssociation: null,
+      });
+    }
+  }, [profile, isProfileLoading]);
+
+  console.log("identityPayload>>>", identityPayload);
   const handleNext = () => {
     if (currentStep < steps.length - 1) setCurrentStep((prev) => prev + 1);
   };
@@ -195,7 +235,7 @@ const AccountSetup = () => {
           !values.businessPhone ||
           !values.businessAddress ||
           !values.bvn ||
-          !stepOnePayload.businessProofOfAddress
+          !values.businessProofOfAddress
         ) {
           setError(
             "Please fill in all required fields including proof of address"
@@ -210,10 +250,10 @@ const AccountSetup = () => {
         formData.append("businessAddress", values.businessAddress);
         formData.append("bvn", values.bvn);
 
-        if (stepOnePayload.businessProofOfAddress instanceof File) {
+        if (values.businessProofOfAddress instanceof File) {
           formData.append(
             "businessProofOfAddress",
-            stepOnePayload.businessProofOfAddress
+            values.businessProofOfAddress
           );
         }
 
@@ -234,20 +274,33 @@ const AccountSetup = () => {
           handleNext();
         }
       } else if (currentStep === 2) {
+        if (
+          !values.rcNumber ||
+          !values.dateOfIncorporation ||
+          !values.shareholders ||
+          !values.businessCACCertificate ||
+          !values.businessMemoOfAssociation
+        ) {
+          setError(
+            "Please fill in all required fields and upload all documents"
+          );
+          return;
+        }
+
         formData.append("rcNumber", values.rcNumber);
         formData.append("dateOfIncorporation", values.dateOfIncorporation);
         formData.append("shareholders", JSON.stringify(values.shareholders));
 
-        if (stepTwoPayload.businessCACCertificate instanceof File) {
+        if (values.businessCACCertificate instanceof File) {
           formData.append(
             "businessCACCertificate",
-            stepTwoPayload.businessCACCertificate
+            values.businessCACCertificate
           );
         }
-        if (stepTwoPayload.businessMemoOfAssociation instanceof File) {
+        if (values.businessMemoOfAssociation instanceof File) {
           formData.append(
             "businessMemoOfAssociation",
-            stepTwoPayload.businessMemoOfAssociation
+            values.businessMemoOfAssociation
           );
         }
 
@@ -289,6 +342,7 @@ const AccountSetup = () => {
     } else if (currentStep === 1) {
       setStepOnePayload({ ...stepOnePayload, [key]: value });
     } else {
+      console.log("stepTwoPayload", stepTwoPayload);
       setStepTwoPayload({ ...stepTwoPayload, [key]: value });
     }
   };
@@ -305,6 +359,14 @@ const AccountSetup = () => {
         return {};
     }
   };
+
+  if (isProfileLoading || isDashboardLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <ClipLoader color="#000" size={50} />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -424,10 +486,15 @@ const AccountSetup = () => {
                         id="business-proof-of-address"
                         label="Attach Proof Of Address"
                         accept=".png,.jpg,.jpeg,.pdf"
-                        maxSize={5 * 1024 * 1024} // 5MB
-                        onChange={(file) =>
-                          updatePayload("businessProofOfAddress", file)
-                        }
+                        maxSize={5 * 1024 * 1024}
+                        onChange={(file) => {
+                          handleChange({
+                            target: {
+                              name: "businessProofOfAddress",
+                              value: file,
+                            },
+                          });
+                        }}
                       />
                     </div>
                   </div>
@@ -462,9 +529,14 @@ const AccountSetup = () => {
                     <div className="col-span-1 lg:col-span-2">
                       <MultiValueInput
                         label="Add shareholders"
-                        onChange={(shareholders: Shareholder[]) =>
-                          updatePayload("shareholders", shareholders)
-                        }
+                        onChange={(shareholders: Shareholder[]) => {
+                          handleChange({
+                            target: {
+                              name: "shareholders",
+                              value: shareholders,
+                            },
+                          });
+                        }}
                       />
                     </div>
                     <div className="col-span-1 lg:col-span-2">
@@ -473,9 +545,14 @@ const AccountSetup = () => {
                         label="CAC Certificate"
                         accept=".png,.jpg,.jpeg,.pdf"
                         maxSize={5 * 1024 * 1024}
-                        onChange={(file) =>
-                          updatePayload("businessCACCertificate", file)
-                        }
+                        onChange={(file) => {
+                          handleChange({
+                            target: {
+                              name: "businessCACCertificate",
+                              value: file,
+                            },
+                          });
+                        }}
                       />
                     </div>
                     <div className="col-span-1 lg:col-span-2">
@@ -484,9 +561,14 @@ const AccountSetup = () => {
                         label="Business Memo of Association"
                         accept=".png,.jpg,.jpeg,.pdf"
                         maxSize={5 * 1024 * 1024}
-                        onChange={(file) =>
-                          updatePayload("businessMemoOfAssociation", file)
-                        }
+                        onChange={(file) => {
+                          handleChange({
+                            target: {
+                              name: "businessMemoOfAssociation",
+                              value: file,
+                            },
+                          });
+                        }}
                       />
                     </div>
                   </div>

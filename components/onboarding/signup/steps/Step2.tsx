@@ -11,6 +11,7 @@ import { AxiosError } from "axios";
 import { Formik, Form } from "formik";
 import Link from "next/link";
 import React from "react";
+import { IoArrowBack } from "react-icons/io5";
 import { toast } from "react-toastify";
 import * as Yup from "yup";
 
@@ -37,6 +38,7 @@ type SignupStepTwoProps = {
   nextStep: () => void;
   title: string;
   previousData: { businessType: string };
+  prevStep: () => void;
 };
 
 const validationSchema = Yup.object({
@@ -46,6 +48,9 @@ const validationSchema = Yup.object({
   password: Yup.string()
     .min(8, "Password must be at least 8 characters")
     .required("Password is required"),
+  confirmPassword: Yup.string()
+    .oneOf([Yup.ref("password")], "Passwords must match")
+    .required("Please confirm your password"),
   referral: Yup.string(),
   submit: Yup.string(),
 });
@@ -54,12 +59,14 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
   nextStep,
   title,
   previousData,
+  prevStep,
 }) => {
   const initialValues = {
     firstname: "",
     lastname: "",
     email: "",
     password: "",
+    confirmPassword: "",
     isRegistered: true,
     referral: "",
     submit: "",
@@ -114,6 +121,13 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
 
   return (
     <div className="">
+      <button
+        onClick={() => prevStep()}
+        className="flex items-center gap-2 text-gray-600 mb-6 hover:text-gray-800"
+      >
+        <IoArrowBack size={20} />
+        <span>Back</span>
+      </button>
       <h2 className="text-xl font-semibold text-black text-center border-b border-border pb-2">
         {title}
       </h2>
@@ -193,6 +207,17 @@ const SignupStepTwo: React.FC<SignupStepTwoProps> = ({
               onChange={(value) => setFieldValue("password", value)}
               value={values.password}
               error={touched.password ? errors.password : undefined}
+            />
+
+            <PasswordInput
+              label="Confirm Password"
+              placeholder="Confirm your password"
+              className="mt-4"
+              onChange={(value) => setFieldValue("confirmPassword", value)}
+              value={values.confirmPassword}
+              error={
+                touched.confirmPassword ? errors.confirmPassword : undefined
+              }
             />
 
             <Input

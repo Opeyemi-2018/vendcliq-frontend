@@ -35,6 +35,8 @@ import {
   AccountByIdResponse,
   AccountDetailsByIdResponse,
   LoanStatDetailsResponse,
+  OutsideTransferPayload,
+  OutsideTransferResponse,
 } from "@/types";
 import axiosInstance from ".";
 import {
@@ -53,6 +55,8 @@ import {
   INVENTORY_LIST,
   LIST_BANKS,
   LOAN_STAT_DETAILS,
+  LOCAL_TRANSFER,
+  OUTSIDE_TRANSFER,
   POST_REPAYMENT_PATTERN,
   REQUEST_PIN_TOKEN,
   RESEND_EMAIL_OTP,
@@ -92,12 +96,23 @@ interface InventoryResponse {
   data: InventoryItem[];
 }
 
+interface TransferPayload {
+  senderAccountId: number;
+  receiverAccountNo: string;
+
+  amount: number;
+  narration: string;
+  saveAsBeneficiary: boolean;
+}
+
 // Generic GET Request
 export const fetcher = async <T>(
   url: string,
   params?: Record<string, unknown>
 ): Promise<T> => {
-  const response = await axiosInstance.get<T>(url, { params });
+  const response = await axiosInstance.get<T>(url, {
+    params,
+  });
   console.log("Response Data:", response.data);
   return response.data;
 };
@@ -161,6 +176,10 @@ export const handleGetProfile = async (
 };
 
 export const handleGetInventory = async (): Promise<InventoryResponse> => {
+  if (!process.env.NEXT_PUBLIC_PRODUCT_API_KEY) {
+    console.log("API Key is missing");
+    throw new Error("API Key is missing");
+  }
   return await fetcher<InventoryResponse>(INVENTORY_LIST);
 };
 
@@ -361,3 +380,18 @@ export const handleApiError = (
   }
 };
 // Other methods (PUT, DELETE, etc.) can be added similarly
+
+export const handleOutsideTransfer = async (
+  payload: OutsideTransferPayload
+): Promise<OutsideTransferResponse> => {
+  return await poster<OutsideTransferResponse, OutsideTransferPayload>(
+    OUTSIDE_TRANSFER,
+    payload
+  );
+};
+
+export const handleLocalTransfer = async (
+  payload: TransferPayload
+): Promise<ApiResponse> => {
+  return await poster<ApiResponse, TransferPayload>(LOCAL_TRANSFER, payload);
+};

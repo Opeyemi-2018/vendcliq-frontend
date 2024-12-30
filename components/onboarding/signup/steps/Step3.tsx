@@ -2,10 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/Field";
-import {
-  handleApiError,
-  handleEmailVerification,
-} from "@/lib/utils/api/apiHelper";
+import { handleEmailVerification } from "@/lib/utils/api/apiHelper";
 import { ResendEmailVerificationToken } from "@/services/verification/Verification";
 import { EmailVerificationPayload } from "@/types";
 import React, { useState, useEffect } from "react";
@@ -13,9 +10,13 @@ import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { toast } from "react-toastify";
 
+import Link from "next/link";
+import { AxiosError } from "axios";
+
 type SignupStepThreeProps = {
   nextStep: () => void;
   title: string;
+  prevStep: () => void;
 };
 
 const validationSchema = Yup.object({
@@ -26,7 +27,7 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
   nextStep,
   title,
 }) => {
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState(30);
   const [timerActive, setTimerActive] = useState(true);
@@ -44,7 +45,7 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
 
   useEffect(() => {
     setTimerActive(true);
-    setTimeLeft(30);
+    setTimeLeft(60);
   }, []);
 
   const handleResendVerificationToken = async () => {
@@ -56,7 +57,13 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
         handleStartTimer();
       }
     } catch (error) {
-      handleApiError(error, setError);
+      if (error instanceof AxiosError) {
+        const errorData = error.response?.data;
+        console.log("errorData>>>>", errorData);
+        toast.error(errorData?.msg || "An error occurred");
+      } else {
+        toast.error("An unexpected error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -66,6 +73,7 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
     const payload: EmailVerificationPayload = { token: values.token };
 
     setLoading(true);
+    setTimerActive(false); // Stop timer when submitting
     try {
       const response = await handleEmailVerification(payload);
       if (response.status === "success") {
@@ -73,7 +81,16 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
         nextStep();
       }
     } catch (error) {
-      handleApiError(error, setError);
+      if (error instanceof AxiosError) {
+        const errorData = error.response?.data;
+        if (errorData?.data?.[0]?.message) {
+          toast.error(errorData.data[0].message);
+        } else {
+          toast.error(errorData?.msg || "An error occurred");
+        }
+      } else {
+        toast.error("An unexpected error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -132,13 +149,20 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
               <Button
                 type="submit"
                 disabled={isSubmitting || loading}
-                className="mt-6 w-full"
+                className="mt-6 w-full px-6 py-2 font-sans bg-yellow-500 text-black rounded-none"
               >
                 {isSubmitting || loading ? "Verifying..." : "Continue"}
               </Button>
             </Form>
           )}
         </Formik>
+
+        <div className="flex gap-1 items-center justify-center mt-3 font-sans text-sm">
+          <p className="text-black">I already have an account?</p>
+          <Link href={"/"}>
+            <p className="text-primary">Login</p>
+          </Link>
+        </div>
       </div>
     </div>
   );
