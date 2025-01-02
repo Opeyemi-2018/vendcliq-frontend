@@ -41,6 +41,8 @@ const GET_ACCOUNT_DETAILS_BY_ID = (id: string) =>
 const LOAN_STAT_DETAILS = "/client/v1/loans/dashboard";
 const OUTSIDE_TRANSFER = "/client/v1/transfer/outside";
 const LOCAL_TRANSFER = "/client/v1/transfer/local";
+const VERIFY_VERA_BANK_ACCOUNT = (accountNumber: string) =>
+  `/client/v1/bank-accounts/accounts/verify/${accountNumber}`;
 // EXPORT URLS
 export {
   VERIFY_EMAIL,
@@ -78,4 +80,5 @@ export {
   LOAN_STAT_DETAILS,
   OUTSIDE_TRANSFER,
   LOCAL_TRANSFER,
+  VERIFY_VERA_BANK_ACCOUNT,
 };

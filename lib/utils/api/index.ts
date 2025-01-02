@@ -37,12 +37,10 @@ api.interceptors.response.use(
   (error) => {
     if (error.response) {
       const { status, data } = error.response;
-      if (
-        status === 401 &&
-        data.message === "An error occurred - Token Expired"
-      ) {
+      console.log("error", error);
+      if (status === 401 && data.errors[0].message === "Unauthorized access") {
         // Token has expired, redirect to the login page
-        window.location.href = "/auth/login";
+        window.location.href = "/login";
       }
     }
     return Promise.reject(error);

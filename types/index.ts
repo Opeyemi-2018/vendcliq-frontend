@@ -253,8 +253,8 @@ export interface ResendEmailOtpResponse {
 
 export interface ApiResponse {
   status: number | string;
-
-  message: string;
+  msg?: string;
+  message?: string;
   data?: any; // or be more specific with the data type if known
 }
 

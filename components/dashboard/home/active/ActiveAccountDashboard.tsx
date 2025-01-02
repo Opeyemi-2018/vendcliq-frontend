@@ -185,7 +185,7 @@ export const ActiveAccountDashboard: React.FC = () => {
                         description={transaction.narration}
                         recipientInfo={transaction.reference}
                         transactionId={transaction.transactionId}
-                        amount={`${transaction.type === "debit" ? "-" : "+"} ${
+                        amount={`${transaction.type === "DEBIT" ? "-" : "+"} ${
                           transaction.amount
                         }`}
                         isOutgoing={transaction.type === "DEBIT"}

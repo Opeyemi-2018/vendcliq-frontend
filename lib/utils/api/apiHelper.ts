@@ -69,6 +69,7 @@ import {
   VERIFY_BANK_ACCOUNT,
   VERIFY_EMAIL,
   VERIFY_PHONE_NUMBER,
+  VERIFY_VERA_BANK_ACCOUNT,
 } from "@/url/api-url";
 import { AxiosError } from "axios";
 
@@ -394,4 +395,10 @@ export const handleLocalTransfer = async (
   payload: TransferPayload
 ): Promise<ApiResponse> => {
   return await poster<ApiResponse, TransferPayload>(LOCAL_TRANSFER, payload);
+};
+
+export const handleVerifyVeraBankAccount = async (
+  accountNumber: string
+): Promise<ApiResponse> => {
+  return await fetcher<ApiResponse>(VERIFY_VERA_BANK_ACCOUNT(accountNumber));
 };

@@ -1,11 +1,36 @@
 import { WarningAlert } from "@/components/ui/WarningAlert";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import RequestCard from "../RequestCard";
 import { Landmark } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { handleGetDashboard } from "@/lib/utils/api/apiHelper";
+import { toast } from "react-toastify";
 
 export const PendingAccountDashboard = () => {
   const router = useRouter();
+  const [isFinishedSetup, setIsFinishedSetup] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkRegistrationStatus = async () => {
+      try {
+        const response = await handleGetDashboard();
+        const profileCompletionStep =
+          response.data.business.profileCompletionStep;
+
+        const isComplete =
+          profileCompletionStep !== "0" &&
+          profileCompletionStep !== "1" &&
+          response.data.account.status === "ACTIVE";
+
+        setIsFinishedSetup(isComplete);
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+        setIsFinishedSetup(false);
+      }
+    };
+
+    checkRegistrationStatus();
+  }, []);
   return (
     <div>
       <WarningAlert />
@@ -21,7 +46,11 @@ export const PendingAccountDashboard = () => {
             buttonText="Request loan"
             icon={<Landmark size={44} />}
             primaryColor="bg-primary"
-            onRequestLoan={() => router.push("/dashboard/request")}
+            onRequestLoan={() =>
+              isFinishedSetup
+                ? router.push("/dashboard/request")
+                : toast.error("Please complete your profile")
+            }
           />
 
           <RequestCard
@@ -30,7 +59,11 @@ export const PendingAccountDashboard = () => {
             buttonText="Receive money"
             icon={<Landmark size={44} />}
             primaryColor="bg-primary"
-            onRequestLoan={() => router.push("/dashboard/account")}
+            onRequestLoan={() =>
+              isFinishedSetup
+                ? router.push("/dashboard/account")
+                : toast.error("Please complete your profile")
+            }
           />
         </div>
       </div>
