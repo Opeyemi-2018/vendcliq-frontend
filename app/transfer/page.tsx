@@ -126,9 +126,10 @@ const VeraTransferForm = ({
     };
     verifyAccount();
   }, [values.beneficiaryAccount]);
-  const { data, isLoading } = useQuery({
-    queryKey: ["verify-vera-bank-account"],
+  const { data } = useQuery({
+    queryKey: ["verify-vera-bank-account", values.beneficiaryAccount],
     queryFn: () => handleVerifyVeraBankAccount(values.beneficiaryAccount),
+    enabled: !!values.beneficiaryAccount,
   });
 
   return (
@@ -250,7 +251,6 @@ const OtherBanksTransferForm = ({
   });
 
   const [errors, setErrors] = useState<Partial<TransferFormValues>>({});
-  const [verificationError, setVerificationError] = useState("");
   const { verifyBankAccount } = useVerifyBankAccount();
 
   const validate = () => {
@@ -295,7 +295,6 @@ const OtherBanksTransferForm = ({
     return () => {
       setValues({ ...initialFormValues, selectedBank: "" });
       setErrors({});
-      setVerificationError("");
     };
   }, []);
 
@@ -314,20 +313,19 @@ const OtherBanksTransferForm = ({
             ...prev,
             beneficiaryName: response.data.accountName,
           }));
-          setVerificationError("");
         } else {
-          setVerificationError(response.msg || "Failed to verify account");
+          toast.error(response.msg || "Failed to verify account");
         }
       } catch (error) {
         console.error("Verification error:", error);
-        setVerificationError("Failed to verify account");
+        toast.error("Failed to verify account");
       }
     };
 
     if (values.beneficiaryAccount && values.selectedBank) {
       verifyAccount();
     }
-  }, [values.beneficiaryAccount, values.selectedBank]);
+  }, [values.beneficiaryAccount, values.selectedBank, verifyBankAccount]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -405,10 +403,6 @@ const OtherBanksTransferForm = ({
         />
       </div>
 
-      {verificationError && (
-        <p className="text-red-500 text-sm">{verificationError}</p>
-      )}
-
       <Field
         label="Beneficiary Name"
         required
@@ -476,7 +470,6 @@ const Page = () => {
     { bankCode: string; bankName: string }[]
   >([]);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationError, setVerificationError] = useState("");
 
   const handleSelect = (option: "Vendcilo" | "Other Banks") => {
     setSelectedOption(option);
@@ -518,7 +511,7 @@ const Page = () => {
 
     try {
       setIsVerifying(true);
-      const response = await handleLocalTransfer({
+      await handleLocalTransfer({
         senderAccountId: Number(values.fromAccount),
         receiverAccountNo: values.beneficiaryAccount,
         amount: Number(values.amount),
@@ -532,7 +525,6 @@ const Page = () => {
       const errorMessage =
         error.response?.data?.message || error.message || "Transfer failed";
       toast.error(errorMessage);
-      setVerificationError(errorMessage);
     } finally {
       setIsVerifying(false);
     }
@@ -541,7 +533,7 @@ const Page = () => {
   const handleOtherBanksTransfer = async (values: TransferFormValues) => {
     try {
       setIsVerifying(true);
-      const response = await handleOutsideTransfer({
+      await handleOutsideTransfer({
         senderAccountId: Number(values.fromAccount),
         receiverAccountNo: values.beneficiaryAccount,
         receiverAccountName: values.beneficiaryName,
@@ -550,14 +542,12 @@ const Page = () => {
         saveAsBeneficiary: values.saveToBeneficiaryList,
         receiverBankCode: values.selectedBank!,
       });
-      console.log("response", response);
       toast.success("Transfer successful");
       window.location.reload();
     } catch (err) {
       const error = err as AxiosError<{ msg: string }>;
       console.log("error", error);
       toast.error(error.response?.data?.msg || "Transfer failed");
-      setVerificationError(error.message || "Transfer failed");
     } finally {
       setIsVerifying(false);
     }
