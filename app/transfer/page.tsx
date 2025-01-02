@@ -17,12 +17,14 @@ import {
   handleListBanks,
   handleLocalTransfer,
   handleOutsideTransfer,
+  handleVerifyVeraBankAccount,
 } from "@/lib/utils/api/apiHelper";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { useVerifyBankAccount } from "@/services/loan/loan";
+import { ClipLoader } from "react-spinners";
 
 interface Account {
   id: number;
@@ -58,20 +60,21 @@ interface VerifyResponse {
   msg?: string;
 }
 
+const initialFormValues: TransferFormValues = {
+  fromAccount: "",
+  beneficiaryAccount: "",
+  beneficiaryName: "",
+  amount: "",
+  narration: "",
+  saveToBeneficiaryList: false,
+};
+
 const VeraTransferForm = ({
   accounts,
   isVerifying,
   onSubmit,
 }: TransferFormProps) => {
-  const [values, setValues] = useState<TransferFormValues>({
-    fromAccount: "",
-    beneficiaryAccount: "",
-    beneficiaryName: "",
-    amount: "",
-    narration: "",
-    saveToBeneficiaryList: false,
-  });
-
+  const [values, setValues] = useState<TransferFormValues>(initialFormValues);
   const [errors, setErrors] = useState<Partial<TransferFormValues>>({});
 
   const validate = () => {
@@ -79,7 +82,7 @@ const VeraTransferForm = ({
     if (!values.fromAccount) newErrors.fromAccount = "From account is required";
     if (!values.beneficiaryAccount)
       newErrors.beneficiaryAccount = "Beneficiary account is required";
-    if (!values.beneficiaryName)
+    if (!values.beneficiaryName && !data?.data?.account_name)
       newErrors.beneficiaryName = "Beneficiary name is required";
     if (!values.amount) newErrors.amount = "Amount is required";
     if (!values.narration) newErrors.narration = "Narration is required";
@@ -91,6 +94,7 @@ const VeraTransferForm = ({
     const newErrors = validate();
     if (Object.keys(newErrors).length === 0) {
       onSubmit(values);
+      setValues(initialFormValues); // Reset form after submission
     } else {
       setErrors(newErrors);
     }
@@ -104,9 +108,32 @@ const VeraTransferForm = ({
     }));
   };
 
+  useEffect(() => {
+    // Reset form when component unmounts
+    return () => {
+      setValues(initialFormValues);
+      setErrors({});
+    };
+  }, []);
+
+  useEffect(() => {
+    const verifyAccount = async () => {
+      if (!values.beneficiaryAccount) return;
+      const response = await handleVerifyVeraBankAccount(
+        values.beneficiaryAccount
+      );
+      console.log("response", response);
+    };
+    verifyAccount();
+  }, [values.beneficiaryAccount]);
+  const { data, isLoading } = useQuery({
+    queryKey: ["verify-vera-bank-account"],
+    queryFn: () => handleVerifyVeraBankAccount(values.beneficiaryAccount),
+  });
+
   return (
     <form className="space-y-4">
-      <div>
+      <div className="flex flex-col space-y-2">
         <Label className="block text-sm font-medium text-gray-700">
           From Account <span className="text-red-500">*</span>
         </Label>
@@ -141,7 +168,7 @@ const VeraTransferForm = ({
         <Field
           label="Beneficiary Account"
           required
-          type="text"
+          type="number"
           name="beneficiaryAccount"
           value={values.beneficiaryAccount}
           onChange={handleChange}
@@ -152,9 +179,22 @@ const VeraTransferForm = ({
       </div>
 
       <Field
-        label="Amount"
+        label="Benefiaiery Name"
         required
         type="text"
+        name="beneficiaryName"
+        value={data?.data?.account_name || ""}
+        onChange={handleChange}
+        disabled={true}
+        placeholder="Enter beneficiary name"
+        error={errors.beneficiaryName}
+        readOnly
+      />
+
+      <Field
+        label="Amount"
+        required
+        type="number"
         name="amount"
         value={values.amount}
         onChange={handleChange}
@@ -205,13 +245,8 @@ const OtherBanksTransferForm = ({
   onSubmit,
 }: TransferFormProps) => {
   const [values, setValues] = useState<TransferFormValues>({
-    fromAccount: "",
+    ...initialFormValues,
     selectedBank: "",
-    beneficiaryAccount: "",
-    beneficiaryName: "",
-    amount: "",
-    narration: "",
-    saveToBeneficiaryList: false,
   });
 
   const [errors, setErrors] = useState<Partial<TransferFormValues>>({});
@@ -241,6 +276,7 @@ const OtherBanksTransferForm = ({
         receiverBankCode: values.selectedBank,
       };
       onSubmit(formattedValues);
+      setValues({ ...initialFormValues, selectedBank: "" }); // Reset form after submission
     } else {
       setErrors(newErrors);
     }
@@ -253,6 +289,15 @@ const OtherBanksTransferForm = ({
       [name]: type === "checkbox" ? checked : value,
     }));
   };
+
+  useEffect(() => {
+    // Reset form when component unmounts
+    return () => {
+      setValues({ ...initialFormValues, selectedBank: "" });
+      setErrors({});
+      setVerificationError("");
+    };
+  }, []);
 
   useEffect(() => {
     const verifyAccount = async () => {
@@ -286,7 +331,7 @@ const OtherBanksTransferForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
+      <div className="flex flex-col space-y-2">
         <Label className="block text-sm font-medium text-gray-700">
           From Account <span className="text-red-500">*</span>
         </Label>
@@ -317,7 +362,7 @@ const OtherBanksTransferForm = ({
         )}
       </div>
 
-      <div>
+      <div className="flex flex-col space-y-2">
         <Label className="block text-sm font-medium text-gray-700">
           Select Beneficiary Bank <span className="text-red-500">*</span>
         </Label>
@@ -350,7 +395,7 @@ const OtherBanksTransferForm = ({
         <Field
           label="Beneficiary Account"
           required
-          type="text"
+          type="number"
           name="beneficiaryAccount"
           value={values.beneficiaryAccount}
           onChange={handleChange}
@@ -380,7 +425,7 @@ const OtherBanksTransferForm = ({
       <Field
         label="Amount"
         required
-        type="text"
+        type="number"
         name="amount"
         value={values.amount}
         onChange={handleChange}
@@ -424,16 +469,16 @@ const OtherBanksTransferForm = ({
 };
 
 const Page = () => {
-  const [selectedOption, setSelectedOption] = useState<"Vera" | "Other Banks">(
-    "Vera"
-  );
+  const [selectedOption, setSelectedOption] = useState<
+    "Vendcilo" | "Other Banks"
+  >("Vendcilo");
   const [bankOptions, setBankOptions] = useState<
     { bankCode: string; bankName: string }[]
   >([]);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationError, setVerificationError] = useState("");
 
-  const handleSelect = (option: "Vera" | "Other Banks") => {
+  const handleSelect = (option: "Vendcilo" | "Other Banks") => {
     setSelectedOption(option);
   };
 
@@ -458,7 +503,11 @@ const Page = () => {
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <ClipLoader color="#000" size={50} />
+      </div>
+    );
   }
 
   const handleVeraTransfer = async (values: TransferFormValues) => {
@@ -476,14 +525,14 @@ const Page = () => {
         narration: values.narration,
         saveAsBeneficiary: values.saveToBeneficiaryList,
       });
-      console.log("Transfer response:", response);
       toast.success("Transfer successful");
-      // window.location.href = "/transfer/confirmation";
+      window.location.reload();
     } catch (err) {
-      const error = err as AxiosError<{ msg: string }>;
-      console.log("error", error);
-      toast.error(error.response?.data?.msg || "Transfer failed");
-      setVerificationError(error.message || "Transfer failed");
+      const error = err as AxiosError<{ message?: string }>;
+      const errorMessage =
+        error.response?.data?.message || error.message || "Transfer failed";
+      toast.error(errorMessage);
+      setVerificationError(errorMessage);
     } finally {
       setIsVerifying(false);
     }
@@ -503,7 +552,7 @@ const Page = () => {
       });
       console.log("response", response);
       toast.success("Transfer successful");
-      // window.location.href = "/transfer/confirmation";
+      window.location.reload();
     } catch (err) {
       const error = err as AxiosError<{ msg: string }>;
       console.log("error", error);
@@ -531,11 +580,7 @@ const Page = () => {
                 Transfer to {selectedOption}
               </h3>
 
-              {verificationError && (
-                <p className="text-red-500 text-sm mb-4">{verificationError}</p>
-              )}
-
-              {selectedOption === "Vera" ? (
+              {selectedOption === "Vendcilo" ? (
                 <VeraTransferForm
                   accounts={data?.data?.accounts || []}
                   isVerifying={isVerifying}
