@@ -17,6 +17,7 @@ import {
   handleGetTransactionHistory,
 } from "@/lib/utils/api/apiHelper";
 import { useQuery } from "@tanstack/react-query";
+import FormatCurrency from "@/components/ui/FormatCurrency";
 
 export const ActiveAccountDashboard: React.FC = () => {
   const [filter, setFilter] = useState<string | null>(null);
@@ -137,12 +138,16 @@ export const ActiveAccountDashboard: React.FC = () => {
             />
             <DashboardCard
               title="Wallet balance"
-              amount={`NGN${account?.balance || "0.00"}`}
+              amount={`NGN${FormatCurrency({ amount: account?.balance || 0 })}`}
               showButtons
             />
           </div>
           <div className="hidden md:flex z-0">
-            <LoanLimitCard limit={profile?.business.creditLimit || 0} />
+            <LoanLimitCard
+              limit={FormatCurrency({
+                amount: profile?.business.creditLimit || 0,
+              })}
+            />
           </div>
         </div>
         <div className="flex md:hidden mb-5 z-0">
