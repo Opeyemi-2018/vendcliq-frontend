@@ -11,7 +11,7 @@ import Link from "next/link";
 import React, { useMemo } from "react";
 
 type Transaction = {
-  id: number;
+  id: string;
   reference: string;
   amount: string;
   interestAmount: string;
@@ -31,13 +31,15 @@ type Transaction = {
 type LoanTransactionTableProps = {
   transactions: Transaction[];
   searchQuery: string;
-  filter: string | null;
+  // filter: string | null;
+  sortOrder: "asc" | "desc" | null;
 };
 
 export default function LoanTransactionTable({
   transactions,
   searchQuery,
-  filter,
+  // filter,
+  sortOrder,
 }: LoanTransactionTableProps) {
   const formatCurrency = (amount: string | number) => {
     return new Intl.NumberFormat("en-NG", {
@@ -50,13 +52,13 @@ export default function LoanTransactionTable({
     let data = [...transactions];
 
     // Apply filter only if it's not null or undefined
-    if (filter !== null && filter !== undefined) {
-      data = data.filter((transaction) =>
-        filter === "active"
-          ? transaction.status.toLowerCase() === "active"
-          : transaction.status.toLowerCase() !== "active"
-      );
-    }
+    // if (filter !== null && filter !== undefined) {
+    //   data = data.filter((transaction) =>
+    //     filter === "active"
+    //       ? transaction.status.toLowerCase() === "active"
+    //       : transaction.status.toLowerCase() !== "active"
+    //   );
+    // }
 
     // Apply search query
     if (searchQuery) {
@@ -69,7 +71,7 @@ export default function LoanTransactionTable({
     }
 
     return data;
-  }, [transactions, filter, searchQuery]);
+  }, [transactions, searchQuery, sortOrder]);
 
   return (
     <div className="rounded-lg border">

@@ -80,7 +80,7 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
     },
     validationSchema: validationSchema,
     onSubmit: async (values) => {
-      console.log("Form submission started");
+      // console.log("Form submission started");
       const vendorDetails = {
         accountName: values.accountName,
         bankCode: values.selectedBank,
@@ -88,7 +88,7 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
         narration: values.narration,
         invoiceNo: values.invoiceNo,
       };
-      console.log("Vendor details prepared:", vendorDetails);
+      // console.log("Vendor details prepared:", vendorDetails);
       setVendorDetails(vendorDetails);
       onNext();
     },
@@ -109,7 +109,7 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
           accountNumber: formik.values.accountNumber,
           bankCode: formik.values.selectedBank,
         })) as VerifyResponse;
-        console.log("response verify", response);
+        // console.log("response verify", response);
         if (response.status === "success") {
           formik.setFieldValue("accountName", response.data.accountName);
         } else {

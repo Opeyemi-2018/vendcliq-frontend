@@ -4,8 +4,8 @@ import TransferConfirmation from "@/components/dashboard/transfer/TransferConfir
 import React from "react";
 
 const TransferPage: React.FC = () => {
-  const handlePinSubmit = (pin: string) => {
-    console.log("Entered PIN:", pin);
+  const handlePinSubmit = () => {
+    // console.log("Entered PIN:", pin);
     // Handle transfer confirmation logic here
   };
 

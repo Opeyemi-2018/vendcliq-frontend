@@ -37,7 +37,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response) {
       const { status, data } = error.response;
-      console.log("error", error);
+      // console.log("error", error);
       if (status === 401 && data.errors[0].message === "Unauthorized access") {
         // Token has expired, redirect to the login page
         window.location.href = "/login";

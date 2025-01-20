@@ -50,7 +50,7 @@ interface FormValues {
 export const ItemDetails: React.FC<{
   onNext: () => void;
   onPrevious: () => void;
-  onSubmit: () => void;
+  // onSubmit: () => void;
   vendorDetails: VendorDetails;
   setVendorDetails: (vendorDetails: VendorDetails) => void;
 }> = ({ onNext }) => {
@@ -182,7 +182,7 @@ export const ItemDetails: React.FC<{
         vendorDetails: vendorDetails,
         termsAccepted: values.acceptedTerms,
       };
-      console.log(loanData);
+      // console.log(loanData);
       const loanResponse = await handleCreateLoan(loanData);
 
       if (loanResponse.status === "success") {

@@ -40,14 +40,23 @@ const FilterSortDropdown: React.FC<FilterSortDropdownProps> = ({
           {selectedFilter}
           <MdOutlineKeyboardArrowDown size="16" className="ml-1 text-black" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-36 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
-          <DropdownMenuItem onClick={() => handleFilterSelect("All")}>
+        <DropdownMenuContent className="w-36 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 p-2 z-50">
+          <DropdownMenuItem
+            onClick={() => handleFilterSelect("All")}
+            className="hover:bg-gray-100 text-sm py-2 px-3 hover:cursor-pointer"
+          >
             All
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterSelect("Incoming")}>
+          <DropdownMenuItem
+            onClick={() => handleFilterSelect("Incoming")}
+            className="hover:bg-gray-100 text-sm py-2 px-3 hover:cursor-pointer"
+          >
             Incoming
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleFilterSelect("Outgoing")}>
+          <DropdownMenuItem
+            onClick={() => handleFilterSelect("Outgoing")}
+            className="hover:bg-gray-100 text-sm py-2 px-3 hover:cursor-pointer"
+          >
             Outgoing
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -62,11 +71,17 @@ const FilterSortDropdown: React.FC<FilterSortDropdownProps> = ({
           {selectedSort}
           <MdOutlineKeyboardArrowDown size="16" className="ml-1 text-black" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-36 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
-          <DropdownMenuItem onClick={() => handleSortSelect("asc")}>
+        <DropdownMenuContent className="w-36 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 p-2 z-50">
+          <DropdownMenuItem
+            onClick={() => handleSortSelect("asc")}
+            className="hover:bg-gray-100 text-sm py-2 px-3 hover:cursor-pointer"
+          >
             Ascending
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleSortSelect("desc")}>
+          <DropdownMenuItem
+            onClick={() => handleSortSelect("desc")}
+            className="hover:bg-gray-100 text-sm py-2 px-3 hover:cursor-pointer"
+          >
             Descending
           </DropdownMenuItem>
         </DropdownMenuContent>

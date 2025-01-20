@@ -44,7 +44,7 @@ const Page = () => {
     setLoading(true);
     try {
       const response = await handleSendOtpForForgetPassword({ email });
-      console.log(response);
+      // console.log(response);
       if (response.status === "success") {
         toast.success(response.msg);
         router.push("/forget-password/reset");

@@ -5,9 +5,23 @@ import { Bank, Calendar } from "iconsax-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { handleGetTransactionHistory } from "@/lib/utils/api/apiHelper";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/DropdownMenu";
 
 const TransactionSummary: React.FC = () => {
   const [currentPage] = useState(1);
+  const [selectedPeriod, setSelectedPeriod] = useState("7days");
+
+  const filterOptions = [
+    { value: "7days", label: "Last 7 days" },
+    { value: "30days", label: "Last 30 days" },
+    { value: "90days", label: "Last 90 days" },
+    { value: "custom", label: "Custom range" },
+  ];
 
   const { data } = useQuery({
     queryKey: ["transactionHistory", currentPage],
@@ -39,10 +53,32 @@ const TransactionSummary: React.FC = () => {
   return (
     <div className="p-4 sm:p-5 max-w-lg mx-auto">
       <div className="mb-4">
-        <Button className="bg-white border border-gray-300 px-3 py-2 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 flex items-center hover:bg-gray-100 transition-colors duration-150">
-          <Calendar size="24" color="#000000" />
-          Last 7 days <span className="ml-1">▼</span>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 text-xs sm:text-sm"
+            >
+              <Calendar size={24} color="#000" />
+              {
+                filterOptions.find((option) => option.value === selectedPeriod)
+                  ?.label
+              }
+              <span className="ml-1">▼</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-fit">
+            {filterOptions.map((option) => (
+              <DropdownMenuItem
+                className="text-xs sm:text-sm font-sans p-2"
+                key={option.value}
+                onClick={() => setSelectedPeriod(option.value)}
+              >
+                {option.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <TransactionCard

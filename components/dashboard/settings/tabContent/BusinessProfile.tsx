@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import Field from "@/components/ui/Field";
 import MultiValueInput from "@/components/ui/MultiValueInput";
 import { useGetProfile } from "@/services/profile/Profile";
@@ -17,7 +16,7 @@ export const BusinessProfile = () => {
   });
 
   useEffect(() => {
-    console.log(profile);
+    // console.log(profile);
     if (profile?.business) {
       setBusinessData({
         name: profile.business.name || "",
@@ -48,12 +47,6 @@ export const BusinessProfile = () => {
     }
   };
 
-  const handleSave = () => {
-    // Implement save logic here
-
-    console.log("Saving business data:", businessData);
-  };
-
   return (
     <div className="flex">
       <div className="md:mt-0 mt-10 bg-white w-full max-w-[800px] p-5 sm:p-10">
@@ -68,6 +61,7 @@ export const BusinessProfile = () => {
             value={businessData.name}
             placeholder="Business Name"
             onChange={handleInputChange}
+            disabled={true}
           />
           <Field
             label="Business Email"
@@ -75,6 +69,7 @@ export const BusinessProfile = () => {
             value={businessData.email}
             placeholder="Business Email"
             onChange={handleInputChange}
+            disabled={true}
           />
           <Field
             label="Business Phone Number"
@@ -82,6 +77,7 @@ export const BusinessProfile = () => {
             value={businessData.phone}
             placeholder="Business Phone Number"
             onChange={handleInputChange}
+            disabled={true}
           />
           <Field
             label="Business Address"
@@ -89,6 +85,7 @@ export const BusinessProfile = () => {
             value={businessData.address}
             placeholder="Business Address"
             onChange={handleInputChange}
+            disabled={true}
           />
           <Field
             label="Memo"
@@ -96,6 +93,7 @@ export const BusinessProfile = () => {
             type="file"
             placeholder="Memo"
             onChange={handleInputChange}
+            disabled={true}
           />
           <Field
             label="Date of Incorporation"
@@ -104,6 +102,7 @@ export const BusinessProfile = () => {
             value={businessData.dateOfIncorporation}
             placeholder="Date of Incorporation"
             onChange={handleInputChange}
+            disabled={true}
           />
           <Field
             label="RC Number"
@@ -111,19 +110,27 @@ export const BusinessProfile = () => {
             value={businessData.rcNumber}
             placeholder="RC Number"
             onChange={handleInputChange}
+            disabled={true}
           />
         </div>
 
-        <MultiValueInput label="Add shareholders" />
+        <MultiValueInput label="Add shareholders" disabled={true} />
 
-        <div className="flex mt-10 gap-5 justify-end">
-          <Button className="bg-inherit text-primary hover:bg-light-gray border border-primary rounded-none">
+        {/* <div className="flex mt-10 gap-5 justify-end">
+          <Button
+            className="bg-inherit text-primary hover:bg-light-gray border border-primary rounded-none"
+            disabled
+          >
             Cancel
           </Button>
-          <Button className="rounded-none text-black" onClick={handleSave}>
+          <Button
+            className="rounded-none text-black"
+            onClick={handleSave}
+            disabled
+          >
             Save Changes
           </Button>
-        </div>
+        </div> */}
       </div>
     </div>
   );
