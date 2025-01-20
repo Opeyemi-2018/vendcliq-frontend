@@ -1,4 +1,5 @@
 import { Copy } from "iconsax-react";
+import { toast } from "react-toastify";
 
 interface CopyToClipboardProps {
   text: string;
@@ -15,10 +16,10 @@ const CopyToClipboard: React.FC<CopyToClipboardProps> = ({
     navigator.clipboard
       .writeText(`${text} ${bankName || ""} ${accountHolder || ""}`)
       .then(() => {
-        alert("Copied to clipboard!");
+        toast.success("Copied to clipboard!");
       })
       .catch((error) => {
-        console.error("Failed to copy text: ", error);
+        toast.error("Failed to copy text: ", error);
       });
   };
 

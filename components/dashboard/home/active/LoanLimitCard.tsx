@@ -25,7 +25,15 @@ const LoanLimitCard = ({ limit }: { limit: string | number }) => (
     </div>
     <div className="z-40 min-h-72 md:h-full text-white">
       <p className="text-3xl sm:text-4xl">Your Loan Limit is</p>
-      <p className="text-6xl sm:text-8xl text-primary">N{limit}</p>
+      <p
+        className={`${
+          Number(limit) >= 1000000
+            ? "text-6xl sm:text-8xl"
+            : "text-4xl sm:text-8xl"
+        } text-primary`}
+      >
+        N{limit}
+      </p>
       <div className="mt-4 sm:mt-5">
         <div className="flex items-center gap-2">
           <FaCheck className="text-white" />

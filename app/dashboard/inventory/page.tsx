@@ -9,7 +9,7 @@ const Page = () => {
     const Token = cookies.authToken;
     // console.log(Token);
     if (Token) {
-      window.location.href = `https://erp.vendcliq.com/version-test/main?&page=Dashboard&token=${Token}`;
+      window.location.href = `https://erp.vendcliq.com/main?page=Dashboard&fegg=${Token}`;
     }
   }, []);
   return (

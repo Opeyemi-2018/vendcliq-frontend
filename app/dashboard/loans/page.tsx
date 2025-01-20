@@ -29,11 +29,11 @@ const Page = () => {
     queryKey: ["loanStatDetails"],
     queryFn: () => handleGetLoanStatDetails(),
   });
-  console.log(loanStatDetails);
+  // console.log("loanStatDetails", loanStatDetails);
   const loans = loan?.data?.data || [];
 
   const activeLoan = loanStatDetails?.data.total_active_loan_sum;
-  console.log(activeLoan);
+  // console.log(activeLoan);
   const totalAmount = loans.reduce((sum, loan) => sum + Number(loan.amount), 0);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {

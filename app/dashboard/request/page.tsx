@@ -74,32 +74,32 @@ const LoanApplication = () => {
   const handleBankChange = (value: string) => {
     setSelectedBank(value);
   };
-
-  const handleSubmitLoan = async () => {
-    try {
-      const payload = {
-        amount: parseFloat(vendorDetails.amount),
-        term: parseInt(vendorDetails.tenure),
-        purpose: "purchase",
-        items: items.map((item) => ({
-          name: item.name,
-          quantity: item.quantity,
-          amount: item.amount,
-          tenure: item.tenure,
-        })),
-        vendor: vendor,
-        bankCode: selectedBank,
-        accountName: vendorDetails.accountName,
-        narration: vendorDetails.narration,
-        invoiceNumber: vendorDetails.invoiceNo,
-      };
-      console.log("payload", payload);
-      // await handleCreateLoan(payload);
-      handleNextStep();
-    } catch (error) {
-      console.error("Failed to submit loan:", error);
-    }
-  };
+  console.log("vendor", vendor);
+  // const handleSubmitLoan = async () => {
+  //   try {
+  //     // const payload = {
+  //     //   amount: parseFloat(vendorDetails.amount),
+  //     //   term: parseInt(vendorDetails.tenure),
+  //     //   purpose: "purchase",
+  //     //   items: items.map((item) => ({
+  //     //     name: item.name,
+  //     //     quantity: item.quantity,
+  //     //     amount: item.amount,
+  //     //     tenure: item.tenure,
+  //     //   })),
+  //     //   vendor: vendor,
+  //     //   bankCode: selectedBank,
+  //     //   accountName: vendorDetails.accountName,
+  //     //   narration: vendorDetails.narration,
+  //     //   invoiceNumber: vendorDetails.invoiceNo,
+  //     // };
+  //     // console.log("payload", payload);
+  //     // await handleCreateLoan(payload);
+  //     handleNextStep();
+  //   } catch (error) {
+  //     // console.error("Failed to submit loan:", error);
+  //   }
+  // };
 
   const validateStep = (step: number): boolean => {
     switch (step) {
@@ -118,13 +118,20 @@ const LoanApplication = () => {
 
   const handleNextStep = () => {
     if (validateStep(currentStep)) {
-      console.log("currentStep", currentStep);
+      // console.log("currentStep", currentStep);
       setCurrentStep((prevStep) => Math.min(prevStep + 1, 4));
     }
   };
 
   const handlePreviousStep = () => {
     setCurrentStep((prevStep) => Math.max(prevStep - 1, 1));
+  };
+
+  const handleRemoveItem = (indexToRemove: number) => {
+    // Prevent removing the last item
+    if (items.length > 1) {
+      setItems(items.filter((_, index) => index !== indexToRemove));
+    }
   };
 
   return (
@@ -154,6 +161,7 @@ const LoanApplication = () => {
               onAddItem={handleAddItem}
               onNext={handleNextStep}
               onInputChange={handleInputChange}
+              onRemoveItem={handleRemoveItem}
             />
           )}
 
@@ -174,7 +182,7 @@ const LoanApplication = () => {
             <ItemDetails
               key="step-3"
               onNext={handleNextStep}
-              onSubmit={handleSubmitLoan}
+              // onSubmit={handleSubmitLoan}
               onPrevious={handlePreviousStep}
               vendorDetails={{
                 amount: vendorDetails.amount

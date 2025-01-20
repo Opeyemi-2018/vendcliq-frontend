@@ -3,7 +3,13 @@
 import * as React from "react";
 import { Input } from "./Input";
 
-export default function CustomFileInput({ label }: { label: string }) {
+export default function CustomFileInput({
+  label,
+  disabled,
+}: {
+  label: string;
+  disabled?: boolean;
+}) {
   const [file, setFile] = React.useState<File | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -39,6 +45,7 @@ export default function CustomFileInput({ label }: { label: string }) {
           className="hidden"
           accept="image/*,.pdf"
           onChange={handleChange}
+          disabled={disabled}
         />
       </div>
     </div>

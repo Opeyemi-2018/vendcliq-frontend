@@ -24,7 +24,7 @@ export const CreatePin = ({ goNext }: { goNext: () => void }) => {
         localStorage.setItem("pin", newpassword);
         localStorage.setItem("confirmPin", confirmpassword);
         const response = await handleRequestPinToken();
-        console.log(response);
+        // console.log(response);
         if (response.status === "success") {
           toast.success("OTP sent successfully");
           goNext();

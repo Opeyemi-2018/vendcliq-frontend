@@ -1,9 +1,9 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import PasswordInput from "@/components/ui/PasswordInput";
-import { handleCreatePin } from "@/lib/utils/api/apiHelper";
+import { handleCreatePin, handleGetDashboard } from "@/lib/utils/api/apiHelper";
 import { PinPayload } from "@/types";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { IoIosLock } from "react-icons/io";
 import { toast } from "react-toastify";
 
@@ -18,6 +18,14 @@ export const Otp = ({
   const confirmPin = localStorage.getItem("confirmPin") || "";
 
   const [otp, setOtp] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      const response = await handleGetDashboard();
+      setPhoneNumber(response.data.phone.number);
+    };
+    fetchDashboard();
+  }, []);
   const handleSubmitCreatePin = async () => {
     try {
       const payload: PinPayload = {
@@ -26,7 +34,7 @@ export const Otp = ({
         confirmPin: confirmPin,
       };
       const response = await handleCreatePin(payload);
-      console.log("response", response);
+      // console.log("response", response);
       if (response.status === "success") {
         toast.success("PIN created successfully");
         goNext();
@@ -68,7 +76,8 @@ export const Otp = ({
 
           <div className="pt-10 space-y-5">
             <p className="font-medium text-lg font-clash border-l-4 border-primary pl-3">
-              Enter OTP sent to your phone 0803****098
+              Enter OTP sent to your phone{" "}
+              {phoneNumber.slice(0, 4) + "****" + phoneNumber.slice(8, 12)}
             </p>
             <div>
               <PasswordInput

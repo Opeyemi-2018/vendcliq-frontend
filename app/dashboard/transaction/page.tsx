@@ -52,7 +52,12 @@ const Page = () => {
   const transactions = data?.data?.data || [];
   const totalPages = Math.ceil((data?.data?.meta?.total || 0) / itemsPerPage);
 
-  const filteredTransactions = transactions.filter((transaction) => {
+  // Sort transactions by date in descending order (most recent first)
+  const sortedTransactions = [...transactions].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  const filteredTransactions = sortedTransactions.filter((transaction) => {
     const matchesSearch =
       transaction?.id.toString().includes(searchQuery) ||
       transaction?.narration
@@ -159,7 +164,7 @@ const Page = () => {
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        Loading...
+        <ClipLoader color="#000" size={50} />
       </div>
     );
   }
@@ -213,25 +218,25 @@ const Page = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredTransactions.map((transaction) => (
+                      {filteredTransactions.map((transaction, index) => (
                         <TableRow key={transaction.id}>
                           <TableCell className="font-medium">
-                            {transaction.id}
+                            {index + 1}
                           </TableCell>
                           <TableCell>
-                            <FormatCurrency amount={transaction.amount} />
+                            {FormatCurrency({ amount: transaction.amount })}
                           </TableCell>
                           <TableCell>{transaction.narration}</TableCell>
-                          <TableCell>
-                            <div>
+                          <TableCell className="w-40">
+                            <div className="w-full">
                               {transaction.type === "CREDIT" ? (
-                                <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm">
+                                <p className="bg-green-500 text-white px-4 w-20 py-0.5 rounded-full text-center text-sm">
                                   {transaction.type}
-                                </span>
+                                </p>
                               ) : (
-                                <span className="bg-primary text-white px-4 py-1 rounded-full text-sm">
+                                <p className="bg-primary text-white px-4 w-20 py-0.5 rounded-full text-center text-sm">
                                   {transaction.type}
-                                </span>
+                                </p>
                               )}
                             </div>
                           </TableCell>

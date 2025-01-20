@@ -8,6 +8,7 @@ import { Otp } from "@/components/dashboard/settings/tabContent/pin/Otp";
 
 import { PageTitle } from "@/components/ui/pageTitle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import React, { useState } from "react";
 
 const Settings = () => {

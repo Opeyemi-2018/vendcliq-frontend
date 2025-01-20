@@ -124,7 +124,7 @@ const AccountSetup = () => {
 
   const { isLoading: isDashboardLoading } = useDashboardData();
   const { profile, isLoading: isProfileLoading } = useGetProfile();
-  console.log("profile>>>>", profile);
+  //  console.log ("profile>>>>", profile);
   const [identityPayload, setIdentityPayload] = useState<IdentityPayload>({
     file: null,
   });
@@ -191,7 +191,7 @@ const AccountSetup = () => {
     }
   }, [profile, isProfileLoading]);
 
-  console.log("identityPayload>>>", identityPayload);
+  // console.log("identityPayload>>>", identityPayload);
   const handleNext = () => {
     if (currentStep < steps.length - 1) setCurrentStep((prev) => prev + 1);
   };
@@ -223,7 +223,7 @@ const AccountSetup = () => {
             },
           }
         );
-        console.log(response);
+        // console.log(response);
         if (response.status === 200) {
           setError(null);
           handleNext();
@@ -268,7 +268,7 @@ const AccountSetup = () => {
             },
           }
         );
-        console.log(response);
+        // console.log(response);
         if (response.status === 200) {
           setError(null);
           handleNext();
@@ -342,7 +342,7 @@ const AccountSetup = () => {
     } else if (currentStep === 1) {
       setStepOnePayload({ ...stepOnePayload, [key]: value });
     } else {
-      console.log("stepTwoPayload", stepTwoPayload);
+      // console.log("stepTwoPayload", stepTwoPayload);
       setStepTwoPayload({ ...stepTwoPayload, [key]: value });
     }
   };

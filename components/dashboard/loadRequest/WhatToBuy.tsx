@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 
 import { useGetInventory } from "@/services/loan/loan";
+import { IoCloseOutline } from "react-icons/io5";
 
 interface Item {
   name: string;
@@ -25,6 +26,7 @@ interface LoanStepOneProps {
     index: number,
     event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
+  onRemoveItem: (index: number) => void;
 }
 
 const LoanStepOne: React.FC<LoanStepOneProps> = ({
@@ -32,6 +34,7 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
   onAddItem,
   onNext,
   onInputChange,
+  onRemoveItem,
 }) => {
   const { setItems } = useContext(RequestContext);
 
@@ -61,20 +64,23 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
       }));
       setItems(transformedItems);
     }
-    console.log(items);
+    // console.log(items);
     onNext();
   };
   const inventory = useGetInventory();
-  console.log(inventory.results);
+  // console.log(inventory.results);
   return (
     <div className="w-full bg-white p-6">
       <h3 className="text-lg sm:text-xl font-medium border-b border-border pb-2 font-clash mb-4 sm:mb-8">
-        What do you want to buy?
+        {/* What do you want to buy? */}
       </h3>
 
       {items.map((item, index) => (
-        <div key={index} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-          <div className="flex flex-col ">
+        <div
+          key={index}
+          className="flex  w-full  justify-between  items-center gap-4 mb-4"
+        >
+          <div className="flex flex-col w-full">
             <label className="font-medium text-sm text-black pb-1">
               Item {index + 1}
             </label>
@@ -100,20 +106,31 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
             </div>
           </div>
 
-          <Field
-            name="quantity"
-            label="Quantity"
-            placeholder="QTY"
-            type="number"
-            onChange={(e) => onInputChange(index, e)}
-          />
-          <Field
-            name="amount"
-            label="Amount"
-            placeholder="Amount"
-            type="number"
-            onChange={(e) => onInputChange(index, e)}
-          />
+          <div className="flex flex-col w-full">
+            <Field
+              name="quantity"
+              label="Quantity"
+              placeholder="QTY"
+              type="number"
+              onChange={(e) => onInputChange(index, e)}
+            />
+          </div>
+          <div className="flex flex-col w-full">
+            <Field
+              name="amount"
+              label="Amount"
+              placeholder="Amount"
+              type="number"
+              onChange={(e) => onInputChange(index, e)}
+            />
+          </div>
+          <div className="flex flex-col w-10">
+            <IoCloseOutline
+              size={20}
+              className="text-red-500 cursor-pointer "
+              onClick={() => onRemoveItem(index)}
+            />
+          </div>
         </div>
       ))}
 

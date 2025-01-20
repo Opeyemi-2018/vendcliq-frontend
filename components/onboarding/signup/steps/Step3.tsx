@@ -59,7 +59,7 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
     } catch (error) {
       if (error instanceof AxiosError) {
         const errorData = error.response?.data;
-        console.log("errorData>>>>", errorData);
+        // console.log("errorData>>>>", errorData);
         toast.error(errorData?.msg || "An error occurred");
       } else {
         toast.error("An unexpected error occurred");

@@ -58,9 +58,11 @@ interface FieldProps {
 export default function MultiValueInput({
   label,
   onChange,
+  disabled,
 }: {
   label: string;
   onChange?: (shareholders: Shareholder[]) => void;
+  disabled?: boolean;
 }) {
   const [shareholders, setShareholders] = useState<Shareholder[]>([]);
   const [open, setOpen] = useState(false);
@@ -97,20 +99,27 @@ export default function MultiValueInput({
             className="flex items-center gap-1 px-3 py-1 bg-muted rounded-md"
           >
             <span className="text-sm">{`${shareholder.firstname} ${shareholder.lastname}`}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-auto p-0 hover:bg-transparent"
-              onClick={() => removeShareholder(index)}
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Remove {shareholder.firstname}</span>
-            </Button>
+            {!disabled && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 hover:bg-transparent"
+                onClick={() => removeShareholder(index)}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Remove {shareholder.firstname}</span>
+              </Button>
+            )}
           </div>
         ))}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="sm" className="text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              disabled={disabled}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add new shareholder
             </Button>
@@ -138,6 +147,7 @@ export default function MultiValueInput({
                       {key === "gender" ? (
                         <Select
                           onValueChange={(value) => setFieldValue(key, value)}
+                          disabled={disabled}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select gender" />
@@ -150,13 +160,24 @@ export default function MultiValueInput({
                       ) : key === "date_of_birth" ? (
                         <Field name={key}>
                           {({ field }: FieldProps) => (
-                            <Input type="date" {...field} id={key} required />
+                            <Input
+                              type="date"
+                              {...field}
+                              id={key}
+                              required
+                              disabled={disabled}
+                            />
                           )}
                         </Field>
                       ) : (
                         <Field name={key}>
                           {({ field }: FieldProps) => (
-                            <Input {...field} id={key} required />
+                            <Input
+                              {...field}
+                              id={key}
+                              required
+                              disabled={disabled}
+                            />
                           )}
                         </Field>
                       )}
@@ -168,7 +189,9 @@ export default function MultiValueInput({
                         )}
                     </div>
                   ))}
-                  <Button type="submit">Add Shareholder</Button>
+                  <Button type="submit" disabled={disabled}>
+                    Add Shareholder
+                  </Button>
                 </Form>
               )}
             </Formik>

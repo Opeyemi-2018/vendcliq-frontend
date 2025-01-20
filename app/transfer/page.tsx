@@ -117,12 +117,11 @@ const VeraTransferForm = ({
   }, []);
 
   useEffect(() => {
+    if (!values.beneficiaryAccount || values.beneficiaryAccount.length < 10)
+      return;
     const verifyAccount = async () => {
       if (!values.beneficiaryAccount) return;
-      const response = await handleVerifyVeraBankAccount(
-        values.beneficiaryAccount
-      );
-      console.log("response", response);
+      await handleVerifyVeraBankAccount(values.beneficiaryAccount);
     };
     verifyAccount();
   }, [values.beneficiaryAccount]);
@@ -508,7 +507,7 @@ const Page = () => {
       toast.error("Please fill all required fields");
       return;
     }
-
+    // router.
     try {
       setIsVerifying(true);
       await handleLocalTransfer({
@@ -546,7 +545,7 @@ const Page = () => {
       window.location.reload();
     } catch (err) {
       const error = err as AxiosError<{ msg: string }>;
-      console.log("error", error);
+      // console.log("error", error);
       toast.error(error.response?.data?.msg || "Transfer failed");
     } finally {
       setIsVerifying(false);

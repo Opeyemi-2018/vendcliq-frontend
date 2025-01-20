@@ -55,7 +55,7 @@ const appendToFormData = (
 export const handleBusinessSetup = async (
   formData: FormData
 ): Promise<BusinessSetupResponse> => {
-  console.log("Form Data>>", formData.get("businessProofOfAddress"));
+  // console.log("Form Data>>", formData.get("businessProofOfAddress"));
   return await poster<BusinessSetupResponse, FormData>(
     BUSINESS_INFORMATION_SETUP_STEP_ONE,
     formData,

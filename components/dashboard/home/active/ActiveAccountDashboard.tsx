@@ -21,7 +21,7 @@ import FormatCurrency from "@/components/ui/FormatCurrency";
 
 export const ActiveAccountDashboard: React.FC = () => {
   const [filter, setFilter] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>("desc");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const { data } = useDashboardData();
@@ -44,6 +44,7 @@ export const ActiveAccountDashboard: React.FC = () => {
   });
 
   const loanTransactions = loanData?.data?.data || [];
+  console.log(loanTransactions);
   const account = data?.data.account;
   const customer = data?.data.customer;
   const nextPaymentDate = data?.data.nextRepayment;
@@ -53,6 +54,14 @@ export const ActiveAccountDashboard: React.FC = () => {
     (loan) => loan.status.toLowerCase() === "active"
   );
   const activeLoanAmount = activeLoan ? activeLoan.amount : "0.00";
+
+  const transformedLoanTransactions = loanTransactions.map((loan) => ({
+    ...loan,
+    id: loan.id.toString(),
+    maturityAmount: 0,
+    dueDate: "",
+    status: "completed",
+  }));
 
   // Transform transactions data
   const transformedTransactions = allTransactions?.data.data.map(
@@ -65,6 +74,27 @@ export const ActiveAccountDashboard: React.FC = () => {
     })
   );
 
+  const filteredLoanTransactions = useMemo(() => {
+    let data = transformedLoanTransactions || [];
+    // if (filter) {
+    //   data = data.filter((loan) => loan.status.toLowerCase() === filter);
+    // }
+    if (searchQuery) {
+      data = data.filter((loan) =>
+        loan.reference.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    if (sortOrder) {
+      data.sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        if (sortOrder === "asc") return dateA - dateB;
+        if (sortOrder === "desc") return dateB - dateA;
+        return 0;
+      });
+    }
+    return data;
+  }, [transformedLoanTransactions, filter, searchQuery, sortOrder]);
   // Memoized filtered, sorted, and searched data
   const filteredAndSortedTransactions = useMemo(() => {
     let data = transformedTransactions || [];
@@ -79,8 +109,10 @@ export const ActiveAccountDashboard: React.FC = () => {
 
     if (sortOrder) {
       data.sort((a, b) => {
-        if (sortOrder === "asc") return a.amount - b.amount;
-        if (sortOrder === "desc") return b.amount - a.amount;
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        if (sortOrder === "asc") return dateA - dateB;
+        if (sortOrder === "desc") return dateB - dateA;
         return 0;
       });
     }
@@ -208,9 +240,10 @@ export const ActiveAccountDashboard: React.FC = () => {
             <TabsContent value="password">
               <div className="md:w-full md:h-full w-full">
                 <LoanTransactionTable
-                  transactions={loanTransactions}
+                  transactions={filteredLoanTransactions}
                   searchQuery={searchQuery}
-                  filter={filter}
+                  // filter={filter}
+                  sortOrder={sortOrder}
                 />
               </div>
             </TabsContent>

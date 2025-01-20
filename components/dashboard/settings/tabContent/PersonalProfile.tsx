@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import CustomFileInput from "@/components/ui/CustomFileInput";
 import Field from "@/components/ui/Field";
 import { useGetProfile } from "@/services/profile/Profile";
@@ -19,11 +18,13 @@ export const PersonalProfile = () => {
             label="First Name"
             placeholder="First Name"
             value={profile?.firstname}
+            disabled={true}
           />
           <Field
             label="Last Name"
             placeholder="Last Name"
             value={profile?.lastname}
+            disabled={true}
           />
         </div>
 
@@ -33,18 +34,21 @@ export const PersonalProfile = () => {
           placeholder="Email Address"
           type="email"
           value={profile?.business.email}
+          disabled={true}
         />
 
         <div className="mt-7">
-          <CustomFileInput label="ID Card" />
+          <CustomFileInput label="ID Card" disabled={true} />
         </div>
 
-        <div className="flex mt-10 gap-5 justify-end">
-          <Button className="bg-inherit text-primary hover:bg-light-gray border border-primary rounded-none">
+        {/* <div className="flex mt-10 gap-5 justify-end">
+          <Button className="bg-inherit text-primary hover:bg-light-gray border border-primary rounded-none" disabled={true}>
             Cancel
           </Button>
-          <Button className="rounded-none text-black">Save Changes</Button>
-        </div>
+          <Button className="rounded-none text-black" disabled={true}>
+            Save Changes
+          </Button>
+        </div> */}
       </div>
     </div>
   );

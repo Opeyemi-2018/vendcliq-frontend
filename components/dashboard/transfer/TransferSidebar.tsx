@@ -21,7 +21,7 @@ const TransferSidebar: React.FC<TransferSidebarProps> = ({
             : "bg-white text-black border border-gray-300"
         }`}
       >
-        Transfer to Vendcilo
+        Transfer to Vendcilq
       </Button>
 
       {/* Transfer to Other Banks Button */}

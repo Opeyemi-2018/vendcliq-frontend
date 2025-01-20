@@ -6,7 +6,7 @@ import React from "react";
 const LoanStatus: React.FC = () => {
   const { profile } = useGetProfile();
 
-  console.log("email", profile?.email.email);
+  // console.log("email", profile?.email.email);
   const email = profile?.email.email;
   return (
     <div className="flex bg-white p-6">

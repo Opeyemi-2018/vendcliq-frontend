@@ -77,9 +77,13 @@ interface UserProfile {
   data: {
     business: {
       profileCompletionStep: string;
+      status: string;
     };
     account: {
       status: string;
+    };
+    phone: {
+      number: string;
     };
   };
 }
@@ -114,7 +118,7 @@ export const fetcher = async <T>(
   const response = await axiosInstance.get<T>(url, {
     params,
   });
-  console.log("Response Data:", response.data);
+  // console.log("Response Data:", response.data);
   return response.data;
 };
 export const poster = async <T, U>(
@@ -122,8 +126,8 @@ export const poster = async <T, U>(
   data?: U,
   headers?: Record<string, string>
 ): Promise<T> => {
-  console.log("POST Request URL:", url);
-  console.log("POST Data:", data);
+  // console.log("POST Request URL:", url);
+  // console.log("POST Data:", data);
 
   const response = await axiosInstance.post<T>(url, data, {
     headers: {
@@ -132,7 +136,7 @@ export const poster = async <T, U>(
       ...headers,
     },
   });
-  console.log("Response Data:", response.data);
+  // console.log("Response Data:", response.data);
 
   return response.data;
 };
@@ -142,8 +146,8 @@ export const posterWithMultipart = async <T>(
   formData: FormData,
   headers?: Record<string, string>
 ): Promise<T> => {
-  console.log("POST Multipart Request URL:", url);
-  console.log("POST FormData:", formData);
+  // console.log("POST Multipart Request URL:", url);
+  // console.log("POST FormData:", formData);
 
   // Let browser set Content-Type header automatically with boundary
   const response = await axiosInstance.post<T>(url, formData, {
@@ -154,14 +158,14 @@ export const posterWithMultipart = async <T>(
       ...headers,
     },
   });
-  console.log("Response Data:", response.data);
+  // console.log("Response Data:", response.data);
 
   return response.data;
 };
 
 export const handleGetDashboard = async (): Promise<UserProfile> => {
   const response = await fetcher<UserProfile>(GET_PROFILE);
-  console.log(response);
+  // console.log(response);
   return response;
 };
 export const handleSignIn = async (
@@ -178,7 +182,7 @@ export const handleGetProfile = async (
 
 export const handleGetInventory = async (): Promise<InventoryResponse> => {
   if (!process.env.NEXT_PUBLIC_PRODUCT_API_KEY) {
-    console.log("API Key is missing");
+    // console.log("API Key is missing");
     throw new Error("API Key is missing");
   }
   return await fetcher<InventoryResponse>(INVENTORY_LIST);
@@ -187,7 +191,7 @@ export const handleGetInventory = async (): Promise<InventoryResponse> => {
 export const handleEmailVerification = async (
   payload: EmailVerificationPayload
 ): Promise<EmailVerificationResponse> => {
-  console.log("payload", payload);
+  // console.log("payload", payload);
   return await poster<EmailVerificationResponse, EmailVerificationPayload>(
     VERIFY_EMAIL,
 
@@ -373,7 +377,7 @@ export const handleApiError = (
   setError: (msg: string) => void
 ): void => {
   if (error instanceof AxiosError) {
-    console.log("error>>>", error.response?.data.errors[0].message);
+    // console.log("error>>>", error.response?.data.errors[0].message);
 
     setError(error.response?.data.errors[0].message || "An error occurred");
   } else {

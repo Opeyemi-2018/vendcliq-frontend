@@ -37,7 +37,7 @@ const SignupStepOne: React.FC<SignupStepOneProps> = ({ nextStep, title }) => {
         }}
         validationSchema={validationSchema}
         onSubmit={(values) => {
-          console.log("businessType", values.businessType);
+          // console.log("businessType", values.businessType);
           nextStep({ businessType: values.businessType });
         }}
       >

@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 export default function middleware(request: NextRequest) {
   // Log middleware invocation
-  console.log("Middleware invoked");
+  // console.log("Middleware invoked");
 
   // Get tokens from cookies
   const accessToken = request.cookies.get("authToken")?.value;
@@ -20,13 +20,13 @@ export default function middleware(request: NextRequest) {
 
   // Skip middleware for public routes
   if (publicRoutes.includes(request.nextUrl.pathname)) {
-    console.log("Public route accessed:", request.nextUrl.pathname);
+    // console.log("Public route accessed:", request.nextUrl.pathname);
     return NextResponse.next();
   }
 
   // If no tokens found, redirect to login
   if (!accessToken && !refreshToken) {
-    console.log("No tokens found. Redirecting to login.");
+    // console.log("No tokens found. Redirecting to login.");
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -39,7 +39,7 @@ export default function middleware(request: NextRequest) {
       return response;
     } catch (error) {
       // If refresh fails, redirect to login
-      console.log("Token refresh failed. Redirecting to login.");
+      // console.log("Token refresh failed. Redirecting to login.");
       const response = NextResponse.redirect(new URL("/login", request.url));
       response.cookies.delete("refreshToken");
       return response;
@@ -53,7 +53,7 @@ export default function middleware(request: NextRequest) {
 // Specify routes to apply middleware
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|.*\\.png$|.*\\.jpg$).*)",
     "/request",
     "/request/:path*",
     "/dashboard/:path*",

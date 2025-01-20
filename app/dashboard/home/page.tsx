@@ -13,15 +13,13 @@ const Page = () => {
     const checkRegistrationStatus = async () => {
       try {
         const response = await handleGetDashboard();
-        const profileCompletionStep =
-          response.data.business.profileCompletionStep;
-
+        const profileCompletionStep = response.data.business.status;
         const isComplete =
-          profileCompletionStep !== "0" &&
-          profileCompletionStep !== "1" &&
+          profileCompletionStep === "ACTIVATED" ||
           response.data.account.status === "ACTIVE";
 
         setIsFinishedSetup(isComplete);
+        console.log("isComplete>>>>>", isComplete);
       } catch (error) {
         console.error("Failed to fetch profile:", error);
         setIsFinishedSetup(false);
@@ -49,7 +47,7 @@ const Page = () => {
 
   return (
     <div>
-      {isFinishedSetup ? (
+      {isFinishedSetup === true ? (
         <ActiveAccountDashboard />
       ) : (
         <PendingAccountDashboard />

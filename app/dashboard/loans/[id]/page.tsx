@@ -28,7 +28,7 @@ const LoanDetailsScreen = () => {
       currency: "NGN",
     }).format(amount);
   };
-  console.log(loan);
+  // console.log(loan);
   return (
     <div className="w-full min-h-screen p-4 sm:p-6 md:p-8">
       <div className="rounded-lg w-full font-sans mx-auto p-4 sm:p-6 md:p-8">

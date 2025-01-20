@@ -91,13 +91,13 @@ export default function InstructorLayout({
     const checkRegistrationStatus = async () => {
       try {
         const response = await handleGetDashboard();
-        const profileCompletionStep =
-          response.data.business.profileCompletionStep;
+        console.log("response>>>>>", response);
+        const profileCompletionStep = response.data.business.status;
 
         const isComplete =
-          profileCompletionStep !== "0" &&
+          profileCompletionStep === "ACTIVATED" ||
           response.data.account.status === "ACTIVE";
-
+        console.log("isComplete>>>>>", isComplete);
         setIsFinishedSetup(isComplete);
       } catch (error) {
         console.error("Failed to fetch profile:", error);
