@@ -3,11 +3,15 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { handleGetLoanDetails } from "@/lib/utils/api/apiHelper";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { IoArrowBack } from "react-icons/io5";
+import { Loader } from "lucide-react";
 
 const LoanDetailsScreen = () => {
   const { id } = useParams() as { id: string };
+  const router = useRouter();
   const loanId = Array.isArray(id) ? id[0] : id;
 
   const { data: loanDetails, isLoading } = useQuery({
@@ -17,7 +21,13 @@ const LoanDetailsScreen = () => {
   });
 
   if (isLoading || !loanId) {
-    return <div>Loading...</div>;
+    return (
+      <div className="w-full min-h-screen p-4 sm:p-6 md:p-8">
+        <div className="flex justify-center items-center h-full">
+          <Loader />
+        </div>
+      </div>
+    );
   }
 
   const loan = loanDetails?.data;
@@ -28,22 +38,22 @@ const LoanDetailsScreen = () => {
       currency: "NGN",
     }).format(amount);
   };
-  // console.log(loan);
+
   return (
     <div className="w-full min-h-screen p-4 sm:p-6 md:p-8">
+      <Button
+        onClick={() => router.back()}
+        className="mb-4 flex items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200"
+      >
+        <IoArrowBack /> Back
+      </Button>
+
       <div className="rounded-lg w-full font-sans mx-auto p-4 sm:p-6 md:p-8">
         {/* Loan Details */}
         <div className="mb-8">
           <h3 className="text-lg font-semibold mb-4 font-clash">
             Loan Details
           </h3>
-          {/* <div className="text-right mb-4">
-            <Link href={"/dashboard/payloan"}>
-              <Button className="px-4 py-1 bg-yellow-500 text-black font-semibold rounded hover:bg-yellow-600">
-                + Pay Loan
-              </Button>
-            </Link>
-          </div> */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 p-4 border border-gray-200 rounded-md bg-gray-50">
             <Detail
               key="status"
@@ -118,7 +128,6 @@ const LoanDetailsScreen = () => {
                   <th className="p-2 border">Total Repayment</th>
                   <th className="p-2 border">Payment Date</th>
                   <th className="p-2 border">Status</th>
-                  {/* <th className="p-2 border">Action</th> */}
                 </tr>
               </thead>
               <tbody>
@@ -133,16 +142,6 @@ const LoanDetailsScreen = () => {
                     </td>
                     <td className="p-2 border">
                       {loan.status === "ACTIVE" ? (
-                        <StatusBadge
-                          className="bg-green-500 text-black"
-                          status={loan.status}
-                        />
-                      ) : (
-                        <StatusBadge status={loan.status} />
-                      )}
-                    </td>
-                    {/* {repayment && (
-                      <td className="p-2 border">
                         <Button
                           onClick={() => {
                             router.push(`/dashboard/payloan/${loan.id}`);
@@ -152,8 +151,10 @@ const LoanDetailsScreen = () => {
                         >
                           + Pay Loan
                         </Button>
-                      </td>
-                    )} */}
+                      ) : (
+                        <StatusBadge status={loan.status} />
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -170,8 +171,8 @@ const LoanDetailsScreen = () => {
                 Loan Review Date
               </span>
               <span className="font-medium">
-                {loan?.reviewDate
-                  ? new Date(loan.reviewDate).toLocaleDateString()
+                {loan?.loanReviewDate && loan.loanReviewDate !== "null"
+                  ? new Date(loan.loanReviewDate).toLocaleDateString()
                   : "-"}
               </span>
             </div>
@@ -180,8 +181,8 @@ const LoanDetailsScreen = () => {
                 Loan Disburse Date
               </span>
               <span className="font-medium">
-                {loan?.disburseDate
-                  ? new Date(loan.disburseDate).toLocaleDateString()
+                {loan?.loanDisburseDate && loan.loanDisburseDate !== "null"
+                  ? new Date(loan.loanDisburseDate).toLocaleDateString()
                   : "-"}
               </span>
             </div>

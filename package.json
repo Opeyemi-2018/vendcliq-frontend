@@ -30,6 +30,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^16.4.5",
     "dropdown-menu": "^0.1.1",
+    "embla-carousel-autoplay": "^8.5.2",
     "embla-carousel-react": "^8.5.1",
     "formik": "^2.4.6",
     "iconsax-react": "^0.0.8",

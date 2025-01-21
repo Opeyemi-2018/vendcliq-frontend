@@ -7,7 +7,7 @@ export interface IReusableInputProps {
   label: string;
   type?: string;
   placeholder?: string;
-  value?: string;
+  value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
   name?: string;
@@ -344,6 +344,10 @@ export interface LoanDetailsResponse {
     createdAt: string;
     updatedAt: string;
     deletedAt: string | null;
+    loanDisburseBy?: number;
+    loanDisburseDate?: string;
+    loanReviewBy?: number;
+    loanReviewDate?: string;
     repayments: Array<{
       id: string;
       reference: string;
@@ -609,6 +613,7 @@ export interface OutsideTransferPayload {
   amount: number;
   narration: string;
   saveAsBeneficiary: boolean;
+  pin: string;
 }
 
 export interface OutsideTransferResponse {
@@ -627,6 +632,7 @@ export interface LocalTransferPayload {
   narration: string;
   saveAsBeneficiary: boolean;
   receiverBankCode?: string;
+  pin: string;
 }
 
 export interface LocalTransferResponse {

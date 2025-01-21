@@ -20,6 +20,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -38,7 +39,7 @@ const Login = () => {
     {
       quote:
         "Your service has been an invaluable asset to my business endeavours. Your unwavering presence and prompt responses to my needs have been instrumental in navigating various situations. Thank you for being a steadfast partner in my journey towards success.",
-      name: "JNneka Okafor, ",
+      name: "Nneka Okafor, ",
       role: "Retailer",
     },
     {
@@ -213,7 +214,14 @@ const Login = () => {
               What our <br />
               <span className="text-primary">Customers</span> are Saying
             </h1>
-            <Carousel className="w-full mt-0 relative font-sans">
+            <Carousel
+              className="w-full mt-0 relative font-sans"
+              plugins={[
+                Autoplay({
+                  delay: 2000,
+                }),
+              ]}
+            >
               <CarouselContent>
                 {testimonials.map((testimonial, index) => (
                   <CarouselItem key={index}>

@@ -57,6 +57,7 @@ import {
   LOAN_STAT_DETAILS,
   LOCAL_TRANSFER,
   OUTSIDE_TRANSFER,
+  PAY_LOAN,
   POST_REPAYMENT_PATTERN,
   REQUEST_PIN_TOKEN,
   RESEND_EMAIL_OTP,
@@ -108,6 +109,7 @@ interface TransferPayload {
   amount: number;
   narration: string;
   saveAsBeneficiary: boolean;
+  pin: string;
 }
 
 // Generic GET Request
@@ -405,4 +407,13 @@ export const handleVerifyVeraBankAccount = async (
   accountNumber: string
 ): Promise<ApiResponse> => {
   return await fetcher<ApiResponse>(VERIFY_VERA_BANK_ACCOUNT(accountNumber));
+};
+
+export const handlePayLoan = async (
+  id: string,
+  amount: number
+): Promise<ApiResponse> => {
+  return await poster<ApiResponse, { amount: number }>(PAY_LOAN(id), {
+    amount,
+  });
 };
