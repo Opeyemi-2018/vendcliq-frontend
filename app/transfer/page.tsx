@@ -15,16 +15,15 @@ import {
 import {
   handleGetAccount,
   handleListBanks,
-  handleLocalTransfer,
-  handleOutsideTransfer,
   handleVerifyVeraBankAccount,
 } from "@/lib/utils/api/apiHelper";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useQuery } from "@tanstack/react-query";
-import { AxiosError } from "axios";
+
 import { useVerifyBankAccount } from "@/services/loan/loan";
 import { ClipLoader } from "react-spinners";
+import { useRouter } from "next/navigation";
 
 interface Account {
   id: number;
@@ -116,19 +115,11 @@ const VeraTransferForm = ({
     };
   }, []);
 
-  useEffect(() => {
-    if (!values.beneficiaryAccount || values.beneficiaryAccount.length < 10)
-      return;
-    const verifyAccount = async () => {
-      if (!values.beneficiaryAccount) return;
-      await handleVerifyVeraBankAccount(values.beneficiaryAccount);
-    };
-    verifyAccount();
-  }, [values.beneficiaryAccount]);
   const { data } = useQuery({
     queryKey: ["verify-vera-bank-account", values.beneficiaryAccount],
     queryFn: () => handleVerifyVeraBankAccount(values.beneficiaryAccount),
-    enabled: !!values.beneficiaryAccount,
+    enabled:
+      !!values.beneficiaryAccount && values.beneficiaryAccount.length >= 10,
   });
 
   return (
@@ -463,14 +454,15 @@ const OtherBanksTransferForm = ({
 
 const Page = () => {
   const [selectedOption, setSelectedOption] = useState<
-    "Vendcilo" | "Other Banks"
-  >("Vendcilo");
+    "Vendcilq" | "Other Banks"
+  >("Vendcilq");
   const [bankOptions, setBankOptions] = useState<
     { bankCode: string; bankName: string }[]
   >([]);
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [isVerifying] = useState(false);
+  const router = useRouter();
 
-  const handleSelect = (option: "Vendcilo" | "Other Banks") => {
+  const handleSelect = (option: "Vendcilq" | "Other Banks") => {
     setSelectedOption(option);
   };
 
@@ -508,47 +500,58 @@ const Page = () => {
       return;
     }
     // router.
-    try {
-      setIsVerifying(true);
-      await handleLocalTransfer({
-        senderAccountId: Number(values.fromAccount),
-        receiverAccountNo: values.beneficiaryAccount,
-        amount: Number(values.amount),
-        narration: values.narration,
-        saveAsBeneficiary: values.saveToBeneficiaryList,
-      });
-      toast.success("Transfer successful");
-      window.location.reload();
-    } catch (err) {
-      const error = err as AxiosError<{ message?: string }>;
-      const errorMessage =
-        error.response?.data?.message || error.message || "Transfer failed";
-      toast.error(errorMessage);
-    } finally {
-      setIsVerifying(false);
-    }
+    // try {
+    // setIsVerifying(true);
+    // await handleLocalTransfer({
+    //   senderAccountId: Number(values.fromAccount),
+    //   receiverAccountNo: values.beneficiaryAccount,
+    //   amount: Number(values.amount),
+    //   narration: values.narration,
+    //   saveAsBeneficiary: values.saveToBeneficiaryList,
+    // });
+    // toast.success("Transfer successful");
+    // window.location.reload();
+    localStorage.setItem(
+      "veraTransferData",
+      JSON.stringify({ ...values, type: "vendcilq" })
+    );
+    router.push("/transfer/confirmation?type=vendcilq");
+    // } catch () {
+    // const error = err as AxiosError<{ message?: string }>;
+    // const errorMessage =
+    //   error.response?.data?.message || error.message || "Transfer failed";
+    // toast.error(errorMessage);
+    // } finally {
+    //   // setIsVerifying(false);
+    // }
   };
 
   const handleOtherBanksTransfer = async (values: TransferFormValues) => {
     try {
-      setIsVerifying(true);
-      await handleOutsideTransfer({
-        senderAccountId: Number(values.fromAccount),
-        receiverAccountNo: values.beneficiaryAccount,
-        receiverAccountName: values.beneficiaryName,
-        amount: Number(values.amount),
-        narration: values.narration,
-        saveAsBeneficiary: values.saveToBeneficiaryList,
-        receiverBankCode: values.selectedBank!,
-      });
-      toast.success("Transfer successful");
-      window.location.reload();
-    } catch (err) {
-      const error = err as AxiosError<{ msg: string }>;
-      // console.log("error", error);
-      toast.error(error.response?.data?.msg || "Transfer failed");
-    } finally {
-      setIsVerifying(false);
+      // router.push(
+      //   `/transfer/confirmation?data=${encodeURIComponent(
+      //     JSON.stringify(values)
+      //   )}`
+      // );
+      // await handleOutsideTransfer({
+      //   senderAccountId: Number(values.fromAccount),
+      //   receiverAccountNo: values.beneficiaryAccount,
+      //   receiverAccountName: values.beneficiaryName,
+      //   amount: Number(values.amount),
+      //   narration: values.narration,
+      //   saveAsBeneficiary: values.saveToBeneficiaryList,
+      //   receiverBankCode: values.selectedBank!,
+      // });
+      // Store transfer data in localStorage (or you could use React Context)
+      localStorage.setItem(
+        "transferData",
+        JSON.stringify({ ...values, type: "other" })
+      );
+      // Navigate to confirmation page without sensitive data in URL
+      router.push("/transfer/confirmation?type=other");
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+      console.error("Transfer error:", error);
     }
   };
 
@@ -569,7 +572,7 @@ const Page = () => {
                 Transfer to {selectedOption}
               </h3>
 
-              {selectedOption === "Vendcilo" ? (
+              {selectedOption === "Vendcilq" ? (
                 <VeraTransferForm
                   accounts={data?.data?.accounts || []}
                   isVerifying={isVerifying}

@@ -101,8 +101,8 @@ export const ActiveAccountDashboard: React.FC = () => {
 
     if (filter) {
       data = data.filter((transaction) => {
-        if (filter === "credit") return transaction.type === "credit";
-        if (filter === "debit") return transaction.type === "debit";
+        if (filter === "Incoming") return transaction.type === "CREDIT";
+        if (filter === "Outgoing") return transaction.type === "DEBIT";
         return true;
       });
     }
@@ -175,11 +175,7 @@ export const ActiveAccountDashboard: React.FC = () => {
             />
           </div>
           <div className="hidden md:flex z-0">
-            <LoanLimitCard
-              limit={FormatCurrency({
-                amount: profile?.business.creditLimit || 0,
-              })}
-            />
+            <LoanLimitCard limit={profile?.business.creditLimit || 0} />
           </div>
         </div>
         <div className="flex md:hidden mb-5 z-0">

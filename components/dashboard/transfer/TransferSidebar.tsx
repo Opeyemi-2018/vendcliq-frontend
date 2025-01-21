@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import React from "react";
-type OptionType = "Vendcilo" | "Other Banks";
+type OptionType = "Vendcilq" | "Other Banks";
 
 interface TransferSidebarProps {
   selectedOption: OptionType;
@@ -14,9 +14,9 @@ const TransferSidebar: React.FC<TransferSidebarProps> = ({
     <div className="p-4 bg-white h-fit flex flex-col space-y-4">
       {/* Transfer to Vera Button */}
       <Button
-        onClick={() => onSelect("Vendcilo")}
+        onClick={() => onSelect("Vendcilq")}
         className={`py-2 w-fit px-4 text-left rounded-none font-semibold transition-colors ${
-          selectedOption === "Vendcilo"
+          selectedOption === "Vendcilq"
             ? "bg-yellow-500 text-white"
             : "bg-white text-black border border-gray-300"
         }`}

@@ -18,11 +18,11 @@ const FilterSortDropdown: React.FC<FilterSortDropdownProps> = ({
   onFilterChange,
   onSortChange,
 }) => {
-  const [selectedFilter, setSelectedFilter] = useState("Filters");
-  const [selectedSort, setSelectedSort] = useState("Sorts");
+  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [selectedSort, setSelectedSort] = useState("Ascending");
 
   const handleFilterSelect = (filter: string) => {
-    setSelectedFilter(filter === "All" ? "Filters" : filter);
+    setSelectedFilter(filter === "All" ? "All" : filter);
     onFilterChange(filter);
   };
 
