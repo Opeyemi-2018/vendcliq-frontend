@@ -94,7 +94,7 @@ export const ActiveAccountDashboard: React.FC = () => {
       });
     }
     return data;
-  }, [transformedLoanTransactions, filter, searchQuery, sortOrder]);
+  }, [transformedLoanTransactions, searchQuery, sortOrder]);
   // Memoized filtered, sorted, and searched data
   const filteredAndSortedTransactions = useMemo(() => {
     let data = transformedTransactions || [];
