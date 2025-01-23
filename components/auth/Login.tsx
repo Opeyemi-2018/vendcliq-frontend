@@ -83,9 +83,9 @@ const Login = () => {
         ]);
         // console.log("response>>>", response);
         if (response.data.user.email.verified === null) {
-          router.push("/signup?step=3");
+          router.push(`/signup?step=3`);
         } else if (response.data.user.phone.verified === null) {
-          router.push("/signup?step=4");
+          router.push(`/signup?step=4`);
         } else {
           router.push("/dashboard/home");
         }

@@ -5,6 +5,7 @@ import {
   handleApiError,
   handleConfirmPhoneNumber,
 } from "@/lib/utils/api/apiHelper";
+
 import { ConfirmPhoneNumberPayload } from "@/types";
 
 import React, { useState } from "react";
@@ -38,6 +39,7 @@ const SignupStepFour: React.FC<SignupStepFourProps> = ({ nextStep, title }) => {
       setLoading(true);
       localStorage.setItem("phone", phone);
       const response = await handleConfirmPhoneNumber(payload);
+      console.log("response>>> phone", response);
       if (response.status === "success") {
         toast.success(response.msg);
         nextStep();
