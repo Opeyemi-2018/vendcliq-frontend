@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 
 import Link from "next/link";
 import { AxiosError } from "axios";
+import { useSearchParams } from "next/navigation";
 
 type SignupStepThreeProps = {
   nextStep: () => void;
@@ -31,7 +32,10 @@ const SignupStepThree: React.FC<SignupStepThreeProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState(30);
   const [timerActive, setTimerActive] = useState(true);
+  const searchParams = useSearchParams();
+  const phoneParam = searchParams?.get("phone");
   const email = localStorage.getItem("email");
+  console.log("phoneParam", phoneParam);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;

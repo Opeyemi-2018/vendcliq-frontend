@@ -13,10 +13,12 @@ const Page = () => {
     const checkRegistrationStatus = async () => {
       try {
         const response = await handleGetDashboard();
+        console.log("res>", response);
         const profileCompletionStep = response.data.business.status;
         const isComplete =
-          profileCompletionStep === "ACTIVATED" ||
-          response.data.account.status === "ACTIVE";
+          profileCompletionStep === "ACTIVATED" &&
+          response.data.account.status === "ACTIVE" &&
+          response.data.business.status === "ACTIVE";
 
         setIsFinishedSetup(isComplete);
         console.log("isComplete>>>>>", isComplete);
