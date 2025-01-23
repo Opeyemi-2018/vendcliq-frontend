@@ -38,9 +38,9 @@ type LoanTransactionTableProps = {
 export default function LoanTransactionTable({
   transactions,
   searchQuery,
-  // filter,
-  sortOrder,
-}: LoanTransactionTableProps) {
+}: // filter,
+// sortOrder,
+LoanTransactionTableProps) {
   const formatCurrency = (amount: string | number) => {
     return new Intl.NumberFormat("en-NG", {
       style: "currency",
@@ -71,7 +71,7 @@ export default function LoanTransactionTable({
     }
 
     return data;
-  }, [transactions, searchQuery, sortOrder]);
+  }, [transactions, searchQuery]);
 
   return (
     <div className="rounded-lg border">
