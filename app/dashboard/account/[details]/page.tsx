@@ -141,14 +141,16 @@ const Page = () => {
                     <div className="flex items-center gap-2">
                       <span
                         className={`flex h-2.5 w-2.5 rounded-full ${
-                          transaction.type === "credit"
+                          transaction.type === "credit" ||
+                          transaction.type === "CREDIT"
                             ? "bg-green-500"
                             : "bg-red-500"
                         }`}
                       />
                       <span
                         className={`font-medium ${
-                          transaction.type === "credit"
+                          transaction.type === "credit" ||
+                          transaction.type === "CREDIT"
                             ? "text-green-700 bg-green-50"
                             : "text-red-700 bg-red-50"
                         } px-3 py-1 rounded-full text-sm`}
