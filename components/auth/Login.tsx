@@ -196,7 +196,7 @@ const Login = () => {
 
           <div className="flex flex-col md:flex-row gap-1 items-center font-sans justify-center mt-3">
             <p className="text-black">Don&apos;t have an account?</p>
-            <Link href="/signup">
+            <Link href="/signup?step=1">
               <p className="text-primary">Create an account</p>
             </Link>
           </div>

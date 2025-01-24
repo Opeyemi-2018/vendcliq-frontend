@@ -95,8 +95,9 @@ export default function InstructorLayout({
         const profileCompletionStep = response.data.business.status;
 
         const isComplete =
-          profileCompletionStep === "ACTIVATED" ||
+          profileCompletionStep === "ACTIVATED" &&
           response.data.account.status === "ACTIVE";
+
         console.log("isComplete>>>>>", isComplete);
         setIsFinishedSetup(isComplete);
       } catch (error) {
