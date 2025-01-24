@@ -42,7 +42,7 @@ export const PendingAccountDashboard = () => {
         <div className="flex flex-col sm:flex-row gap-4 sm:space-x-4 mt-5">
           <RequestCard
             title="Request Loan"
-            description="Buy more with Vera Africa, request loan for your business and pay small small"
+            description="Buy more with Vendcliq Africa, request loan for your business and pay small small"
             buttonText="Request loan"
             icon={<Landmark size={44} />}
             primaryColor="bg-primary"
