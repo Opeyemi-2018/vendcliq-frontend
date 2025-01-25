@@ -119,7 +119,7 @@ const VeraTransferForm = ({
     queryKey: ["verify-vera-bank-account", values.beneficiaryAccount],
     queryFn: () => handleVerifyVeraBankAccount(values.beneficiaryAccount),
     enabled:
-      !!values.beneficiaryAccount && values.beneficiaryAccount.length >= 10,
+      !!values.beneficiaryAccount && values.beneficiaryAccount.length === 10,
   });
 
   return (
@@ -288,34 +288,41 @@ const OtherBanksTransferForm = ({
     };
   }, []);
 
-  useEffect(() => {
-    const verifyAccount = async () => {
-      if (!values.beneficiaryAccount || !values.selectedBank) return;
+  const verifyAccount = async () => {
+    if (
+      values.beneficiaryAccount.length < 10 ||
+      !values.selectedBank ||
+      !values.beneficiaryAccount
+    ) {
+      toast.error("Please fill all required fields");
+      return;
+    }
 
-      try {
-        const response = (await verifyBankAccount({
-          accountNumber: values.beneficiaryAccount,
-          bankCode: values.selectedBank,
-        })) as VerifyResponse;
+    try {
+      const response = (await verifyBankAccount({
+        accountNumber: values.beneficiaryAccount,
+        bankCode: values.selectedBank || "",
+      })) as VerifyResponse;
 
-        if (response.status === "success") {
-          setValues((prev) => ({
-            ...prev,
-            beneficiaryName: response.data.accountName,
-          }));
-        } else {
-          toast.error(response.msg || "Failed to verify account");
-        }
-      } catch (error) {
-        console.error("Verification error:", error);
-        toast.error("Failed to verify account");
+      if (response.status === "success") {
+        setValues((prev) => ({
+          ...prev,
+          beneficiaryName: response.data.accountName,
+        }));
+      } else {
+        toast.error(response.msg || "Failed to verify account");
       }
-    };
+    } catch (error) {
+      console.error("Verification error:", error);
+      toast.error("Failed to verify account");
+    }
+  };
 
-    if (values.beneficiaryAccount && values.selectedBank) {
+  useEffect(() => {
+    if (values.beneficiaryAccount.length === 10 && values.selectedBank) {
       verifyAccount();
     }
-  }, [values.beneficiaryAccount, values.selectedBank, verifyBankAccount]);
+  }, [values.beneficiaryAccount, values.selectedBank]); // Runs only when these values change
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
