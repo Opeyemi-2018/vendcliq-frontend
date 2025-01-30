@@ -28,6 +28,9 @@ import { RiFileDownloadFill } from "react-icons/ri";
 import { ClipLoader } from "react-spinners";
 import * as XLSX from "xlsx";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import Image from "next/image";
+import html2canvas from "html2canvas";
+import Logo from "@/components/Logo";
 
 // Add an interface for the transaction type
 interface Transaction {
@@ -36,6 +39,13 @@ interface Transaction {
   narration: string;
   type: string;
   date: string;
+  status?: string;
+  receiver_name?: string;
+  receiver_account?: string;
+  receiver_bank?: string;
+  sender_name?: string;
+  sender_account?: string;
+  session_id?: string;
 }
 
 const Page = () => {
@@ -52,6 +62,7 @@ const Page = () => {
   const transactions = data?.data?.data || [];
   const totalPages = Math.ceil((data?.data?.meta?.total || 0) / itemsPerPage);
 
+  console.log(transactions);
   // Sort transactions by date in descending order (most recent first)
   const sortedTransactions = [...transactions].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -119,47 +130,111 @@ const Page = () => {
   }: {
     transaction: Transaction;
   }) => {
+    const receiptRef = React.useRef<HTMLDivElement>(null);
+
+    const downloadReceipt = async () => {
+      if (receiptRef.current) {
+        const canvas = await html2canvas(receiptRef.current);
+        const image = canvas.toDataURL("image/png");
+        const link = document.createElement("a");
+        link.href = image;
+        link.download = `receipt-${transaction.id}.png`;
+        link.click();
+      }
+    };
+
     return (
-      <DialogContent className="max-w-2xl font-sans">
-        <div className="p-6 space-y-4">
+      <DialogContent className="max-w-xl">
+        <div ref={receiptRef} className="bg-white p-6 font-sans">
           {/* Header */}
-          <div className="text-center space-y-2">
-            <h3 className="font-bold text-xl">Transaction Receipt</h3>
-            <p className="text-gray-500">#{transaction.id}</p>
+          <div className="text-center space-y-4 pb-6">
+            <div className="flex justify-center">
+              <Logo />
+            </div>
+            <h2 className="text-2xl font-bold text-[#1a237e]">
+              Transaction Details
+            </h2>
           </div>
 
-          {/* Transaction Details */}
-          <div className="space-y-3">
-            {/* Amount */}
-            <div className="flex justify-between">
-              <span className="text-gray-600">Amount</span>
-              <FormatCurrency amount={transaction.amount} />
-            </div>
+          {/* Details Grid */}
+          <div className="space-y-4">
+            <DetailRow
+              label="Payment Description"
+              value={transaction.narration}
+            />
+            <DetailRow
+              label="Amount"
+              value={<FormatCurrency amount={transaction.amount} />}
+            />
+            <DetailRow
+              label="Receiver's Name"
+              value={transaction.receiver_name || "N/A"}
+            />
+            <DetailRow
+              label="Receiver's Account"
+              value={transaction.receiver_account || "N/A"}
+            />
+            <DetailRow
+              label="Receiver's Bank"
+              value={transaction.receiver_bank || "N/A"}
+            />
+            <DetailRow
+              label="Sender's Name"
+              value={transaction.sender_name || "N/A"}
+            />
+            <DetailRow
+              label="Sender's Account"
+              value={
+                transaction.sender_account
+                  ? `******${transaction.sender_account.slice(-4)}`
+                  : "N/A"
+              }
+            />
+            <DetailRow
+              label="Date"
+              value={new Date(transaction.date).toLocaleString()}
+            />
+            <DetailRow
+              label="Session ID"
+              value={transaction.session_id || transaction.id}
+            />
+            <DetailRow
+              label="Status"
+              value={
+                <span className="text-green-500 font-medium">
+                  {transaction.status || "Success"}
+                </span>
+              }
+            />
+            <DetailRow label="Transaction Type" value={transaction.type} />
+          </div>
 
-            {/* Date */}
-            <div className="flex justify-between">
-              <span className="text-gray-600">Date</span>
-              <span>{new Date(transaction.date).toLocaleDateString()}</span>
-            </div>
-
-            {/* Type */}
-            <div className="flex justify-between">
-              <span className="text-gray-600">Type</span>
-              <span>{transaction.type}</span>
-            </div>
-
-            {/* Narration */}
-            <div className="flex justify-between">
-              <span className="text-gray-600">Narration</span>
-              <span className="text-right max-w-auto">
-                {transaction.narration}
-              </span>
-            </div>
+          {/* Download Button */}
+          <div className="mt-8">
+            <Button
+              onClick={downloadReceipt}
+              className="w-full bg-[#1a237e] text-white hover:bg-[#1a237e]/90"
+            >
+              Download Receipt
+            </Button>
           </div>
         </div>
       </DialogContent>
     );
   };
+
+  const DetailRow = ({
+    label,
+    value,
+  }: {
+    label: string;
+    value: React.ReactNode;
+  }) => (
+    <div className="flex justify-between py-2 border-b border-gray-100">
+      <span className="text-gray-600">{label}</span>
+      <span className="font-medium text-right">{value}</span>
+    </div>
+  );
 
   if (isLoading) {
     return (

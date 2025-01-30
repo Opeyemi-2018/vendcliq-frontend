@@ -147,7 +147,7 @@ export const ActiveAccountDashboard: React.FC = () => {
         <h1 className="text-black font-medium text-xl">
           Hi {customer?.firstname || "there"}
         </h1>
-        <div className="flex md:flex-row flex-row text-xs md:text-md mt-3 bg-white items-center text-md text-black w-full md:w-fit gap-2 md:gap-5 py-1 md:px-5 p-2 font-sans border border-border rounded-lg">
+        <div className="flex md:flex-row flex-col text-xs md:text-md mt-3 bg-white items-center text-md text-black w-full md:w-fit gap-2 md:gap-5 py-1 md:px-5 p-2 font-sans border border-border rounded-lg">
           <p className="text-nowrap">{text}</p>
           <p className="border-x border-border text-nowrap px-3">{bankName}</p>
           <p className="text-nowrap">

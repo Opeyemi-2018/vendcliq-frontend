@@ -33,6 +33,7 @@
     "embla-carousel-autoplay": "^8.5.2",
     "embla-carousel-react": "^8.5.1",
     "formik": "^2.4.6",
+    "html2canvas": "^1.4.1",
     "iconsax-react": "^0.0.8",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^2.5.2",
