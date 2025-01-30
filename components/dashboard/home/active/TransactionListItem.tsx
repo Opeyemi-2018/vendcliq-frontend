@@ -39,14 +39,18 @@ export const TransactionListItem: React.FC<TransactionListItemProps> = ({
         )}
 
         {/* Description and Details */}
-        <div className="flex flex-col">
-          <p className="text-[#797979] text-xs sm:text-sm md:text-base">
-            {description}
+        <div className="flex flex-col w-full">
+          <p className="text-[#797979] text-xs sm:text-sm md:text-base break-words text-wrap truncate md:truncate-none">
+            {description.length > 20
+              ? description.substring(0, 20) + "..."
+              : description}
           </p>
-          <p className="text-[#797979] text-xs sm:text-sm md:text-base">
+          <p className="text-[#797979] text-xs sm:text-sm md:text-base break-words ">
             {recipientInfo}
           </p>
-          <p className="text-xs sm:text-sm md:text-base">{transactionId}</p>
+          <p className="text-xs sm:text-sm md:text-base break-words">
+            {transactionId}
+          </p>
         </div>
       </div>
 
