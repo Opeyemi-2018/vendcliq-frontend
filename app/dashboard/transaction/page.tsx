@@ -134,7 +134,27 @@ const Page = () => {
 
     const downloadReceipt = async () => {
       if (receiptRef.current) {
-        const canvas = await html2canvas(receiptRef.current);
+        // Wait for a small delay to ensure images are loaded
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const canvas = await html2canvas(receiptRef.current, {
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          onclone: (document) => {
+            // Ensure images are loaded in the cloned document
+            const images = document.getElementsByTagName("img");
+            return new Promise((resolve) => {
+              const loadPromises = Array.from(images).map((img) => {
+                if (img.complete) return Promise.resolve();
+                return new Promise((resolve) => {
+                  img.onload = resolve;
+                  img.onerror = resolve;
+                });
+              });
+              Promise.all(loadPromises).then(resolve);
+            });
+          },
+        });
         const image = canvas.toDataURL("image/png");
         const link = document.createElement("a");
         link.href = image;
@@ -146,17 +166,20 @@ const Page = () => {
     return (
       <DialogContent className="max-w-xl">
         <div ref={receiptRef} className="bg-white p-6 font-sans">
-          {/* Header */}
           <div className="text-center space-y-4 pb-6">
             <div className="flex justify-center">
-              <Logo />
+              <img
+                src="/logo.png"
+                alt="Logo"
+                className="w-[50px] h-[50px] object-contain"
+                crossOrigin="anonymous"
+              />
             </div>
             <h2 className="text-2xl font-bold text-[#1a237e]">
               Transaction Details
             </h2>
           </div>
 
-          {/* Details Grid */}
           <div className="space-y-4">
             <DetailRow
               label="Payment Description"
@@ -208,16 +231,15 @@ const Page = () => {
             />
             <DetailRow label="Transaction Type" value={transaction.type} />
           </div>
+        </div>
 
-          {/* Download Button */}
-          <div className="mt-8">
-            <Button
-              onClick={downloadReceipt}
-              className="w-full bg-[#1a237e] text-white hover:bg-[#1a237e]/90"
-            >
-              Download Receipt
-            </Button>
-          </div>
+        <div className="mt-8">
+          <Button
+            onClick={downloadReceipt}
+            className="w-full bg-[#1a237e] text-white hover:bg-[#1a237e]/90"
+          >
+            Download Receipt
+          </Button>
         </div>
       </DialogContent>
     );

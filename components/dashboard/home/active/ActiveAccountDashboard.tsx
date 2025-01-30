@@ -25,6 +25,7 @@ export const ActiveAccountDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const { data } = useDashboardData();
+
   const { profile } = useGetProfile();
 
   const { data: loanData } = useQuery({
@@ -165,7 +166,7 @@ export const ActiveAccountDashboard: React.FC = () => {
           <div className=" w-full flex md:justify-between flex-col h-full gap-5 ">
             <DashboardCard
               title="Active loan"
-              amount={`NGN${activeLoanAmount}`}
+              amount={`NGN${data?.data.creditCheck.totalUsed}`}
               nextPaymentDate={nextPaymentDate || ""}
             />
             <DashboardCard
@@ -175,7 +176,9 @@ export const ActiveAccountDashboard: React.FC = () => {
             />
           </div>
           <div className="hidden md:flex z-0">
-            <LoanLimitCard limit={profile?.business.creditLimit || 0} />
+            <LoanLimitCard
+              limit={data?.data.creditCheck.remainingCredit || 0}
+            />
           </div>
         </div>
         <div className="flex md:hidden mb-5 z-0">

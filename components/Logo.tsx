@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-const Logo = () => {
+const Logo = ({ className }: { className?: string }) => {
   return (
     <Link href="/dashboard/home">
       <Image
@@ -8,7 +8,7 @@ const Logo = () => {
         alt="Logo"
         width={100}
         height={100}
-        className="object-cover"
+        className={`object-cover ${className}`}
       />
     </Link>
   );

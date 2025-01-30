@@ -128,6 +128,12 @@ export interface DashboardResponse {
     loan: [];
     nextRepayment: string | null;
     cashReward: number;
+    creditCheck: {
+      canApprove: boolean;
+      totalUsed: number;
+      remainingCredit: number;
+      message: string;
+    };
   };
 }
 export interface SignInPayload {
@@ -608,8 +614,8 @@ export interface LoanStatDetailsResponse {
 export interface OutsideTransferPayload {
   senderAccountId: number;
   receiverAccountNo: string;
-  receiverAccountName?: string;
-  receiverBankCode?: string;
+  receiverAccountName: string;
+  receiverBankCode: string;
   amount: number;
   narration: string;
   saveAsBeneficiary: boolean;
