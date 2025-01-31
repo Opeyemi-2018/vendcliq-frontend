@@ -30,7 +30,6 @@ import * as XLSX from "xlsx";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import Image from "next/image";
 import html2canvas from "html2canvas";
-import Logo from "@/components/Logo";
 
 // Add an interface for the transaction type
 interface Transaction {

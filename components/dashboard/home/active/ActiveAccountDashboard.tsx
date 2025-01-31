@@ -51,10 +51,6 @@ export const ActiveAccountDashboard: React.FC = () => {
   const nextPaymentDate = data?.data.nextRepayment;
 
   // Get active loan amount
-  const activeLoan = loanTransactions.find(
-    (loan) => loan.status.toLowerCase() === "active"
-  );
-  const activeLoanAmount = activeLoan ? activeLoan.amount : "0.00";
 
   const transformedLoanTransactions = loanTransactions.map((loan) => ({
     ...loan,
