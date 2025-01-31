@@ -11,6 +11,7 @@ import {
 
 import { useGetInventory } from "@/services/loan/loan";
 import { IoCloseOutline } from "react-icons/io5";
+import ComboBox from "@/components/ui/ComboBox";
 
 interface Item {
   name: string;
@@ -68,7 +69,14 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
     onNext();
   };
   const inventory = useGetInventory();
-  // console.log(inventory.results);
+
+  // Format inventory options for ComboBox
+  const inventoryOptions =
+    inventory.results?.map((item) => ({
+      label: item.name,
+      value: item.name,
+    })) || [];
+
   return (
     <div className="w-full bg-white p-6">
       <h3 className="text-lg sm:text-xl font-medium border-b border-border pb-2 font-clash mb-4 sm:mb-8">
@@ -78,31 +86,26 @@ const LoanStepOne: React.FC<LoanStepOneProps> = ({
       {items.map((item, index) => (
         <div
           key={index}
-          className="flex  w-full  justify-between  items-center gap-4 mb-4"
+          className="flex w-full justify-between items-center gap-4 mb-4"
         >
           <div className="flex flex-col w-full">
             <label className="font-medium text-sm text-black pb-1">
               Item {index + 1}
             </label>
             <div className="h-12">
-              <Select
-                onValueChange={(value) =>
+              <ComboBox
+                options={inventoryOptions}
+                value={
+                  item.name ? { label: item.name, value: item.name } : undefined
+                }
+                onChange={(option) =>
                   onInputChange(index, {
-                    target: { name: "name", value },
+                    target: { name: "name", value: option.value },
                   } as React.ChangeEvent<HTMLSelectElement>)
                 }
-              >
-                <SelectTrigger className="w-full h-full border border-input bg-background px-3 py-2 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
-                  <SelectValue placeholder="Select an item" />
-                </SelectTrigger>
-                <SelectContent>
-                  {inventory.results?.map((item) => (
-                    <SelectItem key={item.id} value={item.name}>
-                      {item.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Search for an item..."
+                label="Select Item"
+              />
             </div>
           </div>
 
