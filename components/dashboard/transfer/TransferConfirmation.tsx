@@ -15,6 +15,8 @@ interface TransferConfirmationProps {
   date?: string;
   charges?: string;
   onPinSubmit: (pin: string) => void;
+  isLoading?: boolean;
+  pinInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const DetailRow: React.FC<{
@@ -35,10 +37,16 @@ const PinInput: React.FC<{
   <input
     type="password"
     value={value}
-    onChange={(e) => onChange(e.target.value)}
+    onChange={(e) => {
+      const newValue = e.target.value.replace(/\D/g, "").slice(0, 4);
+      onChange(newValue);
+    }}
+    maxLength={4}
+    pattern="\d{4}"
+    inputMode="numeric"
     className="w-full sm:w-fit px-3 py-2 border rounded-none focus:outline-none focus:border-yellow-500"
-    placeholder="Enter PIN"
-    aria-label="PIN input"
+    placeholder="Enter 4-digit PIN"
+    aria-label="4-digit PIN input"
   />
 );
 

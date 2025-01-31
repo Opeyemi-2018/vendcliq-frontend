@@ -26,6 +26,9 @@ const ConfirmationPage = () => {
   const [veraTransferData, setVeraTransferData] = useState<TransferData | null>(
     null
   );
+  const [isLoading, setIsLoading] = useState(false);
+  const [pin, setPin] = useState("");
+
   useEffect(() => {
     // Get transfer data from localStorage instead of URL params
     const storedData = localStorage.getItem("transferData");
@@ -42,6 +45,11 @@ const ConfirmationPage = () => {
   }, []);
 
   const handlePinSubmit = async (pin: string) => {
+    if (pin.length !== 4) {
+      toast.error("Please enter a 4-digit PIN");
+      return;
+    }
+    setIsLoading(true);
     console.log("transferData", transferData);
     console.log("veraTransferData", veraTransferData);
     try {
@@ -112,8 +120,11 @@ const ConfirmationPage = () => {
       }
     } catch (error: unknown) {
       const err = error as { response?: { data?: { msg?: string } } };
+      // console.log("error", error.name);
       console.log("error", err.response?.data?.msg);
       toast.error(err.response?.data?.msg || "Transfer failed");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -121,6 +132,11 @@ const ConfirmationPage = () => {
   console.log("displayData", displayData);
   return (
     <div className="min-h-screen px-5 flex justify-center">
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      )}
       {displayData?.type === "vendcilq" && (
         <TransferConfirmation
           type={"vendcilq"}
@@ -132,6 +148,13 @@ const ConfirmationPage = () => {
           date={new Date().toLocaleDateString()}
           charges={"0"}
           onPinSubmit={handlePinSubmit}
+          isLoading={isLoading}
+          pinInput={(e) => {
+            const value = e.target.value.replace(/[^0-9]/g, "");
+            if (value.length <= 4) {
+              setPin(value);
+            }
+          }}
         />
       )}
       {displayData?.type === "other" && (
@@ -148,8 +171,16 @@ const ConfirmationPage = () => {
           date={new Date().toLocaleDateString()}
           charges={"0"}
           onPinSubmit={handlePinSubmit}
+          isLoading={isLoading}
+          pinInput={(e) => {
+            const value = e.target.value.replace(/[^0-9]/g, "");
+            if (value.length <= 4) {
+              setPin(value);
+            }
+          }}
         />
       )}
+      <div className="hidden">{pin}</div>
     </div>
   );
 };

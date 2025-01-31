@@ -167,7 +167,10 @@ export const ActiveAccountDashboard: React.FC = () => {
             />
             <DashboardCard
               title="Wallet balance"
-              amount={`NGN${FormatCurrency({ amount: account?.balance || 0 })}`}
+              amount={`NGN${FormatCurrency({
+                amount: account?.balance || 0,
+                useAbbreviation: false,
+              })}`}
               showButtons
             />
           </div>
