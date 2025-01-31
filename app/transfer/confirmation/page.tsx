@@ -180,6 +180,7 @@ const ConfirmationPage = () => {
           }}
         />
       )}
+      <div className="hidden">{pin}</div>
     </div>
   );
 };

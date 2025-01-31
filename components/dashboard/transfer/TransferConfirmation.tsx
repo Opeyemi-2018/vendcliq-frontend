@@ -62,8 +62,6 @@ const TransferConfirmation: React.FC<TransferConfirmationProps> = ({
   date,
   charges,
   onPinSubmit,
-  isLoading,
-  pinInput,
 }) => {
   const [pin, setPin] = React.useState("");
 

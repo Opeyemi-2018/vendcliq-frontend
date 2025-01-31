@@ -1,13 +1,6 @@
 import React, { useContext } from "react";
 import Field from "@/components/ui/Field";
 import { RequestContext } from "./RequestContext";
-import {
-  Select,
-  SelectItem,
-  SelectContent,
-  SelectValue,
-  SelectTrigger,
-} from "@/components/ui/select";
 
 import { useGetInventory } from "@/services/loan/loan";
 import { IoCloseOutline } from "react-icons/io5";
