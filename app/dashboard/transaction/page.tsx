@@ -30,7 +30,6 @@ import * as XLSX from "xlsx";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import Image from "next/image";
 import html2canvas from "html2canvas";
-import Logo from "@/components/Logo";
 
 // Add an interface for the transaction type
 interface Transaction {
@@ -134,7 +133,25 @@ const Page = () => {
 
     const downloadReceipt = async () => {
       if (receiptRef.current) {
+        // Style logo before capturing
+        const logoElement = receiptRef.current.querySelector("img");
+        if (logoElement) {
+          logoElement.style.width = "120px"; // Smaller width
+          logoElement.style.height = "60px"; // Smaller height
+          logoElement.style.objectFit = "contain";
+          logoElement.style.objectPosition = "center";
+        }
+
         const canvas = await html2canvas(receiptRef.current);
+
+        // Reset logo styles after capturing
+        if (logoElement) {
+          logoElement.style.width = "";
+          logoElement.style.height = "";
+          logoElement.style.objectFit = "contain";
+          logoElement.style.objectPosition = "center";
+        }
+
         const image = canvas.toDataURL("image/png");
         const link = document.createElement("a");
         link.href = image;
@@ -145,18 +162,22 @@ const Page = () => {
 
     return (
       <DialogContent className="max-w-xl">
-        <div ref={receiptRef} className="bg-white p-6 font-sans">
-          {/* Header */}
-          <div className="text-center space-y-4 pb-6">
+        <div ref={receiptRef} className="p-6 font-sans">
+          <div className="text-center">
             <div className="flex justify-center">
-              <Logo />
+              <Image
+                src={"/favicon.ico"}
+                alt="Logo"
+                width={24}
+                height={16}
+                className={`object-contain`}
+              />
             </div>
-            <h2 className="text-2xl font-bold text-[#1a237e]">
+            <h2 className="text-xl font-bold text-[#1a237e]">
               Transaction Details
             </h2>
           </div>
 
-          {/* Details Grid */}
           <div className="space-y-4">
             <DetailRow
               label="Payment Description"
@@ -208,16 +229,15 @@ const Page = () => {
             />
             <DetailRow label="Transaction Type" value={transaction.type} />
           </div>
+        </div>
 
-          {/* Download Button */}
-          <div className="mt-8">
-            <Button
-              onClick={downloadReceipt}
-              className="w-full bg-[#1a237e] text-white hover:bg-[#1a237e]/90"
-            >
-              Download Receipt
-            </Button>
-          </div>
+        <div className="mt-8">
+          <Button
+            onClick={downloadReceipt}
+            className="w-full bg-[#1a237e] text-white hover:bg-[#1a237e]/90"
+          >
+            Download Receipt
+          </Button>
         </div>
       </DialogContent>
     );

@@ -88,7 +88,9 @@ const ConfirmationPage = () => {
             veraTransferData?.beneficiaryAccount ||
             "",
           receiverAccountName:
-            transferData?.beneficiaryName || veraTransferData?.beneficiaryName,
+            transferData?.beneficiaryName ||
+            veraTransferData?.beneficiaryName ||
+            "",
           amount: Number(transferData?.amount || veraTransferData?.amount),
           narration:
             transferData?.narration || veraTransferData?.narration || "",
@@ -97,7 +99,7 @@ const ConfirmationPage = () => {
             veraTransferData?.saveToBeneficiaryList ||
             false,
           receiverBankCode:
-            transferData?.selectedBank || veraTransferData?.selectedBank,
+            transferData?.selectedBank || veraTransferData?.selectedBank || "",
           pin,
         });
         console.log("response", response);
@@ -109,8 +111,9 @@ const ConfirmationPage = () => {
         }
       }
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message: string } } };
-      toast.error(err.response?.data?.message || "Transfer failed");
+      const err = error as { response?: { data?: { msg?: string } } };
+      console.log("error", err.response?.data?.msg);
+      toast.error(err.response?.data?.msg || "Transfer failed");
     }
   };
 

@@ -24,6 +24,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useVerifyBankAccount } from "@/services/loan/loan";
 import { ClipLoader } from "react-spinners";
 import { useRouter } from "next/navigation";
+import ComboBox from "@/components/ui/ComboBox";
 
 interface Account {
   id: number;
@@ -57,6 +58,11 @@ interface VerifyResponse {
     accountName: string;
   };
   msg?: string;
+}
+
+interface BankOption {
+  label: string;
+  value: string;
 }
 
 const initialFormValues: TransferFormValues = {
@@ -324,6 +330,18 @@ const OtherBanksTransferForm = ({
     }
   }, [values.beneficiaryAccount, values.selectedBank]); // Runs only when these values change
 
+  // Format bank options for ComboBox
+  const formattedBankOptions =
+    bankOptions?.map((bank) => ({
+      label: bank.bankName,
+      value: bank.bankCode,
+    })) || [];
+
+  // Find selected bank option
+  const selectedBankOption = formattedBankOptions.find(
+    (option) => option.value === values.selectedBank
+  );
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex flex-col space-y-2">
@@ -361,26 +379,18 @@ const OtherBanksTransferForm = ({
         <Label className="block text-sm font-medium text-gray-700">
           Select Beneficiary Bank <span className="text-red-500">*</span>
         </Label>
-        <Select
-          onValueChange={(value) =>
-            setValues((prev) => ({ ...prev, selectedBank: value }))
-          }
-          value={values.selectedBank}
-        >
-          <SelectTrigger className="w-full h-12 bg-gray-100 border border-gray-300 rounded-sm px-3">
-            <SelectValue placeholder="Select bank" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Select bank</SelectLabel>
-              {bankOptions?.map((bank) => (
-                <SelectItem key={bank.bankCode} value={bank.bankCode}>
-                  {bank.bankName}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          </SelectContent>
-        </Select>
+        <ComboBox
+          options={formattedBankOptions}
+          value={selectedBankOption}
+          onChange={(option: BankOption) => {
+            setValues((prev) => ({
+              ...prev,
+              selectedBank: option.value,
+            }));
+          }}
+          placeholder="Search for a bank..."
+          label="Select Bank"
+        />
         {errors.selectedBank && (
           <p className="text-red-500 text-sm mt-1">{errors.selectedBank}</p>
         )}
@@ -468,6 +478,7 @@ const Page = () => {
   >([]);
   const [isVerifying] = useState(false);
   const router = useRouter();
+  console.log("bankOptions", bankOptions);
 
   const handleSelect = (option: "Vendcilq" | "Other Banks") => {
     setSelectedOption(option);
