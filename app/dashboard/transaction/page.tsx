@@ -134,27 +134,25 @@ const Page = () => {
 
     const downloadReceipt = async () => {
       if (receiptRef.current) {
-        // Wait for a small delay to ensure images are loaded
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        const canvas = await html2canvas(receiptRef.current, {
-          useCORS: true,
-          allowTaint: true,
-          logging: false,
-          onclone: (document) => {
-            // Ensure images are loaded in the cloned document
-            const images = document.getElementsByTagName("img");
-            return new Promise((resolve) => {
-              const loadPromises = Array.from(images).map((img) => {
-                if (img.complete) return Promise.resolve();
-                return new Promise((resolve) => {
-                  img.onload = resolve;
-                  img.onerror = resolve;
-                });
-              });
-              Promise.all(loadPromises).then(resolve);
-            });
-          },
-        });
+        // Style logo before capturing
+        const logoElement = receiptRef.current.querySelector("img");
+        if (logoElement) {
+          logoElement.style.width = "120px"; // Smaller width
+          logoElement.style.height = "60px"; // Smaller height
+          logoElement.style.objectFit = "contain";
+          logoElement.style.objectPosition = "center";
+        }
+
+        const canvas = await html2canvas(receiptRef.current);
+
+        // Reset logo styles after capturing
+        if (logoElement) {
+          logoElement.style.width = "";
+          logoElement.style.height = "";
+          logoElement.style.objectFit = "contain";
+          logoElement.style.objectPosition = "center";
+        }
+
         const image = canvas.toDataURL("image/png");
         const link = document.createElement("a");
         link.href = image;
@@ -165,17 +163,18 @@ const Page = () => {
 
     return (
       <DialogContent className="max-w-xl">
-        <div ref={receiptRef} className="bg-white p-6 font-sans">
-          <div className="text-center space-y-4 pb-6">
+        <div ref={receiptRef} className="p-6 font-sans">
+          <div className="text-center">
             <div className="flex justify-center">
-              <img
-                src="/logo.png"
+              <Image
+                src={"/favicon.ico"}
                 alt="Logo"
-                className="w-[50px] h-[50px] object-contain"
-                crossOrigin="anonymous"
+                width={24}
+                height={16}
+                className={`object-contain`}
               />
             </div>
-            <h2 className="text-2xl font-bold text-[#1a237e]">
+            <h2 className="text-xl font-bold text-[#1a237e]">
               Transaction Details
             </h2>
           </div>
