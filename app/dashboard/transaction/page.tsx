@@ -161,7 +161,7 @@ const Page = () => {
     };
 
     return (
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <div ref={receiptRef} className="p-6 font-sans">
           <div className="text-center">
             <div className="flex justify-center">
@@ -250,9 +250,11 @@ const Page = () => {
     label: string;
     value: React.ReactNode;
   }) => (
-    <div className="flex justify-between py-2 border-b border-gray-100">
+    <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-gray-100">
       <span className="text-gray-600">{label}</span>
-      <span className="font-medium text-right">{value}</span>
+      <span className="font-medium sm:text-right sm:w-60 break-words">
+        {value}
+      </span>
     </div>
   );
 
