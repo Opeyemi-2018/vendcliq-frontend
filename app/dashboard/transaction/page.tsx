@@ -45,6 +45,15 @@ interface Transaction {
   sender_name?: string;
   sender_account?: string;
   session_id?: string;
+  meta?: {
+    beneficiaryAccountName?: string;
+    beneficiaryAccountNumber?: string;
+    senderAccountName?: string;
+    senderAccountNumber?: string;
+  };
+  provider?: string;
+  reference?: string;
+  transactionId?: string;
 }
 
 const Page = () => {
@@ -189,25 +198,25 @@ const Page = () => {
             />
             <DetailRow
               label="Receiver's Name"
-              value={transaction.receiver_name || "N/A"}
+              value={transaction?.meta?.beneficiaryAccountName || "N/A"}
             />
             <DetailRow
               label="Receiver's Account"
-              value={transaction.receiver_account || "N/A"}
+              value={transaction?.meta?.beneficiaryAccountNumber || "N/A"}
             />
             <DetailRow
               label="Receiver's Bank"
-              value={transaction.receiver_bank || "N/A"}
+              value={transaction?.provider || "N/A"}
             />
             <DetailRow
               label="Sender's Name"
-              value={transaction.sender_name || "N/A"}
+              value={transaction?.meta?.senderAccountName || "N/A"}
             />
             <DetailRow
               label="Sender's Account"
               value={
-                transaction.sender_account
-                  ? `******${transaction.sender_account.slice(-4)}`
+                transaction?.meta?.senderAccountNumber
+                  ? `******${transaction?.meta?.senderAccountNumber.slice(-4)}`
                   : "N/A"
               }
             />
@@ -217,7 +226,7 @@ const Page = () => {
             />
             <DetailRow
               label="Session ID"
-              value={transaction.session_id || transaction.id}
+              value={transaction.reference || transaction.transactionId}
             />
             <DetailRow
               label="Status"

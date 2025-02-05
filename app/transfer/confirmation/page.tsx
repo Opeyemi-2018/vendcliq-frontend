@@ -120,9 +120,11 @@ const ConfirmationPage = () => {
       }
     } catch (error: unknown) {
       const err = error as { response?: { data?: { msg?: string } } };
-      // console.log("error", error.name);
-      console.log("error", err.response?.data?.msg);
-      toast.error(err.response?.data?.msg || "Transfer failed");
+      console.log("error", err);
+      const errorMessage =
+        err.response?.data?.msg ||
+        (error instanceof Error ? error.message : "Transfer failed");
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
