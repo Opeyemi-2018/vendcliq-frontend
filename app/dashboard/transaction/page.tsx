@@ -52,6 +52,8 @@ interface Transaction {
     senderAccountNumber?: string;
   };
   provider?: string;
+  reference?: string;
+  transactionId?: string;
 }
 
 const Page = () => {
@@ -224,7 +226,7 @@ const Page = () => {
             />
             <DetailRow
               label="Session ID"
-              value={transaction.session_id || transaction.id}
+              value={transaction.reference || transaction.transactionId}
             />
             <DetailRow
               label="Status"
