@@ -499,16 +499,16 @@ export interface TransactionHistoryResponse {
       date: string;
       createdAt: string;
       updatedAt: string;
-      accountBalance: number | null;
-      fee: number;
+      accountBalance: string;
+      fee: string;
       provider: string;
       action: string;
       meta: {
-        session: string;
-        vatAmount: number;
         settledAmount: number;
-        sourceBankName: string;
-        initiationTranRef: string | null;
+        senderAccountName: string;
+        senderAccountNumber: string;
+        beneficiaryAccountName?: string;
+        beneficiaryAccountNumber?: string;
       };
     }>;
   };
