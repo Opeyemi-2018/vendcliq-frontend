@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import TransferSidebar from "@/components/dashboard/transfer/TransferSidebar";
 import { Button } from "@/components/ui/button";
