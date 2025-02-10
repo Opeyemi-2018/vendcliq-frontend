@@ -194,7 +194,7 @@ const Page = () => {
             />
             <DetailRow
               label="Amount"
-              value={<FormatCurrency amount={transaction.amount} />}
+              value={transaction.amount}
             />
             <DetailRow
               label="Receiver's Name"
@@ -330,7 +330,7 @@ const Page = () => {
                             {index + 1}
                           </TableCell>
                           <TableCell>
-                            {FormatCurrency({ amount: transaction.amount })}
+                           {transaction.amount }
                           </TableCell>
                           <TableCell>{transaction.narration}</TableCell>
                           <TableCell className="w-40">
