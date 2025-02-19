@@ -338,6 +338,12 @@ const OtherBanksTransferForm = ({
       value: bank.bankCode,
     })) || [];
 
+    formattedBankOptions.push({
+      label: "Providus Bank",
+      value: "000023",
+    });
+  
+
   // Find selected bank option
   const selectedBankOption = formattedBankOptions.find(
     (option) => option.value === values.selectedBank
