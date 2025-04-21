@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
 import {
   VERIFY_EMAIL,
   CONFIRM_PHONE_NUMBER,
@@ -76,19 +75,32 @@ const AUTH_COOKIE_MAX_AGE = parseInt(process.env.AUTH_COOKIE_MAX_AGE as string |
 const RATE_LIMIT = parseInt(process.env.RATE_LIMIT as string || '100', 10); // requests per minute
 const RATE_LIMIT_WINDOW = parseInt(process.env.RATE_LIMIT_WINDOW as string || '60000', 10); // 1 minute in ms
 
-// Function to generate security signature
-const generateSignature = (clientId: string, timestamp: string, method: string, path: string): string => {
-  // This signature generation should match the backend implementation
+// Function to generate security signature using Web Crypto API
+const generateSignature = async (clientId: string, timestamp: string, method: string, path: string): Promise<string> => {
   const data = `${clientId}:${timestamp}:${method}:${path}`;
-  return crypto.createHmac('sha256', APP_SECRET_KEY).update(data).digest('hex');
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(APP_SECRET_KEY),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    key,
+    encoder.encode(data)
+  );
+  return Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
 };
 
-
 // Function to add security headers required by origin_security_middleware
-const addSecurityHeaders = (headers: Record<string, string>, method: string, path: string): Record<string, string> => {
+const addSecurityHeaders = async (headers: Record<string, string>, method: string, path: string): Promise<Record<string, string>> => {
   const timestamp = Date.now().toString();
   const clientId = CLIENT_ID;
-  const signature = generateSignature(clientId, timestamp, method, path);
+  const signature = await generateSignature(clientId, timestamp, method, path);
  
   return {
     ...headers,
@@ -100,6 +112,7 @@ const addSecurityHeaders = (headers: Record<string, string>, method: string, pat
     'origin': CLIENT_ORIGIN, 
   };
 };
+
 // Allowed endpoints whitelist
 const ALLOWED_ENDPOINTS = [
   // Auth & Profile
@@ -246,7 +259,7 @@ export async function POST(request: Request) {
     };
 
     // Add security headers required by origin_security_middleware
-    const secureHeaders = addSecurityHeaders(baseHeaders, 'POST', endpoint);
+    const secureHeaders = await addSecurityHeaders(baseHeaders, 'POST', endpoint);
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
@@ -330,7 +343,7 @@ export async function GET(request: Request) {
     };
 
     // Add security headers required by origin_security_middleware
-    const secureHeaders = addSecurityHeaders(baseHeaders, 'GET', endpoint);
+    const secureHeaders = await addSecurityHeaders(baseHeaders, 'GET', endpoint);
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       headers: secureHeaders
