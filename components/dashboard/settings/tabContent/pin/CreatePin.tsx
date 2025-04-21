@@ -20,11 +20,21 @@ export const CreatePin = ({ goNext }: { goNext: () => void }) => {
         return toast.error("Pin must contain only numbers");
       }
 
+      // Additional PIN validation
+      if (/(\d)\1{3}/.test(newpassword)) {
+        return toast.error("PIN cannot contain repeated digits");
+      }
+
+      if (/^(0123|1234|2345|3456|4567|5678|6789|9876|8765|7654|6543|5432|4321|3210)$/.test(newpassword)) {
+        return toast.error("PIN cannot be sequential numbers");
+      }
+
       if (newpassword === confirmpassword) {
-        localStorage.setItem("pin", newpassword);
-        localStorage.setItem("confirmPin", confirmpassword);
-        const response = await handleRequestPinToken();
-        // console.log(response);
+        const response = await handleRequestPinToken({
+          pin: newpassword,
+          confirmPin: confirmpassword
+        });
+        
         if (response.status === "success") {
           toast.success("OTP sent successfully");
           goNext();
@@ -33,7 +43,8 @@ export const CreatePin = ({ goNext }: { goNext: () => void }) => {
         return toast.error("Pin does not match");
       }
     } catch (error) {
-      console.log(error);
+      console.error("Error creating PIN:", error);
+      toast.error("Failed to create PIN. Please try again.");
     }
   };
 

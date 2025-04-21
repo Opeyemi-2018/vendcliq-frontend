@@ -1,30 +1,38 @@
 import axios from "axios";
-const baseURL = process.env.NEXT_PUBLIC_VERA_API_BASE_URL;
 
+// Create axios instance for proxy
 const api = axios.create({
-  baseURL: `${baseURL}`,
+  baseURL: process.env.NODE_ENV === 'production' 
+    ? '/api/client'  // Production path
+    : 'http://localhost:3000/api/client', // Development path
+  withCredentials: true // Important for secure cookie handling
 });
+
+// Track if we're already redirecting to prevent redirect loops
+let isRedirecting = false;
 
 api.interceptors.request.use(
   (config) => {
-    const localToken = localStorage.getItem("authToken");
-    const cookieToken = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("authToken="))
-      ?.split("=")[1];
-
-    const Token = localToken || cookieToken;
-
-    if (Token && Token !== "undefined" && Token !== "null") {
-      config.headers.Authorization = `Bearer ${Token}`;
-      config.headers["Content-Type"] = "application/json";
-      config.headers["x-api-key"] = process.env.NEXT_PUBLIC_PRODUCT_API_KEY;
+    // For GET requests, add endpoint as query parameter
+    if (config.method?.toLowerCase() === 'get') {
+      config.params = {
+        ...config.params,
+        endpoint: config.url
+      };
+      config.url = ''; // Clear the URL as it's now in params
     } else {
-      clearAuthTokens();
+      // For POST/PUT/DELETE requests, include endpoint in body
+      const originalData = config.data || {};
+      config.data = {
+        endpoint: config.url,
+        data: originalData
+      };
+      config.url = ''; // Clear the URL as it's now in body
     }
     return config;
   },
   (error) => {
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
@@ -32,15 +40,21 @@ api.interceptors.request.use(
 // Add an interceptor to handle response errors
 api.interceptors.response.use(
   (response) => {
+    // Reset redirecting flag on successful response
+    isRedirecting = false;
     return response;
   },
   (error) => {
     if (error.response) {
-      const { status, data } = error.response;
-      // console.log("error", error);
-      if (status === 401 && data.errors[0].message === "Unauthorized access") {
-        // Token has expired, redirect to the login page
-        window.location.href = "/login";
+      const { status } = error.response;
+      
+      // Handle authentication errors
+      if (status === 401) {
+        // Prevent redirect loops
+        if (!isRedirecting) {
+          isRedirecting = true;
+          clearAuthTokens();
+        }
       }
     }
     return Promise.reject(error);
@@ -48,14 +62,13 @@ api.interceptors.response.use(
 );
 
 const clearAuthTokens = () => {
-  localStorage.removeItem("authToken");
-  document.cookie =
-    "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  api.defaults.headers.common["Authorization"] = "";
+  // Redirect to logout endpoint which will clear the cookie and redirect to login
+  if (typeof window !== 'undefined') {
+    window.location.href = '/api/auth/logout';
+  }
 };
 
-export const destroyToken = clearAuthTokens;
-
+export { clearAuthTokens };
 export default api;
 
 export const startOtpTimer = (callback: (timeLeft: number) => void) => {

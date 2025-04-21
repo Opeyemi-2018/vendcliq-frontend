@@ -183,7 +183,7 @@ export const handleGetProfile = async (
 };
 
 export const handleGetInventory = async (): Promise<InventoryResponse> => {
-  if (!process.env.NEXT_PUBLIC_PRODUCT_API_KEY) {
+  if (!process.env.PRODUCT_API_KEY) {
     // console.log("API Key is missing");
     throw new Error("API Key is missing");
   }
