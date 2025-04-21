@@ -260,7 +260,7 @@ export async function POST(request: Request) {
 
     // Add security headers required by origin_security_middleware
     const secureHeaders = await addSecurityHeaders(baseHeaders, 'POST', endpoint);
-
+    
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: secureHeaders,
@@ -288,7 +288,7 @@ export async function POST(request: Request) {
     nextResponse.headers.set('X-Content-Type-Options', 'nosniff');
     nextResponse.headers.set('X-Frame-Options', 'DENY');
     nextResponse.headers.set('X-XSS-Protection', '1; mode=block');
-    
+
     return nextResponse;
   } catch (error) {
     console.error('API proxy error:', error);
@@ -315,7 +315,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const endpoint = searchParams.get('endpoint');
-
+    
     if (!endpoint || typeof endpoint !== 'string') {
       return NextResponse.json(
         { error: 'Invalid endpoint' },
