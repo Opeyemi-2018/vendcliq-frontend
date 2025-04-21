@@ -20,7 +20,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
+//import Autoplay from "embla-carousel-autoplay";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -216,11 +216,11 @@ const Login = () => {
             </h1>
             <Carousel
               className="w-full mt-0 relative font-sans"
-              plugins={[
-                Autoplay({
-                  delay: 2000,
-                }),
-              ]}
+              // plugins={[
+              //   Autoplay({
+              //     delay: 2000,
+              //   }),
+              // ]}
             >
               <CarouselContent>
                 {testimonials.map((testimonial, index) => (

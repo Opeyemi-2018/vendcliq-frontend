@@ -32,7 +32,7 @@ import {
   Wallet2,
 } from "iconsax-react";
 import { useDashboardData } from "@/services/home/home";
-import { destroyToken } from "@/lib/utils/api";
+import { clearAuthTokens } from "@/lib/utils/api";
 import Logo from "@/components/Logo";
 import Link from "next/link";
 import { handleGetDashboard } from "@/lib/utils/api/apiHelper";
@@ -201,8 +201,7 @@ export default function InstructorLayout({
                 <DropdownMenuContent className="w-fit mt-2 px-5 mr-5 py-5">
                   <DropdownMenuItem
                     onClick={() => {
-                      destroyToken();
-                      localStorage.removeItem("authToken");
+                      clearAuthTokens();
                       window.location.href = "/";
                     }}
                     className="cursor-pointer flex items-center gap-2"
@@ -298,8 +297,7 @@ export default function InstructorLayout({
                     <DropdownMenuContent className="w-fit mt-2 px-5 mr-5 py-5">
                       <DropdownMenuItem
                         onClick={() => {
-                          destroyToken();
-                          localStorage.removeItem("authToken");
+                          clearAuthTokens();
                           window.location.href = "/";
                         }}
                         className="cursor-pointer flex items-center gap-2"
