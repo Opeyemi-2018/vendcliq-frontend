@@ -31,6 +31,8 @@ import {
   LOAN_STAT_DETAILS,
   OUTSIDE_TRANSFER,
   LOCAL_TRANSFER,
+  GET_ACCOUNT_BY_ID,
+  GET_ACCOUNT_DETAILS_BY_ID,
 } from '@/url/api-url';
 
 // Add dynamic configuration
@@ -153,16 +155,55 @@ const ALLOWED_ENDPOINTS = [
   // Bank Accounts
   GET_ACCOUNT,
   GET_BANK_ACCOUNT,
+  GET_ACCOUNT_BY_ID,
+  GET_ACCOUNT_DETAILS_BY_ID,
   VERIFY_BANK_ACCOUNT,
   LIST_BANKS,
 ];
 
 // Helper function to validate endpoint
 const isValidEndpoint = (endpoint: string): boolean => {
-  return ALLOWED_ENDPOINTS.some(allowed => 
-    endpoint.startsWith(allowed) || 
-    endpoint.match(new RegExp(`^${allowed}\\?.*$`))
-  );
+  // Ensure endpoint starts with a slash for pattern matching
+  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  
+  // Check for static endpoints
+  const staticMatch = ALLOWED_ENDPOINTS.some(allowed => {
+    if (typeof allowed === 'string') {
+      // For static endpoints, check if they match exactly or with query parameters
+      if (allowed.startsWith('/')) {
+        return endpoint === allowed || endpoint.startsWith(allowed + '?');
+      } else {
+        // Handle endpoints without leading slash
+        return endpoint === allowed || 
+               endpoint === `/${allowed}` || 
+               endpoint.startsWith(`${allowed}?`) || 
+               endpoint.startsWith(`/${allowed}?`);
+      }
+    }
+    return false;
+  });
+  
+  if (staticMatch) return true;
+  
+  // Check for dynamic endpoints patterns
+  if (normalizedEndpoint.match(/^\/client\/v1\/bank-accounts\/\d+$/) ||
+      normalizedEndpoint.match(/^\/client\/v1\/bank-accounts\/accounts\/\d+$/)) {
+    return true;
+  }
+  
+  if (normalizedEndpoint.match(/^\/client\/v1\/loans\/\d+$/)) {
+    return true;
+  }
+
+  if (normalizedEndpoint.match(/^\/client\/v1\/loans\/list\/repayment-pattern\?tenure=\d+$/)) {
+    return true;
+  }
+  
+  if (normalizedEndpoint.match(/^\/client\/v1\/bank-accounts\/accounts\/verify\/\d+$/)) {
+    return true;
+  }
+  
+  return false;
 };
 
 // Helper function to get auth token from cookies or header
@@ -323,8 +364,9 @@ export async function GET(request: Request) {
       );
     }
 
+    const isValid = isValidEndpoint(endpoint);
     // Validate endpoint against whitelist
-    if (!isValidEndpoint(endpoint)) {
+    if (!isValid) {
       return NextResponse.json(
         { error: 'Endpoint not allowed' },
         { status: 403 }
@@ -343,25 +385,30 @@ export async function GET(request: Request) {
     };
 
     // Add security headers required by origin_security_middleware
-    const secureHeaders = await addSecurityHeaders(baseHeaders, 'GET', endpoint);
+    const secureHeaders = await addSecurityHeaders(baseHeaders, 'GET', endpoint);    
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        headers: secureHeaders
+      });
+      
+      const data = await response.json();
+      const nextResponse = NextResponse.json(data, { status: response.status });
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: secureHeaders
-    });
+      // Add security headers to response
+      nextResponse.headers.set('X-Content-Type-Options', 'nosniff');
+      nextResponse.headers.set('X-Frame-Options', 'DENY');
+      nextResponse.headers.set('X-XSS-Protection', '1; mode=block');
 
-    const data = await response.json();
-    const nextResponse = NextResponse.json(data, { status: response.status });
-
-    // Add security headers to response
-    nextResponse.headers.set('X-Content-Type-Options', 'nosniff');
-    nextResponse.headers.set('X-Frame-Options', 'DENY');
-    nextResponse.headers.set('X-XSS-Protection', '1; mode=block');
-
-    return nextResponse;
-  } catch (error) {
-    console.error('API proxy error:', error);
+      return nextResponse;
+    } catch (fetchError: unknown) {
+      return NextResponse.json(
+        { error: 'Error fetching from API', details: fetchError instanceof Error ? fetchError.message : String(fetchError) },
+        { status: 500 }
+      );
+    }
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Internal Server Error', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }

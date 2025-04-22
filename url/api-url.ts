@@ -23,7 +23,7 @@ const RESEND_EMAIL_OTP = "/client/v1/auth/resend-otp";
 const CHANGE_PASSWORD = "/client/v1/auth/change-password";
 const CREATE_PIN = "/client/v1/auth/pin";
 const UPDATE_PIN = "/client/v1/auth/pin-update";
-const REQUEST_PIN_TOKEN = "client/v1/auth/request-pin-token";
+const REQUEST_PIN_TOKEN = "/client/v1/auth/request-pin-token";
 const GET_TENURES = "/client/v1/loans/list/tenures";
 const REPAYMENT_PATTERN = (tenure: string) =>
   `/client/v1/loans/list/repayment-pattern?tenure=${tenure}`;
@@ -37,7 +37,7 @@ const TRANSACTION_HISTORY = "/client/v1/transactions";
 const GET_ACCOUNT = "/client/v1/bank-accounts";
 const GET_ACCOUNT_BY_ID = (id: string) => `/client/v1/bank-accounts/${id}`;
 const GET_ACCOUNT_DETAILS_BY_ID = (id: string) =>
-  `client/v1/bank-accounts/accounts/${id}`;
+  `/client/v1/bank-accounts/accounts/${id}`;
 const LOAN_STAT_DETAILS = "/client/v1/loans/dashboard";
 const OUTSIDE_TRANSFER = "/client/v1/transfer/outside";
 const LOCAL_TRANSFER = "/client/v1/transfer/local";
