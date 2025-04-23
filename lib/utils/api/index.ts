@@ -21,13 +21,22 @@ api.interceptors.request.use(
       };
       config.url = ''; // Clear the URL as it's now in params
     } else {
-      // For POST/PUT/DELETE requests, include endpoint in body
-      const originalData = config.data || {};
-      config.data = {
-        endpoint: config.url,
-        data: originalData
-      };
-      config.url = ''; // Clear the URL as it's now in body
+      // For POST/PUT/DELETE requests
+      const contentType = config.headers?.['Content-Type'];
+      const contentTypeStr = typeof contentType === 'string' ? contentType : '';
+      
+      if (contentTypeStr.includes('multipart/form-data')) {
+        // For multipart/form-data, endpoint is already in params from posterWithMultipart
+        // Keep the FormData as is
+      } else {
+        // For JSON requests, include endpoint in body
+        const originalData = config.data || {};
+        config.data = {
+          endpoint: config.url,
+          data: originalData
+        };
+      }
+      config.url = ''; // Clear the URL as it's now in body or params
     }
     return config;
   },

@@ -268,9 +268,23 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate request body
-    const body = await request.json();
-    const { endpoint, data } = body;
+    // Check content type
+    const contentType = request.headers.get('content-type') || '';
+    let endpoint: string;
+    let data: FormData | Record<string, unknown>;
+
+    if (contentType.includes('multipart/form-data')) {
+      // For multipart/form-data, get the endpoint from the URL search params
+      const { searchParams } = new URL(request.url);
+      endpoint = searchParams.get('endpoint') || '';
+      // Pass through the FormData as is
+      data = await request.formData();
+    } else {
+      // For JSON requests, get endpoint and data from body
+      const body = await request.json();
+      endpoint = body.endpoint;
+      data = body.data;
+    }
 
     if (!endpoint || typeof endpoint !== 'string') {
       return NextResponse.json(
@@ -290,8 +304,7 @@ export async function POST(request: Request) {
     const token = getAuthToken(request);
     
     // Create base headers
-    const baseHeaders = {
-      'Content-Type': 'application/json',
+    const baseHeaders: Record<string, string> = {
       'x-api-key': API_KEY as string,
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
@@ -299,13 +312,18 @@ export async function POST(request: Request) {
       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
 
+    // For multipart/form-data, don't set Content-Type header - let the browser set it with boundary
+    if (!contentType.includes('multipart/form-data')) {
+      baseHeaders['Content-Type'] = 'application/json';
+    }
+
     // Add security headers required by origin_security_middleware
     const secureHeaders = await addSecurityHeaders(baseHeaders, 'POST', endpoint);
     
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: secureHeaders,
-      body: JSON.stringify(data)
+      body: contentType.includes('multipart/form-data') ? data as FormData : JSON.stringify(data)
     });
 
     const responseData = await response.json();

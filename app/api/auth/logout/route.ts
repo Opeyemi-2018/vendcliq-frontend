@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const response = NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'));
+  const response = NextResponse.redirect(new URL('/login', process.env.CLIENT_ORIGIN || 'https://app.vendcliq.com'));
   
   // Clear the auth cookie
   response.cookies.set('authToken', '', {
