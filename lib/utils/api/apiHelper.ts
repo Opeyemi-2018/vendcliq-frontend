@@ -151,11 +151,10 @@ export const posterWithMultipart = async <T>(
   // console.log("POST Multipart Request URL:", url);
   // console.log("POST FormData:", formData);
 
-  // Let browser set Content-Type header automatically with boundary
-  const response = await axiosInstance.post<T>(url, formData, {
+  // Use the api instance from index.ts which routes through /api/client
+  const response = await axiosInstance.post<T>('', formData, {
+    params: { endpoint: url }, // Pass endpoint as query param for multipart
     headers: {
-      // Let browser set Content-Type automatically for files like png, jpg etc
-      "Content-Type": "multipart/form-data",
       Accept: "*/*",
       ...headers,
     },
