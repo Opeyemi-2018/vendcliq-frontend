@@ -1,3 +1,27 @@
+/**
+ * API Route Handler for /api/client
+ * 
+ * This route handler acts as a secure proxy between the frontend and the backend API.
+ * It provides several security features and validations:
+ * 
+ * 1. Rate Limiting: Prevents abuse by limiting requests per IP
+ * 2. Authentication: Manages auth tokens and session cookies
+ * 3. Request Validation: Validates endpoints against whitelist
+ * 4. Security Headers: Adds required security headers and signatures
+ * 5. Content Type Handling: Supports both JSON and multipart/form-data
+ * 
+ * Environment Variables Required:
+ * - VERA_API_BASE_URL: Base URL of the backend API
+ * - PRODUCT_API_KEY: API key for backend authentication
+ * - CLIENT_ID: Client identifier for request signing
+ * - CLIENT_VERSION: Client version for request tracking
+ * - CLIENT_ORIGIN: Allowed origin for CORS
+ * - APP_SECRET_KEY: Secret key for request signing
+ * - AUTH_COOKIE_MAX_AGE: (optional) Cookie lifetime in seconds (default: 86400)
+ * - RATE_LIMIT: (optional) Requests per minute per IP (default: 100)
+ * - RATE_LIMIT_WINDOW: (optional) Rate limit window in ms (default: 60000)
+ */
+
 import { NextResponse } from 'next/server';
 import {
   VERIFY_EMAIL,
@@ -35,7 +59,7 @@ import {
   GET_ACCOUNT_DETAILS_BY_ID,
 } from '@/url/api-url';
 
-// Add dynamic configuration
+// Configure route handler for dynamic responses and edge runtime
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
@@ -69,15 +93,31 @@ if (!APP_SECRET_KEY) {
   throw new Error('APP_SECRET_KEY environment variable is not set');
 }
 
-// Authentication constants
+/**
+ * Authentication Constants
+ * - AUTH_SIGNIN_PATH: Endpoint for sign-in requests
+ * - AUTH_COOKIE_MAX_AGE: Cookie lifetime in seconds (24 hours default)
+ */
 const AUTH_SIGNIN_PATH = SIGN_IN;
-const AUTH_COOKIE_MAX_AGE = parseInt(process.env.AUTH_COOKIE_MAX_AGE as string || '86400', 10); // 24 hours in seconds
+const AUTH_COOKIE_MAX_AGE = parseInt(process.env.AUTH_COOKIE_MAX_AGE as string || '86400', 10);
 
-// Rate limiting configuration
-const RATE_LIMIT = parseInt(process.env.RATE_LIMIT as string || '100', 10); // requests per minute
-const RATE_LIMIT_WINDOW = parseInt(process.env.RATE_LIMIT_WINDOW as string || '60000', 10); // 1 minute in ms
+/**
+ * Rate Limiting Configuration
+ * Implements a simple in-memory rate limiting strategy
+ */
+const RATE_LIMIT = parseInt(process.env.RATE_LIMIT as string || '100', 10);
+const RATE_LIMIT_WINDOW = parseInt(process.env.RATE_LIMIT_WINDOW as string || '60000', 10);
 
-// Function to generate security signature using Web Crypto API
+/**
+ * Generates a security signature for request authentication
+ * Uses HMAC-SHA256 for secure request signing
+ * 
+ * @param clientId - Client identifier
+ * @param timestamp - Current timestamp
+ * @param method - HTTP method
+ * @param path - Request path
+ * @returns Promise<string> - Hex-encoded signature
+ */
 const generateSignature = async (clientId: string, timestamp: string, method: string, path: string): Promise<string> => {
   const data = `${clientId}:${timestamp}:${method}:${path}`;
   const encoder = new TextEncoder();
@@ -98,7 +138,19 @@ const generateSignature = async (clientId: string, timestamp: string, method: st
     .join('');
 };
 
-// Function to add security headers required by origin_security_middleware
+/**
+ * Adds required security headers to requests
+ * Headers include:
+ * - Client identification (id, version, device)
+ * - Request timestamp
+ * - Security signature
+ * - Origin validation
+ * 
+ * @param headers - Existing headers
+ * @param method - HTTP method
+ * @param path - Request path
+ * @returns Promise<Record<string, string>> - Headers with security additions
+ */
 const addSecurityHeaders = async (headers: Record<string, string>, method: string, path: string): Promise<Record<string, string>> => {
   const timestamp = Date.now().toString();
   const clientId = CLIENT_ID;
@@ -115,7 +167,11 @@ const addSecurityHeaders = async (headers: Record<string, string>, method: strin
   };
 };
 
-// Allowed endpoints whitelist
+/**
+ * Whitelist of allowed endpoints
+ * Grouped by functionality for better organization
+ * New endpoints must be added here to be accessible
+ */
 const ALLOWED_ENDPOINTS = [
   // Auth & Profile
   SIGN_IN,
@@ -161,7 +217,13 @@ const ALLOWED_ENDPOINTS = [
   LIST_BANKS,
 ];
 
-// Helper function to validate endpoint
+/**
+ * Validates if an endpoint is allowed
+ * Supports both static endpoints and dynamic patterns
+ * 
+ * @param endpoint - Endpoint to validate
+ * @returns boolean - Whether the endpoint is valid
+ */
 const isValidEndpoint = (endpoint: string): boolean => {
   // Ensure endpoint starts with a slash for pattern matching
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
@@ -206,7 +268,13 @@ const isValidEndpoint = (endpoint: string): boolean => {
   return false;
 };
 
-// Helper function to get auth token from cookies or header
+/**
+ * Extracts authentication token from request
+ * Checks both Authorization header and cookies
+ * 
+ * @param request - Incoming request
+ * @returns string | null - Auth token if found
+ */
 const getAuthToken = (request: Request): string | null => {
   // First try to get from Authorization header
   const authHeader = request.headers.get('Authorization');
@@ -254,6 +322,21 @@ const isRateLimited = (clientIp: string): boolean => {
   return false;
 };
 
+/**
+ * POST request handler
+ * Handles both JSON and multipart/form-data requests
+ * Supports file uploads and regular API requests
+ * 
+ * Features:
+ * - Rate limiting
+ * - Endpoint validation
+ * - Authentication
+ * - Security headers
+ * - Error handling
+ * 
+ * @param request - Incoming request
+ * @returns Promise<NextResponse> - API response
+ */
 export async function POST(request: Request) {
   try {
     // Get client IP for rate limiting
@@ -276,12 +359,12 @@ export async function POST(request: Request) {
     if (contentType.includes('multipart/form-data')) {
       // For multipart/form-data, get the endpoint from the URL search params
       const { searchParams } = new URL(request.url);
-      endpoint = searchParams.get('endpoint') || '';
+      endpoint = decodeURIComponent(searchParams.get('endpoint') || '');
       // Pass through the FormData as is
       data = await request.formData();
     } else {
       // For JSON requests, get endpoint and data from body
-      const body = await request.json();
+    const body = await request.json();
       endpoint = body.endpoint;
       data = body.data;
     }
@@ -358,6 +441,20 @@ export async function POST(request: Request) {
   }
 }
 
+/**
+ * GET request handler
+ * Handles API requests that fetch data
+ * 
+ * Features:
+ * - Rate limiting
+ * - Endpoint validation
+ * - Authentication
+ * - Security headers
+ * - Error handling
+ * 
+ * @param request - Incoming request
+ * @returns Promise<NextResponse> - API response
+ */
 export async function GET(request: Request) {
   try {
     // Get client IP for rate limiting
@@ -395,11 +492,11 @@ export async function GET(request: Request) {
     
     // Create base headers
     const baseHeaders = {
-      'x-api-key': API_KEY as string,
+        'x-api-key': API_KEY as string,
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
       'X-XSS-Protection': '1; mode=block',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
     };
 
     // Add security headers required by origin_security_middleware
@@ -408,8 +505,8 @@ export async function GET(request: Request) {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers: secureHeaders
       });
-      
-      const data = await response.json();
+
+    const data = await response.json();
       const nextResponse = NextResponse.json(data, { status: response.status });
 
       // Add security headers to response

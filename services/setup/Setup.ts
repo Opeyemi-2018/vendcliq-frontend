@@ -55,28 +55,18 @@ const appendToFormData = (
 export const handleBusinessSetup = async (
   formData: FormData
 ): Promise<BusinessSetupResponse> => {
-  // console.log("Form Data>>", formData.get("businessProofOfAddress"));
-  return await poster<BusinessSetupResponse, FormData>(
+  return await posterWithMultipart<BusinessSetupResponse>(
     BUSINESS_INFORMATION_SETUP_STEP_ONE,
-    formData,
-    {
-      "Content-Type": "application/json",
-      Accept: "multipart/form-data",
-    }
+    formData
   );
 };
 
 export const handleBusinessSetupStepTwo = async (
   formData: FormData
 ): Promise<BusinessSetupResponse> => {
-  const token = localStorage.getItem("authToken");
-  return await poster<BusinessSetupResponse, FormData>(
+  return await posterWithMultipart<BusinessSetupResponse>(
     BUSINESS_INFORMATION_SETUP_STEP_TWO,
-    formData,
-    {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "multipart/form-data",
-    }
+    formData
   );
 };
 

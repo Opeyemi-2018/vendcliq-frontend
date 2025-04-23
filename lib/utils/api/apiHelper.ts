@@ -112,7 +112,13 @@ interface TransferPayload {
   pin: string;
 }
 
-// Generic GET Request
+/**
+ * Generic GET request handler
+ * @template T - The expected response type
+ * @param {string} url - The endpoint URL to send the request to
+ * @param {Record<string, unknown>} [params] - Optional query parameters
+ * @returns {Promise<T>} Promise resolving to the response data
+ */
 export const fetcher = async <T>(
   url: string,
   params?: Record<string, unknown>
@@ -123,6 +129,16 @@ export const fetcher = async <T>(
   // console.log("Response Data:", response.data);
   return response.data;
 };
+
+/**
+ * Generic POST request handler for JSON data
+ * @template T - The expected response type
+ * @template U - The request payload type
+ * @param {string} url - The endpoint URL to send the request to
+ * @param {U} [data] - The request payload
+ * @param {Record<string, string>} [headers] - Optional additional headers
+ * @returns {Promise<T>} Promise resolving to the response data
+ */
 export const poster = async <T, U>(
   url: string,
   data?: U,
@@ -142,24 +158,44 @@ export const poster = async <T, U>(
 
   return response.data;
 };
-// Generic POST Request with multipart/form-data
+
+/**
+ * Generic POST request handler for multipart/form-data, specifically designed for file uploads
+ * @template T - The expected response type
+ * @param {string} url - The endpoint URL to send the request to
+ * @param {FormData} formData - FormData object containing file(s) and other form fields
+ * @param {Record<string, string>} [headers] - Optional additional headers
+ * @returns {Promise<T>} Promise resolving to the response data
+ * 
+ * @example
+ * ```typescript
+ * // Single file upload
+ * const formData = new FormData();
+ * formData.append('file', fileObject);
+ * const response = await posterWithMultipart('/upload', formData);
+ * 
+ * // Multiple files with additional fields
+ * const formData = new FormData();
+ * formData.append('file1', fileObject1);
+ * formData.append('file2', fileObject2);
+ * formData.append('field', 'value');
+ * const response = await posterWithMultipart('/upload', formData);
+ * ```
+ */
 export const posterWithMultipart = async <T>(
   url: string,
   formData: FormData,
   headers?: Record<string, string>
 ): Promise<T> => {
-  // console.log("POST Multipart Request URL:", url);
-  // console.log("POST FormData:", formData);
-
   // Use the api instance from index.ts which routes through /api/client
   const response = await axiosInstance.post<T>('', formData, {
     params: { endpoint: url }, // Pass endpoint as query param for multipart
     headers: {
+      'Content-Type': 'multipart/form-data',
       Accept: "*/*",
       ...headers,
     },
   });
-  // console.log("Response Data:", response.data);
 
   return response.data;
 };
