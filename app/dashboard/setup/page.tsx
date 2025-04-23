@@ -17,6 +17,7 @@ import axios from "axios";
 import { useGetProfile } from "@/services/profile/Profile";
 import { useDashboardData } from "@/services/home/home";
 import { ClipLoader } from "react-spinners";
+import { handleIdentityUpload, handleBusinessSetup, handleBusinessSetupStepTwo } from "@/services/setup/Setup";
 
 interface Shareholder {
   firstname: string;
@@ -202,7 +203,6 @@ const AccountSetup = () => {
 
   const handleSubmit = async (values: FormValues) => {
     setLoading(true);
-    const formData = new FormData();
 
     try {
       if (currentStep === 0) {
@@ -210,21 +210,9 @@ const AccountSetup = () => {
           setError("Please upload an identity document");
           return;
         }
-        formData.append("file", identityPayload.file);
-
-        const token = localStorage.getItem("authToken");
-        const response = await axios.post(
-          "https://api.vendcliq.com/client/v1/auth/upload-identity",
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-        // console.log(response);
-        if (response.status === 200) {
+        
+        const response = await handleIdentityUpload({ file: identityPayload.file });
+        if (response.status === 'success') {
           setError(null);
           handleNext();
         }
@@ -237,9 +225,7 @@ const AccountSetup = () => {
           !values.bvn ||
           !values.businessProofOfAddress
         ) {
-          setError(
-            "Please fill in all required fields including proof of address"
-          );
+          setError("Please fill in all required fields including proof of address");
           return;
         }
 
@@ -249,27 +235,12 @@ const AccountSetup = () => {
         formData.append("businessPhone", values.businessPhone);
         formData.append("businessAddress", values.businessAddress);
         formData.append("bvn", values.bvn);
-
         if (values.businessProofOfAddress instanceof File) {
-          formData.append(
-            "businessProofOfAddress",
-            values.businessProofOfAddress
-          );
+          formData.append("businessProofOfAddress", values.businessProofOfAddress);
         }
 
-        const token = localStorage.getItem("authToken");
-        const response = await axios.post(
-          "https://api.vendcliq.com/client/v1/auth/business-information",
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-        // console.log(response);
-        if (response.status === 200) {
+        const response = await handleBusinessSetup(formData);
+        if (response.status === 'success') {
           setError(null);
           handleNext();
         }
@@ -281,49 +252,29 @@ const AccountSetup = () => {
           !values.businessCACCertificate ||
           !values.businessMemoOfAssociation
         ) {
-          setError(
-            "Please fill in all required fields and upload all documents"
-          );
+          setError("Please fill in all required fields and upload all documents");
           return;
         }
 
+        const formData = new FormData();
         formData.append("rcNumber", values.rcNumber);
         formData.append("dateOfIncorporation", values.dateOfIncorporation);
         formData.append("shareholders", JSON.stringify(values.shareholders));
-
         if (values.businessCACCertificate instanceof File) {
-          formData.append(
-            "businessCACCertificate",
-            values.businessCACCertificate
-          );
+          formData.append("businessCACCertificate", values.businessCACCertificate);
         }
         if (values.businessMemoOfAssociation instanceof File) {
-          formData.append(
-            "businessMemoOfAssociation",
-            values.businessMemoOfAssociation
-          );
+          formData.append("businessMemoOfAssociation", values.businessMemoOfAssociation);
         }
 
-        const token = localStorage.getItem("authToken");
-        const response = await axios.post(
-          "https://api.vendcliq.com/client/v1/auth/business-information-step2",
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-        if (response.status === 200) {
+        const response = await handleBusinessSetupStepTwo(formData);
+        if (response.status === 'success') {
           router.push("/dashboard/home");
         }
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        setError(
-          error.response?.data?.message || "Failed to upload identity document"
-        );
+        setError(error.response?.data?.message || "Failed to process request");
       } else {
         setError("An unexpected error occurred");
       }
