@@ -47,6 +47,34 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
 
   const { verifyBankAccount } = useVerifyBankAccount();
 
+  const handleVerifyAccount = async () => {
+    if (!formik.values.accountNumber || !formik.values.selectedBank) {
+      setVerificationError("Please enter account number and select bank");
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerificationError("");
+
+    try {
+      const response = (await verifyBankAccount({
+        accountNumber: formik.values.accountNumber,
+        bankCode: formik.values.selectedBank,
+      })) as VerifyResponse;
+      
+      if (response.status === "success") {
+        formik.setFieldValue("accountName", response.data.accountName);
+      } else {
+        setVerificationError(response.msg || "Failed to verify account");
+      }
+    } catch (error) {
+      console.log("error verify", error);
+      setVerificationError("An error occurred while verifying account");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   useEffect(() => {
     const fetchBanks = async () => {
       try {
@@ -93,46 +121,6 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
       onNext();
     },
   });
-
-  useEffect(() => {
-    const handleVerifyAccount = async () => {
-      if (!formik.values.accountNumber || !formik.values.selectedBank) {
-        setVerificationError("Please enter account number and select bank");
-        return;
-      }
-
-      setIsVerifying(true);
-      setVerificationError("");
-
-      try {
-        const response = (await verifyBankAccount({
-          accountNumber: formik.values.accountNumber,
-          bankCode: formik.values.selectedBank,
-        })) as VerifyResponse;
-        // console.log("response verify", response);
-        if (response.status === "success") {
-          formik.setFieldValue("accountName", response.data.accountName);
-        } else {
-          setVerificationError(response.msg || "Failed to verify account");
-        }
-      } catch (error) {
-        console.log("error verify", error);
-        setVerificationError("An error occurred while verifying account");
-      } finally {
-        setIsVerifying(false);
-      }
-    };
-
-    if (formik.values.accountNumber && formik.values.selectedBank) {
-      handleVerifyAccount();
-    }
-  }, [
-    formik.values.accountNumber,
-    formik.values.selectedBank,
-    verifyBankAccount,
-    formik.setFieldValue,
-    formik,
-  ]);
 
   return (
     <div className="w-full bg-white p-6 ">
@@ -198,19 +186,30 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
           <p className="text-red-500 text-sm">{verificationError}</p>
         )}
 
-        <Field
-          label="Vendor name / Account name"
-          required
-          type="text"
-          placeholder="Enter account name"
-          {...formik.getFieldProps("accountName")}
-          className="h-full"
-          error={
-            formik.touched.accountName ? formik.errors.accountName : undefined
-          }
-          disabled={isVerifying}
-          readOnly
-        />
+        <div className="flex flex-col gap-4">
+          <Button
+            type="button"
+            onClick={handleVerifyAccount}
+            disabled={isVerifying || !formik.values.accountNumber || !formik.values.selectedBank}
+            className="w-full sm:w-auto py-2 px-8 bg-gray-500 text-white rounded-sm hover:bg-gray-600 disabled:bg-gray-300"
+          >
+            {isVerifying ? "Verifying..." : "Verify Account"}
+          </Button>
+
+          <Field
+            label="Vendor name / Account name"
+            required
+            type="text"
+            placeholder="Enter account name"
+            {...formik.getFieldProps("accountName")}
+            className="h-full"
+            error={
+              formik.touched.accountName ? formik.errors.accountName : undefined
+            }
+            disabled={isVerifying}
+            readOnly
+          />
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field

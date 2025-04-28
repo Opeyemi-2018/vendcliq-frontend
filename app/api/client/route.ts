@@ -257,7 +257,8 @@ const isValidEndpoint = (endpoint: string): boolean => {
     return true;
   }
 
-  if (normalizedEndpoint.match(/^\/client\/v1\/loans\/list\/repayment-pattern\?tenure=\d+(%20|\+)?(?:weeks?|months?)$/)) {
+  console.log("Checking endpoint:", normalizedEndpoint);
+  if (normalizedEndpoint.match(/^\/client\/v1\/loans\/list\/repayment[-_]pattern.*$/)) {
     return true;
   }
   
