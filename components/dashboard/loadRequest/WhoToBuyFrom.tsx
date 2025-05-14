@@ -80,13 +80,26 @@ const LoanStepTwo: React.FC<LoanStepTwoProps> = ({
       try {
         const response = await handleListBanks();
         if (response?.data?.banks) {
-          setBankOptions(response.data.banks);
+          // Add Providus Bank to the fetched banks
+          const allBanks = [
+            ...response.data.banks,
+            {
+              bankCode: "000023",
+              bankName: "Providus Bank"
+            }
+          ];
+          setBankOptions(allBanks);
         }
       } catch (error) {
         console.error("Error fetching banks:", error);
+        // If API fails, at least show Providus Bank
+        setBankOptions([{
+          bankCode: "000023",
+          bankName: "Providus Bank"
+        }]);
       }
     };
-
+  
     fetchBanks();
   }, []);
 
