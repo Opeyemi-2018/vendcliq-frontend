@@ -1,0 +1,209 @@
+"use client";
+
+import { useState } from "react";
+import { ChevronLeft, MessageSquare } from "lucide-react";
+import { BsWhatsapp } from "react-icons/bs";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { confirmPhoneSchema, type ConfirmPhoneData } from "@/types/auth";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { FormData } from "../page";
+import { toast } from "sonner";
+import { handleConfirmPhoneNumber } from "@/lib/utils/api/apiHelper";
+import ProgressHeader from "./ProgressHeader";
+
+interface Props {
+  onNext: (data: Partial<FormData>) => void;
+
+  data: FormData;
+}
+
+export default function Step3({ onNext, data }: Props) {
+  const [method, setMethod] = useState<"whatsapp" | "sms">(
+    data.isWhatsappNo === "true" ? "whatsapp" : "sms"
+  );
+
+  const form = useForm<ConfirmPhoneData>({
+    resolver: zodResolver(confirmPhoneSchema),
+    defaultValues: {
+      phone: data.phone || "",
+      isWhatsappNo: method === "whatsapp" ? "true" : "false",
+    },
+  });
+
+  const onSubmit = async (values: ConfirmPhoneData) => {
+    const cleanedPhone = values.phone.replace(/\D/g, "");
+    const finalPhone = cleanedPhone.startsWith("0")
+      ? "234" + cleanedPhone.slice(1)
+      : cleanedPhone;
+
+    try {
+      const response = await handleConfirmPhoneNumber({
+        phone: finalPhone,
+        isWhatsappNo: method === "whatsapp" ? "true" : "false",
+      });
+
+      if (response.status === "success") {
+        toast.success("Code sent to your phone!");
+        onNext({
+          phone: values.phone,
+          isWhatsappNo: method === "whatsapp" ? "true" : "false",
+        });
+      }
+    } catch (error: any) {
+      toast.error(error.message); // ← Now shows clean message
+    }
+  };
+
+  return (
+    <div>
+      {/* <div className="flex items-center justify-between mb-5">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-[#2F2F2F] hover:opacity-70"
+        >
+          <ChevronLeft className="w-5 h-5" /> Back
+        </button>
+        <button
+          onClick={() => form.handleSubmit(onSubmit)()}
+          disabled={!form.formState.isValid}
+          className="text-[#2F2F2F] font-medium disabled:text-gray-400"
+        >
+          Next
+        </button>
+      </div> */}
+      <ProgressHeader currentStep={3} />
+
+      <h1 className="text-[22px] font-semibold mb-3 clash-font">
+        Phone Number
+      </h1>
+      <p className="text-[#9E9A9A] mb-8">
+        We’ll use this number to keep your account safe and send important
+        updates.
+      </p>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <FormControl>
+                  <PhoneInput
+                    country={"ng"}
+                    value={field.value}
+                    onChange={field.onChange}
+                    inputStyle={{
+                      width: "100%",
+                      height: "56px",
+                      backgroundColor: "#F3F4F6",
+                      borderRadius: "8px",
+                      border: "none",
+                    }}
+                    containerStyle={{ width: "100%" }}
+                    buttonStyle={{ borderRadius: "8px 0 0 8px" }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div>
+            <div className="mb-4">
+              <p className="text-[#2F2F2F] font-bold ">
+                Choose verification method
+              </p>
+              <p className="text-[#9E9A9A] text-[13px]">
+                Select method that’s easiest for you to get your OTP.
+              </p>
+            </div>{" "}
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => setMethod("whatsapp")}
+                className={`w-full flex items-center justify-between px-5 py-4 rounded-lg border-2 transition-all ${
+                  method === "whatsapp"
+                    ? "border-[#0A6DC0] bg-[#0A6DC012]"
+                    : "border-[#E5E7EB] bg-white"
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <BsWhatsapp className="text-[#25D366] text-2xl" />
+                  <span className="font-medium">WhatsApp</span>
+                </div>
+                {method === "whatsapp" && (
+                  <div className="w-6 h-6 rounded-full bg-[#0A6DC0] flex items-center justify-center">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMethod("sms")}
+                className={`w-full flex items-center justify-between px-5 py-4 rounded-lg border-2 transition-all ${
+                  method === "sms"
+                    ? "border-[#0A6DC0] bg-[#0A6DC012]"
+                    : "border-[#E5E7EB] bg-white"
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <MessageSquare className="text-[#0A6DC0] text-2xl" />
+                  <span className="font-medium">SMS</span>
+                </div>
+                {method === "sms" && (
+                  <div className="w-6 h-6 rounded-full bg-[#0A6DC0] flex items-center justify-center">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={form.formState.isSubmitting}
+            className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] text-white font-bold py-6 rounded-xl"
+          >
+            {form.formState.isSubmitting
+              ? "Sending Code..."
+              : "Send Verification Code"}
+          </Button>
+        </form>
+      </Form>
+    </div>
+  );
+}

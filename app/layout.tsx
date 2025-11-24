@@ -42,7 +42,7 @@ export default function RootLayout({
         />
       </Head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased `}
       >
         <QueryClientProvider client={queryClient}>
           <RequestProvider>{children}</RequestProvider>

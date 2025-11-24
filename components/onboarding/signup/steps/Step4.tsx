@@ -1,94 +1,94 @@
-"use client";
-import { Button } from "@/components/ui/button";
-import Input from "@/components/ui/Field";
-import {
-  handleApiError,
-  handleConfirmPhoneNumber,
-} from "@/lib/utils/api/apiHelper";
+// "use client";
+// import { Button } from "@/components/ui/button";
+// import Input from "@/components/ui/Field";
+// import {
+//   handleApiError,
+//   handleConfirmPhoneNumber,
+// } from "@/lib/utils/api/apiHelper";
 
-import { ConfirmPhoneNumberPayload } from "@/types";
+// import { ConfirmPhoneNumberPayload } from "@/types";
 
-import React, { useState } from "react";
+// import React, { useState } from "react";
 
-import { toast } from "react-toastify";
+// import { toast } from "react-toastify";
 
-type SignupStepFourProps = {
-  nextStep: () => void;
-  title: string;
-  prevStep: () => void;
-};
+// type SignupStepFourProps = {
+//   nextStep: () => void;
+//   title: string;
+//   prevStep: () => void;
+// };
 
-const SignupStepFour: React.FC<SignupStepFourProps> = ({ nextStep, title }) => {
-  const [phone, setPhone] = useState<string>("");
-  const [isWhatsappNo, setIsWhatsappNo] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+// const SignupStepFour: React.FC<SignupStepFourProps> = ({ nextStep, title }) => {
+//   const [phone, setPhone] = useState<string>("");
+//   const [isWhatsappNo, setIsWhatsappNo] = useState<boolean>(true);
+//   const [error, setError] = useState<string | null>(null);
+//   const [loading, setLoading] = useState<boolean>(false);
 
-  const handleSubmit = async () => {
-    if (!phone) {
-      setError("Phone number is required.");
-      return;
-    }
+//   const handleSubmit = async () => {
+//     if (!phone) {
+//       setError("Phone number is required.");
+//       return;
+//     }
 
-    const payload: ConfirmPhoneNumberPayload = {
-      phone,
-      isWhatsappNo,
-    };
+//     const payload: ConfirmPhoneNumberPayload = {
+//       phone,
+//       isWhatsappNo,
+//     };
 
-    try {
-      setLoading(true);
-      localStorage.setItem("phone", phone);
-      const response = await handleConfirmPhoneNumber(payload);
-      console.log("response>>> phone", response);
-      if (response.status === "success") {
-        toast.success(response.msg);
-        nextStep();
-      }
-    } catch (error) {
-      handleApiError(error, setError);
-    } finally {
-      setLoading(false);
-    }
-  };
+//     try {
+//       setLoading(true);
+//       localStorage.setItem("phone", phone);
+//       const response = await handleConfirmPhoneNumber(payload);
+//       console.log("response>>> phone", response);
+//       if (response.status === "success") {
+//         toast.success(response.msg);
+//         nextStep();
+//       }
+//     } catch (error) {
+//       handleApiError(error, setError);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
 
-  return (
-    <div>
-      <h2 className="text-xl font-semibold text-black text-center border-b border-border pb-2">
-        {title}
-      </h2>
-      <div className="font-sans">
-        <div className="mt-10 font-sans">
-          <Input
-            label="Phone Number"
-            placeholder="Enter your phone number"
-            className="flex-1 my-5"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-          <div className="mt-5">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={isWhatsappNo}
-                onChange={(e) => setIsWhatsappNo(e.target.checked)}
-                className="form-checkbox"
-              />
-              Is this your WhatsApp number?
-            </label>
-          </div>
-        </div>
+//   return (
+//     <div>
+//       <h2 className="text-xl font-semibold text-black text-center border-b border-border pb-2">
+//         {title}
+//       </h2>
+//       <div className="font-sans">
+//         <div className="mt-10 font-sans">
+//           <Input
+//             label="Phone Number"
+//             placeholder="Enter your phone number"
+//             className="flex-1 my-5"
+//             value={phone}
+//             onChange={(e) => setPhone(e.target.value)}
+//           />
+//           <div className="mt-5">
+//             <label className="flex items-center gap-2">
+//               <input
+//                 type="checkbox"
+//                 checked={isWhatsappNo}
+//                 onChange={(e) => setIsWhatsappNo(e.target.checked)}
+//                 className="form-checkbox"
+//               />
+//               Is this your WhatsApp number?
+//             </label>
+//           </div>
+//         </div>
 
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+//         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
-        <Button
-          onClick={handleSubmit}
-          className="mt-6 w-full text-white rounded-none"
-        >
-          {loading ? "Verifying..." : "Continue"}
-        </Button>
-      </div>
-    </div>
-  );
-};
+//         <Button
+//           onClick={handleSubmit}
+//           className="mt-6 w-full text-white rounded-none"
+//         >
+//           {loading ? "Verifying..." : "Continue"}
+//         </Button>
+//       </div>
+//     </div>
+//   );
+// };
 
-export default SignupStepFour;
+// export default SignupStepFour;

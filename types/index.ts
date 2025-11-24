@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export interface IButton {
   children: React.ReactNode;
   className?: string;
@@ -145,6 +147,7 @@ export interface SignInResponse {
   msg: string;
   data: {
     token: {
+      [x: string]: any;
       token: string;
       type: string;
     };
@@ -258,6 +261,8 @@ export interface ResendEmailOtpResponse {
 }
 
 export interface ApiResponse {
+  success: any;
+  error: string | undefined;
   status: number | string;
   msg?: string;
   message?: string;

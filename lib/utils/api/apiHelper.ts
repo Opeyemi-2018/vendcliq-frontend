@@ -1,3 +1,4 @@
+// lib/utils/api/apiHelper.ts
 import {
   ConfirmPhoneNumberPayload,
   ConfirmPhoneNumberResponse,
@@ -38,10 +39,13 @@ import {
   OutsideTransferPayload,
   OutsideTransferResponse,
 } from "@/types";
+
 import axiosInstance from ".";
 import {
   CHANGE_PASSWORD,
   CONFIRM_PHONE_NUMBER,
+  CREATE_PASSWORD,
+  CREATE_BUSINESS_DETAILS,
   CREATE_LOAN,
   CREATE_PIN,
   DASHBOARD,
@@ -72,6 +76,8 @@ import {
   VERIFY_PHONE_NUMBER,
   VERIFY_VERA_BANK_ACCOUNT,
 } from "@/url/api-url";
+import type { OtpApiResponse } from "@/types/auth";
+
 import { AxiosError } from "axios";
 
 interface UserProfile {
@@ -105,48 +111,25 @@ interface InventoryResponse {
 interface TransferPayload {
   senderAccountId: number;
   receiverAccountNo: string;
-
   amount: number;
   narration: string;
   saveAsBeneficiary: boolean;
   pin: string;
 }
 
-/**
- * Generic GET request handler
- * @template T - The expected response type
- * @param {string} url - The endpoint URL to send the request to
- * @param {Record<string, unknown>} [params] - Optional query parameters
- * @returns {Promise<T>} Promise resolving to the response data
- */
 export const fetcher = async <T>(
   url: string,
   params?: Record<string, unknown>
 ): Promise<T> => {
-  const response = await axiosInstance.get<T>(url, {
-    params,
-  });
-  // console.log("Response Data:", response.data);
+  const response = await axiosInstance.get<T>(url, { params });
   return response.data;
 };
 
-/**
- * Generic POST request handler for JSON data
- * @template T - The expected response type
- * @template U - The request payload type
- * @param {string} url - The endpoint URL to send the request to
- * @param {U} [data] - The request payload
- * @param {Record<string, string>} [headers] - Optional additional headers
- * @returns {Promise<T>} Promise resolving to the response data
- */
-export const poster = async <T, U>(
+export const poster = async <T, U = unknown>(
   url: string,
   data?: U,
   headers?: Record<string, string>
 ): Promise<T> => {
-  // console.log("POST Request URL:", url);
-  // console.log("POST Data:", data);
-
   const response = await axiosInstance.post<T>(url, data, {
     headers: {
       "Content-Type": "application/json",
@@ -154,95 +137,160 @@ export const poster = async <T, U>(
       ...headers,
     },
   });
-  // console.log("Response Data:", response.data);
-
   return response.data;
 };
 
-/**
- * Generic POST request handler for multipart/form-data, specifically designed for file uploads
- * @template T - The expected response type
- * @param {string} url - The endpoint URL to send the request to
- * @param {FormData} formData - FormData object containing file(s) and other form fields
- * @param {Record<string, string>} [headers] - Optional additional headers
- * @returns {Promise<T>} Promise resolving to the response data
- * 
- * @example
- * ```typescript
- * // Single file upload
- * const formData = new FormData();
- * formData.append('file', fileObject);
- * const response = await posterWithMultipart('/upload', formData);
- * 
- * // Multiple files with additional fields
- * const formData = new FormData();
- * formData.append('file1', fileObject1);
- * formData.append('file2', fileObject2);
- * formData.append('field', 'value');
- * const response = await posterWithMultipart('/upload', formData);
- * ```
- */
 export const posterWithMultipart = async <T>(
   url: string,
   formData: FormData,
   headers?: Record<string, string>
 ): Promise<T> => {
-  // Use the api instance from index.ts which routes through /api/client
-  const response = await axiosInstance.post<T>('', formData, {
-    params: { endpoint: url }, // Pass endpoint as query param for multipart
+  const response = await axiosInstance.post<T>("", formData, {
+    params: { endpoint: url },
     headers: {
-      'Content-Type': 'multipart/form-data',
+      "Content-Type": "multipart/form-data",
       Accept: "*/*",
       ...headers,
     },
   });
-
   return response.data;
 };
 
-export const handleGetDashboard = async (): Promise<UserProfile> => {
-  const response = await fetcher<UserProfile>(GET_PROFILE);
-  // console.log(response);
-  return response;
+export const handleEmailVerification = async (
+  verificationCode: string
+): Promise<OtpApiResponse> => {
+  const res = await poster<OtpApiResponse>(
+    VERIFY_EMAIL,
+    { verificationCode },
+    {
+      "X-Skip-Proxy-Wrap": "true",
+    }
+  );
+  return res; // always returns { status: "failed", msg: "Invalid verification token." } or success
 };
+
+export const handleResendEmailVerificationToken =
+  async (): Promise<OtpApiResponse> => {
+    return await poster<OtpApiResponse>(
+      RESEND_VERIFICATION_TOKEN,
+      { channel: "email" },
+      {
+        "X-Skip-Proxy-Wrap": "true",
+      }
+    );
+  };
+
+export const handleVerifyPhoneNumber = async (
+  verificationCode: string
+): Promise<OtpApiResponse> => {
+  return await poster<OtpApiResponse>(
+    VERIFY_PHONE_NUMBER,
+    { verificationCode },
+    {
+      "X-Skip-Proxy-Wrap": "true",
+    }
+  );
+};
+
+export const handleConfirmPhoneNumber = async (payload: {
+  phone: string;
+  isWhatsappNo: "true" | "false";
+}): Promise<OtpApiResponse> => {
+  return await poster<OtpApiResponse>(CONFIRM_PHONE_NUMBER, payload, {
+    "X-Skip-Proxy-Wrap": "true",
+  });
+};
+
+export const handleResendPhoneVerificationToken = async (
+  phone?: string,
+  channel: "phone" | "whatsapp" = "phone" // ← Add channel parameter with default
+): Promise<OtpApiResponse> => {
+  return await poster<OtpApiResponse>(
+    RESEND_VERIFICATION_TOKEN,
+    {
+      channel: channel, // ← Use the provided channel
+      phone: phone,
+    },
+    {
+      "X-Skip-Proxy-Wrap": "true",
+    }
+  );
+};
+
+export const handleCreatePassword = async (
+  password: string
+): Promise<ApiResponse> => {
+  return await poster<ApiResponse>(
+    CREATE_PASSWORD,
+    {
+      password,
+      confirmPassword: password,
+    },
+    {
+      "x-skip-proxy-wrap": "true",
+    }
+  );
+};
+
+// business detail
+export interface BusinessInfoPayload {
+  accountType: "DISTRIBUTOR" | "WHOLESALER" | "RETAILER";
+  businessName: string;
+  businessAddress: string;
+  companyGoal: "Fast Sales" | "Higher Profit";
+  logo?: File;
+}
+
+export interface BusinessInfoResponse {
+  status: "success" | "failed";
+  msg: string;
+  data?: any;
+}
+
+export const handleCreateBusinessDetails = async (
+  payload: BusinessInfoPayload
+): Promise<BusinessInfoResponse> => {
+  const { logo, ...data } = payload;
+
+  // If there's a logo → multipart
+  if (logo) {
+    const formData = new FormData();
+    formData.append("logo", logo);
+    Object.entries(data).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+
+    return await posterWithMultipart<BusinessInfoResponse>(
+      CREATE_BUSINESS_DETAILS,
+      formData
+    );
+  }
+
+  // No logo → normal JSON
+  return await poster<BusinessInfoResponse>(CREATE_BUSINESS_DETAILS, data);
+};
+
+export const handleGetDashboard = async (): Promise<UserProfile> => {
+  return await fetcher<UserProfile>(GET_PROFILE);
+};
+
 export const handleSignIn = async (
   payload: SignInPayload
 ): Promise<SignInResponse> => {
-  return await poster<SignInResponse, SignInPayload>(SIGN_IN, payload);
+  return await poster<SignInResponse, SignInPayload>(SIGN_IN, payload, {
+    "x-skip-proxy-wrap": "true",
+  });
 };
 
-export const handleGetProfile = async (
-  payload: SignInPayload
-): Promise<SignInResponse> => {
-  return await poster<SignInResponse, SignInPayload>(SIGN_IN, payload);
-};
+// export const handleGetProfile = async (
+//   payload: SignInPayload
+// ): Promise<SignInResponse> => {
+//   return await poster<SignInResponse, SignInPayload>(SIGN_IN, payload);
+// };
 
 export const handleGetInventory = async (): Promise<InventoryResponse> => {
-  if (!process.env.PRODUCT_API_KEY) {
-    // console.log("API Key is missing");
-    throw new Error("API Key is missing");
-  }
+  if (!process.env.PRODUCT_API_KEY) throw new Error("API Key is missing");
   return await fetcher<InventoryResponse>(INVENTORY_LIST);
-};
-
-export const handleEmailVerification = async (
-  payload: EmailVerificationPayload
-): Promise<EmailVerificationResponse> => {
-  // console.log("payload", payload);
-  return await poster<EmailVerificationResponse, EmailVerificationPayload>(
-    VERIFY_EMAIL,
-
-    payload
-  );
-};
-
-export const handleConfirmPhoneNumber = async (
-  payload: ConfirmPhoneNumberResponse
-): Promise<ConfirmPhoneNumberResponse> => {
-  return await poster<ConfirmPhoneNumberResponse, ConfirmPhoneNumberPayload>(
-    CONFIRM_PHONE_NUMBER,
-    payload
-  );
 };
 
 export const handleCreateLoan = async (
@@ -283,15 +331,6 @@ export const handlePostRepaymentPattern = async (
   );
 };
 
-export const handleVerifyPhoneNumber = async (
-  payload: VerifyPhoneNumberPayload
-): Promise<VerifyPhoneNumberResponse> => {
-  return await poster<VerifyPhoneNumberResponse, VerifyPhoneNumberPayload>(
-    VERIFY_PHONE_NUMBER,
-    payload
-  );
-};
-
 export const handleGetTenures = async (): Promise<GetTenuresResponse> => {
   return await fetcher<GetTenuresResponse>(GET_TENURES);
 };
@@ -308,6 +347,7 @@ export const handleResendEmailOtp = async (
 export const handleListBanks = async (): Promise<ListBanksResponse> => {
   return await fetcher<ListBanksResponse>(LIST_BANKS);
 };
+
 export const handleDashboard = async (): Promise<DashboardResponse> => {
   return await fetcher<DashboardResponse>(DASHBOARD);
 };
@@ -320,6 +360,7 @@ export const handleVerifyBankAccount = async (
     payload
   );
 };
+
 export const handleChangePassword = async (
   payload: ChangePasswordPayload
 ): Promise<ApiResponse> => {
@@ -353,22 +394,6 @@ export const handleResetPassword = async (
     payload
   );
 };
-
-export const handleResendEmailVerificationToken =
-  async (): Promise<ResendVerificationResponse> => {
-    return await fetcher<ResendVerificationResponse>(
-      RESEND_VERIFICATION_TOKEN,
-      { channel: "email" }
-    );
-  };
-
-export const handleResendPhoneVerificationToken =
-  async (): Promise<ResendVerificationResponse> => {
-    return await fetcher<ResendVerificationResponse>(
-      RESEND_VERIFICATION_TOKEN,
-      { channel: "phone" }
-    );
-  };
 
 export const handleSendOtpForForgetPassword = async (
   payload: SendOtpForForgetPasswordPayload
@@ -409,19 +434,17 @@ export const handleGetLoanStatDetails =
   async (): Promise<LoanStatDetailsResponse> => {
     return await fetcher<LoanStatDetailsResponse>(LOAN_STAT_DETAILS);
   };
+
 export const handleApiError = (
   error: unknown,
   setError: (msg: string) => void
 ): void => {
   if (error instanceof AxiosError) {
-    // console.log("error>>>", error.response?.data.errors[0].message);
-
-    setError(error.response?.data.errors[0].message || "An error occurred");
+    setError(error.response?.data.errors?.[0]?.message || "An error occurred");
   } else {
     setError("An unexpected error occurred");
   }
 };
-// Other methods (PUT, DELETE, etc.) can be added similarly
 
 export const handleOutsideTransfer = async (
   payload: OutsideTransferPayload

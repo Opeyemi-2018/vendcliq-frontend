@@ -1,10 +1,14 @@
 // API BASE URL
 
-const VERIFY_EMAIL = "/client/v1/auth/verify-email-address";
-const SIGN_UP = "/client/v1/auth/signup";
-const CONFIRM_PHONE_NUMBER = "/client/v1/auth/confirm-phone-number";
-const SIGN_IN = "/client/v1/auth/signin";
-const VERIFY_PHONE_NUMBER = "/client/v1/auth/verify-phone-number";
+const SIGN_UP = "/client/v2/auth/signup";
+const RESEND_VERIFICATION_TOKEN = "/client/v2/auth/resend-verification";
+const VERIFY_EMAIL = "/client/v2/auth/verify-email";
+const CONFIRM_PHONE_NUMBER = "/client/v2/auth/confirm-phone";
+const VERIFY_PHONE_NUMBER = "/client/v2/auth/verify-phone";
+const CREATE_PASSWORD = "/client/v2/auth/create-password";
+const CREATE_BUSINESS_DETAILS = "/client/v2/profile/business-information";
+const SIGN_IN = "/client/v2/auth/signin";
+// const SIGN_IN = "/client/v1/auth/signin";
 const GET_PROFILE = "/client/v1/auth/profile";
 const DASHBOARD = "/client/v1/dashboard";
 
@@ -32,7 +36,6 @@ const INVENTORY_LIST = "/v1/inventory/search";
 const SEND_OTP_FOR_FORGET_PASSWORD = "/client/v1/auth/forgot-password";
 const RESET_PASSWORD = "/client/v1/auth/reset-password";
 const GET_BANK_ACCOUNT = "/client/v1/bank-accounts";
-const RESEND_VERIFICATION_TOKEN = "/client/v1/auth/re-send-verification-token";
 const TRANSACTION_HISTORY = "/client/v1/transactions";
 const GET_ACCOUNT = "/client/v1/bank-accounts";
 const GET_ACCOUNT_BY_ID = (id: string) => `/client/v1/bank-accounts/${id}`;
@@ -49,9 +52,11 @@ const PAY_LOAN = (id: string) =>
 export {
   VERIFY_EMAIL,
   CONFIRM_PHONE_NUMBER,
+  CREATE_PASSWORD,
   SIGN_IN,
   SIGN_UP,
   VERIFY_PHONE_NUMBER,
+  CREATE_BUSINESS_DETAILS,
   GET_PROFILE,
   DASHBOARD,
   BUSINESS_INFORMATION_SETUP_STEP_ONE,
