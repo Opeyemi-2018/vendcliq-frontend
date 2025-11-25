@@ -39,7 +39,7 @@ export default function Step9({ data }: Props) {
           Your Vendcliq Account has been successfully created. Click the button
           below to continue to dashboard
           <Button className="bg-[#0A6DC0] hover:bg-[#085a9e] w-[411px] ">
-            <Link href={"/dashboard/home"} className=" font-bold text-[16px]">
+            <Link href={"/dashboards/home"} className=" font-bold text-[16px]">
               Go to Dashboard
             </Link>
           </Button>

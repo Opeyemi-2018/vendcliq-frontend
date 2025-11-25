@@ -30,6 +30,7 @@ export interface SignUpResponse {
     message: string;
   };
 }
+
 // This is what your OTP endpoints ACTUALLY return
 export interface OtpApiResponse {
   status: "success" | "failed";
@@ -43,6 +44,9 @@ export interface LegacyApiResponse {
   data?: unknown;
 }
 
+// types/auth.ts (or wherever you keep your types)
+
+// types/auth.ts
 export interface SignInResponse {
   status: "success" | "failed";
   msg: string;
@@ -90,7 +94,7 @@ export interface SignInResponse {
       storeIds: any;
       terminals: any[];
     };
-  };
+  } | null;
 }
 
 export interface SignInPayload {

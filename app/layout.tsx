@@ -8,6 +8,7 @@ import { useState } from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { RequestProvider } from "@/components/dashboard/loadRequest/RequestContext";
+import { Toaster } from "sonner";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -46,7 +47,8 @@ export default function RootLayout({
       >
         <QueryClientProvider client={queryClient}>
           <RequestProvider>{children}</RequestProvider>
-          <ToastContainer />
+          {/* <ToastContainer /> */}
+          <Toaster position="top-center" richColors />
         </QueryClientProvider>
       </body>
     </html>

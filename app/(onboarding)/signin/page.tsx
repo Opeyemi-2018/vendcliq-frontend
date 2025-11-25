@@ -19,8 +19,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema, SignInFormData } from "@/types/auth";
 import { toast } from "sonner";
 import { handleSignIn } from "@/lib/utils/api/apiHelper";
-import { setCookie } from "nookies";
-import { AxiosError } from "axios";
 
 const SignIN = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -34,46 +32,26 @@ const SignIN = () => {
       password: "",
     },
   });
+  const showErrorMessage = (msg: string) => {
+    toast.error(msg);
+  };
 
   const onSubmit = async (values: SignInFormData) => {
     try {
       setIsLoading(true);
-
-      const response = await handleSignIn(values); // ← Only call ONCE
-      console.log("SignIn success:", response);
+      const response = await handleSignIn(values);
 
       if (response.status === "success") {
-        const token = response.data.tokens.accessToken.token;
-
-        // Store token in localStorage + cookies
-        await Promise.all([
-          localStorage.setItem("authToken", token),
-          setCookie(null, "authToken", token, {
-            path: "/",
-            maxAge: 30 * 24 * 60 * 60, // 30 days
-          }),
-          setCookie(null, "refreshToken", token, {
-            // assuming same token works as refresh for now
-            path: "/",
-            maxAge: 60 * 24 * 60 * 60, // 60 days
-          }),
-        ]);
-
-        toast.success("Successfully signed in");
-
-        // Force reload to trigger middleware properly
-        window.location.href = "/dashboard/home";
-        // OR use router.push + delay if you prefer
-        // router.push("/dashboard/home");
+        toast.success("Signed in successfully!");
+        router.push("/dashboards/home");
+        return;
       }
+
+      // This will now show the real message
+      toast.error(response.msg);
     } catch (error: any) {
-      console.error("Login error:", error.response?.data || error);
-
-      if (error instanceof AxiosError) {
-        toast.error(error.response?.data?.msg || "Invalid email or password");
-      } else {
-        toast.error("Network error. Please try again.");
-      }
+      // Only real network errors reach here now
+      toast.error("No internet connection");
     } finally {
       setIsLoading(false);
     }

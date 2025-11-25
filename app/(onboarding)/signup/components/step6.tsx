@@ -137,7 +137,7 @@ export default function Step6({ onNext, data }: Props) {
 
       <Button
         onClick={handleProceed}
-        className="w-full bg-[#0A6DC0]  text-white font-bold py-6 px-6 rounded-xl transition-all duration-300 hover:shadow-xl"
+        className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] text-white font-bold py-6 px-6 rounded-xl transition-all duration-300 hover:shadow-xl"
       >
         Proceed
       </Button>

@@ -146,6 +146,7 @@ export interface SignInResponse {
   status: string;
   msg: string;
   data: {
+    tokens: any;
     token: {
       [x: string]: any;
       token: string;

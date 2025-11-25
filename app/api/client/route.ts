@@ -444,18 +444,19 @@ export async function POST(request: Request) {
       status: response.status,
     });
 
-    // If this is a login/authentication endpoint and login was successful
+    // Handle successful sign-in: set authToken cookie
     if (endpoint === AUTH_SIGNIN_PATH && responseData.status === "success") {
-      const token = responseData.data.token.token;
+      const token = responseData.data?.tokens?.accessToken?.token;
 
-      // Set the cookie with strict security options
-      nextResponse.cookies.set("authToken", token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: AUTH_COOKIE_MAX_AGE,
-      });
+      if (token) {
+        nextResponse.cookies.set("authToken", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: 30 * 24 * 60 * 60, // 30 days
+        });
+      }
     }
 
     // Add security headers to response

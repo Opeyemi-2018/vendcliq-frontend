@@ -136,6 +136,7 @@ export const poster = async <T, U = unknown>(
       Accept: "application/json",
       ...headers,
     },
+    validateStatus: () => true,
   });
   return response.data;
 };
@@ -277,16 +278,14 @@ export const handleGetDashboard = async (): Promise<UserProfile> => {
 export const handleSignIn = async (
   payload: SignInPayload
 ): Promise<SignInResponse> => {
-  return await poster<SignInResponse, SignInPayload>(SIGN_IN, payload, {
-    "x-skip-proxy-wrap": "true",
-  });
+  return await poster<SignInResponse>(SIGN_IN, payload);
 };
 
-// export const handleGetProfile = async (
-//   payload: SignInPayload
-// ): Promise<SignInResponse> => {
-//   return await poster<SignInResponse, SignInPayload>(SIGN_IN, payload);
-// };
+export const handleGetProfile = async (
+  payload: SignInPayload
+): Promise<SignInResponse> => {
+  return await poster<SignInResponse, SignInPayload>(SIGN_IN, payload);
+};
 
 export const handleGetInventory = async (): Promise<InventoryResponse> => {
   if (!process.env.PRODUCT_API_KEY) throw new Error("API Key is missing");
