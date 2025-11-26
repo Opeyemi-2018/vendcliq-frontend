@@ -9,51 +9,50 @@ const Page = () => {
   const [isFinishedSetup, setIsFinishedSetup] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // useEffect(() => {
-  //   const checkRegistrationStatus = async () => {
-  //     try {
-  //       const response = await handleGetDashboard();
-  //       console.log("res>", response);
-  //       const profileCompletionStep = response.data.business.status;
-  //       const isComplete =
-  //         profileCompletionStep === "ACTIVATED" &&
-  //         response.data.account.status === "ACTIVE";
+  useEffect(() => {
+    const checkRegistrationStatus = async () => {
+      try {
+        const response = await handleGetDashboard();
+        console.log("res>", response);
+        const profileCompletionStep = response.data.business.status;
+        const isComplete =
+          profileCompletionStep === "ACTIVATED" &&
+          response.data.account.status === "ACTIVE";
 
-  //       setIsFinishedSetup(isComplete);
-  //       console.log("isComplete>>>>>", isComplete);
-  //     } catch (error) {
-  //       console.error("Failed to fetch profile:", error);
-  //       setIsFinishedSetup(false);
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
+        setIsFinishedSetup(isComplete);
+        console.log("isComplete>>>>>", isComplete);
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+        setIsFinishedSetup(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  //   checkRegistrationStatus();
+    checkRegistrationStatus();
 
-  // Cleanup function to prevent state updates on unmounted component
-  //   return () => {
-  //     setIsLoading(true);
-  //     setIsFinishedSetup(null);
-  //   };
-  // }, []);
+    // Cleanup function to prevent state updates on unmounted component
+    return () => {
+      setIsLoading(true);
+      setIsFinishedSetup(null);
+    };
+  }, []);
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="flex justify-center items-center h-screen">
-  //       <ClipLoader color="#000" size={50} />
-  //     </div>
-  //   );
-  // }
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <ClipLoader color="#000" size={50} />
+      </div>
+    );
+  }
 
   return (
     <div>
-      {/* {isFinishedSetup === true ? (
+      {isFinishedSetup === true ? (
         <ActiveAccountDashboard />
       ) : (
         <PendingAccountDashboard />
-      )} */}
-      this is the home
+      )}
     </div>
   );
 };

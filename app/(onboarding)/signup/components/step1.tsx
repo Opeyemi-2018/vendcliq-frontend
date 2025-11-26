@@ -1,4 +1,3 @@
-// components/step1.tsx
 "use client";
 
 import { useState } from "react";
@@ -14,21 +13,24 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { User, Mail, Link2, ChevronLeft } from "lucide-react";
+import { User, Mail, Link2 } from "lucide-react";
 import Link from "next/link";
 import { ClipLoader } from "react-spinners";
 import { toast } from "sonner";
 
-import { step1Schema, type Step1FormData } from "@/types/auth";
-import { FormData } from "../page";
+import {
+  step1Schema,
+  type Step1FormData,
+  type SignupFormData,
+} from "@/types/auth";
+
 import { poster } from "@/lib/utils/api/apiHelper";
 import { SIGN_UP } from "@/url/api-url";
-import { SignUpResponse } from "@/types/auth";
 import ProgressHeader from "./ProgressHeader";
 
 interface Props {
-  onNext: (data: Partial<FormData>) => void;
-  data: FormData;
+  onNext: (data: Partial<SignupFormData>) => void;
+  data: SignupFormData;
 }
 
 export default function Step1({ onNext, data }: Props) {
@@ -66,7 +68,6 @@ export default function Step1({ onNext, data }: Props) {
           return;
         }
 
-        // Save everything needed for next steps
         localStorage.setItem("accessToken", token);
         localStorage.setItem("authToken", token);
         localStorage.setItem("email", values.email.toLowerCase().trim());
@@ -95,18 +96,8 @@ export default function Step1({ onNext, data }: Props) {
 
   return (
     <div>
-      {/* Back Button */}
-
-      {/* <button
-        onClick={() => (window.location.href = "/")}
-        className="flex items-center gap-2 text-[#2F2F2F] hover:text-[#0A6DC0] transition group mb-4"
-      >
-        <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-        Back
-      </button> */}
       <ProgressHeader currentStep={1} />
 
-      {/* Title */}
       <h1 className="clash-font text-[22px] font-semibold mb-2 text-[#2F2F2F]">
         Join the Cliq
       </h1>
@@ -117,7 +108,6 @@ export default function Step1({ onNext, data }: Props) {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-          {/* First & Last Name Row */}
           <FormField
             control={form.control}
             name="firstName"
@@ -162,7 +152,6 @@ export default function Step1({ onNext, data }: Props) {
             )}
           />
 
-          {/* Email */}
           <FormField
             control={form.control}
             name="email"
@@ -186,7 +175,6 @@ export default function Step1({ onNext, data }: Props) {
             )}
           />
 
-          {/* Referral Code */}
           <FormField
             control={form.control}
             name="referralCode"
@@ -209,7 +197,6 @@ export default function Step1({ onNext, data }: Props) {
             )}
           />
 
-          {/* Submit Button */}
           <Button
             type="submit"
             disabled={loading}
@@ -227,7 +214,6 @@ export default function Step1({ onNext, data }: Props) {
         </form>
       </Form>
 
-      {/* Sign In Link */}
       <p className="text-center mt-8 text-sm text-[#9E9A9A]">
         Already have an account?{" "}
         <Link

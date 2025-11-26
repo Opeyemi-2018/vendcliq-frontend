@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft } from "lucide-react";
+// DELETED: Removed unused ChevronLeft import since it's commented out in the JSX
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -14,8 +14,11 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { verifyEmailSchema, type VerifyEmailFormData } from "@/types/auth";
-import { FormData } from "../page";
+import {
+  verifyEmailSchema,
+  type VerifyEmailFormData,
+  type SignupFormData,
+} from "@/types/auth";
 import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
 
@@ -26,21 +29,19 @@ import {
 import ProgressHeader from "./ProgressHeader";
 
 interface Props {
-  onNext: (data: Partial<FormData>) => void;
-
-  data: FormData;
+  onNext: (data: Partial<SignupFormData>) => void;
+  data: SignupFormData;
 }
 
 export default function Step2({ onNext, data }: Props) {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(10); 
+  const [timeLeft, setTimeLeft] = useState(10);
   const [canResend, setCanResend] = useState(false);
 
   const form = useForm<VerifyEmailFormData>({
     resolver: zodResolver(verifyEmailSchema),
     defaultValues: {
-      email: data.email || "",
       verificationCode: "",
     },
   });
@@ -87,14 +88,12 @@ export default function Step2({ onNext, data }: Props) {
         form.setError("verificationCode", { message: errorMsg });
       }
     } catch (error: any) {
-      // Handle Axios error with response data
       if (error.response?.data) {
         const errorData = error.response.data;
         const errorMsg = errorData.msg || "Invalid verification code";
         toast.error(errorMsg);
         form.setError("verificationCode", { message: errorMsg });
       } else {
-        // Handle network errors
         const msg = error.message || "Failed to verify email";
         toast.error(msg);
         form.setError("verificationCode", { message: msg });
@@ -108,15 +107,6 @@ export default function Step2({ onNext, data }: Props) {
 
   return (
     <div className="max-w-lg mx-auto">
-      {/* <div className="flex items-center justify-between mb-8">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-[#2F2F2F] hover:text-[#0A6DC0] transition group"
-        >
-          <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          Back
-        </button>
-      </div> */}
       <ProgressHeader currentStep={2} />
 
       <h1 className="clash-font text-[22px] font-semibold text-[#2F2F2F] mb-3">

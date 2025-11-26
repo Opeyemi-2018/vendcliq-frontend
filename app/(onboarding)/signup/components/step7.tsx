@@ -1,28 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, Upload, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import Image from "next/image";
-import { FormData } from "../page";
+import { type SignupFormData } from "@/types/auth";
 import { toast } from "sonner";
 import ProgressHeader from "./ProgressHeader";
 
 interface Props {
-  onNext: (data: Partial<FormData>) => void;
-  
-  data: FormData;
+  onNext: (data: Partial<SignupFormData>) => void;
+  data: SignupFormData;
 }
 
-export default function Step7({ onNext,  data }: Props) {
+export default function Step7({ onNext, data }: Props) {
   const [businessName, setBusinessName] = useState(data.businessName || "");
   const [businessAddress, setBusinessAddress] = useState(
     data.businessAddress || ""
   );
+
   const [logoFile, setLogoFile] = useState<File | null>(
-    data.uploadedLogo || null
+    (data.uploadedLogo as File) || null
   );
+
   const [logoPreview, setLogoPreview] = useState<string | null>(
     data.uploadedLogoPreview || null
   );
@@ -72,17 +73,7 @@ export default function Step7({ onNext,  data }: Props) {
 
   return (
     <div>
-      {/* <div className="flex items-center justify-between mb-5">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-[#2F2F2F] hover:opacity-70"
-        >
-          <ChevronLeft className="w-5 h-5" /> Back
-        </button>
-        <button onClick={handleContinue} className="text-[#2F2F2F] font-medium">
-          Next
-        </button>
-      </div> */}
+      
       <ProgressHeader currentStep={7} />
 
       <h1 className="text-[22px] font-semibold mb-3">Business Details</h1>
@@ -102,11 +93,12 @@ export default function Step7({ onNext,  data }: Props) {
                 alt="Business logo"
                 width={120}
                 height={120}
-                className="rounded-xl w-full h-[250px]  border-2 border-dashed border-gray-300"
+                className="rounded-xl w-full h-[250px]  border-2 border-dashed border-gray-300 object-cover"
+                unoptimized 
               />
               <button
                 onClick={removeLogo}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 z-10"
               >
                 <X className="w-4 h-4" />
               </button>

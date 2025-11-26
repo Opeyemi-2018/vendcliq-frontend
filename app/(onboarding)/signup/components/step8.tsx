@@ -1,46 +1,43 @@
 "use client";
 
-import { ChevronLeft, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FormData } from "../page";
+
+import { type SignupFormData } from "@/types/auth";
+
 import { toast } from "sonner";
 import { useState } from "react";
 import ProgressHeader from "./ProgressHeader";
 
 interface Props {
-  onNext: (data: Partial<FormData>) => void;
- 
-  data: FormData;
+  onNext: (data: Partial<SignupFormData>) => void;
+
+  data: SignupFormData;
 }
 
 const goals = [
-  { id: "Fast Sales", title: "Fast Sales", icon: "⚡" },
-  { id: "Higher Profit", title: "Higher Profit", icon: "📈" },
+  { id: "Fast Sales" as const, title: "Fast Sales", icon: "⚡" },
+  { id: "Higher Profit" as const, title: "Higher Profit", icon: "📈" },
 ];
 
-export default function Step8({ onNext,  data }: Props) {
-  const [selected, setSelected] = useState<"Fast Sales" | "Higher Profit">(
+export default function Step8({ onNext, data }: Props) {
+
+  const [selected, setSelected] = useState<SignupFormData["companyGoal"]>(
     data.companyGoal || "Fast Sales"
   );
 
   const handleContinue = () => {
-    onNext({ companyGoal: selected });
-    toast.success("Goal selected! One last step...");
+    if (selected) {
+      onNext({ companyGoal: selected });
+      toast.success("Goal selected! One last step...");
+    } else {
+      toast.error("Please select a goal to continue.");
+    }
   };
 
   return (
     <div>
-      {/* <div className="flex items-center justify-between mb-5">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-[#2F2F2F] hover:opacity-70"
-        >
-          <ChevronLeft className="w-5 h-5" /> Back
-        </button>
-        <button onClick={handleContinue} className="text-[#2F2F2F] font-medium">
-          Next
-        </button>
-      </div> */}
+     
       <ProgressHeader currentStep={8} />
 
       <h1 className="text-[22px] font-semibold mb-3">
@@ -54,7 +51,7 @@ export default function Step8({ onNext,  data }: Props) {
         {goals.map((goal) => (
           <button
             key={goal.id}
-            onClick={() => setSelected(goal.id as any)}
+            onClick={() => setSelected(goal.id)}
             className={`w-full text-left p-4 rounded-2xl border-2 transition-all ${
               selected === goal.id
                 ? "border-[#0A6DC0] bg-[#0A6DC012]"

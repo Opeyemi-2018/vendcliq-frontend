@@ -1,16 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { FormData } from "../page";
+import { type SignupFormData } from "@/types/auth";
 import { toast } from "sonner";
 import ProgressHeader from "./ProgressHeader";
 
 interface Props {
-  onNext: (data: Partial<FormData>) => void;
-  
-  data: FormData;
+  onNext: (data: Partial<SignupFormData>) => void;
+  data: SignupFormData;
 }
 
 const accountTypes = [
@@ -38,33 +37,22 @@ const accountTypes = [
 ];
 
 export default function Step6({ onNext, data }: Props) {
-  const [selected, setSelected] = useState<FormData["accountType"]>(
+  const [selected, setSelected] = useState<SignupFormData["accountType"]>(
     data.accountType || "RETAILER"
   );
 
   const handleProceed = () => {
-    onNext({ accountType: selected });
-    toast.success("Account type selected!");
+    if (selected) {
+      onNext({ accountType: selected });
+      toast.success("Account type selected!");
+    } else {
+      toast.error("Please select a business type to proceed.");
+    }
   };
 
   return (
     <div>
-      {/* <div className="flex items-center justify-between mb-5">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-slate-700 hover:text-slate-900 transition mb-7 group"
-        >
-          <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          Back
-        </button>
-
-        <button
-          onClick={handleProceed}
-          className="text-slate-700 hover:text-slate-900 transition font-medium"
-        >
-          Next
-        </button>
-      </div> */}
+      
       <ProgressHeader currentStep={6} />
 
       <div className="mb-10">

@@ -1,9 +1,9 @@
-
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { Toaster } from "sonner";
+// Importing the centralized type definition
+import { SignupFormData } from "@/types/auth"; // Adjust the path as needed (e.g., if you are not using an alias)
 import Step1 from "./components/step1";
 import Step2 from "./components/step2";
 import Step3 from "./components/step3";
@@ -14,32 +14,11 @@ import Step7 from "./components/step7";
 import Step8 from "./components/step8";
 import Step9 from "./components/step9";
 
-export type FormData = {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  referralCode?: string;
-  verificationCode?: string;
-  phone?: string;
-  isWhatsappNo?: "true" | "false";
-  phoneVerificationCode?: string;
-  password?: string;
-  confirmPassword?: string;
-  accountType?: "DISTRIBUTOR" | "WHOLESALER" | "RETAILER";
-  businessName?: string;
-  businessAddress?: string;
-  uploadedLogo?: File | null;
-  uploadedLogoPreview?: string | null;
-  companyGoal?: "Fast Sales" | "Higher Profit";
-};
 
 export default function SignupPage() {
   const [step, setStep] = useState(1);
-  const [data, setData] = useState<FormData>({});
+  const [data, setData] = useState<SignupFormData>({});
 
-  
-
-  // On mount, restore progress from localStorage
   useEffect(() => {
     const savedData = localStorage.getItem("signupFormData");
     const savedStep = localStorage.getItem("signupStep");
@@ -57,13 +36,12 @@ export default function SignupPage() {
     }
   }, []);
 
-  // Save to localStorage every time step or data changes
   useEffect(() => {
     localStorage.setItem("signupFormData", JSON.stringify(data));
     localStorage.setItem("signupStep", step.toString());
   }, [step, data]);
 
-  const next = (newData: Partial<FormData>) => {
+  const next = (newData: Partial<SignupFormData>) => {
     setData((prev) => ({ ...prev, ...newData }));
     setStep((s) => s + 1);
   };

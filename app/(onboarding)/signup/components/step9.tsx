@@ -7,8 +7,11 @@ import animationData from "@/public/animate.json";
 import ProgressHeader from "./ProgressHeader";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+
+type SignupFormData = Record<string, unknown>;
+
 interface Props {
-  data: FormData;
+  data: SignupFormData; 
 }
 
 export default function Step9({ data }: Props) {
@@ -21,7 +24,6 @@ export default function Step9({ data }: Props) {
   }, []);
   return (
     <div className="flex flex-col justify-between h-[80vh] py-5">
-      {/* <ProgressHeader currentStep={9} /> */}
 
       <div className="flex items-center justify-center">
         <Lottie
@@ -38,7 +40,7 @@ export default function Step9({ data }: Props) {
         <div className="text-[#9E9A9A] text-center text-[16px] leading-relaxed mb-8 max-w-md mx-auto">
           Your Vendcliq Account has been successfully created. Click the button
           below to continue to dashboard
-          <Button className="bg-[#0A6DC0] hover:bg-[#085a9e] w-[411px] ">
+          <Button asChild className="bg-[#0A6DC0] hover:bg-[#085a9e] w-[411px] ">
             <Link href={"/dashboards/home"} className=" font-bold text-[16px]">
               Go to Dashboard
             </Link>

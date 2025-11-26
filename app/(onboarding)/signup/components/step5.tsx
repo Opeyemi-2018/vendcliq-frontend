@@ -1,7 +1,9 @@
+// components/step5.tsx
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, Eye, EyeOff, Check, X } from "lucide-react";
+// DELETED: Removed unused ChevronLeft import since it's commented out in the JSX
+import { Eye, EyeOff, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -14,22 +16,25 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+// UPDATED: Importing the required partial schema and the central combined type
 import {
   createPasswordSchema,
   type CreatePasswordFormData,
+  type SignupFormData,
 } from "@/types/auth";
-import { FormData } from "../page";
+// DELETED: Removed 'import { FormData } from "../page";'
 import { toast } from "sonner";
 import { handleCreatePassword } from "@/lib/utils/api/apiHelper";
 import ProgressHeader from "./ProgressHeader";
 
 interface Props {
-  onNext: (data: Partial<FormData>) => void;
-  
-  data: FormData;
+  // UPDATED: Using the centralized SignupFormData type
+  onNext: (data: Partial<SignupFormData>) => void;
+  // UPDATED: Using the centralized SignupFormData type
+  data: SignupFormData;
 }
 
-export default function Step5({ onNext,   }: Props) {
+export default function Step5({ onNext, data }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -37,8 +42,9 @@ export default function Step5({ onNext,   }: Props) {
   const form = useForm<CreatePasswordFormData>({
     resolver: zodResolver(createPasswordSchema),
     defaultValues: {
-      password: "",
-      confirmPassword: "",
+      // Pre-fill existing data if available (though unlikely for a fresh password)
+      password: data.password || "",
+      confirmPassword: data.confirmPassword || "",
     },
   });
 
@@ -57,11 +63,15 @@ export default function Step5({ onNext,   }: Props) {
   const onSubmit = async (values: CreatePasswordFormData) => {
     setLoading(true);
     try {
+      // Assuming handleCreatePassword uses the global token (stored in Step 1)
       const response = await handleCreatePassword(values.password);
 
       if (response.status === "success") {
         toast.success(response.msg || "Password created successfully!");
-        onNext({ password: values.password });
+        onNext({
+          password: values.password,
+          confirmPassword: values.confirmPassword,
+        }); // Passing both fields for completeness
       } else {
         toast.error(response.msg || "Failed to create password");
       }
@@ -73,7 +83,7 @@ export default function Step5({ onNext,   }: Props) {
   };
 
   return (
-    <div >
+    <div>
       <ProgressHeader currentStep={5} />
       {/* <div className="mb-8">
         <button
@@ -190,7 +200,6 @@ export default function Step5({ onNext,   }: Props) {
             )}
           />
 
-          {/* Password Requirements */}
           {password && (
             <div className="bg-gray-50 p-4 rounded-lg space-y-2">
               <p className="text-sm font-medium text-[#2F2F2F]">

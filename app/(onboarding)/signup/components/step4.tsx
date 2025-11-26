@@ -1,8 +1,6 @@
-// components/step4.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -14,8 +12,7 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { verifyPhoneSchema, type VerifyPhoneData } from "@/types/auth";
-import { FormData } from "../page";
+import { verifyPhoneSchema, type VerifyPhoneData, type SignupFormData } from "@/types/auth"; 
 import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
 
@@ -26,8 +23,8 @@ import {
 import ProgressHeader from "./ProgressHeader";
 
 interface Props {
-  onNext: (data: Partial<FormData>) => void;
-  data: FormData;
+  onNext: (data: Partial<SignupFormData>) => void; 
+  data: SignupFormData;
 }
 
 export default function Step4({ onNext, data }: Props) {
@@ -38,7 +35,7 @@ export default function Step4({ onNext, data }: Props) {
 
   const form = useForm<VerifyPhoneData>({
     resolver: zodResolver(verifyPhoneSchema),
-    defaultValues: { verificationCode: "" },
+    defaultValues: { phoneVerificationCode: "" }, 
   });
 
   useEffect(() => {
@@ -50,12 +47,16 @@ export default function Step4({ onNext, data }: Props) {
     return () => clearTimeout(timer);
   }, [timeLeft]);
 
-  // components/step4.tsx - Updated handleResend function
-  // components/step4.tsx - Updated handleResend function
   const handleResend = async () => {
     setResending(true);
+    
+    if (!data.phone) {
+        toast.error("Phone number not found. Please go back to step 3.");
+        setResending(false);
+        return;
+    }
+
     try {
-      // Determine the channel based on what was selected in step 3
       const channel = data.isWhatsappNo === "true" ? "whatsapp" : "phone";
 
       const res = await handleResendPhoneVerificationToken(data.phone, channel);
@@ -64,7 +65,7 @@ export default function Step4({ onNext, data }: Props) {
         toast.success(
           `New code sent via ${channel === "whatsapp" ? "WhatsApp" : "SMS"}!`
         );
-        setTimeLeft(120);
+        setTimeLeft(10); 
         setCanResend(false);
       } else {
         toast.error(res.msg || "Failed to resend code");
@@ -81,29 +82,28 @@ export default function Step4({ onNext, data }: Props) {
   const onSubmit = async (values: VerifyPhoneData) => {
     setLoading(true);
     try {
-      const response = await handleVerifyPhoneNumber(values.verificationCode);
+      const response = await handleVerifyPhoneNumber(values.phoneVerificationCode);
 
       if (response.status === "success") {
         toast.success(response.msg || "Phone verified!");
-        onNext({ phoneVerificationCode: values.verificationCode });
+        onNext({ phoneVerificationCode: values.phoneVerificationCode });
       } else {
         const msg = response.msg || "Invalid code";
         toast.error(msg);
-        form.setError("verificationCode", { message: msg });
+        form.setError("phoneVerificationCode", { message: msg }); 
       }
     } catch (error: any) {
-      // Extract the actual backend error message
       const backendMessage = error.response?.data?.msg;
       const errorMsg = backendMessage || error.message || "Verification failed";
 
       toast.error(errorMsg);
-      form.setError("verificationCode", { message: errorMsg });
+      form.setError("phoneVerificationCode", { message: errorMsg }); 
     } finally {
       setLoading(false);
     }
   };
 
-  const code = form.watch("verificationCode") || "";
+  const code = form.watch("phoneVerificationCode") || "";
 
   return (
     <div className="">
@@ -121,7 +121,7 @@ export default function Step4({ onNext, data }: Props) {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
             control={form.control}
-            name="verificationCode"
+            name="phoneVerificationCode" 
             render={({ field }) => (
               <FormItem>
                 <FormControl>
@@ -133,7 +133,7 @@ export default function Step4({ onNext, data }: Props) {
                         type="text"
                         inputMode="numeric"
                         maxLength={1}
-                        value={field.value?.[index] || ""}
+                        value={field.value?.[index] || ""} 
                         onChange={(e) => {
                           const digit = e.target.value.replace(/\D/g, "");
                           if (!digit && e.target.value !== "") return;

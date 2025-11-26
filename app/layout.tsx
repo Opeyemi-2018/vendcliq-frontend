@@ -5,26 +5,28 @@ import "./globals.css";
 import Head from "next/head";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { RequestProvider } from "@/components/dashboard/loadRequest/RequestContext";
 import { Toaster } from "sonner";
+import { DM_Sans } from "next/font/google";
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-dm-sans",
+});
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
   weight: "100 900",
 });
+
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
   weight: "100 900",
 });
-
-// const metadata: Metadata = {
-//   title: "vendcliq",
-//   description: "",
-// };
 
 export default function RootLayout({
   children,
@@ -32,8 +34,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [queryClient] = useState(() => new QueryClient());
+
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} ${dmSans.variable}`}
+    >
       <Head>
         <link rel="icon" href="/favicon.ico" />
         <link
@@ -42,12 +48,10 @@ export default function RootLayout({
           href="/apple-touch-icon.png"
         />
       </Head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased `}
-      >
+
+      <body className="antialiased bg-white">
         <QueryClientProvider client={queryClient}>
           <RequestProvider>{children}</RequestProvider>
-          {/* <ToastContainer /> */}
           <Toaster position="top-center" richColors />
         </QueryClientProvider>
       </body>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { BsWhatsapp } from "react-icons/bs";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,18 +14,21 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { confirmPhoneSchema, type ConfirmPhoneData } from "@/types/auth";
+import {
+  confirmPhoneSchema,
+  type ConfirmPhoneData,
+  type SignupFormData,
+} from "@/types/auth";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-import { FormData } from "../page";
+// DELETED: Removed 'import { FormData } from "../page";'
 import { toast } from "sonner";
 import { handleConfirmPhoneNumber } from "@/lib/utils/api/apiHelper";
 import ProgressHeader from "./ProgressHeader";
 
 interface Props {
-  onNext: (data: Partial<FormData>) => void;
-
-  data: FormData;
+  onNext: (data: Partial<SignupFormData>) => void;
+  data: SignupFormData;
 }
 
 export default function Step3({ onNext, data }: Props) {
@@ -42,6 +45,8 @@ export default function Step3({ onNext, data }: Props) {
   });
 
   const onSubmit = async (values: ConfirmPhoneData) => {
+    form.setValue("isWhatsappNo", method === "whatsapp" ? "true" : "false");
+
     const cleanedPhone = values.phone.replace(/\D/g, "");
     const finalPhone = cleanedPhone.startsWith("0")
       ? "234" + cleanedPhone.slice(1)
@@ -61,27 +66,12 @@ export default function Step3({ onNext, data }: Props) {
         });
       }
     } catch (error: any) {
-      toast.error(error.message); // ← Now shows clean message
+      toast.error(error.message);
     }
   };
 
   return (
     <div>
-      {/* <div className="flex items-center justify-between mb-5">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-[#2F2F2F] hover:opacity-70"
-        >
-          <ChevronLeft className="w-5 h-5" /> Back
-        </button>
-        <button
-          onClick={() => form.handleSubmit(onSubmit)()}
-          disabled={!form.formState.isValid}
-          className="text-[#2F2F2F] font-medium disabled:text-gray-400"
-        >
-          Next
-        </button>
-      </div> */}
       <ProgressHeader currentStep={3} />
 
       <h1 className="text-[22px] font-semibold mb-3 clash-font">
