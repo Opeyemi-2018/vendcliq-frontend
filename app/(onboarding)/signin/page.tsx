@@ -47,10 +47,8 @@ const SignIN = () => {
         return;
       }
 
-      // This will now show the real message
       toast.error(response.msg);
     } catch (error: any) {
-      // Only real network errors reach here now
       toast.error("No internet connection");
     } finally {
       setIsLoading(false);

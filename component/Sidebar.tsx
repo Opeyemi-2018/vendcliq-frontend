@@ -40,7 +40,7 @@ import { Button } from "@/components/ui/button";
 const items = [
   {
     title: "Home",
-    url: "dashboards/home",
+    url: "/dashboards/home",
     icon: Home,
   },
   {

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { Separator } from "@/components/ui/separator";
+import Table from "./chunks/Table";
 
 const Home = () => {
   return (
@@ -20,8 +21,8 @@ const Home = () => {
         <Copy className="w-5 h-5 text-[#0A6DC0] flex-shrink-0 cursor-pointer" />
       </div>
 
-      <div className="bg-[url('/blue.svg')] bg-no-repeat bg-cover bg-center  overflow-hidden h-[218px] mt-10 flex justify-between rounded-2xl">
-        <div className="max-w-[50rem] space-y-6 p-6">
+      <div className="bg-[url('/blue.svg')] bg-no-repeat bg-cover bg-center  overflow-hidden h-[218px] mt-6 flex justify-between rounded-2xl">
+        <div className="max-w-[50rem] space-y-6 p-6 flexflex-col ">
           <h1 className="text-[16px] lg:text-[25px] xl:text-[31px] md:font-semibold font-clash text-white  md:leading-6 lg:leading-10">
             Need quick cash flow to boost and grow your business? Get up to ₦10M
             today.
@@ -40,7 +41,7 @@ const Home = () => {
         />
       </div>
 
-      <div className="mt-8 flex gap-5 flex-col md:flex-row">
+      <div className="mt-6 flex gap-5 flex-col lg:flex-row">
         <div className=" border-[#E4E4E4] border-2 bg-white px-4 lg:px-7 py-5 rounded-2xl flex flex-col justify-between h-[218px] w-full">
           <div className="flex justify-between items-start">
             <div className="space-y-1 md:space-y-2">
@@ -54,10 +55,18 @@ const Home = () => {
             <Image src={"/wallet.svg"} width={35} height={35} alt="wallet" />
           </div>
           <div className="flex justify-between gap-3">
-            <Button className="bg-[#0A2540] hover:bg-[#0A6DC0] text-[16px]  w-full text-white">
+            <Button className="bg-[#0A2540] hover:bg-[#0A6DC0] text-[16px] flex gap-2 lg:gap-10 px-6 py-2  w-full text-white">
+              <Image src={"/export.svg"} width={20} height={20} alt="wallet" />
               Send Money
             </Button>
-            <Button className="bg-[#0A6DC0] hover:bg-[#0A2540]  text-[16px] w-full text-white">
+            <Button className="bg-[#0A6DC0] hover:bg-[#0A2540]  text-[16px] flex gap-2 lg:gap-10 px-6 py-2 w-full text-white">
+              <Image
+                src={"/export.svg"}
+                width={20}
+                height={20}
+                alt="wallet"
+                className="rotate-180"
+              />{" "}
               Fund Wallet
             </Button>
           </div>
@@ -81,6 +90,10 @@ const Home = () => {
             Take your first loan
           </Link>
         </div>
+      </div>
+
+      <div className="border-2 border-[#E4E4E4] px-4 lg:px-7 py-5  bg-white rounded-2xl mt-6">
+        <Table />
       </div>
     </div>
   );

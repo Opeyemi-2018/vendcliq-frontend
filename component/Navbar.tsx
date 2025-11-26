@@ -26,7 +26,7 @@ const Navbar = () => {
             <Headphones />
             <h1>Support</h1>
           </div>
-            <Separator orientation="vertical" className="h-4"/>
+          <Separator orientation="vertical" className="h-4" />
           <h1>John Doe</h1>
         </div>
         <DropdownMenu>
