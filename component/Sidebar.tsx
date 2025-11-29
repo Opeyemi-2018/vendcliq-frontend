@@ -4,7 +4,6 @@ import {
   BookOpen,
   CreditCard,
   Home,
-  Inbox,
   Calculator,
   ArrowRightLeft,
   Settings,
@@ -15,10 +14,10 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 import Link from "next/link";
@@ -34,53 +33,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 
-// Menu items.
 const items = [
-  {
-    title: "Home",
-    url: "/dashboards/home",
-    icon: Home,
-  },
-  {
-    title: "Loan",
-    url: "/dashboards/about",
-    icon: BriefcaseBusiness,
-  },
-  {
-    title: "Inventory",
-    url: "#",
-    icon: BookOpen,
-  },
-  {
-    title: "Invoicing",
-    url: "#",
-    icon: ScrollText,
-  },
-  {
-    title: "Bills Payment",
-    url: "#",
-    icon: CreditCard,
-  },
-  {
-    title: "Account",
-    url: "#",
-    icon: Calculator,
-  },
-  {
-    title: "Transactions",
-    url: "#",
-    icon: ArrowRightLeft,
-  },
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
-  },
+  { title: "Home", url: "/dashboards/home", icon: Home },
+  { title: "Loan", url: "/dashboards/about", icon: BriefcaseBusiness },
+  { title: "Inventory", url: "#", icon: BookOpen },
+  { title: "Invoicing", url: "#", icon: ScrollText },
+  { title: "Bills Payment", url: "#", icon: CreditCard },
+  { title: "Account", url: "#", icon: Calculator },
+  { title: "Transactions", url: "#", icon: ArrowRightLeft },
+  { title: "Settings", url: "#", icon: Settings },
 ];
 
 export function AppSidebar() {
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
   return (
     <Sidebar collapsible="icon">
       <SidebarContent
@@ -92,18 +60,27 @@ export function AppSidebar() {
         }}
       >
         <SidebarGroup>
-          <div className="px-4 py-4 group-data-[collapsible=icon]:hidden">
-            <Image src={"/vl.svg"} width={150} height={150} alt="logo" />
-            <Separator
-              orientation="horizontal"
-              className="h-[1px] mt-3"
-              style={{ background: "#FFFFFF1A" }}
-            />
-          </div>
+          {!isCollapsed && (
+            <div className="px-4 py-4">
+              <Image src={"/vl.svg"} width={150} height={150} alt="logo" />
+              <Separator
+                orientation="horizontal"
+                className="h-[1px] mt-3"
+                style={{ background: "#FFFFFF1A" }}
+              />
+            </div>
+          )}
 
-          <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:py-4">
-            <Image src="/sidebar-logo.svg" width={32} height={32} alt="logo" />
-          </div>
+          {isCollapsed && (
+            <div className="flex justify-center py-4">
+              <Image
+                src="/sidebar-logo.svg"
+                width={32}
+                height={32}
+                alt="logo"
+              />
+            </div>
+          )}
 
           <SidebarGroupContent>
             <SidebarMenu className="mt-4">
@@ -114,7 +91,7 @@ export function AppSidebar() {
                     tooltip={item.title}
                     className="menuButton text-white hover:bg-white/10 data-[active=true]:bg-white/10"
                   >
-                    <Link href={item.url} className="flex gap-4 ">
+                    <Link href={item.url} className="flex gap-4">
                       <item.icon
                         style={{ width: "30px", height: "30px" }}
                         className="text-white pr-2"
@@ -131,9 +108,31 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Logout at the bottom */}
+        {/* Bottom section */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
+            
+              <SidebarMenu className="mt-4">
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    className="menuButton text-white hover:bg-white/10 data-[active=true]:bg-white/10"
+                  >
+                    <div
+                      style={{
+                        backgroundImage: "url('/mesh.svg')",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        height: "127px",
+                      }}
+                      className="h-[127px] w-[217px]"
+                    >
+                      jjjj
+                    </div>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+           
             <SidebarMenu>
               <SidebarMenuItem>
                 <AlertDialog>
@@ -148,7 +147,7 @@ export function AppSidebar() {
                         strokeWidth={2}
                       />
                       <span className="text-white font-dm-sans text-[16px]">
-                        Logout
+                        Logout Account
                       </span>
                     </SidebarMenuButton>
                   </AlertDialogTrigger>
@@ -163,10 +162,7 @@ export function AppSidebar() {
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex items-center flex-row justify-center">
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        // onClick={() => logout()}
-                        className="alert-danger"
-                      >
+                      <AlertDialogAction className="alert-danger">
                         Continue
                       </AlertDialogAction>
                     </AlertDialogFooter>

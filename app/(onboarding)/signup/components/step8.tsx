@@ -8,6 +8,7 @@ import { type SignupFormData } from "@/types/auth";
 import { toast } from "sonner";
 import { useState } from "react";
 import ProgressHeader from "./ProgressHeader";
+import { useRouter } from "next/navigation";
 
 interface Props {
   onNext: (data: Partial<SignupFormData>) => void;
@@ -24,11 +25,18 @@ export default function Step8({ onNext, data }: Props) {
   const [selected, setSelected] = useState<SignupFormData["companyGoal"]>(
     data.companyGoal || "Fast Sales"
   );
+  const router = useRouter();
 
   const handleContinue = () => {
     if (selected) {
       onNext({ companyGoal: selected });
+
       toast.success("Goal selected!");
+
+      localStorage.removeItem("signupFormData");
+      localStorage.removeItem("signupStep");
+
+      router.push("/congrats");
     } else {
       toast.error("Please select a goal to continue.");
     }

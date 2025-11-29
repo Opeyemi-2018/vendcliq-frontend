@@ -1,5 +1,3 @@
-
-
 import { z } from "zod";
 
 export interface ApiResponse {
@@ -162,7 +160,10 @@ export const businessInformationSchema = z.object({
 });
 
 export const signInSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z
+    .string()
+    .min(1, "email is required")
+    .email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -178,7 +179,7 @@ export const contactSchema = z.object({
 });
 
 const completeSignupSchema = step1Schema
-  .partial() 
+  .partial()
   .merge(verifyEmailSchema.partial())
   .merge(confirmPhoneSchema.partial())
   .merge(verifyPhoneSchema.partial())

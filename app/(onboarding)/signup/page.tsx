@@ -1,9 +1,9 @@
+// app/(onboarding)/signup/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { Toaster } from "sonner";
 import { SignupFormData } from "@/types/auth";
-
 import Step1 from "./components/step1";
 import Step2 from "./components/step2";
 import Step3 from "./components/step3";
@@ -12,27 +12,24 @@ import Step5 from "./components/step5";
 import Step6 from "./components/step6";
 import Step7 from "./components/step7";
 import Step8 from "./components/step8";
-import Step9 from "./components/step9";
+import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<SignupFormData>({});
+  const router = useRouter();
 
-  // restore from localStorage
+  // restore progress
   useEffect(() => {
     const savedData = localStorage.getItem("signupFormData");
     const savedStep = localStorage.getItem("signupStep");
     if (savedData && savedStep) {
-      try {
-        setData(JSON.parse(savedData));
-        setStep(parseInt(savedStep, 10));
-      } catch (e) {
-        console.error("Failed to restore signup progress", e);
-      }
+      setData(JSON.parse(savedData));
+      setStep(parseInt(savedStep, 10));
     }
   }, []);
 
-  // persist on every change
+  // save progress
   useEffect(() => {
     localStorage.setItem("signupFormData", JSON.stringify(data));
     localStorage.setItem("signupStep", step.toString());
@@ -40,7 +37,12 @@ export default function SignupPage() {
 
   const next = (newData: Partial<SignupFormData>) => {
     setData((prev) => ({ ...prev, ...newData }));
-    setStep((s) => s + 1);
+    if (step === 8) {
+      // Final step → go to thanks page
+      router.push("/thanks");
+    } else {
+      setStep((s) => s + 1);
+    }
   };
 
   const steps = {
@@ -52,23 +54,14 @@ export default function SignupPage() {
     6: <Step6 onNext={next} data={data} />,
     7: <Step7 onNext={next} data={data} />,
     8: <Step8 onNext={next} data={data} />,
-    9: <Step9 data={data} />,
   };
 
   return (
-    <>
+    <div className="w-full py-8 px-3 lg:px-10 xl:px-24">
       <Toaster position="top-center" richColors />
-
-      {/* This div is the direct sibling → hero disappears on step 9 */}
-      <div data-full-width={step === 9}>
-        <div className="w-full py-8 px-3 lg:px-10 xl:px-24">
-          <div className="mx-auto lg:max-w-[40rem] w-full">
-            <div className={step === 9 ? "max-w-3xl mx-auto text-center" : ""}>
-              {steps[step as keyof typeof steps]}
-            </div>
-          </div>
-        </div>
+      <div className="mx6-auto lg:max-w-[40rem] w-full">
+        {steps[step as keyof typeof steps]}
       </div>
-    </>
+    </div>
   );
 }
