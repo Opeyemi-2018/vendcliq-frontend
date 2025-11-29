@@ -21,7 +21,6 @@ const goals = [
 ];
 
 export default function Step8({ onNext, data }: Props) {
-
   const [selected, setSelected] = useState<SignupFormData["companyGoal"]>(
     data.companyGoal || "Fast Sales"
   );
@@ -29,7 +28,7 @@ export default function Step8({ onNext, data }: Props) {
   const handleContinue = () => {
     if (selected) {
       onNext({ companyGoal: selected });
-      toast.success("Goal selected! One last step...");
+      toast.success("Goal selected!");
     } else {
       toast.error("Please select a goal to continue.");
     }
@@ -37,7 +36,6 @@ export default function Step8({ onNext, data }: Props) {
 
   return (
     <div>
-     
       <ProgressHeader currentStep={8} />
 
       <h1 className="text-[22px] font-semibold mb-3">

@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 import { handleCreatePassword } from "@/lib/utils/api/apiHelper";
 import ProgressHeader from "./ProgressHeader";
+import { ClipLoader } from "react-spinners";
 
 interface Props {
   // UPDATED: Using the centralized SignupFormData type
@@ -227,9 +228,10 @@ export default function Step5({ onNext, data }: Props) {
           <Button
             type="submit"
             disabled={loading || !form.formState.isValid}
-            className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] text-white font-bold py-6 rounded-xl text-lg"
+            className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] text-white font-bold py-6 rounded-xl "
           >
-            {loading ? "Creating Password..." : "Continue"}
+            {loading ? <>Creating...
+                    <ClipLoader size={24} color="white" /></> : "Continue"}
           </Button>
         </form>
       </Form>

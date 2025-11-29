@@ -99,7 +99,7 @@ export default function Step1({ onNext, data }: Props) {
       <ProgressHeader currentStep={1} />
 
       <h1 className="clash-font text-[22px] font-semibold mb-2 text-[#2F2F2F]">
-        Join the Cliq
+        Create Account
       </h1>
       <p className="text-[#9E9A9A] mb-4 text-[16px] leading-relaxed">
         Join thousands of business owners transforming how they manage and grow
@@ -204,8 +204,9 @@ export default function Step1({ onNext, data }: Props) {
           >
             {loading ? (
               <>
-                <ClipLoader size={24} color="white" />
+               
                 Creating Account...
+                 <ClipLoader size={20} color="white" />
               </>
             ) : (
               "Continue"

@@ -12,7 +12,7 @@ const Home = () => {
       <h1 className="font-bold font-dm-sans text-[#2F2F2F] text-[20px] md:text-[25px]">
         Welcome back, Shotayo
       </h1>
-      <div className="bg-white text-[12px] md:text-[14px] md:font-bold text-[#2F2F2F] py-3 px-2 md:px-6  items-center gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10">
+      <div className="bg-white text-center text-[12px] md:text-[14px] md:font-bold text-[#2F2F2F] py-3 px-2 md:px-6  items-center gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
         <h1 className="flex-shrink-0">904567892</h1>
         <Separator orientation="vertical" className="h-4" />
         <h1 className="flex-shrink-0">Providus Bank</h1>
@@ -85,7 +85,7 @@ const Home = () => {
           </div>
           <Link
             href={"#"}
-            className="font-inter text-[16px] font-medium text-[#0A6DC0] underline"
+            className="font-inter w-fit cursor-pointer text-[16px] font-medium text-[#0A6DC0] border-b-2 border-[#0A6DC0]"
           >
             Take your first loan
           </Link>

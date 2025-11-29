@@ -25,6 +25,7 @@ import "react-phone-input-2/lib/style.css";
 import { toast } from "sonner";
 import { handleConfirmPhoneNumber } from "@/lib/utils/api/apiHelper";
 import ProgressHeader from "./ProgressHeader";
+import { ClipLoader } from "react-spinners";
 
 interface Props {
   onNext: (data: Partial<SignupFormData>) => void;
@@ -59,7 +60,7 @@ export default function Step3({ onNext, data }: Props) {
       });
 
       if (response.status === "success") {
-        toast.success("Code sent to your phone!");
+        toast.success("Code sent to your whatsapp!");
         onNext({
           phone: values.phone,
           isWhatsappNo: method === "whatsapp" ? "true" : "false",
@@ -188,9 +189,14 @@ export default function Step3({ onNext, data }: Props) {
             disabled={form.formState.isSubmitting}
             className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] text-white font-bold py-6 rounded-xl"
           >
-            {form.formState.isSubmitting
-              ? "Sending Code..."
-              : "Send Verification Code"}
+            {form.formState.isSubmitting ? (
+              <>
+                Sending...
+                <ClipLoader size={20} color="white" />
+              </>
+            ) : (
+              "Send Verification Code"
+            )}
           </Button>
         </form>
       </Form>

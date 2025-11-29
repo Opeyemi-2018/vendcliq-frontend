@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Toaster } from "sonner";
-// Importing the centralized type definition
-import { SignupFormData } from "@/types/auth"; // Adjust the path as needed (e.g., if you are not using an alias)
+import { SignupFormData } from "@/types/auth";
+
 import Step1 from "./components/step1";
 import Step2 from "./components/step2";
 import Step3 from "./components/step3";
@@ -14,28 +14,25 @@ import Step7 from "./components/step7";
 import Step8 from "./components/step8";
 import Step9 from "./components/step9";
 
-
 export default function SignupPage() {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<SignupFormData>({});
 
+  // restore from localStorage
   useEffect(() => {
     const savedData = localStorage.getItem("signupFormData");
     const savedStep = localStorage.getItem("signupStep");
-
     if (savedData && savedStep) {
       try {
-        const parsedData = JSON.parse(savedData);
-        const parsedStep = parseInt(savedStep);
-
-        setData(parsedData);
-        setStep(parsedStep);
+        setData(JSON.parse(savedData));
+        setStep(parseInt(savedStep, 10));
       } catch (e) {
-        console.error("Failed to restore signup progress");
+        console.error("Failed to restore signup progress", e);
       }
     }
   }, []);
 
+  // persist on every change
   useEffect(() => {
     localStorage.setItem("signupFormData", JSON.stringify(data));
     localStorage.setItem("signupStep", step.toString());
@@ -59,9 +56,19 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="w-full lg:max-w-[40rem] mx-auto py-8 px-3 lg:px-10 xl:px-24">
+    <>
       <Toaster position="top-center" richColors />
-      {steps[step as keyof typeof steps]}
-    </div>
+
+      {/* This div is the direct sibling → hero disappears on step 9 */}
+      <div data-full-width={step === 9}>
+        <div className="w-full py-8 px-3 lg:px-10 xl:px-24">
+          <div className="mx-auto lg:max-w-[40rem] w-full">
+            <div className={step === 9 ? "max-w-3xl mx-auto text-center" : ""}>
+              {steps[step as keyof typeof steps]}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

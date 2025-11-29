@@ -203,8 +203,9 @@ export default function Step2({ onNext, data }: Props) {
           >
             {loading ? (
               <>
-                <ClipLoader size={24} color="white" />
+            
                 Verifying...
+                    <ClipLoader size={20} color="white" />
               </>
             ) : (
               "Verify Email"

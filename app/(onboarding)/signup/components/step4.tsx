@@ -204,7 +204,7 @@ export default function Step4({ onNext, data }: Props) {
           >
             {loading ? (
               <>
-                <ClipLoader size={24} color="white" />
+                <ClipLoader size={20} color="white" />
                 Verifying...
               </>
             ) : (

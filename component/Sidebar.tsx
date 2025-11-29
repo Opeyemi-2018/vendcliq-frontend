@@ -82,30 +82,45 @@ const items = [
 
 export function AppSidebar() {
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarContent
-        style={{ backgroundColor: "#0A2540" }}
-        className="p-4 flex justify-between"
+        style={{
+          backgroundColor: "#0A2540",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+        }}
       >
         <SidebarGroup>
-          <Image src={"/vl.svg"} width={150} height={150} alt="logo" />
-          <Separator
-            orientation="horizontal"
-            className="h-[1px] mt-3 text-red-700"
-          />
+          <div className="px-4 py-4 group-data-[collapsible=icon]:hidden">
+            <Image src={"/vl.svg"} width={150} height={150} alt="logo" />
+            <Separator
+              orientation="horizontal"
+              className="h-[1px] mt-3"
+              style={{ background: "#FFFFFF1A" }}
+            />
+          </div>
+
+          <div className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:py-4">
+            <Image src="/sidebar-logo.svg" width={32} height={32} alt="logo" />
+          </div>
 
           <SidebarGroupContent>
-            <SidebarMenu className="mt-10">
+            <SidebarMenu className="mt-4">
               {items.map((item) => (
-                <SidebarMenuItem key={item.title} className="">
-                  <SidebarMenuButton asChild className="menuButton py-5 ">
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    tooltip={item.title}
+                    className="menuButton text-white hover:bg-white/10 data-[active=true]:bg-white/10"
+                  >
                     <Link href={item.url} className="flex gap-4 ">
                       <item.icon
-                        style={{ width: "24px", height: "24px" }}
-                        className="text-white"
+                        style={{ width: "30px", height: "30px" }}
+                        className="text-white pr-2"
                         strokeWidth={2}
                       />
-                      <span className="text-white font-dm-sans text-[16px] font-regular">
+                      <span className="text-white font-dm-sans text-[16px]">
                         {item.title}
                       </span>
                     </Link>
@@ -115,28 +130,52 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <AlertDialog>
-          <AlertDialogTrigger className="flex items-center gap-2 px-3 py-2 text-white menuButton font-dm-sans text-[16px] font-regular">
-            <LogOut /> Logout
-          </AlertDialogTrigger>
-          <AlertDialogContent className="">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action will log you out of the system
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="flex items-center flex-row justify-center">
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                // onClick={() => logout()}
-                className=" alert-danger"
-              >
-                Continue
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+
+        {/* Logout at the bottom */}
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <SidebarMenuButton
+                      tooltip="Logout"
+                      className="menuButton text-white hover:bg-white/10 data-[active=true]:bg-white/10"
+                    >
+                      <LogOut
+                        style={{ width: "30px", height: "30px" }}
+                        className="text-white pr-2"
+                        strokeWidth={2}
+                      />
+                      <span className="text-white font-dm-sans text-[16px]">
+                        Logout
+                      </span>
+                    </SidebarMenuButton>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Are you absolutely sure?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action will log you out of the system
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex items-center flex-row justify-center">
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        // onClick={() => logout()}
+                        className="alert-danger"
+                      >
+                        Continue
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );
