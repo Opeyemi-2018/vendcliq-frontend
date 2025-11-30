@@ -115,9 +115,9 @@ export default function KYCPage() {
   };
 
   return (
-    <div className="flex gap-8 h-[calc(100vh-120px)]">
+    <div className="flex gap-4 h-[calc(100vh-120px)]">
       {/* Left Sidebar - Steps */}
-      <div className="bg-white rounded-lg p-8  shadow-sm">
+      <div className="bg-white w-[35%] rounded-lg p-8  shadow-sm">
         <h2 className="text-[16px] text-[#2F2F2F] font-clash font-semibold mb-3">
           Registration Steps
         </h2>
