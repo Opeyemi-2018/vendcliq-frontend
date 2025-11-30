@@ -33,6 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 const items = [
   { title: "Home", url: "/dashboards/home", icon: Home },
@@ -63,11 +64,6 @@ export function AppSidebar() {
           {!isCollapsed && (
             <div className="px-4 py-4">
               <Image src={"/vl.svg"} width={150} height={150} alt="logo" />
-              <Separator
-                orientation="horizontal"
-                className="h-[1px] mt-3"
-                style={{ background: "#FFFFFF1A" }}
-              />
             </div>
           )}
 
@@ -81,6 +77,11 @@ export function AppSidebar() {
               />
             </div>
           )}
+          <Separator
+            orientation="horizontal"
+            className="h-[1px]"
+            style={{ background: "#FFFFFF1A" }}
+          />
 
           <SidebarGroupContent>
             <SidebarMenu className="mt-4">
@@ -110,29 +111,47 @@ export function AppSidebar() {
 
         {/* Bottom section */}
         <SidebarGroup className="mt-auto">
-          <SidebarGroupContent>
-            
-              <SidebarMenu className="mt-4">
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    className="menuButton text-white hover:bg-white/10 data-[active=true]:bg-white/10"
+          <SidebarGroupContent className="space-y-3">
+            <SidebarMenu className="mt-4">
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild className="">
+                  <div
+                    style={{
+                      backgroundImage: "url('/mesh.svg')",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      height: "127px",
+                    }}
+                    className="h-[127px] w-[217px]"
                   >
-                    <div
-                      style={{
-                        backgroundImage: "url('/mesh.svg')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        height: "127px",
-                      }}
-                      className="h-[127px] w-[217px]"
-                    >
-                      jjjj
-                    </div>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-           
+                    {!isCollapsed && (
+                      <div className="space-y-3">
+                        <h1 className="text-white font-clash text-[14px] font-semibold">
+                          Payment Subscriptions
+                        </h1>
+                        <p className="text-[13px] font-dm-sans font-medium text-white leading-none ">
+                          View subscription, manage your plan and upgrade.
+                        </p>
+                        <Button className="bg-white text-[#0A2540] hover:bg-[#0A2540] hover:text-white">
+                          Upgrade Plan
+                        </Button>
+                      </div>
+                    )}
+                    {isCollapsed && (
+                      <div className="flex justify-center py-4">
+                        <Image
+                          src="/sub.svg"
+                          width={32}
+                          height={32}
+                          alt="logo"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+
             <SidebarMenu>
               <SidebarMenuItem>
                 <AlertDialog>

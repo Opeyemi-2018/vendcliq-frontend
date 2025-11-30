@@ -76,7 +76,7 @@ export default function Step7({ onNext, data }: Props) {
       
       <ProgressHeader currentStep={7} />
 
-      <h1 className="text-[22px] font-semibold mb-3">Business Details</h1>
+      <h1 className="text-[22px] font-semibold mb-3 font-clash">Business Details</h1>
       <p className="text-[#9E9A9A] mb-8">
         Tell us about your business so we can set everything up perfectly
       </p>

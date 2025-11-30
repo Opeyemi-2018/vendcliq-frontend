@@ -8,6 +8,7 @@ import Step4 from "./components/step4";
 import Step5 from "./components/step5";
 import Step6 from "./components/step6";
 import Step7 from "./components/step7";
+import { Separator } from "@/components/ui/separator";
 
 interface FormData {
   // Step 1
@@ -117,10 +118,15 @@ export default function KYCPage() {
     <div className="flex gap-8 h-[calc(100vh-120px)]">
       {/* Left Sidebar - Steps */}
       <div className="bg-white rounded-lg p-8  shadow-sm">
-        <h2 className="text-[16px] text-[#2F2F2F] font-semibold mb-8">
+        <h2 className="text-[16px] text-[#2F2F2F] font-clash font-semibold mb-3">
           Registration Steps
         </h2>
-        <div className="space-y-6">
+        <Separator
+          orientation="horizontal"
+          className="h-[1px]"
+          style={{ background: "#E0E0E0" }}
+        />
+        <div className="space-y-6 mt-5">
           {steps.map((step) => (
             <div
               key={step.id}
@@ -145,9 +151,16 @@ export default function KYCPage() {
       </div>
 
       {/* Right Content Area */}
-      <div className="flex-1 bg-white  rounded-lg  p-10 shadow-sm">
-        <h2 className="text-2xl font-semibold mb-2">Complete account setup</h2>
-        <p className="text-gray-500 mb-8">Kindly enter your business details</p>
+      <div className="flex-1 bg-white  rounded-lg  p-8 shadow-sm">
+        <h2 className="text-[16px] text-[#2F2F2F] font-clash font-semibold mb-3">
+          Complete account setup
+        </h2>
+        <Separator
+          orientation="horizontal"
+          className="h-[1px]"
+          style={{ background: "#E0E0E0" }}
+        />
+        <p className="text-gray-500 my-5">Kindly enter your business details</p>
 
         {renderStep()}
 

@@ -46,7 +46,7 @@ export default function Step8({ onNext, data }: Props) {
     <div>
       <ProgressHeader currentStep={8} />
 
-      <h1 className="text-[22px] font-semibold mb-3">
+      <h1 className="text-[22px] font-semibold mb-3 font-clash">
         What’s your main business goal?
       </h1>
       <p className="text-[#9E9A9A] mb-8">
