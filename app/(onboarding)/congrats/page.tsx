@@ -38,7 +38,7 @@ export default function ThanksPage() {
             size="lg"
             className="bg-[#0A6DC0] hover:bg-[#085a9e] text-white w-full font-semibold px-16 py-6 rounded-xl shadow-lg transition-all"
           >
-            <Link href="/dashboards/home">Go to Dashboard</Link>
+            <Link href="/dashboards/account/overview">Go to Dashboard</Link>
           </Button>
         </div>
       </div>

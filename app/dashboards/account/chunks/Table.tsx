@@ -97,9 +97,9 @@ const Table = () => {
         <div className="flex gap-4 lg:gap-10">
           <button
             onClick={() => setActiveTab(tabs[0])}
-            className={`text-[13px] lg:text-[16px] ${
+            className={`text-[13px] lg:text-[16px] font-dm-sans ${
               activeTab === "Payment Transaction"
-                ? "text-[#0A6DC0] font-bold font-dm-sans border-b-2 border-[#0A6DC0]"
+                ? "text-[#0A6DC0] font-bold  border-b-2 border-[#0A6DC0]"
                 : "text-[#2F2F2F] font-medium"
             }`}
           >

@@ -11,15 +11,15 @@
   border-width: 1px; /* Adjust as needed */
   border-color: gray; /* Replace with desired color */
   border-radius: 0.5rem; /* Optional, for rounded edges */
-  /* Adjust the dash length and gap */
   border-image: linear-gradient(to right, gray 33%, rgba(255, 255, 255, 0) 33%)
     5;
 }
 
-
+.menuButton[data-active="true"] {
+  background-color: #ffffff1a !important;
+}
 
 .menuButton {
-  margin-bottom: 0.75rem !important;
   transition: background-color 200ms !important;
 }
 .menuButton:hover {

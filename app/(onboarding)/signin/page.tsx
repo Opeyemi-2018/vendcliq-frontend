@@ -43,7 +43,7 @@ const SignIN = () => {
 
       if (response.status === "success") {
         toast.success("Signed in successfully!");
-        router.push("/dashboards/home");
+        router.push("/dashboards/account/overview");
         return;
       }
 

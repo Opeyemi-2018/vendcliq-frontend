@@ -1,6 +1,6 @@
 "use client";
-import { ActiveAccountDashboard } from "@/components/dashboard/home/active/ActiveAccountDashboard";
-import { PendingAccountDashboard } from "@/components/dashboard/home/pending";
+import { ActiveAccountDashboard } from "@/components/dashboard/account/active/ActiveAccountDashboard";
+import { PendingAccountDashboard } from "@/components/dashboard/account/pending";
 import { handleGetDashboard } from "@/lib/utils/api/apiHelper";
 import { ClipLoader } from "react-spinners";
 import React, { useState, useEffect } from "react";

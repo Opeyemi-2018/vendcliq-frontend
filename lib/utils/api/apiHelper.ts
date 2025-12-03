@@ -167,7 +167,7 @@ export const handleEmailVerification = async (
       "X-Skip-Proxy-Wrap": "true",
     }
   );
-  return res; // always returns { status: "failed", msg: "Invalid verification token." } or success
+  return res; 
 };
 
 export const handleResendEmailVerificationToken =
@@ -247,6 +247,7 @@ export interface BusinessInfoResponse {
   msg: string;
   data?: any;
 }
+
 
 export const handleCreateBusinessDetails = async (
   payload: BusinessInfoPayload

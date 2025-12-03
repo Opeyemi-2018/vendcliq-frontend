@@ -17,6 +17,7 @@ import { User, Mail, Link2 } from "lucide-react";
 import Link from "next/link";
 import { ClipLoader } from "react-spinners";
 import { toast } from "sonner";
+import { useUser } from "@/context/userContext";
 
 import {
   step1Schema,
@@ -35,6 +36,7 @@ interface Props {
 
 export default function Step1({ onNext, data }: Props) {
   const [loading, setLoading] = useState(false);
+  const { setUser } = useUser();
 
   const form = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
@@ -61,11 +63,14 @@ export default function Step1({ onNext, data }: Props) {
 
       if (response.status === "success") {
         const token = response.data?.tokens?.accessToken?.token;
+        const userData = response.data?.user;
 
         if (!token) {
           toast.error("Authentication failed: No token received");
-          console.error("Missing token in response:", response);
           return;
+        }
+        if (userData) {
+          setUser(userData);
         }
 
         localStorage.setItem("accessToken", token);
@@ -204,9 +209,8 @@ export default function Step1({ onNext, data }: Props) {
           >
             {loading ? (
               <>
-               
                 Creating Account...
-                 <ClipLoader size={20} color="white" />
+                <ClipLoader size={20} color="white" />
               </>
             ) : (
               "Continue"

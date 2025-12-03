@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 
 const Navbar = () => {
   return (
-    <nav className="p-4 flex items-center justify-between sticky top-0 border-b-2 border-[#0000001A] z-10 bg-white round ">
+    <nav className="p-4 flex items-center justify-between sticky top-0 border-b-2 border-[#0000001A] z-10 bg-white ">
       <SidebarTrigger style={{ background: "#0A2540", color: "white" }} />
       <div style={{ gap: "30px" }} className="flex items-center">
         <div

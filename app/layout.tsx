@@ -9,6 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { RequestProvider } from "@/components/dashboard/loadRequest/RequestContext";
 import { Toaster } from "sonner";
 import { DM_Sans } from "next/font/google";
+import { UserProvider } from "@/context/userContext";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -51,7 +52,9 @@ export default function RootLayout({
 
       <body className="antialiased bg-white">
         <QueryClientProvider client={queryClient}>
-          <RequestProvider>{children}</RequestProvider>
+          <UserProvider>
+            <RequestProvider>{children}</RequestProvider>
+          </UserProvider>
           <Toaster position="top-center" richColors />
         </QueryClientProvider>
       </body>

@@ -1,24 +1,50 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import { CircleCheck, Copy, MoveRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Separator } from "@/components/ui/separator";
-import Table from "./chunks/Table";
+import Table from "../chunks/Table";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import { useUser } from "@/context/userContext";
 
 const Home = () => {
+  const { user, isUserPending, getUserFullName } = useUser();
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+  useEffect(() => {
+    // Check if user status is PENDING and show modal
+    if (isUserPending) {
+      setShowWelcomeModal(true);
+    }
+  }, [isUserPending]);
+
+  const handleCloseModal = () => {
+    setShowWelcomeModal(false);
+  };
+
+  const handleCreateStore = () => {
+    // Navigate to create store page
+    window.location.href = "/dashboards/inventory/my-store";
+    setShowWelcomeModal(false);
+  };
+
+  const handleCreateBusinessAccount = () => {
+    // Navigate to business account creation or trigger account verification
+    window.location.href = "/dashboards/account/overview";
+    setShowWelcomeModal(false);
+  };
   return (
     <div className="">
       <h1 className="font-bold font-dm-sans text-[#2F2F2F] text-[20px] md:text-[25px]">
-        Welcome back, Shotayo
+        Welcome back, {user?.firstname}
       </h1>
       <div className="bg-white text-center text-[12px] md:text-[14px] md:font-bold text-[#2F2F2F] py-3 px-2 md:px-6  items-center gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
         <h1 className="flex-shrink-0">904567892</h1>
@@ -35,7 +61,7 @@ const Home = () => {
             Need quick cash flow to boost and grow your business? Get up to ₦10M
             today.
           </h1>
-          <Button className="w-[188px] bg-white font-medium hover:text-white hover:bg-[#0A2540] text-[16px] font-dm-sans text-[#2F2F2F]">
+          <Button className="w-[188px] flex items-center bg-white font-medium hover:text-white hover:bg-[#0A2540] text-[16px] font-dm-sans text-[#2F2F2F]">
             Request Loan <MoveRight />
           </Button>
         </div>
@@ -61,7 +87,7 @@ const Home = () => {
             </div>
             <Image src={"/wallet.svg"} width={35} height={35} alt="wallet" />
           </div>
-          <div className="flex justify-between gap-3">
+          <div className="flex justify-between gap-3 font-dm-sans">
             <Button className="bg-[#0A2540] hover:bg-[#304c6a] text-[16px] flex gap-2 lg:gap-10 px-6 py-2  w-full text-white">
               <Image src={"/export.svg"} width={20} height={20} alt="wallet" />
               Send Money
@@ -92,7 +118,7 @@ const Home = () => {
           </div>
           <Link
             href={"#"}
-            className="font-inter w-fit cursor-pointer text-[16px] font-medium text-[#0A6DC0] border-b-2 border-[#0A6DC0]"
+            className="font-inter font-dm-sans w-fit cursor-pointer text-[16px] font-medium text-[#0A6DC0] hover:text-[#09599a] border-b-2 border-[#0A6DC0]"
           >
             Take your first loan
           </Link>
@@ -103,8 +129,8 @@ const Home = () => {
         <Table />
       </div>
 
-      <Dialog>
-        <DialogTrigger>Open</DialogTrigger>
+      <Dialog open={showWelcomeModal} onOpenChange={setShowWelcomeModal}>
+        {/* <DialogTrigger>Open</DialogTrigger> */}
         <DialogContent className="border-none flex items-center  gap-4 p-0 w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[600px] h-[360px] md:h-[418px] overflow-hidden">
           <Image
             src={"/modal-woman.svg"}
@@ -162,11 +188,11 @@ const Home = () => {
                 </p>
               </div>
             </div>
-            <div className="flex flex-col gap-3">
-              <Button className="bg-[#0A6DC0] hover:bg-[#09599a]">
+            <div className="flex flex-col gap-3 ">
+              <Button className="bg-[#0A6DC0] hover:bg-[#09599a] font-dm-sans">
                 Create a Store
               </Button>
-              <Button className="bg-[#0A2540] hover:bg-[#304c6a]">
+              <Button className="bg-[#0A2540] hover:bg-[#304c6a] font-dm-sans">
                 Create Business Account
               </Button>
             </div>
