@@ -33,8 +33,8 @@ const REPAYMENT_PATTERN = (tenure: string) =>
   `/client/v1/loans/list/repayment-pattern?tenure=${tenure}`;
 const POST_REPAYMENT_PATTERN = "/client/v1/loans/repayment/pattern";
 const INVENTORY_LIST = "/v1/inventory/search";
-const SEND_OTP_FOR_FORGET_PASSWORD = "/client/v1/auth/forgot-password";
-const RESET_PASSWORD = "/client/v1/auth/reset-password";
+const SEND_OTP_FOR_FORGET_PASSWORD = "/client/v2/auth/forgot-password";
+const RESET_PASSWORD = "/client/v2/auth/reset-password";
 const GET_BANK_ACCOUNT = "/client/v1/bank-accounts";
 const TRANSACTION_HISTORY = "/client/v1/transactions";
 const GET_ACCOUNT = "/client/v1/bank-accounts";

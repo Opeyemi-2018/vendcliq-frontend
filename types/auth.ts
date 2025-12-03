@@ -160,10 +160,7 @@ export const businessInformationSchema = z.object({
 });
 
 export const signInSchema = z.object({
-  email: z
-    .string()
-    .min(1, "email is required")
-    .email("Invalid email address"),
+  email: z.string().min(1, "email is required").email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -186,8 +183,53 @@ const completeSignupSchema = step1Schema
   .merge(createPasswordSchema.partial())
   .merge(businessInformationSchema.partial());
 
-export type SignupFormData = z.infer<typeof completeSignupSchema>;
+// Combined type for the entire flow
+export interface ForgotPasswordFormData {
+  email?: string;
+  otp?: string;
+  password?: string;
+  confirmPassword?: string;
+}
+export interface ResetPasswordResponse {
+  status: string;
+  msg: string;
+}
 
+// Step 1: Request OTP Schema
+export const forgotPasswordStep1Schema = z.object({
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
+});
+
+// Step 2: Reset Password Schema
+export const forgotPasswordStep2Schema = z
+  .object({
+    otp: z
+      .string()
+      .min(6, "OTP must be 6 digits")
+      .max(6, "OTP must be 6 digits")
+      .regex(/^\d+$/, "OTP must contain only numbers"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/[a-zA-Z]/, "Password must contain letters")
+      .regex(/\d/, "Password must contain numbers")
+      .regex(
+        /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
+        "Password must contain special characters"
+      ),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+// Type exports
+
+export type SignupFormData = z.infer<typeof completeSignupSchema>;
 export type Step1FormData = z.infer<typeof step1Schema>;
 export type VerifyEmailFormData = z.infer<typeof verifyEmailSchema>;
 export type ConfirmPhoneData = z.infer<typeof confirmPhoneSchema>;
@@ -198,3 +240,5 @@ export type BusinessInformationFormData = z.infer<
 >;
 export type SignInFormData = z.infer<typeof signInSchema>;
 export type ContactFormData = z.infer<typeof contactSchema>;
+export type ForgotPasswordStep1Data = z.infer<typeof forgotPasswordStep1Schema>;
+export type ForgotPasswordStep2Data = z.infer<typeof forgotPasswordStep2Schema>;

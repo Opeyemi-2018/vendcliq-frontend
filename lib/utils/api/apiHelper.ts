@@ -28,7 +28,6 @@ import {
   LoanResponse,
   SendOtpForForgetPasswordResponse,
   SendOtpForForgetPasswordPayload,
-  ResetPasswordResponse,
   ResetPasswordPayload,
   ResendVerificationResponse,
   TransactionHistoryResponse,
@@ -39,6 +38,7 @@ import {
   OutsideTransferPayload,
   OutsideTransferResponse,
 } from "@/types";
+
 
 import axiosInstance from ".";
 import {
@@ -76,7 +76,7 @@ import {
   VERIFY_PHONE_NUMBER,
   VERIFY_VERA_BANK_ACCOUNT,
 } from "@/url/api-url";
-import type { OtpApiResponse } from "@/types/auth";
+import type { OtpApiResponse,ResetPasswordResponse } from "@/types/auth";
 
 import { AxiosError } from "axios";
 

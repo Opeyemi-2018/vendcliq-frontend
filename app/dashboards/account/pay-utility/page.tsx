@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import AirtimeFlow from "./chunks/AirtimeFlow";
 import DataFlow from "./chunks/DataFlow";
 import { Separator } from "@/components/ui/separator";
-import { Check, CircleCheck } from "lucide-react";
 import Image from "next/image";
 const PayUtility = () => {
   const [selectedUtility, setSelectedUtility] = useState<"airtime" | "data">(

@@ -9,11 +9,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useUser } from "@/context/userContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { Separator } from "@/components/ui/separator";
+import { clearAuthTokens } from "@/lib/utils/api";
 
 const Navbar = () => {
+  const { user } = useUser();
   return (
     <nav className="p-4 flex items-center justify-between sticky top-0 border-b-2 border-[#0000001A] z-10 bg-white ">
       <SidebarTrigger style={{ background: "#0A2540", color: "white" }} />
@@ -27,11 +40,11 @@ const Navbar = () => {
             <h1>Support</h1>
           </div>
           <Separator orientation="vertical" className="h-4" />
-          <h1>John Doe</h1>
+          <h1>{user?.firstname}</h1>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger>
-            <div className="flex items-center ">
+            <div className="flex items-center">
               <Avatar>
                 <AvatarImage
                   className="w-10 rounded-full "
@@ -42,7 +55,7 @@ const Navbar = () => {
               <ChevronDown size={20} />
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent sideOffset={10}>
+          <DropdownMenuContent sideOffset={10} align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
@@ -51,9 +64,43 @@ const Navbar = () => {
             {/* <DropdownMenuItem>
             <Settings className="h-[1.2rem] w-[1.2rem] mr-2" /> Settings
             </DropdownMenuItem> */}
-            <DropdownMenuItem>
-              <LogOut className="h-[1.2rem] w-[1.2rem] mr-2" /> Log out
-            </DropdownMenuItem>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  className="text-[#FF0000] bg-[#FF0000]/20 cursor-pointer focus:bg-red-700"
+                >
+                  <div
+                    className="flex gap-3 items-center"
+                    style={{ color: "#FF0000" }}
+                  >
+                    <LogOut className="h-[1.2rem] w-[1.2rem] mr-2" />
+                    <span>Log out</span>
+                  </div>
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action will log you out of the system
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      clearAuthTokens();
+                      window.location.href = "/signin";
+                    }}
+                    className="alert-danger"
+                  >
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

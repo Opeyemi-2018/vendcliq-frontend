@@ -1,5 +1,4 @@
-// components/ProgressHeader.tsx
-import { Check } from "lucide-react";
+
 
 interface ProgressHeaderProps {
   currentStep: number;

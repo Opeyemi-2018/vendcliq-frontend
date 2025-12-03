@@ -59,11 +59,17 @@ const SignIN = () => {
     <div className="w-full lg:max-w-[40rem] mx-auto  py-8 px-3 lg:px-10 xl:px-24">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-[#2F2F2F] py-10 hover:opacity-70"
+        className="flex items-center gap-2 text-[#2F2F2F] py-10 hover:opacity-70 mb-6"
       >
         <ChevronLeft className="w-5 h-5" />
         Back
       </button>
+      <h1 className="clash-font  text-[22px] font-semibold mb-2 text-[#2F2F2F]">
+        Welcome Back
+      </h1>
+      <p className="text-[#9E9A9A] mb-4 text-[16px] leading-relaxed">
+        Enter your email and password to continue right where you stopped
+      </p>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* EMAIL FIELD */}
@@ -130,6 +136,12 @@ const SignIN = () => {
             )}
           />
 
+          <Link
+            href="/forgot-password"
+            className="text-[#0A6DC0] hover:underline font-medium float-end text-sm"
+          >
+            Forgot Password?
+          </Link>
           <Button
             type="submit"
             disabled={isLoading}

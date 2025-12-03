@@ -456,10 +456,7 @@ export interface ResetPasswordPayload {
   confirmPassword: string;
 }
 
-export interface ResetPasswordResponse {
-  status: string;
-  msg: string;
-}
+
 
 export interface LoanItem {
   item: string;
