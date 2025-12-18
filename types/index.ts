@@ -153,6 +153,8 @@ export interface SignInResponse {
       type: string;
     };
     user: {
+      userId: number | undefined;
+      wallet: any;
       firstname: string;
       lastname: string;
       email: {

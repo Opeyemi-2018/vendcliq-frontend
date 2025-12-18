@@ -138,8 +138,8 @@ const Table = () => {
       </div>
 
       {activeTab === "Payment Transaction" && (
-        <div className="flex flex-col lg:flex-row mt-6 lg:gap-0 gap-4 justify-between">
-          <div className="w-[50%] space-y-4">
+        <div className="flex flex-col xl:flex-row mt-6 lg:gap-10 gap-4 justify-between">
+          <div className="w-[60] space-y-4">
             {transactions.map((transaction) => (
               <div key={transaction.id} className="space-y-1">
                 <div className="flex items-center gap-2 text-[14px] font-regular text-[#6F6F6F]">
@@ -147,18 +147,22 @@ const Table = () => {
                   <Separator orientation="vertical" className="h-4" />
                   <p>{transaction.time}</p>
                 </div>
-                <div className="flex md:gap-4 md:items-center flex-col md:flex-row ">
-                  <Image
-                    src={
-                      transaction.status === "paidOut" ? "/out.svg" : "/in.svg"
-                    }
-                    width={30}
-                    height={30}
-                    alt="wallet"
-                    className="flex-shrink-0 hidden lg:inline"
-                  />
+                <div className="flex sm:gap-4 sm:items-center flex-col sm:flex-row ">
+                  <div className="">
+                    <Image
+                      src={
+                        transaction.status === "paidOut"
+                          ? "/out.svg"
+                          : "/in.svg"
+                      }
+                      width={30}
+                      height={30}
+                      alt="wallet"
+                      className="flex-shrink-0  hidden lg:inline"
+                    />
+                  </div>
 
-                  <h1 className="font-medium  w-full md:w-[255px] lg:font-bold text-[10px] lg:text-[14px] font-dm-sans">
+                  <h1 className="font-medium   lg:font-bold text-[10px] lg:text-[14px] font-dm-sans">
                     {transaction.description}
                   </h1>
 
@@ -177,7 +181,7 @@ const Table = () => {
               </div>
             ))}
           </div>
-          <div className="lg:w-[40%] border border-[#E4E4E4] px-4 lg:px-7 py-5  bg-white rounded-2xl">
+          <div className="xl:w-[45%] border border-[#E4E4E4] px-4 lg:px-7 py-5  bg-white rounded-2xl">
             <div className="flex items-center gap-2">
               {" "}
               <Calendar /> Last 7 days. <ChevronDown />{" "}

@@ -3,10 +3,8 @@ import {
   BriefcaseBusiness,
   ScrollText,
   BookOpen,
-  CreditCard,
   Home,
   RectangleEllipsis,
-  ArrowRightLeft,
   Percent,
   LogOut,
   ChevronDown,
@@ -64,12 +62,17 @@ const items = [
   },
   {
     title: "Inventory",
-    url: "#",
+    url: "/dashboards/inventory/overview",
     icon: BookOpen,
     children: [
+      { title: "Overview", url: "/dashboards/inventory/overview" },
       { title: "Sell", url: "/dashboards/inventory/sell" },
       { title: "Buy", url: "/dashboards/inventory/buy" },
       { title: "My Store", url: "/dashboards/inventory/my-store" },
+      {
+        title: "Create Store",
+        url: "/dashboards/inventory/create-store",
+      },
     ],
   },
   { title: "Loan", url: "/dashboards/loan", icon: BriefcaseBusiness },
@@ -126,6 +129,7 @@ export function AppSidebar() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
+          // borderRight: "none",
         }}
       >
         <SidebarGroup>
@@ -195,11 +199,11 @@ export function AppSidebar() {
                                 <SidebarMenuSubItem key={child.title}>
                                   <SidebarMenuSubButton
                                     asChild
-                                    isActive={childActive} // THIS IS THE KEY PROP
-                                    className="menuButton text-white hover:bg-white/10"
+                                    isActive={childActive}
+                                    className="menuButton  text-white hover:bg-white/10"
                                   >
                                     <Link href={child.url}>
-                                      <span className="text-white font-dm-sans text-[14px]">
+                                      <span className="text-white  font-dm-sans text-[14px]">
                                         {child.title}
                                       </span>
                                     </Link>
@@ -217,7 +221,7 @@ export function AppSidebar() {
                         isActive={isActive(item.url)}
                         className="menuButton mb-3 text-white hover:bg-white/10"
                       >
-                        <Link href={item.url} className="flex gap-4">
+                        <Link href={item.url} className="flex ">
                           <item.icon
                             style={{ width: "30px", height: "30px" }}
                             className="text-white pr-2"
@@ -297,7 +301,7 @@ export function AppSidebar() {
                       </span>
                     </SidebarMenuButton>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className=" ">
                     <AlertDialogHeader>
                       <AlertDialogTitle>
                         Are you absolutely sure?

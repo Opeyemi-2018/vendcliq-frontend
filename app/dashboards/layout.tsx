@@ -2,15 +2,15 @@
 import Navbar from "@/component/Navbar";
 import { AppSidebar } from "@/component/Sidebar";
 import { ReactNode } from "react";
-import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 // Create an inner component that uses the sidebar hook
 const DashboardContent = ({ children }: { children: ReactNode }) => {
-  const { setOpenMobile } = useSidebar();
+  // const { setOpenMobile } = useSidebar();
 
-  const handleLinkClick = () => {
-    setOpenMobile(false);
-  };
+  // const handleLinkClick = () => {
+  //   setOpenMobile(false);
+  // };
 
   return (
     <>

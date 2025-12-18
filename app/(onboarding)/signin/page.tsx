@@ -19,11 +19,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema, SignInFormData } from "@/types/auth";
 import { toast } from "sonner";
 import { handleSignIn } from "@/lib/utils/api/apiHelper";
+import { useUser } from "@/context/userContext";
 
 const SignIN = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { setUser, setWallet } = useUser();
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -32,9 +34,6 @@ const SignIN = () => {
       password: "",
     },
   });
-  const showErrorMessage = (msg: string) => {
-    toast.error(msg);
-  };
 
   const onSubmit = async (values: SignInFormData) => {
     try {
@@ -42,13 +41,35 @@ const SignIN = () => {
       const response = await handleSignIn(values);
 
       if (response.status === "success") {
+        const token = response.data?.tokens?.accessToken?.token;
+        localStorage.setItem("accessToken", token);
+        localStorage.setItem("authToken", token);
+
+        const userData = response.data?.user;
+        const walletData = response.data?.user?.wallet;
+
+        if (userData) {
+          setUser({
+            firstname: userData.firstname,
+            lastname: userData.lastname,
+            email: userData.email.email,
+            status: userData.account.status,
+            userId: userData.userId,
+            phone: userData.phone,
+          });
+        }
+        if (walletData) {
+          setWallet(walletData);
+        }
+
         toast.success("Signed in successfully!");
         router.push("/dashboards/account/overview");
         return;
       }
 
       toast.error(response.msg);
-    } catch (error: any) {
+    } catch (error) {
+      console.log(error);
       toast.error("No internet connection");
     } finally {
       setIsLoading(false);

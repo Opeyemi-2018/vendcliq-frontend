@@ -1,11 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { Button } from "@/components/ui/button";
-import { CircleCheck, Copy, MoveRight } from "lucide-react";
+import { LayoutDashboard, Copy, MoveRight, EyeOff, Eye } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import Table from "../chunks/Table";
+{/* <LayoutDashboard />; */}
 import {
   Dialog,
   DialogContent,
@@ -14,15 +16,22 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useUser } from "@/context/userContext";
+import { useRouter } from "next/navigation";
 
 const Home = () => {
-  const { user, isUserPending, getUserFullName } = useUser();
+  const { user, isUserPending, wallet } = useUser();
+  const [showBalance, setShowBallance] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-
+  const router = useRouter();
   useEffect(() => {
-    // Check if user status is PENDING and show modal
-    if (isUserPending) {
+    // Check if user has seen the welcome modal before
+    const hasSeenWelcomeModal = localStorage.getItem("hasSeenWelcomeModal");
+
+    // Only show modal if user is pending AND hasn't seen it before
+    if (isUserPending && !hasSeenWelcomeModal) {
       setShowWelcomeModal(true);
+      // Mark that user has seen the modal
+      localStorage.setItem("hasSeenWelcomeModal", "true");
     }
   }, [isUserPending]);
 
@@ -37,21 +46,26 @@ const Home = () => {
   };
 
   const handleCreateBusinessAccount = () => {
-    // Navigate to business account creation or trigger account verification
-    window.location.href = "/dashboards/account/overview";
+    router.push("/dashboards/business-account");
     setShowWelcomeModal(false);
   };
+
   return (
     <div className="">
       <h1 className="font-bold font-dm-sans text-[#2F2F2F] text-[20px] md:text-[25px]">
         Welcome back, {user?.firstname}
       </h1>
-      <div className="bg-white text-center text-[12px] md:text-[14px] md:font-bold text-[#2F2F2F] py-3 px-2 md:px-6  items-center gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
-        <h1 className="flex-shrink-0">904567892</h1>
+
+      <div className="bg-white text-center text-[12px] md:text-[14px] md:font-bold text-[#2F2F2F] py-3 px-2 md:px-6 items-center gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
+        <p className="flex-shrink-0">
+          {Object.keys(wallet?.accountNumbers || {})[0]}
+        </p>
         <Separator orientation="vertical" className="h-4" />
-        <h1 className="flex-shrink-0">Providus Bank</h1>
+        <h1 className="flex-shrink-0">
+          {wallet?.accountNumbers?.WEMA || "N/A"}
+        </h1>
         <Separator orientation="vertical" className="h-4" />
-        <h1 className="flex-shrink-0">Chukwudi & Sons</h1>
+        <h1 className="flex-shrink-0">{wallet?.accountName || "Loading..."}</h1>
         <Copy className="w-5 h-5 text-[#0A6DC0] flex-shrink-0 cursor-pointer" />
       </div>
 
@@ -78,30 +92,52 @@ const Home = () => {
         <div className=" border-[#E4E4E4] border-2 bg-white px-4 lg:px-7 py-5 rounded-2xl flex flex-col justify-between h-[218px] w-full">
           <div className="flex justify-between items-start">
             <div className="space-y-1 md:space-y-2">
-              <h1 className="font-bold font-dm-sans text-[13px]  md:text-[16px] text-[#2F2F2F]">
-                Wallet Balance
-              </h1>
-              <h1 className="font-clash text-[#2F2F2F] text-[20px] lg:text-[25px] font-semibold">
-                NGN 0.00
-              </h1>
+              <div className="flex items-center gap-4">
+                <h1 className="font-bold font-dm-sans text-[13px]  md:text-[16px] text-[#2F2F2F]">
+                  Wallet Balance
+                </h1>
+                <button
+                
+                  type="button"
+                  onClick={() => setShowBallance(!showBalance)}
+                >
+                  {showBalance ? <EyeOff size={21} /> : <Eye size={23} />}
+                </button>
+              </div>
+              {showBalance ? (
+                <h1 className="text-[28px] font-clash font-bold">****</h1>
+              ) : (
+                <h1 className="font-clash text-[#2F2F2F] text-[20px] lg:text-[25px] font-semibold">
+                  # {wallet?.balance}
+                </h1>
+              )}
             </div>
             <Image src={"/wallet.svg"} width={35} height={35} alt="wallet" />
           </div>
           <div className="flex justify-between gap-3 font-dm-sans">
-            <Button className="bg-[#0A2540] hover:bg-[#304c6a] text-[16px] flex gap-2 lg:gap-10 px-6 py-2  w-full text-white">
-              <Image src={"/export.svg"} width={20} height={20} alt="wallet" />
-              Send Money
-            </Button>
-            <Button className="bg-[#0A6DC0] hover:bg-[#09599a]  text-[16px] flex gap-2 lg:gap-10 px-6 py-2 w-full text-white">
-              <Image
-                src={"/export.svg"}
-                width={20}
-                height={20}
-                alt="wallet"
-                className="rotate-180"
-              />{" "}
-              Fund Wallet
-            </Button>
+            <Link href={"/dashboards/account/send-money"} className="w-full">
+              <Button className="bg-[#0A2540] hover:bg-[#304c6a] w-full text-[16px] flex gap-2 lg:gap-10 px-6 py-2  text-white">
+                <Image
+                  src={"/export.svg"}
+                  width={20}
+                  height={20}
+                  alt="wallet"
+                />
+                Send Money
+              </Button>
+            </Link>
+            <Link href={"/dashboards/account/pay-utility"} className="w-full">
+              <Button className="bg-[#0A6DC0] hover:bg-[#09599a] w-full text-[16px] flex gap-2 lg:gap-10 px-6 py-2  text-white">
+                <Image
+                  src={"/buy.svg"}
+                  width={20}
+                  height={20}
+                  alt="wallet"
+                  className="rotate-180"
+                />{" "}
+                Buy Utilities
+              </Button>
+            </Link>
           </div>
         </div>
         <div className=" border-[#E4E4E4] border-2 bg-white px-4 lg:px-7 py-5 rounded-2xl flex flex-col justify-between h-[218px] w-full">
@@ -192,7 +228,10 @@ const Home = () => {
               <Button className="bg-[#0A6DC0] hover:bg-[#09599a] font-dm-sans">
                 Create a Store
               </Button>
-              <Button className="bg-[#0A2540] hover:bg-[#304c6a] font-dm-sans">
+              <Button
+                onClick={handleCreateBusinessAccount}
+                className="bg-[#0A2540] hover:bg-[#304c6a] font-dm-sans"
+              >
                 Create Business Account
               </Button>
             </div>

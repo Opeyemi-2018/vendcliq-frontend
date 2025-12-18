@@ -6,7 +6,6 @@ import Head from "next/head";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import "react-toastify/dist/ReactToastify.css";
-import { RequestProvider } from "@/components/dashboard/loadRequest/RequestContext";
 import { Toaster } from "sonner";
 import { DM_Sans } from "next/font/google";
 import { UserProvider } from "@/context/userContext";
@@ -53,7 +52,7 @@ export default function RootLayout({
       <body className="antialiased bg-white">
         <QueryClientProvider client={queryClient}>
           <UserProvider>
-            <RequestProvider>{children}</RequestProvider>
+            {children}
           </UserProvider>
           <Toaster position="top-center" richColors />
         </QueryClientProvider>

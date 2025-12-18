@@ -21,7 +21,6 @@ import {
 } from "@/types/auth";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
-// DELETED: Removed 'import { FormData } from "../page";'
 import { toast } from "sonner";
 import { handleConfirmPhoneNumber } from "@/lib/utils/api/apiHelper";
 import ProgressHeader from "./ProgressHeader";
@@ -48,10 +47,13 @@ export default function Step3({ onNext, data }: Props) {
   const onSubmit = async (values: ConfirmPhoneData) => {
     form.setValue("isWhatsappNo", method === "whatsapp" ? "true" : "false");
 
-    const cleanedPhone = values.phone.replace(/\D/g, "");
-    const finalPhone = cleanedPhone.startsWith("0")
-      ? "234" + cleanedPhone.slice(1)
-      : cleanedPhone;
+    let finalPhone = values.phone.replace(/\D/g, ""); 
+    if (finalPhone.startsWith("234")) {
+      finalPhone = finalPhone.substring(3);
+    }
+    if (finalPhone.startsWith("0")) {
+      finalPhone = finalPhone.substring(1);
+    }
 
     try {
       const response = await handleConfirmPhoneNumber({
@@ -60,14 +62,36 @@ export default function Step3({ onNext, data }: Props) {
       });
 
       if (response.status === "success") {
-        toast.success("Code sent to your whatsapp!");
+        const serverMessage = response.msg || "Verification code sent!";
+        toast.success(serverMessage);
+
         onNext({
-          phone: values.phone,
+          phone: finalPhone,
           isWhatsappNo: method === "whatsapp" ? "true" : "false",
         });
+      } else {
+        // Handle specific duplicate phone error
+        if (
+          response.msg?.includes("Duplicate entry") ||
+          response.msg?.includes("users_phone_unique")
+        ) {
+          toast.error(
+            "This phone number is already registered. Please use a different number"
+          );
+        } else {
+          // Generic error from backend
+          toast.error(
+            response.msg ||
+              "Failed to send verification code. Please try again."
+          );
+        }
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(
+        error.message ||
+          "An unexpected error occurred. Please check your connection and try again."
+      );
     }
   };
 
@@ -114,7 +138,7 @@ export default function Step3({ onNext, data }: Props) {
 
           <div>
             <div className="mb-4">
-              <p className="text-[#2F2F2F] font-bold ">
+              <p className="text-[#2F2F2F] font-clash font-bold ">
                 Choose verification method
               </p>
               <p className="text-[#9E9A9A] text-[13px]">

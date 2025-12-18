@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // components/OtherBankTransfer.tsx
 "use client";
 
@@ -63,6 +64,7 @@ export default function OtherBankTransfer() {
   const [showAccount, setShowAccount] = useState(false);
 
   const form = useForm<TransferFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(transferSchema) as any,
     defaultValues: {
       beneficiaryType: "saved",
@@ -110,8 +112,7 @@ export default function OtherBankTransfer() {
       return;
     }
 
-    console.log("Transfer submitted:", form.getValues());
-    toast.success("Transfer completed successfully!");
+    // toast.success("Transfer completed successfully!");
     setShowSuccess(true);
   };
 
@@ -332,7 +333,7 @@ export default function OtherBankTransfer() {
                 </Button>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="outline"
                   onClick={() => setStep(1)}
                   className="mt-8"
                 >
@@ -366,8 +367,7 @@ export default function OtherBankTransfer() {
                     <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
                       Beneficiary Bank
                     </h2>{" "}
-                    {selectedBeneficiary?.bank ||
-                      form.getValues("accountNumber")}
+                    {selectedBeneficiary?.bank || form.getValues("bank")}
                   </div>
                   <div>
                     <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
@@ -392,7 +392,7 @@ export default function OtherBankTransfer() {
                 </Button>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="outline"
                   onClick={() => setStep(2)}
                   className="mt-8"
                 >
@@ -482,7 +482,7 @@ export default function OtherBankTransfer() {
 
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="outline"
                   onClick={() => setStep(1)}
                   className="mt-8"
                 >
@@ -515,7 +515,7 @@ export default function OtherBankTransfer() {
               className="w-full bg-[#0A6DC0] hover:bg-[#09599a]"
               onClick={() => router.push("/dashboards/account/overview")}
             >
-              Back to Dashboard
+              Back to Account
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

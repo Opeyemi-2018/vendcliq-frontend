@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // components/AirtimeFlow.tsx
 "use client";
 
@@ -35,7 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import { ChevronDown, EyeOff, Eye } from "lucide-react";
+import { ChevronDown, EyeOff, Eye, ChevronLeft } from "lucide-react";
 import Lottie from "lottie-react";
 
 const networks = [
@@ -314,6 +315,7 @@ export default function AirtimeFlow() {
                     </h1>
                   )}
                 </div>
+                
               </div>
 
               <div className="space-y-6">
@@ -349,6 +351,14 @@ export default function AirtimeFlow() {
                 className="w-full bg-[#0A6DC0] hover:bg-[#09599a] py-6 "
               >
                 Make Payment
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep(1)}
+                className="mt-8"
+              >
+                <ChevronLeft className="w-4  mr-2" /> Back
               </Button>
             </div>
           )}
@@ -461,6 +471,14 @@ export default function AirtimeFlow() {
                 className="w-full bg-[#0A6DC0] hover:bg-[#09599a] font-dm-sans py-6"
               >
                 Make Payment
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStep(2)}
+                className="mt-8"
+              >
+                <ChevronLeft className="w-4  mr-2" /> Back
               </Button>
             </div>
           )}{" "}

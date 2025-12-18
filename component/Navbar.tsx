@@ -1,6 +1,6 @@
 "use client";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { LogOut, ChevronDown, Headphones, Sun, User } from "lucide-react";
+import { LogOut, ChevronDown, Headphones, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,9 +24,11 @@ import { useUser } from "@/context/userContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { Separator } from "@/components/ui/separator";
 import { clearAuthTokens } from "@/lib/utils/api";
+import Link from "next/link";
 
 const Navbar = () => {
-  const { user } = useUser();
+  const { user, isUserPending } = useUser();
+
   return (
     <nav className="p-4 flex items-center justify-between sticky top-0 border-b-2 border-[#0000001A] z-10 bg-white ">
       <SidebarTrigger style={{ background: "#0A2540", color: "white" }} />
@@ -35,12 +37,20 @@ const Navbar = () => {
           style={{ gap: "30px" }}
           className="flex items-center text-[13px] md:text-[16px] font-medium"
         >
-          <div className="flex items-center gap-2">
+          {isUserPending && (
+            <Link
+              href={"/dashboards/business-account"}
+              className="font-inter font-dm-sans  cursor-pointer whitespace-nowrap text-[14px] lg:text-[16px] font-medium text-[#0A6DC0] hover:text-[#09599a] border-b-2 border-[#0A6DC0]"
+            >
+              Create Business Account{" "}
+            </Link>
+          )}
+          <div className="hidden lg:flex items-center gap-2">
             <Headphones />
             <h1>Support</h1>
           </div>
-          <Separator orientation="vertical" className="h-4" />
-          <h1>{user?.firstname}</h1>
+          <Separator orientation="vertical" className="h-4 " />
+          <h1 className="hidden lg:inline">{user?.firstname}</h1>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger>

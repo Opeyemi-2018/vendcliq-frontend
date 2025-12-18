@@ -8,7 +8,6 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormMessage,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,7 +29,7 @@ interface Props {
 export default function Step4({ onNext, data }: Props) {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(10);
+  const [timeLeft, setTimeLeft] = useState(20);
   const [canResend, setCanResend] = useState(false);
 
   const form = useForm<VerifyPhoneData>({
@@ -65,11 +64,12 @@ export default function Step4({ onNext, data }: Props) {
         toast.success(
           `New code sent via ${channel === "whatsapp" ? "WhatsApp" : "SMS"}!`
         );
-        setTimeLeft(10); 
+        setTimeLeft(20); 
         setCanResend(false);
       } else {
         toast.error(res.msg || "Failed to resend code");
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const backendMessage = error.response?.data?.msg;
       const errorMsg = backendMessage || error.message || "Network error";
@@ -92,6 +92,7 @@ export default function Step4({ onNext, data }: Props) {
         toast.error(msg);
         form.setError("phoneVerificationCode", { message: msg }); 
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const backendMessage = error.response?.data?.msg;
       const errorMsg = backendMessage || error.message || "Verification failed";
@@ -113,7 +114,7 @@ export default function Step4({ onNext, data }: Props) {
         Verify Phone Number
       </h1>
       <p className="text-[#9E9A9A] mb-8">
-        We've sent a one-time code via{" "}
+        We&apos;ve sent a one-time code via{" "}
         <strong>{data.isWhatsappNo === "true" ? "WhatsApp" : "SMS"}</strong>
       </p>
 
@@ -180,7 +181,7 @@ export default function Step4({ onNext, data }: Props) {
 
           <div className="flex justify-between text-sm text-[#9E9A9A]">
             <p>
-              Didn't receive code?{" "}
+              Didn&apos;t receive code?{" "}
               <button
                 type="button"
                 onClick={handleResend}

@@ -3,16 +3,18 @@
 import { useState } from "react";
 import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/Input";
 import Image from "next/image";
 import { type SignupFormData } from "@/types/auth";
 import { toast } from "sonner";
 import ProgressHeader from "./ProgressHeader";
+import { Input } from "@/components/ui/Input";
+import PlacesAutocompleteInput from "@/hooks/googleMap"; 
 
 interface Props {
   onNext: (data: Partial<SignupFormData>) => void;
   data: SignupFormData;
 }
+
 
 export default function Step7({ onNext, data }: Props) {
   const [businessName, setBusinessName] = useState(data.businessName || "");
@@ -23,7 +25,6 @@ export default function Step7({ onNext, data }: Props) {
   const [logoFile, setLogoFile] = useState<File | null>(
     (data.uploadedLogo as File) || null
   );
-
   const [logoPreview, setLogoPreview] = useState<string | null>(
     data.uploadedLogoPreview || null
   );
@@ -56,9 +57,7 @@ export default function Step7({ onNext, data }: Props) {
       return;
     }
     if (businessAddress.trim().split(/\s+/).filter(Boolean).length < 3) {
-      toast.error(
-        "Please enter a complete business address (at least 3 words)"
-      );
+      toast.error("Please enter a complete business address");
       return;
     }
 
@@ -73,10 +72,11 @@ export default function Step7({ onNext, data }: Props) {
 
   return (
     <div>
-      
       <ProgressHeader currentStep={7} />
 
-      <h1 className="text-[22px] font-semibold mb-3 font-clash">Business Details</h1>
+      <h1 className="text-[22px] font-semibold mb-3 font-clash">
+        Business Details
+      </h1>
       <p className="text-[#9E9A9A] mb-8">
         Tell us about your business so we can set everything up perfectly
       </p>
@@ -87,14 +87,14 @@ export default function Step7({ onNext, data }: Props) {
         </label>
         <div className="relative">
           {logoPreview ? (
-            <div className="relative inline-block  w-full">
+            <div className="relative inline-block w-full">
               <Image
                 src={logoPreview}
                 alt="Business logo"
                 width={120}
                 height={120}
-                className="rounded-xl w-full h-[250px]  border-2 border-dashed border-gray-300 object-cover"
-                unoptimized 
+                className="rounded-xl w-full h-[100px] border-2 border-dashed border-gray-300 object-cover"
+                unoptimized
               />
               <button
                 onClick={removeLogo}
@@ -138,14 +138,19 @@ export default function Step7({ onNext, data }: Props) {
         <label className="block text-[#2F2F2F] font-medium mb-2">
           Business Address
         </label>
-        <div className="relative">
-          <Input
-            placeholder="Enter full business address"
-            value={businessAddress}
-            onChange={(e) => setBusinessAddress(e.target.value)}
-            className="bg-[#D8D8D866] h-12 border-0 text-gray-900 placeholder:text-gray-400"
-          />
-        </div>
+        {/* This will show Google Places dropdown when user types */}
+        <PlacesAutocompleteInput
+          value={businessAddress}
+          onChange={(value) => {
+            if (typeof value === "string") {
+              setBusinessAddress(value);
+            } else {
+              setBusinessAddress(value.formatted_address || "");
+            }
+          }}
+          placeholder="Enter full business address"
+          className="bg-[#D8D8D866] h-12 border-0"
+        />
       </div>
 
       <Button

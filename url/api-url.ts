@@ -8,15 +8,20 @@ const VERIFY_PHONE_NUMBER = "/client/v2/auth/verify-phone";
 const CREATE_PASSWORD = "/client/v2/auth/create-password";
 const CREATE_BUSINESS_DETAILS = "/client/v2/profile/business-information";
 const SIGN_IN = "/client/v2/auth/signin";
+const VALIDATE_BVN = "/client/v2/profile/validate-bvn";
+const REQUEST_BVN_TOKEN = "/client/v2/profile/send-bvn-otp";
+const VERIFY_BVN_TOKEN = "/client/v2/profile/validate-bvn-token";
+const UPLOAD_BUSINESS_VERIFICATION =
+  "/client/v2/profile/upload-identity-documents";
 // const SIGN_IN = "/client/v1/auth/signin";
-const GET_PROFILE = "/client/v1/auth/profile";
-const DASHBOARD = "/client/v1/dashboard";
 
 const BUSINESS_INFORMATION_SETUP_STEP_ONE =
   "/client/v1/auth/business-information";
 const BUSINESS_INFORMATION_SETUP_STEP_TWO =
   "/client/v1/auth/business-information-step2";
 const IDENTITY_UPLOAD = "/client/v1/auth/upload-identity";
+const GET_PROFILE = "/";
+const DASHBOARD = "/";
 const CREATE_LOAN = "/client/v1/loans";
 const GET_LOAN = "/client/v1/loans";
 const GET_LOAN_DETAILS = (id: string) => `/client/v1/loans/${id}`;
@@ -49,6 +54,11 @@ const VERIFY_VERA_BANK_ACCOUNT = (accountNumber: string) =>
 const PAY_LOAN = (id: string) =>
   `/client/v1/loans/repayments/installment/${id}`;
 // EXPORT URLS
+
+// inventory endpoint
+const CREATE_STORE = "inventory/stores";
+const CREATE_STOCK = "inventory/stocks";
+const GET_PRODUCTS = "inventory/products?page=1&limit=50&all=false&search=";
 export {
   VERIFY_EMAIL,
   CONFIRM_PHONE_NUMBER,
@@ -57,6 +67,13 @@ export {
   SIGN_UP,
   VERIFY_PHONE_NUMBER,
   CREATE_BUSINESS_DETAILS,
+  VALIDATE_BVN,
+  REQUEST_BVN_TOKEN,
+  VERIFY_BVN_TOKEN,
+  UPLOAD_BUSINESS_VERIFICATION,
+  CREATE_STORE,
+  CREATE_STOCK,
+  GET_PRODUCTS,
   GET_PROFILE,
   DASHBOARD,
   BUSINESS_INFORMATION_SETUP_STEP_ONE,

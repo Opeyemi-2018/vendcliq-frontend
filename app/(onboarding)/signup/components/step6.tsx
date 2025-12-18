@@ -12,7 +12,7 @@ interface Props {
   data: SignupFormData;
 }
 
-const accountTypes = [
+const businessTypes = [
   {
     id: "DISTRIBUTOR" as const,
     title: "Distributor",
@@ -37,22 +37,21 @@ const accountTypes = [
 ];
 
 export default function Step6({ onNext, data }: Props) {
-  const [selected, setSelected] = useState<SignupFormData["accountType"]>(
-    data.accountType || "RETAILER"
+  const [selected, setSelected] = useState<SignupFormData["businessType"]>(
+    data.businessType || "RETAILER"
   );
 
   const handleProceed = () => {
     if (selected) {
-      onNext({ accountType: selected });
-      toast.success("Account type selected!");
+      onNext({ businessType: selected }); 
+      toast.success("Account type saved!");
     } else {
-      toast.error("Please select a business type to proceed.");
+      toast.error("Please select a business type");
     }
   };
 
   return (
     <div>
-      
       <ProgressHeader currentStep={6} />
 
       <div className="mb-10">
@@ -71,7 +70,7 @@ export default function Step6({ onNext, data }: Props) {
         </label>
 
         <div className="space-y-3">
-          {accountTypes.map((type) => (
+          {businessTypes.map((type) => (
             <button
               key={type.id}
               onClick={() => setSelected(type.id)}

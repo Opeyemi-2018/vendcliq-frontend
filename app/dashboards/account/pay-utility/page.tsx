@@ -7,6 +7,8 @@ import AirtimeFlow from "./chunks/AirtimeFlow";
 import DataFlow from "./chunks/DataFlow";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
+
+
 const PayUtility = () => {
   const [selectedUtility, setSelectedUtility] = useState<"airtime" | "data">(
     "airtime"

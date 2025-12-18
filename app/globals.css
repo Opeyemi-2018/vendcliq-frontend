@@ -6,14 +6,14 @@
 .clash-font {
   font-family: "Clash Display", sans-serif;
 }
-.custom-dashed-border {
+/* .custom-dashed-border {
   border-style: dashed;
-  border-width: 1px; /* Adjust as needed */
-  border-color: gray; /* Replace with desired color */
-  border-radius: 0.5rem; /* Optional, for rounded edges */
+  border-width: 1px; 
+  border-color: gray; 
+  border-radius: 0.5rem; 
   border-image: linear-gradient(to right, gray 33%, rgba(255, 255, 255, 0) 33%)
     5;
-}
+} */
 
 .menuButton[data-active="true"] {
   background-color: #ffffff1a !important;
@@ -105,6 +105,18 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+}
+/* [data-sonner-toast] {
+  background-color: rgb(246, 234, 234) !important;
+  color: red !important;
+  border: 1px solid red !important;
+} */
+
+[data-sonner-toast][data-type="success"] {
+  background-color: white !important;
+  color: #0a6dc0 !important;
+  border-color: #0a6dc0 !important;
+  z-index: 30 !important;
 }
 
 @layer base {

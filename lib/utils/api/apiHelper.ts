@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // lib/utils/api/apiHelper.ts
 import {
   ConfirmPhoneNumberPayload,
@@ -38,7 +40,23 @@ import {
   OutsideTransferPayload,
   OutsideTransferResponse,
 } from "@/types";
-
+import type {
+  BusinessInfoPayload,
+  BusinessInfoResponse,
+  OtpApiResponse,
+  ResetPasswordResponse,
+} from "@/types/auth";
+import {
+  ValidateBvnPayload,
+  ValidateBvnResponse,
+  RequestBvnTokenPayload,
+  RequestBvnTokenResponse,
+  VerifyBvnTokenPayload,
+  VerifyBvnTokenResponse,
+  UploadCacPayload,
+  UploadGovernmentIdPayload,
+  UploadCacResponse,
+} from "@/types/business";
 
 import axiosInstance from ".";
 import {
@@ -46,6 +64,15 @@ import {
   CONFIRM_PHONE_NUMBER,
   CREATE_PASSWORD,
   CREATE_BUSINESS_DETAILS,
+  VALIDATE_BVN,
+  REQUEST_BVN_TOKEN,
+  VERIFY_BVN_TOKEN,
+  UPLOAD_BUSINESS_VERIFICATION,
+
+  // inventory endpoints
+  GET_PRODUCTS,
+  CREATE_STORE,
+  CREATE_STOCK,
   CREATE_LOAN,
   CREATE_PIN,
   DASHBOARD,
@@ -76,9 +103,10 @@ import {
   VERIFY_PHONE_NUMBER,
   VERIFY_VERA_BANK_ACCOUNT,
 } from "@/url/api-url";
-import type { OtpApiResponse,ResetPasswordResponse } from "@/types/auth";
 
 import { AxiosError } from "axios";
+import { CreateStoreFormData, CreateStoreResponse } from "@/types/store";
+import { CreateStockResponse,  ProductsResponse } from "@/types/stock";
 
 interface UserProfile {
   data: {
@@ -116,6 +144,8 @@ interface TransferPayload {
   saveAsBeneficiary: boolean;
   pin: string;
 }
+export type BusinessVerificationPayload = UploadCacPayload &
+  UploadGovernmentIdPayload;
 
 export const fetcher = async <T>(
   url: string,
@@ -147,9 +177,8 @@ export const posterWithMultipart = async <T>(
   headers?: Record<string, string>
 ): Promise<T> => {
   const response = await axiosInstance.post<T>("", formData, {
-    params: { endpoint: url },
+    params: { endpoint: url }, // ← sends ?endpoint=/real/url
     headers: {
-      "Content-Type": "multipart/form-data",
       Accept: "*/*",
       ...headers,
     },
@@ -167,7 +196,7 @@ export const handleEmailVerification = async (
       "X-Skip-Proxy-Wrap": "true",
     }
   );
-  return res; 
+  return res;
 };
 
 export const handleResendEmailVerificationToken =
@@ -204,12 +233,12 @@ export const handleConfirmPhoneNumber = async (payload: {
 
 export const handleResendPhoneVerificationToken = async (
   phone?: string,
-  channel: "phone" | "whatsapp" = "phone" // ← Add channel parameter with default
+  channel: "phone" | "whatsapp" = "phone"
 ): Promise<OtpApiResponse> => {
   return await poster<OtpApiResponse>(
     RESEND_VERIFICATION_TOKEN,
     {
-      channel: channel, // ← Use the provided channel
+      channel: channel,
       phone: phone,
     },
     {
@@ -233,33 +262,15 @@ export const handleCreatePassword = async (
   );
 };
 
-// business detail
-export interface BusinessInfoPayload {
-  accountType: "DISTRIBUTOR" | "WHOLESALER" | "RETAILER";
-  businessName: string;
-  businessAddress: string;
-  companyGoal: "Fast Sales" | "Higher Profit";
-  logo?: File;
-}
-
-export interface BusinessInfoResponse {
-  status: "success" | "failed";
-  msg: string;
-  data?: any;
-}
-
-
 export const handleCreateBusinessDetails = async (
   payload: BusinessInfoPayload
 ): Promise<BusinessInfoResponse> => {
   const { logo, ...data } = payload;
-
-  // If there's a logo → multipart
   if (logo) {
     const formData = new FormData();
     formData.append("logo", logo);
     Object.entries(data).forEach(([key, value]) => {
-      formData.append(key, value);
+      formData.append(key, value as string);
     });
 
     return await posterWithMultipart<BusinessInfoResponse>(
@@ -267,9 +278,15 @@ export const handleCreateBusinessDetails = async (
       formData
     );
   }
-
-  // No logo → normal JSON
   return await poster<BusinessInfoResponse>(CREATE_BUSINESS_DETAILS, data);
+};
+
+export const handleSubmitBusinessVerification = (payload: FormData) => {
+  return posterWithMultipart<UploadCacResponse>(
+    UPLOAD_BUSINESS_VERIFICATION,
+    payload,
+    { "X-Skip-Proxy-Wrap": "true" }
+  );
 };
 
 export const handleGetDashboard = async (): Promise<UserProfile> => {
@@ -281,6 +298,48 @@ export const handleSignIn = async (
 ): Promise<SignInResponse> => {
   return await poster<SignInResponse>(SIGN_IN, payload);
 };
+
+// business verification
+
+export const handleValidateBvn = async (
+  payload: ValidateBvnPayload
+): Promise<ValidateBvnResponse> => {
+  return await poster<ValidateBvnResponse, ValidateBvnPayload>(
+    VALIDATE_BVN,
+    payload,
+    {
+      "X-Skip-Proxy-Wrap": "true",
+    }
+  );
+};
+
+export const handleRequestBvnToken = async (
+  payload: RequestBvnTokenPayload
+): Promise<RequestBvnTokenResponse> => {
+  return await poster<RequestBvnTokenResponse, RequestBvnTokenPayload>(
+    REQUEST_BVN_TOKEN,
+    payload,
+    {
+      "X-Skip-Proxy-Wrap": "true",
+    }
+  );
+};
+
+export const handleVerifyBvnToken = async (
+  payload: VerifyBvnTokenPayload
+): Promise<VerifyBvnTokenResponse> => {
+  return await poster<VerifyBvnTokenResponse, VerifyBvnTokenPayload>(
+    VERIFY_BVN_TOKEN,
+    payload,
+    {
+      "X-Skip-Proxy-Wrap": "true",
+    }
+  );
+};
+
+// export const handleGetProducts = async (): Promise<{ data: any[] }> => {
+//   return await fetcher<{ data: any[] }>(GET_PRODUCTS);
+// };
 
 export const handleGetProfile = async (
   payload: SignInPayload
@@ -348,9 +407,9 @@ export const handleListBanks = async (): Promise<ListBanksResponse> => {
   return await fetcher<ListBanksResponse>(LIST_BANKS);
 };
 
-export const handleDashboard = async (): Promise<DashboardResponse> => {
-  return await fetcher<DashboardResponse>(DASHBOARD);
-};
+// export const handleDashboard = async (): Promise<DashboardResponse> => {
+//   return await fetcher<DashboardResponse>(DASHBOARD);
+// };
 
 export const handleVerifyBankAccount = async (
   payload: VerifyBankAccountPayload
@@ -474,4 +533,30 @@ export const handlePayLoan = async (
   return await poster<ApiResponse, { amount: number }>(PAY_LOAN(id), {
     amount,
   });
+};
+
+
+// inventory api call 
+
+// get product list
+export const handleGetProducts = async (): Promise<ProductsResponse> => {
+  return await fetcher<ProductsResponse>(GET_PRODUCTS);
+};
+
+// Create store
+export const handleCreateStore = async (
+  payload: CreateStoreFormData
+): Promise<CreateStoreResponse> => {
+  return await poster<CreateStoreResponse, CreateStoreFormData>(
+    CREATE_STORE,
+    payload
+  );
+};
+
+
+// Create stock
+export const handleCreateStock = async (
+  payload: any
+): Promise<CreateStockResponse> => {
+  return await poster<CreateStockResponse, any>(CREATE_STOCK, payload);
 };

@@ -5,13 +5,7 @@ import { useState, useEffect } from "react";
 // DELETED: Removed unused ChevronLeft import since it's commented out in the JSX
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -36,7 +30,7 @@ interface Props {
 export default function Step2({ onNext, data }: Props) {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(10);
+  const [timeLeft, setTimeLeft] = useState(20);
   const [canResend, setCanResend] = useState(false);
 
   const form = useForm<VerifyEmailFormData>({
@@ -62,7 +56,7 @@ export default function Step2({ onNext, data }: Props) {
 
       if (res.status === "success") {
         toast.success(res.msg || "New code sent!");
-        setTimeLeft(10);
+        setTimeLeft(20);
         setCanResend(false);
       } else {
         toast.error(res.msg || "Failed to resend code");
@@ -87,6 +81,7 @@ export default function Step2({ onNext, data }: Props) {
         toast.error(errorMsg);
         form.setError("verificationCode", { message: errorMsg });
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.response?.data) {
         const errorData = error.response.data;
@@ -203,9 +198,8 @@ export default function Step2({ onNext, data }: Props) {
           >
             {loading ? (
               <>
-            
                 Verifying...
-                    <ClipLoader size={20} color="white" />
+                <ClipLoader size={20} color="white" />
               </>
             ) : (
               "Verify Email"

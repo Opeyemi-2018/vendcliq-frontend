@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { z } from "zod";
 
 export interface ApiResponse {
@@ -100,6 +102,21 @@ export interface ContactResponse {
   message: string;
 }
 
+// business detail
+export interface BusinessInfoPayload {
+  businessType: "DISTRIBUTOR" | "WHOLESALER" | "RETAILER";
+  businessName: string;
+  businessAddress: string;
+  companyGoal: "Fast Sales" | "Higher Profit";
+  logo?: File;
+}
+
+export interface BusinessInfoResponse {
+  status: "success" | "failed";
+  msg: string;
+  data?: any;
+}
+
 export const step1Schema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -145,7 +162,7 @@ export const createPasswordSchema = z
   });
 
 export const businessInformationSchema = z.object({
-  accountType: z.enum(["DISTRIBUTOR", "WHOLESALER", "RETAILER"] as const, {
+  businessType: z.enum(["DISTRIBUTOR", "WHOLESALER", "RETAILER"] as const, {
     error: () => ({ message: "Business type is required" }),
   }),
   companyGoal: z.enum(["Fast Sales", "Higher Profit"] as const, {

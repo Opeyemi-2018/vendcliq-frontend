@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -137,7 +138,7 @@ export default function ForgotPassword() {
             Forgot Password?
           </h1>
           <p className="text-[#9E9A9A] mb-8 text-[16px] leading-relaxed">
-            Enter your email address and we'll send you a code to reset your
+            Enter your email address and we&apos;ll send you a code to reset your
             password.
           </p>
 

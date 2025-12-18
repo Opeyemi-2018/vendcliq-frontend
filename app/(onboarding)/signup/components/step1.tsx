@@ -59,6 +59,7 @@ export default function Step1({ onNext, data }: Props) {
         referralCode: values.referralCode?.trim() || undefined,
       };
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response = await poster<any>(SIGN_UP, payload);
 
       if (response.status === "success") {
@@ -88,6 +89,7 @@ export default function Step1({ onNext, data }: Props) {
       } else {
         toast.error(response.msg || "Signup failed");
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const msg =
         error?.response?.data?.msg ||

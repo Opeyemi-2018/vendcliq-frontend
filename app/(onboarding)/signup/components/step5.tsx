@@ -1,8 +1,6 @@
-// components/step5.tsx
 "use client";
 
 import { useState } from "react";
-// DELETED: Removed unused ChevronLeft import since it's commented out in the JSX
 import { Eye, EyeOff, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
@@ -16,22 +14,18 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-// UPDATED: Importing the required partial schema and the central combined type
 import {
   createPasswordSchema,
   type CreatePasswordFormData,
   type SignupFormData,
 } from "@/types/auth";
-// DELETED: Removed 'import { FormData } from "../page";'
 import { toast } from "sonner";
 import { handleCreatePassword } from "@/lib/utils/api/apiHelper";
 import ProgressHeader from "./ProgressHeader";
 import { ClipLoader } from "react-spinners";
 
 interface Props {
-  // UPDATED: Using the centralized SignupFormData type
   onNext: (data: Partial<SignupFormData>) => void;
-  // UPDATED: Using the centralized SignupFormData type
   data: SignupFormData;
 }
 
@@ -52,19 +46,18 @@ export default function Step5({ onNext, data }: Props) {
   const password = form.watch("password");
 
   const requirements = [
-    { test: password.length >= 8, label: "At least 8 characters" },
-    { test: /[a-zA-Z]/.test(password), label: "Contains letters" },
-    { test: /\d/.test(password), label: "Contains numbers" },
+    { test: password.length >= 8, label: "8 characters" },
+    { test: /[a-zA-Z]/.test(password), label: "Letters" },
+    { test: /\d/.test(password), label: "Numbers" },
     {
       test: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
-      label: "Contains symbols",
+      label: "symbols",
     },
   ];
 
   const onSubmit = async (values: CreatePasswordFormData) => {
     setLoading(true);
     try {
-      // Assuming handleCreatePassword uses the global token (stored in Step 1)
       const response = await handleCreatePassword(values.password);
 
       if (response.status === "success") {
@@ -72,10 +65,11 @@ export default function Step5({ onNext, data }: Props) {
         onNext({
           password: values.password,
           confirmPassword: values.confirmPassword,
-        }); // Passing both fields for completeness
+        }); 
       } else {
         toast.error(response.msg || "Failed to create password");
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(error.message || "Network error. Please try again.");
     } finally {
@@ -202,20 +196,24 @@ export default function Step5({ onNext, data }: Props) {
           />
 
           {password && (
-            <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+            <div className=" space-y-2">
               <p className="text-sm font-medium text-[#2F2F2F]">
                 Password must contain:
               </p>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="flex items-center justify-between md:gap-2 text-[11px] md:text-[14px]">
                 {requirements.map((req, i) => (
-                  <div key={i} className="flex items-center gap-2">
+                  <div key={i} className="flex items-center md:gap-2">
                     {req.test ? (
                       <Check className="w-4 h-4 text-green-600" />
                     ) : (
                       <X className="w-4 h-4 text-red-400" />
                     )}
                     <span
-                      className={req.test ? "text-green-600" : "text-gray-500"}
+                      className={
+                        req.test
+                          ? "text-green-600 whitespace-nowrap"
+                          : "text-red-400 whitespace-nowrap"
+                      }
                     >
                       {req.label}
                     </span>
@@ -230,8 +228,14 @@ export default function Step5({ onNext, data }: Props) {
             disabled={loading || !form.formState.isValid}
             className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] text-white font-bold py-6 rounded-xl "
           >
-            {loading ? <>Creating...
-                    <ClipLoader size={24} color="white" /></> : "Continue"}
+            {loading ? (
+              <>
+                Creating...
+                <ClipLoader size={24} color="white" />
+              </>
+            ) : (
+              "Continue"
+            )}
           </Button>
         </form>
       </Form>

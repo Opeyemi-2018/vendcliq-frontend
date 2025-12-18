@@ -1,20 +1,48 @@
 // contexts/UserContext.tsx
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 export interface UserData {
   firstname: string;
   lastname: string;
   email: string;
   status: "PENDING" | "ACTIVE" | "SUSPENDED" | string;
+  userId?: number;
+  phone?: {
+    number: string;
+    verified: string | null;
+  };
+}
+
+export interface WalletData {
+  walletId: number;
+  balance: string;
+  currency: string;
+  accountName: string;
+  accountNumbers: {
+    WEMA?: string;
+    [key: string]: string | undefined;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface UserContextType {
   user: UserData | null;
+  wallet: WalletData | null;
   setUser: (user: UserData | null) => void;
+  setWallet: (wallet: WalletData | null) => void;
+  setUserAndWallet: (user: UserData | null, wallet: WalletData | null) => void;
   isUserPending: boolean;
   getUserFullName: () => string;
+  getWalletBalance: () => string;
   clearUserData: () => void;
 }
 
@@ -22,15 +50,26 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<UserData | null>(null);
+  const [wallet, setWalletState] = useState<WalletData | null>(null);
 
   useEffect(() => {
     // Load user from localStorage on mount
     const storedUser = localStorage.getItem("user");
+    const storedWallet = localStorage.getItem("wallet");
+
     if (storedUser) {
       try {
         setUserState(JSON.parse(storedUser));
       } catch (error) {
         console.error("Error parsing user data:", error);
+      }
+    }
+
+    if (storedWallet) {
+      try {
+        setWalletState(JSON.parse(storedWallet));
+      } catch (error) {
+        console.error("Error parsing wallet data:", error);
       }
     }
   }, []);
@@ -46,6 +85,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setWallet = (walletData: WalletData | null) => {
+    setWalletState(walletData);
+    if (walletData) {
+      localStorage.setItem("wallet", JSON.stringify(walletData));
+    } else {
+      localStorage.removeItem("wallet");
+    }
+  };
+
+  const setUserAndWallet = (
+    userData: UserData | null,
+    walletData: WalletData | null
+  ) => {
+    setUser(userData);
+    setWallet(walletData);
+  };
+
   const isUserPending = user?.status === "PENDING";
 
   const getUserFullName = () => {
@@ -53,19 +109,32 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return `${user.firstname} ${user.lastname}`;
   };
 
+  const getWalletBalance = () => {
+    if (!wallet) return "0.00";
+    return wallet.balance;
+  };
+
   const clearUserData = () => {
     setUserState(null);
+    setWalletState(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("wallet");
     localStorage.removeItem("userStatus");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("authToken");
   };
 
   return (
     <UserContext.Provider
       value={{
         user,
+        wallet,
         setUser,
+        setWallet,
+        setUserAndWallet,
         isUserPending,
         getUserFullName,
+        getWalletBalance,
         clearUserData,
       }}
     >
@@ -81,10 +150,3 @@ export function useUser() {
   }
   return context;
 }
-
-// Usage in your Step1 component:
-// const { setUser } = useUser();
-// setUser(response.data.user);
-
-// Usage in dashboard:
-// const { user, isUserPending, getUserFullName } = useUser();
