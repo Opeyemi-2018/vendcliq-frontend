@@ -81,7 +81,6 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
     },
   });
 
-  // Fetch products on component mount
   useEffect(() => {
     const fetchProducts = async () => {
       try {

@@ -7,7 +7,9 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import Table from "../chunks/Table";
-{/* <LayoutDashboard />; */}
+{
+  /* <LayoutDashboard />; */
+}
 import {
   Dialog,
   DialogContent,
@@ -97,7 +99,6 @@ const Home = () => {
                   Wallet Balance
                 </h1>
                 <button
-                
                   type="button"
                   onClick={() => setShowBallance(!showBalance)}
                 >
@@ -114,9 +115,10 @@ const Home = () => {
             </div>
             <Image src={"/wallet.svg"} width={35} height={35} alt="wallet" />
           </div>
+
           <div className="flex justify-between gap-3 font-dm-sans">
             <Link href={"/dashboards/account/send-money"} className="w-full">
-              <Button className="bg-[#0A2540] hover:bg-[#304c6a] w-full text-[16px] flex gap-2 lg:gap-10 px-6 py-2  text-white">
+              <Button className="bg-[#0A2540] hover:bg-[#304c6a] w-full text-[16px] flex gap-2 lg:gap-10 px-6 py-5 md:py-6  text-white">
                 <Image
                   src={"/export.svg"}
                   width={20}
@@ -127,7 +129,7 @@ const Home = () => {
               </Button>
             </Link>
             <Link href={"/dashboards/account/pay-utility"} className="w-full">
-              <Button className="bg-[#0A6DC0] hover:bg-[#09599a] w-full text-[16px] flex gap-2 lg:gap-10 px-6 py-2  text-white">
+              <Button className="bg-[#0A6DC0] hover:bg-[#09599a] w-full text-[16px] flex gap-2 lg:gap-10 px-6 py-5 md:py-6  text-white">
                 <Image
                   src={"/buy.svg"}
                   width={20}
