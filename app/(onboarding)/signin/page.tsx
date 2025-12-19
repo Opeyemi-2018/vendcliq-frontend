@@ -77,10 +77,10 @@ const SignIN = () => {
   };
 
   return (
-    <div className="w-full lg:max-w-[40rem] mx-auto py-4 md:py-8 px-3 lg:px-10 xl:px-24">
+    <div className="w-full lg:max-w-[40rem] mx-auto  px-3 lg:px-10 xl:px-24">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-[#2F2F2F] pb-4 md:pb-10 hover:opacity-70 mb-6"
+        className="flex items-center gap-2 text-[#2F2F2F] pb-4 md:pb-10 hover:opacity-70 mb-4"
       >
         <ChevronLeft className="w-5 h-5" />
         Back
