@@ -85,7 +85,7 @@ const SignIN = () => {
         <ChevronLeft className="w-5 h-5" />
         Back
       </button>
-      <h1 className="clash-font  text-[22px] font-semibold mb-2 text-[#2F2F2F]">
+      <h1 className="font-clash  text-[22px] font-semibold mb-2 text-[#2F2F2F]">
         Welcome Back
       </h1>
       <p className="text-[#9E9A9A] mb-4 text-[16px] leading-relaxed">

@@ -104,7 +104,7 @@ export default function Step2({ onNext, data }: Props) {
     <div className="max-w-lg mx-auto">
       <ProgressHeader currentStep={2} />
 
-      <h1 className="clash-font text-[22px] font-semibold text-[#2F2F2F] mb-3">
+      <h1 className="font-clash text-[22px] font-semibold text-[#2F2F2F] mb-3">
         Verify Your Email
       </h1>
       <p className="text-[#9E9A9A] mb-8 leading-relaxed">

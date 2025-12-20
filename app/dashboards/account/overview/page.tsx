@@ -55,7 +55,7 @@ const Home = () => {
         Welcome back, {user?.firstname}
       </h1>
 
-      <div className="bg-white text-center text-[14px] md:font-bold text-[#2F2F2F] py-3 px-4 md:px-6 items-center justify-between gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
+      <div className="bg-white font-dm-sans text-center text-[14px] md:font-bold text-[#2F2F2F] py-3 px-4 md:px-6 items-center justify-between gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
         <p className="flex-shrink-0">
           {Object.keys(wallet?.accountNumbers || {})[0]}
         </p>

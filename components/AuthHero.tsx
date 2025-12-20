@@ -64,7 +64,7 @@ export default function AuthHero() {
         <div className="absolute bottom-10 left-10 right-10 ">
           <div className="overflow-hidden mb-4">
             <h2
-              className={`clash-font text-white text-[20px] md:text-[25px] font-semibold transition-all duration-500 ${
+              className={`font-clash text-white text-[20px] md:text-[25px] font-semibold transition-all duration-500 ${
                 isAnimating
                   ? "translate-y-full opacity-0"
                   : "translate-y-0 opacity-100"

@@ -110,7 +110,7 @@ export default function Step4({ onNext, data }: Props) {
     <div className="">
       <ProgressHeader currentStep={4} />
 
-      <h1 className="clash-font text-[22px] font-semibold text-[#2F2F2F] mb-3">
+      <h1 className="font-clash text-[22px] font-semibold text-[#2F2F2F] mb-3">
         Verify Phone Number
       </h1>
       <p className="text-[#9E9A9A] mb-8">
