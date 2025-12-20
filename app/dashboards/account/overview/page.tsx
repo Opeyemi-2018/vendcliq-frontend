@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { useUser } from "@/context/userContext";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const Home = () => {
   const { user, isUserPending, wallet } = useUser();
@@ -49,6 +50,19 @@ const Home = () => {
     setShowWelcomeModal(false);
   };
 
+  const accountNumber = wallet?.accountNumbers?.WEMA;
+
+  const handleCopyAccountNumber = async () => {
+    if (!accountNumber) return;
+
+    try {
+      await navigator.clipboard.writeText(accountNumber);
+      toast.success("Account number copied");
+    } catch (error) {
+      toast.error("Failed to copy");
+    }
+  };
+
   return (
     <div className="">
       <h1 className="font-bold font-dm-sans text-[#2F2F2F] text-[20px] md:text-[25px]">
@@ -65,7 +79,10 @@ const Home = () => {
         </h1>
         <Separator orientation="vertical" className="h-4" />
         <h1 className="flex-shrink-0">{wallet?.accountName || "Loading..."}</h1>
-        <Copy className="w-5 h-5 text-[#0A6DC0] flex-shrink-0 cursor-pointer" />
+        <Copy
+          className="w-5 h-5 text-[#0A6DC0] flex-shrink-0 cursor-pointer"
+          onClick={handleCopyAccountNumber}
+        />{" "}
       </div>
 
       <div className="bg-[url('/blue.svg')] bg-no-repeat bg-cover bg-center  overflow-hidden h-[218px] mt-6 flex justify-between rounded-2xl">

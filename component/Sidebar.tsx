@@ -315,21 +315,23 @@ export function AppSidebar() {
                   </AlertDialogTrigger>
                   <AlertDialogContent className=" ">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>
+                      <AlertDialogTitle className="font-dm-sans">
                         Are you absolutely sure?
                       </AlertDialogTitle>
-                      <AlertDialogDescription>
+                      <AlertDialogDescription className="font-dm-sans">
                         This action will log you out of the system
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter className="flex items-center flex-row justify-center">
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogFooter className="flex items-center flex-col gap-3 sm:flex-row justify-center">
+                      <AlertDialogCancel className="w-full sm:w-auto">
+                        Cancel
+                      </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => {
                           clearAuthTokens();
                           window.location.href = "/signin";
                         }}
-                        className="alert-danger"
+                        className="alert-danger w-full sm:w-auto"
                       >
                         Continue
                       </AlertDialogAction>
