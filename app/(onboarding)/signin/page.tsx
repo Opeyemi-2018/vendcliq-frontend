@@ -92,7 +92,7 @@ const SignIN = () => {
         Enter your email and password to continue right where you stopped
       </p>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
           {/* EMAIL FIELD */}
           <FormField
             control={form.control}

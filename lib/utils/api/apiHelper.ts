@@ -32,7 +32,7 @@ import {
   SendOtpForForgetPasswordPayload,
   ResetPasswordPayload,
   ResendVerificationResponse,
-  TransactionHistoryResponse,
+  // TransactionHistoryResponse,
   AccountResponse,
   AccountByIdResponse,
   AccountDetailsByIdResponse,
@@ -68,11 +68,11 @@ import {
   REQUEST_BVN_TOKEN,
   VERIFY_BVN_TOKEN,
   UPLOAD_BUSINESS_VERIFICATION,
-
-  // inventory endpoints
-  GET_PRODUCTS,
-  CREATE_STORE,
-  CREATE_STOCK,
+  RESEND_VERIFICATION_TOKEN,
+  RESET_PASSWORD,
+  SEND_OTP_FOR_FORGET_PASSWORD,
+  SIGN_IN,
+  TRANSACTION_HISTORY,
   CREATE_LOAN,
   CREATE_PIN,
   DASHBOARD,
@@ -92,21 +92,22 @@ import {
   POST_REPAYMENT_PATTERN,
   REQUEST_PIN_TOKEN,
   RESEND_EMAIL_OTP,
-  RESEND_VERIFICATION_TOKEN,
-  RESET_PASSWORD,
-  SEND_OTP_FOR_FORGET_PASSWORD,
-  SIGN_IN,
-  TRANSACTION_HISTORY,
   UPDATE_PIN,
   VERIFY_BANK_ACCOUNT,
   VERIFY_EMAIL,
   VERIFY_PHONE_NUMBER,
   VERIFY_VERA_BANK_ACCOUNT,
+
+  // inventory endpoints
+  GET_PRODUCTS,
+  CREATE_STORE,
+  CREATE_STOCK,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
 import { CreateStoreFormData, CreateStoreResponse } from "@/types/store";
-import { CreateStockResponse,  ProductsResponse } from "@/types/stock";
+import { CreateStockResponse, ProductsResponse } from "@/types/stock";
+import { TransactionHistoryResponse } from "@/types/transactions";
 
 interface UserProfile {
   data: {
@@ -281,18 +282,6 @@ export const handleCreateBusinessDetails = async (
   return await poster<BusinessInfoResponse>(CREATE_BUSINESS_DETAILS, data);
 };
 
-export const handleSubmitBusinessVerification = (payload: FormData) => {
-  return posterWithMultipart<UploadCacResponse>(
-    UPLOAD_BUSINESS_VERIFICATION,
-    payload,
-    { "X-Skip-Proxy-Wrap": "true" }
-  );
-};
-
-export const handleGetDashboard = async (): Promise<UserProfile> => {
-  return await fetcher<UserProfile>(GET_PROFILE);
-};
-
 export const handleSignIn = async (
   payload: SignInPayload
 ): Promise<SignInResponse> => {
@@ -337,6 +326,25 @@ export const handleVerifyBvnToken = async (
   );
 };
 
+export const handleSubmitBusinessVerification = (payload: FormData) => {
+  return posterWithMultipart<UploadCacResponse>(
+    UPLOAD_BUSINESS_VERIFICATION,
+    payload,
+    { "X-Skip-Proxy-Wrap": "true" }
+  );
+};
+
+
+export const handleGetTransactions = async (
+  page: number = 1
+): Promise<TransactionHistoryResponse> => {
+  return await fetcher<TransactionHistoryResponse>(
+    `${TRANSACTION_HISTORY}?page=${page}`
+  );
+};
+
+
+
 // export const handleGetProducts = async (): Promise<{ data: any[] }> => {
 //   return await fetcher<{ data: any[] }>(GET_PRODUCTS);
 // };
@@ -347,6 +355,9 @@ export const handleGetProfile = async (
   return await poster<SignInResponse, SignInPayload>(SIGN_IN, payload);
 };
 
+export const handleGetDashboard = async (): Promise<UserProfile> => {
+  return await fetcher<UserProfile>(GET_PROFILE);
+};
 export const handleGetInventory = async (): Promise<InventoryResponse> => {
   if (!process.env.PRODUCT_API_KEY) throw new Error("API Key is missing");
   return await fetcher<InventoryResponse>(INVENTORY_LIST);
@@ -463,13 +474,13 @@ export const handleSendOtpForForgetPassword = async (
   >(SEND_OTP_FOR_FORGET_PASSWORD, payload);
 };
 
-export const handleGetTransactionHistory = async (
-  page?: number
-): Promise<TransactionHistoryResponse> => {
-  return await fetcher<TransactionHistoryResponse>(
-    `${TRANSACTION_HISTORY}?page=${page || 1}`
-  );
-};
+// export const handleGetTransactionHistory = async (
+//   page?: number
+// ): Promise<TransactionHistoryResponse> => {
+//   return await fetcher<TransactionHistoryResponse>(
+//     `${TRANSACTION_HISTORY}?page=${page || 1}`
+//   );
+// };
 
 export const handleGetAccount = async (): Promise<AccountResponse> => {
   return await fetcher<AccountResponse>(GET_ACCOUNT);
@@ -535,8 +546,7 @@ export const handlePayLoan = async (
   });
 };
 
-
-// inventory api call 
+// inventory api call
 
 // get product list
 export const handleGetProducts = async (): Promise<ProductsResponse> => {
@@ -552,7 +562,6 @@ export const handleCreateStore = async (
     payload
   );
 };
-
 
 // Create stock
 export const handleCreateStock = async (

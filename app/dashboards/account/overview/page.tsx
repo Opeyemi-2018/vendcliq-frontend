@@ -26,13 +26,10 @@ const Home = () => {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const router = useRouter();
   useEffect(() => {
-    // Check if user has seen the welcome modal before
     const hasSeenWelcomeModal = localStorage.getItem("hasSeenWelcomeModal");
 
-    // Only show modal if user is pending AND hasn't seen it before
     if (isUserPending && !hasSeenWelcomeModal) {
       setShowWelcomeModal(true);
-      // Mark that user has seen the modal
       localStorage.setItem("hasSeenWelcomeModal", "true");
     }
   }, [isUserPending]);
@@ -58,7 +55,7 @@ const Home = () => {
         Welcome back, {user?.firstname}
       </h1>
 
-      <div className="bg-white text-center text-[12px] md:text-[14px] md:font-bold text-[#2F2F2F] py-3 px-2 md:px-6 items-center gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
+      <div className="bg-white text-center text-[14px] md:font-bold text-[#2F2F2F] py-3 px-4 md:px-6 items-center justify-between gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
         <p className="flex-shrink-0">
           {Object.keys(wallet?.accountNumbers || {})[0]}
         </p>
@@ -77,7 +74,7 @@ const Home = () => {
             Need quick cash flow to boost and grow your business? Get up to ₦10M
             today.
           </h1>
-          <Button className="w-[188px] flex items-center bg-white font-medium hover:text-white hover:bg-[#0A2540] text-[16px] font-dm-sans text-[#2F2F2F]">
+          <Button className="w-[150px] sm:w-[188px] flex items-center bg-white font-medium hover:text-white hover:bg-[#0A2540] text-[16px] font-dm-sans text-[#2F2F2F]">
             Request Loan <MoveRight />
           </Button>
         </div>
@@ -86,7 +83,7 @@ const Home = () => {
           alt="girl"
           width={100}
           height={100}
-          className="w-[350px] h-[400px]"
+          className="w-[350px] h-[400px] -ml-12 sm:-ml-0"
         />
       </div>
 

@@ -1,5 +1,4 @@
-// API BASE URL
-
+//client v2 endpoints
 const SIGN_UP = "/client/v2/auth/signup";
 const RESEND_VERIFICATION_TOKEN = "/client/v2/auth/resend-verification";
 const VERIFY_EMAIL = "/client/v2/auth/verify-email";
@@ -13,8 +12,11 @@ const REQUEST_BVN_TOKEN = "/client/v2/profile/send-bvn-otp";
 const VERIFY_BVN_TOKEN = "/client/v2/profile/validate-bvn-token";
 const UPLOAD_BUSINESS_VERIFICATION =
   "/client/v2/profile/upload-identity-documents";
-// const SIGN_IN = "/client/v1/auth/signin";
+const SEND_OTP_FOR_FORGET_PASSWORD = "/client/v2/auth/forgot-password";
+const RESET_PASSWORD = "/client/v2/auth/reset-password";
+const  TRANSACTION_HISTORY = "/client/v2/wallets/transactions";
 
+// v1 endpoint
 const BUSINESS_INFORMATION_SETUP_STEP_ONE =
   "/client/v1/auth/business-information";
 const BUSINESS_INFORMATION_SETUP_STEP_TWO =
@@ -38,10 +40,8 @@ const REPAYMENT_PATTERN = (tenure: string) =>
   `/client/v1/loans/list/repayment-pattern?tenure=${tenure}`;
 const POST_REPAYMENT_PATTERN = "/client/v1/loans/repayment/pattern";
 const INVENTORY_LIST = "/v1/inventory/search";
-const SEND_OTP_FOR_FORGET_PASSWORD = "/client/v2/auth/forgot-password";
-const RESET_PASSWORD = "/client/v2/auth/reset-password";
 const GET_BANK_ACCOUNT = "/client/v1/bank-accounts";
-const TRANSACTION_HISTORY = "/client/v1/transactions";
+const TRANSACTION_HISTORYs = "/client/v1/transactions";
 const GET_ACCOUNT = "/client/v1/bank-accounts";
 const GET_ACCOUNT_BY_ID = (id: string) => `/client/v1/bank-accounts/${id}`;
 const GET_ACCOUNT_DETAILS_BY_ID = (id: string) =>
@@ -60,6 +60,7 @@ const CREATE_STORE = "inventory/stores";
 const CREATE_STOCK = "inventory/stocks";
 const GET_PRODUCTS = "inventory/products?page=1&limit=50&all=false&search=";
 export {
+  // v2 endpoint
   VERIFY_EMAIL,
   CONFIRM_PHONE_NUMBER,
   CREATE_PASSWORD,
@@ -74,6 +75,13 @@ export {
   CREATE_STORE,
   CREATE_STOCK,
   GET_PRODUCTS,
+  SEND_OTP_FOR_FORGET_PASSWORD,
+  RESET_PASSWORD,
+    RESEND_VERIFICATION_TOKEN,
+
+   TRANSACTION_HISTORY,
+
+  // v1 endpoint
   GET_PROFILE,
   DASHBOARD,
   BUSINESS_INFORMATION_SETUP_STEP_ONE,
@@ -93,11 +101,8 @@ export {
   GET_LOAN_DETAILS,
   GET_LOAN,
   INVENTORY_LIST,
-  SEND_OTP_FOR_FORGET_PASSWORD,
-  RESET_PASSWORD,
   GET_BANK_ACCOUNT,
-  RESEND_VERIFICATION_TOKEN,
-  TRANSACTION_HISTORY,
+  TRANSACTION_HISTORYs,
   GET_ACCOUNT,
   GET_ACCOUNT_BY_ID,
   GET_ACCOUNT_DETAILS_BY_ID,

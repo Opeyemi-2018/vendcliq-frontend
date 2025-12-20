@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
@@ -12,46 +13,9 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-
-const transactions = [
-  {
-    id: 1,
-    date: "7 Mar 2024",
-    time: " 17:38:00",
-    description:
-      "WEMA BANK | EBUBE DRINKS LIMITED /00003883383364YTHD647749904",
-    amount: "-5,000,000 NGN",
-    status: "paidOut",
-  },
-  {
-    id: 2,
-    date: "7 Mar 2024",
-    time: " 17:38:00",
-    description:
-      "WEMA BANK | EBUBE DRINKS LIMITED /00003883383364YTHD647749904",
-    amount: "+7,000,000 NGN",
-    status: "paidIn",
-  },
-  {
-    id: 3,
-    date: "7 Mar 2024",
-    time: " 17:38:00",
-    description:
-      "WEMA BANK | EBUBE DRINKS LIMITED /00003883383364YTHD647749904",
-    amount: "-3,000,000 NGN",
-    status: "paidOut",
-  },
-  {
-    id: 4,
-    date: "7 Mar 2024",
-    time: " 17:38:00",
-    description:
-      "WEMA BANK | EBUBE DRINKS LIMITED /00003883383364YTHD647749904",
-    amount: "2,000,000 NGN",
-    status: "paidIn",
-  },
-];
+import { useState, useEffect } from "react";
+import { handleGetTransactions } from "@/lib/utils/api/apiHelper";
+import { TransactionHistoryResponse } from "@/types/transactions";
 
 const Loans = [
   {
@@ -87,10 +51,60 @@ const Loans = [
     status: "active",
   },
 ];
+
+const TransactionSkeleton = () => (
+  <div className="border-b border-gray-200 pb-2 animate-pulse">
+    <div className="flex items-center gap-2 mb-2">
+      <div className="h-4 bg-gray-200 rounded w-20"></div>
+      <Separator orientation="vertical" className="h-4" />
+      <div className="h-4 bg-gray-200 rounded w-16"></div>
+    </div>
+    <div className="flex sm:items-center justify-between flex-col sm:flex-row gap-2">
+      <div className="hidden sm:block w-10 h-10 bg-gray-200 rounded-full"></div>
+      <div className="sm:w-[50%] space-y-2">
+        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+      </div>
+      <div className="h-5 bg-gray-200 rounded w-24"></div>
+    </div>
+  </div>
+);
+
 const Table = () => {
   const tabs = ["Payment Transaction", "Loan Transactions"];
   const [activeTab, setActiveTab] = useState(tabs[0]);
-  console.log(activeTab);
+  const [transactions, setTransactions] = useState<
+    TransactionHistoryResponse["data"]["data"]
+  >([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await handleGetTransactions(currentPage);
+        setTransactions(response.data.data);
+      } catch (err) {
+        setError("Failed to load transactions");
+        console.error("Error fetching transactions:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (activeTab === "Payment Transaction") {
+      fetchTransactions();
+    }
+  }, [activeTab, currentPage]);
+
+  const displayedTransactions = showAll
+    ? transactions
+    : transactions.slice(0, 4);
+
   return (
     <div>
       <div className="flex justify-between flex-col items-start gap-2 lg:gap-0 lg:flex-row ">
@@ -138,48 +152,103 @@ const Table = () => {
       </div>
 
       {activeTab === "Payment Transaction" && (
-        <div className="flex flex-col xl:flex-row mt-6 lg:gap-10 gap-4 justify-between">
-          <div className="w-[60] space-y-4">
-            {transactions.map((transaction) => (
-              <div key={transaction.id} className="space-y-1">
-                <div className="flex items-center gap-2 text-[14px] font-regular text-[#6F6F6F]">
-                  <p>{transaction.date}</p>
-                  <Separator orientation="vertical" className="h-4" />
-                  <p>{transaction.time}</p>
-                </div>
-                <div className="flex sm:gap-4 sm:items-center flex-col sm:flex-row ">
-                  <div className="">
-                    <Image
-                      src={
-                        transaction.status === "paidOut"
-                          ? "/out.svg"
-                          : "/in.svg"
-                      }
-                      width={30}
-                      height={30}
-                      alt="wallet"
-                      className="flex-shrink-0  hidden lg:inline"
-                    />
-                  </div>
+        <div className="flex flex-col lg:flex-row mt-6 lg:gap-10 gap-4 justify-between">
+          <div className="lg:w-[50%] space-y-4">
+            {loading && (
+              <>
+                <TransactionSkeleton />
+                <TransactionSkeleton />
+                <TransactionSkeleton />
+                <TransactionSkeleton />
+              </>
+            )}
 
-                  <h1 className="font-medium   lg:font-bold text-[10px] lg:text-[14px] font-dm-sans">
-                    {transaction.description}
-                  </h1>
+            {error && (
+              <div className="text-center py-8 text-red-500">{error}</div>
+            )}
 
-                  <h1
-                    className={`whitespace-nowrap text-[12px] lg:text-[16px] font-dm-sans font-medium ${
-                      transaction.status === "paidIn"
-                        ? "text-[#00C53A]"
-                        : "text-[#FF6242]"
-                    }`}
-                  >
-                    {transaction.amount}
-                  </h1>
-                </div>
-
-                <Separator orientation="horizontal" />
+            {!loading && !error && transactions.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No transactions found
               </div>
-            ))}
+            )}
+
+            {!loading &&
+              !error &&
+              displayedTransactions.map((transaction) => {
+                const date = new Date(transaction.createdAt);
+                const formattedDate = date.toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                });
+                const formattedTime = date.toLocaleTimeString("en-GB", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                });
+                const senderName = transaction.senderAccount?.Name || "Unknown";
+                const senderBank = transaction.senderAccount?.Bank || "N/A";
+                const amountValue = parseFloat(transaction.amount);
+                const formattedAmount =
+                  transaction.transactionType === "CREDIT"
+                    ? `+${amountValue.toLocaleString("en-NG")} NGN`
+                    : `-${amountValue.toLocaleString("en-NG")} NGN`;
+                const status =
+                  transaction.transactionType === "CREDIT"
+                    ? "paidIn"
+                    : "paidOut";
+
+                return (
+                  <div
+                    key={transaction.id}
+                    className=" border-b border-gray-200 pb-2"
+                  >
+                    <div className="flex items-center gap-2 text-[14px] font-regular text-[#6F6F6F]">
+                      <p className="whitespace-nowrap">{formattedDate}</p>
+                      <Separator orientation="vertical" className="h-4" />
+                      <p>{formattedTime}</p>
+                    </div>
+                    <div className="flex sm:items-center justify-between flex-col sm:flex-row ">
+                      <Image
+                        src={status === "paidOut" ? "/out.svg" : "/in.svg"}
+                        width={30}
+                        height={30}
+                        alt="wallet"
+                        className=" hidden sm:inline w-10 h-10"
+                      />
+
+                      <div className="sm:w-[50%]">
+                        <h1 className="font-medium uppercase lg:font-bold text-[14px] font-dm-sans">
+                          {senderBank} | {senderName}
+                        </h1>
+                        <p className="text-[13px] text-[#797979]">
+                          Ref: {transaction.transactionReference}
+                        </p>
+                      </div>
+
+                      <h1
+                        className={` whitespace-nowrap text-[12px] lg:text-[16px] font-dm-sans font-medium ${
+                          status === "paidIn"
+                            ? "text-[#00C53A]"
+                            : "text-[#FF6242]"
+                        }`}
+                      >
+                        {formattedAmount}
+                      </h1>
+                    </div>
+                  </div>
+                );
+              })}
+
+            {!loading && !error && transactions.length > 4 && (
+              <button
+                onClick={() => setShowAll(!showAll)}
+                className="text-[#39498C] font-medium font-dm-sans text-[14px] pt-4"
+              >
+                {showAll ? "Show Less" : "Show More"}
+              </button>
+            )}
           </div>
           <div className="xl:w-[45%] border border-[#E4E4E4] px-4 lg:px-7 py-5  bg-white rounded-2xl">
             <div className="flex items-center gap-2">
@@ -195,7 +264,7 @@ const Table = () => {
                     Total Transaction Value
                   </p>
                 </div>
-                <p className="text-[16px] font-clash text-[#292826] font-semibold">
+                <p className="text-[14px] lg:text-[16px] font-clash text-[#292826] lg:font-semibold">
                   NGN 300,000.00
                 </p>
               </div>
@@ -206,7 +275,7 @@ const Table = () => {
                     Collections Value
                   </p>
                 </div>
-                <p className="text-[16px] font-clash text-[#292826] font-semibold">
+                <p className="text-[14px] lg:text-[16px] font-clash text-[#292826] lg:font-semibold">
                   NGN 300,000.00
                 </p>
               </div>
@@ -217,7 +286,7 @@ const Table = () => {
                     Transfer Value
                   </p>
                 </div>
-                <p className="text-[16px] font-clash text-[#292826] font-semibold">
+                <p className="text-[14px] lg:text-[16px] font-clash text-[#292826] lg:font-semibold">
                   NGN 300,000.00
                 </p>
               </div>

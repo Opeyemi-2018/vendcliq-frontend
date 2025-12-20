@@ -476,48 +476,48 @@ export interface ResendVerificationResponse {
   msg: string;
 }
 
-export interface TransactionHistoryResponse {
-  status: string;
-  msg: string;
-  data: {
-    meta: {
-      total: number;
-      perPage: number;
-      currentPage: number;
-      lastPage: number;
-      firstPage: number;
-      firstPageUrl: string;
-      lastPageUrl: string;
-      nextPageUrl: string | null;
-      previousPageUrl: string | null;
-    };
-    data: Array<{
-      id: number;
-      accountId: number;
-      reference: string;
-      transactionId: string;
-      amount: number;
-      type: string;
-      currency: string;
-      status: string;
-      narration: string;
-      date: string;
-      createdAt: string;
-      updatedAt: string;
-      accountBalance: string;
-      fee: string;
-      provider: string;
-      action: string;
-      meta: {
-        settledAmount: number;
-        senderAccountName: string;
-        senderAccountNumber: string;
-        beneficiaryAccountName?: string;
-        beneficiaryAccountNumber?: string;
-      };
-    }>;
-  };
-}
+// export interface TransactionHistoryResponse {
+//   status: string;
+//   msg: string;
+//   data: {
+//     meta: {
+//       total: number;
+//       perPage: number;
+//       currentPage: number;
+//       lastPage: number;
+//       firstPage: number;
+//       firstPageUrl: string;
+//       lastPageUrl: string;
+//       nextPageUrl: string | null;
+//       previousPageUrl: string | null;
+//     };
+//     data: Array<{
+//       id: number;
+//       accountId: number;
+//       reference: string;
+//       transactionId: string;
+//       amount: number;
+//       type: string;
+//       currency: string;
+//       status: string;
+//       narration: string;
+//       date: string;
+//       createdAt: string;
+//       updatedAt: string;
+//       accountBalance: string;
+//       fee: string;
+//       provider: string;
+//       action: string;
+//       meta: {
+//         settledAmount: number;
+//         senderAccountName: string;
+//         senderAccountNumber: string;
+//         beneficiaryAccountName?: string;
+//         beneficiaryAccountNumber?: string;
+//       };
+//     }>;
+//   };
+// }
 
 export interface AccountResponse {
   status: string;

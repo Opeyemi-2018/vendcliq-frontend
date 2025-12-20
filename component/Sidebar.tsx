@@ -98,7 +98,7 @@ const items = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [openItems, setOpenItems] = useState<string[]>([]);
   const pathname = usePathname();
@@ -121,6 +121,12 @@ export function AppSidebar() {
     );
   };
 
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
     <Sidebar collapsible="icon">
       <SidebarContent
@@ -129,7 +135,6 @@ export function AppSidebar() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          // borderRight: "none",
         }}
       >
         <SidebarGroup>
@@ -202,7 +207,10 @@ export function AppSidebar() {
                                     isActive={childActive}
                                     className="menuButton  text-white hover:bg-white/10"
                                   >
-                                    <Link href={child.url}>
+                                    <Link
+                                      href={child.url}
+                                      onClick={handleLinkClick}
+                                    >
                                       <span className="text-white  font-dm-sans text-[14px]">
                                         {child.title}
                                       </span>
@@ -221,7 +229,11 @@ export function AppSidebar() {
                         isActive={isActive(item.url)}
                         className="menuButton mb-3 text-white hover:bg-white/10"
                       >
-                        <Link href={item.url} className="flex ">
+                        <Link
+                          href={item.url}
+                          className="flex"
+                          onClick={handleLinkClick}
+                        >
                           <item.icon
                             style={{ width: "30px", height: "30px" }}
                             className="text-white pr-2"
