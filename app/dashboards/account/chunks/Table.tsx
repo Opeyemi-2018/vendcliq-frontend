@@ -87,6 +87,7 @@ const Table = () => {
         setLoading(true);
         setError(null);
         const response = await handleGetTransactions(currentPage);
+
         setTransactions(response.data.data);
       } catch (err) {
         setError("Failed to load transactions");
@@ -187,17 +188,31 @@ const Table = () => {
                   minute: "2-digit",
                   second: "2-digit",
                 });
-                const senderName = transaction.senderAccount?.Name || "Unknown";
-                const senderBank = transaction.senderAccount?.Bank || "N/A";
-                const amountValue = parseFloat(transaction.amount);
-                const formattedAmount =
-                  transaction.transactionType === "CREDIT"
-                    ? `+${amountValue.toLocaleString("en-NG")} NGN`
-                    : `-${amountValue.toLocaleString("en-NG")} NGN`;
-                const status =
-                  transaction.transactionType === "CREDIT"
-                    ? "paidIn"
-                    : "paidOut";
+                const isCredit = transaction.transactionType === "CREDIT";
+                const isTransfer = transaction.transactionType === "TRANSFER";
+
+                // Determine counterparty name and bank
+                let counterpartyName = "Unknown";
+                let counterpartyBank = "N/A";
+
+                if (isCredit) {
+                  counterpartyName =
+                    transaction.senderAccount?.Name || "Unknown";
+                  counterpartyBank = transaction.senderAccount?.Bank || "N/A";
+                } else if (isTransfer) {
+                  counterpartyName =
+                    transaction.beneficiaryAccount?.name || "Unknown";
+                  counterpartyBank =
+                    transaction.beneficiaryAccount?.provider || "N/A";
+                }
+
+                // For amount formatting (already good)
+                const amountValue = Math.abs(parseFloat(transaction.amount));
+                const formattedAmount = isCredit
+                  ? `+${amountValue.toLocaleString("en-NG")} NGN`
+                  : `-${amountValue.toLocaleString("en-NG")} NGN`;
+
+                const status = isCredit ? "paidIn" : "paidOut";
 
                 return (
                   <div
@@ -220,7 +235,7 @@ const Table = () => {
 
                       <div className="sm:w-[50%]">
                         <h1 className="font-medium uppercase lg:font-bold text-[14px] font-dm-sans">
-                          {senderBank} | {senderName}
+                          {counterpartyBank} | {counterpartyName}
                         </h1>
                         <p className="text-[13px] text-[#797979]">
                           Ref: {transaction.transactionReference}

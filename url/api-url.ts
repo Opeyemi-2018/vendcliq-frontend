@@ -14,7 +14,10 @@ const UPLOAD_BUSINESS_VERIFICATION =
   "/client/v2/profile/upload-identity-documents";
 const SEND_OTP_FOR_FORGET_PASSWORD = "/client/v2/auth/forgot-password";
 const RESET_PASSWORD = "/client/v2/auth/reset-password";
-const  TRANSACTION_HISTORY = "/client/v2/wallets/transactions";
+const TRANSACTION_HISTORY = "/client/v2/wallets/transactions";
+const VENDCLIQ_TRANSFER = "/client/v2/wallets/transfers/vendcliq";
+const OTHERBANK_TRANSFER = "/client/v2/wallets/transfer"
+const PIN_VALIDATE = "/client/v2/wallets/validate-pin";
 
 // v1 endpoint
 const BUSINESS_INFORMATION_SETUP_STEP_ONE =
@@ -77,9 +80,11 @@ export {
   GET_PRODUCTS,
   SEND_OTP_FOR_FORGET_PASSWORD,
   RESET_PASSWORD,
-    RESEND_VERIFICATION_TOKEN,
-
-   TRANSACTION_HISTORY,
+  RESEND_VERIFICATION_TOKEN,
+  TRANSACTION_HISTORY,
+  VENDCLIQ_TRANSFER,
+  OTHERBANK_TRANSFER,
+  PIN_VALIDATE,
 
   // v1 endpoint
   GET_PROFILE,

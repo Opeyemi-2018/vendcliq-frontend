@@ -1,7 +1,7 @@
 // app/(onboarding)/signup/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Toaster } from "sonner";
 import { SignupFormData } from "@/types/auth";
 import Step1 from "./components/step1";
@@ -18,6 +18,7 @@ export default function SignupPage() {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<SignupFormData>({});
   const [isInitialized, setIsInitialized] = useState(false);
+  const isRestoredSession = useRef(false); // Track if this is a restored session
   const router = useRouter();
 
   // Restore progress on mount
@@ -42,10 +43,12 @@ export default function SignupPage() {
           // No saved step but has token - start from step 2
           setStep(2);
         }
+        isRestoredSession.current = true; // Mark as restored session
       } else if (savedData && savedStep) {
         // Normal restoration without tokens (user hasn't completed Step 1 yet)
         setData(JSON.parse(savedData));
         setStep(parseInt(savedStep, 10));
+        isRestoredSession.current = true; // Mark as restored session
       }
 
       setIsInitialized(true);
@@ -55,8 +58,13 @@ export default function SignupPage() {
     }
   }, []);
 
+  // Only save to localStorage after initialization and if it's not the first render
   useEffect(() => {
-    if (isInitialized) {
+    // Only save if initialized AND (it's a restored session OR not the very first render)
+    if (
+      isInitialized &&
+      (isRestoredSession.current || step !== 1 || Object.keys(data).length > 0)
+    ) {
       try {
         localStorage.setItem("signupFormData", JSON.stringify(data));
         localStorage.setItem("signupStep", step.toString());
@@ -71,6 +79,13 @@ export default function SignupPage() {
 
     if (step === 8) {
       // Final step → go to thanks page
+      // Clear signup progress
+      try {
+        localStorage.removeItem("signupFormData");
+        localStorage.removeItem("signupStep");
+      } catch (error) {
+        console.error("Error clearing signup progress:", error);
+      }
       router.push("/thanks");
     } else {
       setStep((s) => s + 1);

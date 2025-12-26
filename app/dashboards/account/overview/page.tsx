@@ -120,7 +120,7 @@ const Home = () => {
                 </button>
               </div>
               {showBalance ? (
-                <h1 className="text-[28px] font-clash font-bold">****</h1>
+                <h1 className="text-[28px] font-clash font-bold">* * * *</h1>
               ) : (
                 <h1 className="font-clash text-[#2F2F2F] text-[20px] lg:text-[25px] font-semibold">
                   # {wallet?.balance}

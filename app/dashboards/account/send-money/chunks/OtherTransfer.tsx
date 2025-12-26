@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // components/OtherBankTransfer.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -14,7 +15,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, Banknote, Eye, EyeOff, Landmark } from "lucide-react";
+import {
+  ChevronLeft,
+  Landmark,
+  Eye,
+  EyeOff,
+  MoveRight,
+  ChevronDown,
+} from "lucide-react";
 
 import {
   Form,
@@ -35,8 +43,31 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
 import { transferSchema, TransferFormData } from "@/types/transfer";
 import { Separator } from "@/components/ui/separator";
+import { getNipBanks, performNameEnquiry } from "@/actions/otherBanks";
+import { ClipLoader } from "react-spinners";
+import {
+  handleValidatePin,
+  handleOtherBankTransfer,
+} from "@/lib/utils/api/apiHelper";
+import { generateTransactionKey } from "@/lib/utils/generateTransactionKey";
+import { useUser } from "@/context/userContext";
 
 const beneficiaries = [
   {
@@ -61,24 +92,38 @@ export default function OtherBankTransfer() {
   const [showBalance, setShowBalance] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const router = useRouter();
-  const [showAccount, setShowAccount] = useState(false);
+
+  // Custom states for new beneficiary
+  const [banks, setBanks] = useState<{ name: string; code: string }[]>([]);
+  const [selectedBankCode, setSelectedBankCode] = useState<string>("");
+  const [accountNumber, setAccountNumber] = useState<string>("");
+  const [accountName, setAccountName] = useState<string | null>(null);
+  const [isEnquiring, setIsEnquiring] = useState(false);
+  const [enquiryError, setEnquiryError] = useState<string | null>(null);
+  const [isTransferring, setIsTransferring] = useState(false);
+
+  // Reliable states for display in Step 2 & 3
+  const [finalAccountNumber, setFinalAccountNumber] = useState<string>("");
+  const [finalBankName, setFinalBankName] = useState<string>("");
+  const [finalAccountName, setFinalAccountName] = useState<string>("");
+
+  const { wallet } = useUser();
 
   const form = useForm<TransferFormData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(transferSchema) as any,
     defaultValues: {
       beneficiaryType: "saved",
       savedBeneficiaryIndex: undefined,
       bank: "",
       accountNumber: "",
-      accountName: "Shotayo Samson Olumide",
+      accountName: "",
       amount: 100,
       narration: "",
       pin: "",
     },
   });
 
-  const { watch, setValue, trigger } = form;
+  const { watch, setValue } = form;
   const beneficiaryType = watch("beneficiaryType");
   const savedIndex = watch("savedBeneficiaryIndex");
   const pin = watch("pin");
@@ -88,32 +133,162 @@ export default function OtherBankTransfer() {
       ? beneficiaries[savedIndex]
       : null;
 
-  const handleStep1 = async () => {
-    const fields: (keyof TransferFormData)[] = ["beneficiaryType"];
-    if (beneficiaryType === "new")
-      fields.push("accountName", "bank", "accountNumber");
-    else if (savedIndex === undefined) {
-      toast.error("Please select a beneficiary");
-      return;
+  // Load banks
+  useEffect(() => {
+    async function loadBanks() {
+      const token =
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("authToken");
+      if (!token) {
+        toast.error("Please log in again");
+        return;
+      }
+
+      const bankList = await getNipBanks(token);
+      if (bankList) {
+        setBanks(bankList);
+      } else {
+        toast.error("Failed to load banks. Please try again.");
+      }
     }
-    const valid = await trigger(fields);
-    if (valid) setStep(2);
+    loadBanks();
+  }, []);
+
+  // Name enquiry
+  useEffect(() => {
+    async function doEnquiry() {
+      if (selectedBankCode && accountNumber.length === 10) {
+        setIsEnquiring(true);
+        setAccountName(null);
+        setEnquiryError(null);
+
+        const token =
+          localStorage.getItem("accessToken") ||
+          localStorage.getItem("authToken");
+        if (!token) {
+          setEnquiryError("Session expired");
+          setIsEnquiring(false);
+          return;
+        }
+
+        const name = await performNameEnquiry(
+          selectedBankCode,
+          accountNumber,
+          token
+        );
+
+        if (name) {
+          setAccountName(name);
+          setValue("accountName", name);
+        } else {
+          setEnquiryError("Unable to verify account name");
+        }
+        setIsEnquiring(false);
+      } else {
+        setAccountName(null);
+        setEnquiryError(null);
+      }
+    }
+
+    doEnquiry();
+  }, [selectedBankCode, accountNumber, setValue]);
+
+  const handleStep1 = () => {
+    if (beneficiaryType === "new") {
+      if (!selectedBankCode || accountNumber.length !== 10 || !accountName) {
+        toast.error("Please select a bank and verify the account name");
+        return;
+      }
+      const selectedBankName =
+        banks.find((b) => b.code === selectedBankCode)?.name || "";
+
+      // Save to reliable state
+      setFinalBankName(selectedBankName);
+      setFinalAccountNumber(accountNumber);
+      setFinalAccountName(accountName);
+
+      setValue("bank", selectedBankName);
+      setValue("accountNumber", accountNumber);
+      setValue("accountName", accountName);
+    }
+    setStep(2);
   };
 
-  const handleStep2 = async () => {
-    const valid = await trigger("amount");
-    if (valid) setStep(3);
+  const handleStep2 = () => {
+    setStep(3);
   };
 
-  // Handle final submission - bypassing form validation
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
     if (!pin || pin.length !== 4) {
       toast.error("Please enter a 4-digit PIN");
       return;
     }
 
-    // toast.success("Transfer completed successfully!");
-    setShowSuccess(true);
+    if (!finalAccountName || !selectedBankCode || !finalAccountNumber) {
+      toast.error("Invalid beneficiary details");
+      return;
+    }
+
+    const amount = watch("amount");
+    const narration = watch("narration");
+    if (!amount || amount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
+    setIsTransferring(true);
+
+    try {
+      // 1. Validate PIN
+      const pinRes = await handleValidatePin({ pin });
+      if (pinRes.status !== "success" || !pinRes.data?.validated) {
+        toast.error(pinRes.msg || "Invalid PIN");
+        setIsTransferring(false);
+        return;
+      }
+
+      const pinToken = pinRes.data.pinToken;
+
+      // 2. Generate transaction key
+      const transactionKey = await generateTransactionKey();
+
+      // 3. Source account
+      const sourceAccountNumber = wallet?.accountNumbers?.WEMA;
+      if (!sourceAccountNumber) {
+        toast.error("Source wallet account not found");
+        setIsTransferring(false);
+        return;
+      }
+
+      // 4. Build payload
+      const payload = {
+        transactionKey,
+        amount: Number(amount),
+        beneficiaryAccountNumber: finalAccountNumber,
+        beneficiaryBankCode: selectedBankCode,
+        beneficiaryAccountName: finalAccountName,
+        narration: narration || "Transfer",
+        sourceAccountNumber,
+        deviceFingerprint: `web-${Date.now()}-${Math.random()}`,
+        ipAddress: "0.0.0.0",
+        pinToken,
+      };
+
+      // 5. Send transfer
+      const transferRes = await handleOtherBankTransfer(payload);
+
+      if (transferRes.status === "success") {
+        toast.success("Transfer successful!");
+        setShowSuccess(true);
+      } else {
+        toast.error(transferRes.msg || "Transfer failed");
+      }
+    } catch (err: any) {
+      toast.error(err?.msg || "Transfer failed. Please try again.");
+      console.error(err);
+    } finally {
+      setIsTransferring(false);
+    }
   };
 
   return (
@@ -145,7 +320,7 @@ export default function OtherBankTransfer() {
                     onClick={() => setValue("beneficiaryType", "saved")}
                     className={`font-medium hover:bg-[#0A6DC012] ${
                       beneficiaryType === "saved"
-                        ? " bg-[#cbdff5] text-[#2F2F2F] hover:bg-[#cbdff5]"
+                        ? "bg-[#cbdff5] text-[#2F2F2F] hover:bg-[#cbdff5]"
                         : "bg-white border border-[#E3E3E3] text-[#9E9A9A]"
                     }`}
                   >
@@ -157,7 +332,7 @@ export default function OtherBankTransfer() {
                     onClick={() => setValue("beneficiaryType", "new")}
                     className={`font-medium hover:bg-[#0A6DC012] ${
                       beneficiaryType === "new"
-                        ? " bg-[#cbdff5] text-[#2F2F2F] hover:bg-[#cbdff5]"
+                        ? "bg-[#cbdff5] text-[#2F2F2F] hover:bg-[#cbdff5]"
                         : "bg-white border border-[#E3E3E3] text-[#9E9A9A]"
                     }`}
                   >
@@ -173,9 +348,7 @@ export default function OtherBankTransfer() {
                         type="button"
                         onClick={() => setValue("savedBeneficiaryIndex", i)}
                         className={`w-full border-b p-2 border-[#E0E0E0] text-left flex items-center gap-4 transition-all ${
-                          savedIndex === i
-                            ? " bg-[#0A6DC01A]"
-                            : "border-gray-300"
+                          savedIndex === i ? "bg-[#0A6DC01A]" : ""
                         }`}
                       >
                         <Landmark color="#9E9A9A" />
@@ -195,35 +368,108 @@ export default function OtherBankTransfer() {
                   </div>
                 ) : (
                   <div className="space-y-4 pb-3">
-                    <FormField
-                      control={form.control}
-                      name="bank"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Bank</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter bank name" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="accountNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Account Number</FormLabel>
-                          <FormControl>
-                            <Input placeholder="10 digits" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="text-[#0A6DC0] font-dm-sans font-bold text-[16px]">
-                      Shotayo Samson Olumide
+                    {/* Searchable Bank Dropdown */}
+                    <div>
+                      <Label className="text-[#2F2F2F] font-medium text-[16px]">
+                        Bank
+                      </Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className="w-full justify-between h-[55px] font-normal text-left"
+                          >
+                            {selectedBankCode
+                              ? banks.find(
+                                  (bank) => bank.code === selectedBankCode
+                                )?.name
+                              : "Select a bank..."}
+                            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <Command>
+                            <CommandInput
+                              placeholder="Search bank..."
+                              className="h-9"
+                            />
+                            <CommandList>
+                              <CommandEmpty>No bank found.</CommandEmpty>
+                              <CommandGroup>
+                                {banks.map((bank) => (
+                                  <CommandItem
+                                    key={bank.code}
+                                    value={bank.name}
+                                    onSelect={() => {
+                                      setSelectedBankCode(bank.code);
+                                    }}
+                                  >
+                                    {bank.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
+
+                    {/* Account Number */}
+                    <div>
+                      <Label className="text-[#2F2F2F] font-medium text-[16px]">
+                        Account Number
+                      </Label>
+                      <Input
+                        placeholder="10 digits"
+                        className="h-[55px]"
+                        value={accountNumber}
+                        onChange={(e) => {
+                          const val = e.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, 10);
+                          setAccountNumber(val);
+                        }}
+                        maxLength={10}
+                      />
+                    </div>
+
+                    {/* Name Enquiry Result */}
+                    {isEnquiring && (
+                      <div className="text-[#0A6DC0]">
+                        Verifying Account Number...
+                        <ClipLoader size={20} color="#0A6DC0" />
+                      </div>
+                    )}
+                    <p className="text-[16px] font-dm-sans text-[#9E9A9A]">
+                      Account Name
+                    </p>
+                    {accountName && (
+                      <div
+                        onClick={() => {
+                          // Save values before navigating
+                          const selectedBankName =
+                            banks.find((b) => b.code === selectedBankCode)
+                              ?.name || "";
+                          setFinalBankName(selectedBankName);
+                          setFinalAccountNumber(accountNumber);
+                          setFinalAccountName(accountName);
+
+                          setValue("bank", selectedBankName);
+                          setValue("accountNumber", accountNumber);
+                          setValue("accountName", accountName);
+
+                          setStep(2);
+                        }}
+                      >
+                        <p className="font-bold text-[#0A6DC0] text-[16px] -mt-3 flex items-center gap-4 cursor-pointer">
+                          {accountName} <MoveRight className="text-[#0A6DC0]" />
+                        </p>
+                      </div>
+                    )}
+                    {enquiryError && (
+                      <p className="text-sm text-red-600">{enquiryError}</p>
+                    )}
                   </div>
                 )}
 
@@ -231,6 +477,13 @@ export default function OtherBankTransfer() {
                   type="button"
                   onClick={handleStep1}
                   className="w-full bg-[#0A6DC0] hover:bg-[#09599a] py-6 mt-7"
+                  disabled={
+                    beneficiaryType === "new" &&
+                    (!selectedBankCode ||
+                      accountNumber.length !== 10 ||
+                      !accountName ||
+                      isEnquiring)
+                  }
                 >
                   Proceed
                 </Button>
@@ -245,25 +498,24 @@ export default function OtherBankTransfer() {
                   confirm transfer
                 </p>
 
-                <div className="bg-[url('/balance-bg.svg')] my-6 bg-cover bg-no-repeat bg-center  h-[100px] rounded-2xl p-6">
+                <div className="bg-[url('/balance-bg.svg')] my-6 bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6">
                   <div className="space-y-3">
-                    <div className=" flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                       <p className="text-white font-dm-sans font-regular text-[14px]">
-                        {" "}
                         Wallet Balance
-                      </p>{" "}
+                      </p>
                       <button
                         type="button"
-                        onClick={() => setShowAccount(!showAccount)}
+                        onClick={() => setShowBalance(!showBalance)}
                       >
-                        {showAccount ? (
+                        {showBalance ? (
                           <EyeOff size={18} color="white" />
                         ) : (
                           <Eye size={20} color="white" />
                         )}
                       </button>
                     </div>
-                    {showAccount ? (
+                    {showBalance ? (
                       <h1 className="text-[20px] text-white font-clash font-bold">
                         ******
                       </h1>
@@ -277,17 +529,15 @@ export default function OtherBankTransfer() {
 
                 <div className="flex items-center gap-4 mb-4">
                   <Landmark color="#9E9A9A" />
-
                   <div>
                     <p className="font-medium text-[#2F2F2F] font-dm-sans">
-                      {selectedBeneficiary?.name || "Shotayo Samson Olumide"}
+                      {selectedBeneficiary?.name || finalAccountName}
                     </p>
                     <p className="text-[13px] text-[#2F2F2F] font-dm-sans">
-                      {selectedBeneficiary?.accountNo ||
-                        form.getValues("accountNumber")}
+                      {selectedBeneficiary?.accountNo || finalAccountNumber}
                     </p>
                     <p className="text-[13px] text-[#2F2F2F] font-dm-sans">
-                      {selectedBeneficiary?.bank}
+                      {selectedBeneficiary?.bank || finalBankName}
                     </p>
                   </div>
                 </div>
@@ -303,6 +553,7 @@ export default function OtherBankTransfer() {
                           <Input
                             type="number"
                             placeholder="Enter amount"
+                            className="h-[55px]"
                             {...field}
                           />
                         </FormControl>
@@ -315,9 +566,13 @@ export default function OtherBankTransfer() {
                     name="narration"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Narration (Optional)</FormLabel>
+                        <FormLabel>Narration</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Goods payment" {...field} />
+                          <Input
+                            placeholder="e.g. Goods payment"
+                            className="h-[55px]"
+                            {...field}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -337,37 +592,44 @@ export default function OtherBankTransfer() {
                   onClick={() => setStep(1)}
                   className="mt-8"
                 >
-                  <ChevronLeft className="w-4  mr-2" /> Back
+                  <ChevronLeft className="w-4 mr-2" /> Back
                 </Button>
               </>
             )}
 
-            {/* Step 3 */}
+            {/* Step 3 - Confirmation */}
             {step === 3 && (
               <>
                 <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium mt-3">
                   Confirm the information below is correct and click the proceed
-                  button to enter transaction` pin
+                  button to enter transaction pin
                 </p>
                 <div className="space-y-4 text-left mt-5">
+                  {/* Destination */}
+                  <div>
+                    <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
+                      Destination
+                    </h2>
+                    <p className="text-[#0A6DC0] font-medium">Other Bank</p>
+                  </div>
+
                   <div>
                     <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
                       Beneficiary Account Name
                     </h2>{" "}
-                    {selectedBeneficiary?.name || "Shotayo Samson Olumide"}
+                    {selectedBeneficiary?.name || finalAccountName}
                   </div>
                   <div>
                     <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
                       Beneficiary Account No
                     </h2>{" "}
-                    {selectedBeneficiary?.accountNo ||
-                      form.getValues("accountNumber")}
+                    {selectedBeneficiary?.accountNo || finalAccountNumber}
                   </div>
                   <div>
                     <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
                       Beneficiary Bank
                     </h2>{" "}
-                    {selectedBeneficiary?.bank || form.getValues("bank")}
+                    {selectedBeneficiary?.bank || finalBankName}
                   </div>
                   <div>
                     <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
@@ -396,7 +658,7 @@ export default function OtherBankTransfer() {
                   onClick={() => setStep(2)}
                   className="mt-8"
                 >
-                  <ChevronLeft className="w-4  mr-2" /> Back
+                  <ChevronLeft className="w-4 mr-2" /> Back
                 </Button>
               </>
             )}
@@ -473,11 +735,18 @@ export default function OtherBankTransfer() {
                   type="button"
                   onClick={handleFinalSubmit}
                   className="w-full bg-[#0A6DC0] hover:bg-[#09599a] py-6 text-lg font-medium"
-                  disabled={pin?.length !== 4}
+                  disabled={pin?.length !== 4 || isTransferring}
                 >
-                  {pin?.length === 4
-                    ? "Send Money"
-                    : `Enter PIN (${pin?.length || 0}/4)`}
+                  {isTransferring ? (
+                    <>
+                      <ClipLoader size={20} color="white" className="mr-2" />
+                      Sending Money...
+                    </>
+                  ) : pin?.length === 4 ? (
+                    "Send Money"
+                  ) : (
+                    `Enter PIN (${pin?.length || 0}/4)`
+                  )}
                 </Button>
 
                 <Button
@@ -486,7 +755,7 @@ export default function OtherBankTransfer() {
                   onClick={() => setStep(1)}
                   className="mt-8"
                 >
-                  <ChevronLeft className="w-4  mr-2" /> Back
+                  <ChevronLeft className="w-4 mr-2" /> Back
                 </Button>
               </div>
             )}
@@ -494,25 +763,32 @@ export default function OtherBankTransfer() {
         </Card>
       </Form>
 
-      {/* Success Modal */}
+      {/* Success Modal with 🎉 */}
       <AlertDialog open={showSuccess} onOpenChange={setShowSuccess}>
-        <AlertDialogContent className="text-center w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[600px] ">
-          <AlertDialogHeader>
-            <Lottie
-              animationData={animationData}
-              loop
-              className="w-64 h-64 mx-auto"
-            />
-            <AlertDialogTitle className="text-center text-[#2F2F2F] text-[20px] md:text-[25px] font-semibold font-clash">
-              Transfer Successful!
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans text-center">
-              ₦{watch("amount")?.toLocaleString()} has been sent successfully
-            </AlertDialogDescription>
+        <AlertDialogContent className="text-center w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[600px] p-8">
+          <AlertDialogHeader className="space-y-6">
+            <div className="text-[100px] md:text-[140px]">🎉🎉🎉</div>
+            <div className="space-y-4">
+              <AlertDialogTitle className="text-center text-[#2F2F2F] text-[24px] md:text-[28px] font-bold font-clash">
+                Transfer Successful!
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-[16px] md:text-[18px] font-medium text-[#2F2F2F] font-dm-sans space-y-3">
+                <p>You have successfully sent</p>
+                <p className="text-[22px] md:text-[28px] font-bold text-[#0A6DC0]">
+                  ₦{watch("amount")?.toLocaleString()}
+                </p>
+                <p>to</p>
+                <p className="text-[18px] md:text-[22px] font-bold text-[#2F2F2F]">
+                  {finalAccountName ||
+                    selectedBeneficiary?.name ||
+                    "the recipient"}
+                </p>
+              </AlertDialogDescription>
+            </div>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="mt-8">
             <AlertDialogAction
-              className="w-full bg-[#0A6DC0] hover:bg-[#09599a]"
+              className="w-full bg-[#0A6DC0] hover:bg-[#09599a] py-6 text-lg font-medium"
               onClick={() => router.push("/dashboards/account/overview")}
             >
               Back to Account

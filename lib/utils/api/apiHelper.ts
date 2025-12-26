@@ -73,6 +73,9 @@ import {
   SEND_OTP_FOR_FORGET_PASSWORD,
   SIGN_IN,
   TRANSACTION_HISTORY,
+  VENDCLIQ_TRANSFER,
+  OTHERBANK_TRANSFER,
+  PIN_VALIDATE,
   CREATE_LOAN,
   CREATE_PIN,
   DASHBOARD,
@@ -108,6 +111,7 @@ import { AxiosError } from "axios";
 import { CreateStoreFormData, CreateStoreResponse } from "@/types/store";
 import { CreateStockResponse, ProductsResponse } from "@/types/stock";
 import { TransactionHistoryResponse } from "@/types/transactions";
+import { OtherBankTransferPayload, OtherBankTransferResponse, PinValidatePayload, PinValidateResponse, VendCliqTransferPayload, VendCliqTransferResponse } from "@/types/transfer";
 
 interface UserProfile {
   data: {
@@ -340,6 +344,35 @@ export const handleGetTransactions = async (
 ): Promise<TransactionHistoryResponse> => {
   return await fetcher<TransactionHistoryResponse>(
     `${TRANSACTION_HISTORY}?page=${page}`
+  );
+};
+
+// Validate PIN to get pinToken
+export const handleValidatePin = async (
+  payload: PinValidatePayload
+): Promise<PinValidateResponse> => {
+  return await poster<PinValidateResponse, PinValidatePayload>(
+    PIN_VALIDATE,
+    payload
+  );
+};
+
+// Execute VendCliq Transfer
+export const handleVendCliqTransfer = async (
+  payload: VendCliqTransferPayload
+): Promise<VendCliqTransferResponse> => {
+  return await poster<VendCliqTransferResponse, VendCliqTransferPayload>(
+    VENDCLIQ_TRANSFER,
+    payload
+  );
+};
+// Other Bank Transfer
+export const handleOtherBankTransfer = async (
+  payload: OtherBankTransferPayload
+): Promise<OtherBankTransferResponse> => {
+  return await poster<OtherBankTransferResponse, OtherBankTransferPayload>(
+    OTHERBANK_TRANSFER,
+    payload
   );
 };
 
