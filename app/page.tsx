@@ -13,7 +13,7 @@ export default function Home() {
     if (signupProgress && signupStep) {
       router.push("/signup");
     } else if (accessToken) {
-      router.push("/dashboard"); 
+      router.push("/dashboards"); 
     } else {
       router.push("/signin");
     }
