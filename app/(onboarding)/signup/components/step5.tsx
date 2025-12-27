@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, EyeOff, Check, X } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -9,232 +8,208 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
-  FormMessage,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  createPasswordSchema,
-  type CreatePasswordFormData,
-  type SignupFormData,
-} from "@/types/auth";
+import { verifyPhoneSchema, type VerifyPhoneData, type SignupFormData } from "@/types/auth"; 
 import { toast } from "sonner";
-import { handleCreatePassword } from "@/lib/utils/api/apiHelper";
-import ProgressHeader from "./ProgressHeader";
 import { ClipLoader } from "react-spinners";
 
+import {
+  handleVerifyPhoneNumber,
+  handleResendPhoneVerificationToken,
+} from "@/lib/utils/api/apiHelper";
+import ProgressHeader from "./ProgressHeader";
+
 interface Props {
-  onNext: (data: Partial<SignupFormData>) => void;
+  onNext: (data: Partial<SignupFormData>) => void; 
   data: SignupFormData;
 }
 
 export default function Step5({ onNext, data }: Props) {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(20);
+  const [canResend, setCanResend] = useState(false);
 
-  const form = useForm<CreatePasswordFormData>({
-    resolver: zodResolver(createPasswordSchema),
-    defaultValues: {
-      // Pre-fill existing data if available (though unlikely for a fresh password)
-      password: data.password || "",
-      confirmPassword: data.confirmPassword || "",
-    },
+  const form = useForm<VerifyPhoneData>({
+    resolver: zodResolver(verifyPhoneSchema),
+    defaultValues: { phoneVerificationCode: "" }, 
   });
 
-  const password = form.watch("password");
+  useEffect(() => {
+    if (timeLeft === 0) {
+      setCanResend(true);
+      return;
+    }
+    const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [timeLeft]);
 
-  const requirements = [
-    { test: password.length >= 8, label: "8 characters" },
-    { test: /[a-zA-Z]/.test(password), label: "Letters" },
-    { test: /\d/.test(password), label: "Numbers" },
-    {
-      test: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
-      label: "symbols",
-    },
-  ];
+  const handleResend = async () => {
+    setResending(true);
+    
+    if (!data.phone) {
+        toast.error("Phone number not found. Please go back to step 4.");
+        setResending(false);
+        return;
+    }
 
-  const onSubmit = async (values: CreatePasswordFormData) => {
-    setLoading(true);
     try {
-      const response = await handleCreatePassword(values.password);
+      const channel = data.isWhatsappNo === "true" ? "whatsapp" : "phone";
 
-      if (response.status === "success") {
-        toast.success(response.msg || "Password created successfully!");
-        onNext({
-          password: values.password,
-          confirmPassword: values.confirmPassword,
-        }); 
+      const res = await handleResendPhoneVerificationToken(data.phone, channel);
+
+      if (res.status === "success") {
+        toast.success(
+          `New code sent via ${channel === "whatsapp" ? "WhatsApp" : "SMS"}!`
+        );
+        setTimeLeft(20); 
+        setCanResend(false);
       } else {
-        toast.error(response.msg || "Failed to create password");
+        toast.error(res.msg || "Failed to resend code");
       }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.message || "Network error. Please try again.");
+      const backendMessage = error.response?.data?.msg;
+      const errorMsg = backendMessage || error.message || "Network error";
+      toast.error(errorMsg);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const onSubmit = async (values: VerifyPhoneData) => {
+    setLoading(true);
+    try {
+      const response = await handleVerifyPhoneNumber(values.phoneVerificationCode);
+
+      if (response.status === "success") {
+        toast.success(response.msg || "Phone verified!");
+        onNext({ phoneVerificationCode: values.phoneVerificationCode });
+      } else {
+        const msg = response.msg || "Invalid code";
+        toast.error(msg);
+        form.setError("phoneVerificationCode", { message: msg }); 
+      }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const backendMessage = error.response?.data?.msg;
+      const errorMsg = backendMessage || error.message || "Verification failed";
+
+      toast.error(errorMsg);
+      form.setError("phoneVerificationCode", { message: errorMsg }); 
     } finally {
       setLoading(false);
     }
   };
 
+  const code = form.watch("phoneVerificationCode") || "";
+
   return (
-    <div>
+    <div className="">
       <ProgressHeader currentStep={5} />
-      {/* <div className="mb-8">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-[#2F2F2F] hover:text-[#0A6DC0] transition"
-        >
-          <ChevronLeft className="w-5 h-5" />
-          Back
-        </button>
-      </div> */}
 
       <h1 className="font-clash text-[22px] font-semibold text-[#2F2F2F] mb-3">
-        Create Password
+        Verify Phone Number
       </h1>
       <p className="text-[#9E9A9A] mb-8">
-        Create a strong password to secure your account
+        We&apos;ve sent a one-time code via{" "}
+        <strong>{data.isWhatsappNo === "true" ? "WhatsApp" : "SMS"}</strong>
       </p>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Password */}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
             control={form.control}
-            name="password"
+            name="phoneVerificationCode" 
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      {...field}
-                      className="pl-10 pr-12 bg-[#FAFAFA] h-12"
-                    />
-                    <div className="absolute left-3 top-3 text-gray-400">
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 11c1.104 0 2-.896 2-2s-.896-2-2-2-2 .896-2 2 .896 2 2 2zm0 2c-2.67 0-8 1.335-8 4v2h16v-2c0-2.665-5.33-4-8-4z"
-                        />
-                      </svg>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-gray-500"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
-                    </button>
+                  <div className="flex gap-4">
+                    {[0, 1, 2, 3, 4, 5].map((index) => (
+                      <Input
+                        key={index}
+                        id={`otp-${index}`}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={field.value?.[index] || ""} 
+                        onChange={(e) => {
+                          const digit = e.target.value.replace(/\D/g, "");
+                          if (!digit && e.target.value !== "") return;
+
+                          const newCode = (field.value || "")
+                            .padEnd(6, " ")
+                            .split("");
+                          newCode[index] = digit;
+                          const joined = newCode.join("").trim().slice(0, 6);
+                          field.onChange(joined);
+
+                          if (digit && index < 5) {
+                            document
+                              .getElementById(`otp-${index + 1}`)
+                              ?.focus();
+                          } else if (!digit && index > 0) {
+                            document
+                              .getElementById(`otp-${index - 1}`)
+                              ?.focus();
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (
+                            e.key === "Backspace" &&
+                            !field.value?.[index] &&
+                            index > 0
+                          ) {
+                            e.preventDefault();
+                            document
+                              .getElementById(`otp-${index - 1}`)
+                              ?.focus();
+                          }
+                        }}
+                        onFocus={(e) => e.target.select()}
+                        className="w-12 h-12 text-[13px] text-[#333333] lg:w-14 lg:h-14 text-center  rounded-xl border-2 bg-[#D8D8D866] focus:border-[#0A6DC0] focus:bg-white transition-all"
+                        disabled={loading}
+                      />
+                    ))}
                   </div>
                 </FormControl>
-                <FormMessage />
               </FormItem>
             )}
           />
 
-          {/* Confirm Password */}
-          <FormField
-            control={form.control}
-            name="confirmPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <Input
-                      type={showConfirm ? "text" : "password"}
-                      placeholder="Confirm your password"
-                      {...field}
-                      className="pl-10 pr-12 bg-[#FAFAFA] h-12"
-                    />
-                    <div className="absolute left-3 top-3 text-gray-400">
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 11c1.104 0 2-.896 2-2s-.896-2-2-2-2 .896-2 2 .896 2 2 2zm0 2c-2.67 0-8 1.335-8 4v2h16v-2c0-2.665-5.33-4-8-4z"
-                        />
-                      </svg>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirm(!showConfirm)}
-                      className="absolute right-3 top-3 text-gray-500"
-                    >
-                      {showConfirm ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
-                    </button>
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {password && (
-            <div className=" space-y-2">
-              <p className="text-sm font-medium text-[#2F2F2F]">
-                Password must contain:
+          <div className="flex justify-between text-sm text-[#9E9A9A]">
+            <p>
+              Didn&apos;t receive code?{" "}
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={!canResend || resending}
+                className="text-[#0A6DC0] font-medium hover:underline disabled:opacity-50"
+              >
+                {resending ? "Sending..." : "Resend"}
+              </button>
+            </p>
+            {timeLeft > 0 && (
+              <p className="mt-1 text-[16px] text-[#2F2F2F] font-clash">
+                {timeLeft}s
               </p>
-              <div className="flex items-center justify-between md:gap-2 text-[11px] md:text-[14px]">
-                {requirements.map((req, i) => (
-                  <div key={i} className="flex items-center md:gap-2">
-                    {req.test ? (
-                      <Check className="w-4 h-4 text-green-600" />
-                    ) : (
-                      <X className="w-4 h-4 text-red-400" />
-                    )}
-                    <span
-                      className={
-                        req.test
-                          ? "text-green-600 whitespace-nowrap"
-                          : "text-red-400 whitespace-nowrap"
-                      }
-                    >
-                      {req.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
 
           <Button
             type="submit"
-            disabled={loading || !form.formState.isValid}
-            className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] text-white font-bold py-6 rounded-xl "
+            disabled={loading || code.length !== 6}
+            className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] text-white font-bold py-6 rounded-xl"
           >
             {loading ? (
               <>
-                Creating...
-                <ClipLoader size={24} color="white" />
+                <ClipLoader size={20} color="white" />
+                Verifying...
               </>
             ) : (
-              "Continue"
+              "Verify Phone"
             )}
           </Button>
         </form>

@@ -15,9 +15,7 @@ import {
 } from "@/components/ui/form";
 import { User, Mail, Link2 } from "lucide-react";
 import Link from "next/link";
-import { ClipLoader } from "react-spinners";
 import { toast } from "sonner";
-import { useUser } from "@/context/userContext";
 
 import {
   step1Schema,
@@ -25,8 +23,6 @@ import {
   type SignupFormData,
 } from "@/types/auth";
 
-import { poster } from "@/lib/utils/api/apiHelper";
-import { SIGN_UP } from "@/url/api-url";
 import ProgressHeader from "./ProgressHeader";
 
 interface Props {
@@ -35,8 +31,7 @@ interface Props {
 }
 
 export default function Step1({ onNext, data }: Props) {
-  const [loading, setLoading] = useState(false);
-  const { setUser } = useUser();
+  const [loading] = useState(false);
 
   const form = useForm<Step1FormData>({
     resolver: zodResolver(step1Schema),
@@ -48,57 +43,15 @@ export default function Step1({ onNext, data }: Props) {
     },
   });
 
-  const onSubmit = async (values: Step1FormData) => {
-    setLoading(true);
-
-    try {
-      const payload = {
-        firstName: values.firstName.trim(),
-        lastName: values.lastName.trim(),
-        email: values.email.toLowerCase().trim(),
-        referralCode: values.referralCode?.trim() || undefined,
-      };
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response = await poster<any>(SIGN_UP, payload);
-
-      if (response.status === "success") {
-        const token = response.data?.tokens?.accessToken?.token;
-        const userData = response.data?.user;
-
-        if (!token) {
-          toast.error("Authentication failed: No token received");
-          return;
-        }
-        if (userData) {
-          setUser(userData);
-        }
-
-        localStorage.setItem("accessToken", token);
-        localStorage.setItem("authToken", token);
-        localStorage.setItem("email", values.email.toLowerCase().trim());
-
-        toast.success("Verification code sent! Check your email");
-
-        onNext({
-          firstName: values.firstName,
-          lastName: values.lastName,
-          email: values.email,
-          referralCode: values.referralCode,
-        });
-      } else {
-        toast.error(response.msg || "Signup failed");
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      const msg =
-        error?.response?.data?.msg ||
-        error?.response?.data?.message ||
-        "Network error. Please try again.";
-      toast.error(msg);
-    } finally {
-      setLoading(false);
-    }
+  const onSubmit = (values: Step1FormData) => {
+    // Just validate and move to next step (password creation)
+    onNext({
+      firstName: values.firstName,
+      lastName: values.lastName,
+      email: values.email,
+      referralCode: values.referralCode,
+    });
+    toast.success("Information saved!");
   };
 
   return (
@@ -108,7 +61,7 @@ export default function Step1({ onNext, data }: Props) {
       <h1 className="font-clash  text-[22px] font-semibold mb-2 text-[#2F2F2F]">
         Create Account
       </h1>
-      <p className="text-[#9E9A9A] mb-4 text-[16px] leading-relaxed">
+      <p className="text-[#9E9A9A] mb-4 text-[16px] leading">
         Join thousands of business owners transforming how they manage and grow
         their stores.
       </p>
@@ -209,14 +162,7 @@ export default function Step1({ onNext, data }: Props) {
             disabled={loading}
             className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] text-white font-bold py-6 rounded-xl mt-8 transition-all active:scale-95 flex items-center justify-center gap-3"
           >
-            {loading ? (
-              <>
-                Creating Account...
-                <ClipLoader size={20} color="white" />
-              </>
-            ) : (
-              "Continue"
-            )}
+            Continue
           </Button>
         </form>
       </Form>

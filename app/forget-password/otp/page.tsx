@@ -68,7 +68,7 @@ const Page = () => {
         Did you forget your password?
       </h2>
       <p className="text-sm text-black text-left font-sans">
-        Enter your email address and we&apos;ll send you a token to reset your
+        Enter your email address and we&apos;ll send you a token to reset your 
         <br />
         password.
       </p>

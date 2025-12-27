@@ -16,7 +16,7 @@ interface Props {
 }
 
 const goals = [
-    { id: "Fast Sales" as const, title: "Fast Sales", icon: "⚡" },
+  { id: "Fast Sales" as const, title: "Fast Sales", icon: "⚡" },
   { id: "Higher Profit" as const, title: "Higher Profit", icon: "📈" },
 ];
 
@@ -68,7 +68,7 @@ export default function Step8({ data }: Props) {
       <ProgressHeader currentStep={8} />
 
       <h1 className="text-[22px] font-semibold mb-3 font-clash">
-        What’s your main business goal?
+        What&apos;s your main business goal?
       </h1>
       <p className="text-[#9E9A9A] mb-8">
         This helps us recommend the best features and pricing for you
@@ -114,7 +114,6 @@ export default function Step8({ data }: Props) {
         ))}
       </div>
 
-      {/* BEAUTIFUL BUTTON WITH SPINNER - EXACTLY LIKE YOU WANT */}
       <Button
         onClick={handleContinue}
         disabled={loading}

@@ -7,14 +7,19 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import Lottie from "lottie-react";
-import animationData from "@/public/animate.json";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft, Banknote, Eye, EyeOff, Landmark } from "lucide-react";
+import {
+  ChevronLeft,
+  Banknote,
+  Eye,
+  EyeOff,
+  Landmark,
+  MoveRight,
+} from "lucide-react";
 
 import {
   Form,
@@ -45,6 +50,8 @@ import {
   handleVendCliqTransfer,
 } from "@/lib/utils/api/apiHelper";
 import { generateTransactionKey } from "@/lib/utils/generateTransactionKey";
+import Lottie from "lottie-react";
+import animationData from "@/public/animate.json";
 
 const beneficiaries = [
   {
@@ -118,8 +125,39 @@ export default function VendCliqTransfer() {
   };
 
   const handleStep2 = async () => {
-    const valid = await trigger("amount");
-    if (valid) setStep(3);
+    const amount = watch("amount");
+    const narration = watch("narration");
+
+    // First trigger the amount validation from schema
+    const amountValid = await trigger("amount");
+    if (!amountValid) return;
+
+    // Validate amount for zeros only (0, 00, 000, etc.)
+    if (
+      amount.toString().replace(/[^0-9]/g, "") === "" ||
+      amount
+        .toString()
+        .replace(/[^0-9]/g, "")
+        .match(/^0+$/)
+    ) {
+      toast.error("Amount cannot be zero or contain only zeros");
+      return;
+    }
+
+    // Validate narration
+    if (!narration || narration.trim() === "") {
+      toast.error("Please enter a narration");
+      return;
+    }
+
+    // Check narration minimum length
+    if (narration.trim().length < 2) {
+      toast.error("Narration is too short (minimum 2 characters)");
+      return;
+    }
+
+    // If all validations pass, proceed to next step
+    setStep(3);
   };
 
   // Final submission with PIN validation + transfer
@@ -278,8 +316,12 @@ export default function VendCliqTransfer() {
                       onClick={() => setStep(2)}
                       className="hover:bg-[#0A6DC012] p-2 rounded-md space-y-1 cursor-pointer transition-all select-none"
                     >
-                      <p className="font-medium text-[#2F2F2F] text-[16px] font-dm-sans">
-                        {accountInfo.accountName}
+                      <p
+                        onClick={() => setStep(2)}
+                        className="flex items-center gap-5 font-medium text-[#2F2F2F] text-[16px] font-dm-sans"
+                      >
+                        {accountInfo.accountName}{" "}
+                        <MoveRight className="text-[#0A6DC0]" />
                       </p>
                       <p className="text-[13px] font-dm-sans font-medium text-[#9E9A9A]">
                         {accountInfo.provider} BANK
@@ -382,8 +424,16 @@ export default function VendCliqTransfer() {
                             placeholder="e.g. Goods payment"
                             {...field}
                             className="h-[55px]"
+                            onBlur={(e) => {
+                              // Validate on blur
+                              if (e.target.value.trim() === "") {
+                                toast.error("Narration is required");
+                              }
+                            }}
                           />
                         </FormControl>
+                        {/* Add FormMessage to show validation errors */}
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -445,6 +495,14 @@ export default function VendCliqTransfer() {
                       Narration:
                     </h2>{" "}
                     {watch("narration") || "None"}
+                  </div>
+                  <div>
+                    <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
+                      Destination
+                    </h2>
+                    <p className="text-[#2F2F2F] font-medium">
+                      Vendcliq Account
+                    </p>
                   </div>
                 </div>
                 <Button
@@ -568,10 +626,15 @@ export default function VendCliqTransfer() {
       </Form>
 
       <AlertDialog open={showSuccess} onOpenChange={setShowSuccess}>
-        <AlertDialogContent className="text-center w-full  sm:max-w-[90vw] md:max-w-[600px] p-8">
-          <AlertDialogHeader className="space-y-10">
-            <div className="space-y-10">
-              <AlertDialogTitle className="text-center text-[#2F2F2F] text-[24px] md:text-[28px] font-bold font-clash">
+        <AlertDialogContent className="text-center w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[600px] p-8">
+          <AlertDialogHeader className="">
+            <Lottie
+              animationData={animationData}
+              loop={true}
+              className="w-40 md:w-64 md:h-64 mx-auto drop-shadow-lg"
+            />
+            <div className="">
+              <AlertDialogTitle className="text-center text-[#2F2F2F] text-[20px] md:text-[28px] font-bold font-clash">
                 🎉 Transfer Successful! 🎉
               </AlertDialogTitle>
 
@@ -579,8 +642,9 @@ export default function VendCliqTransfer() {
                 <p>You have successfully sent</p>
                 <div className="text-[22px]  font-bold text-[#0A6DC0]">
                   <p>₦{watch("amount")?.toLocaleString()}</p>
-                  <p className="text-[#2F2F2F]">
-                    To {accountInfo?.accountName}
+                  <p className="text-[#9E9A9A]">to</p>
+                  <p className="text-[14px] md:text-[16px] text-[#2F2F2F]">
+                    {accountInfo?.accountName}
                   </p>
                 </div>
               </AlertDialogDescription>
@@ -592,7 +656,7 @@ export default function VendCliqTransfer() {
               className="w-full bg-[#0A6DC0] hover:bg-[#09599a] py-6 text-lg font-medium"
               onClick={() => router.push("/dashboards/account/overview")}
             >
-              Back to Account
+              OK
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

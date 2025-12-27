@@ -39,7 +39,7 @@ export async function getWalletBalance(): Promise<WalletResponse | null> {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        cache: "no-store", // Always fresh data
+        cache: "no-store",
       }
     );
 

@@ -89,7 +89,7 @@ const beneficiaries = [
 
 export default function OtherBankTransfer() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [showBalance, setShowBalance] = useState(false);
+  const [showBallance, setShowBallance] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const router = useRouter();
 
@@ -117,7 +117,7 @@ export default function OtherBankTransfer() {
       bank: "",
       accountNumber: "",
       accountName: "",
-      amount: 100,
+      amount: 0,
       narration: "",
       pin: "",
     },
@@ -215,6 +215,46 @@ export default function OtherBankTransfer() {
   };
 
   const handleStep2 = () => {
+    const amount = watch("amount");
+    const narration = watch("narration");
+
+    // Validate amount
+    if (!amount || amount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
+    // Check if amount is 0, 00, 000, etc. (as string or number)
+    if (
+      amount.toString().replace(/[^0-9]/g, "") === "" ||
+      amount
+        .toString()
+        .replace(/[^0-9]/g, "")
+        .match(/^0+$/)
+    ) {
+      toast.error("Amount cannot be zero or contain only zeros");
+      return;
+    }
+
+    // Check for special characters in amount (except decimal point)
+    if (isNaN(Number(amount))) {
+      toast.error("Amount must be a valid number");
+      return;
+    }
+
+    // Validate narration
+    if (!narration || narration.trim() === "") {
+      toast.error("Please enter a narration");
+      return;
+    }
+
+    // Check narration length
+    if (narration.trim().length < 2) {
+      toast.error("Narration is too short");
+      return;
+    }
+
+    // If all validations pass, proceed to next step
     setStep(3);
   };
 
@@ -462,7 +502,10 @@ export default function OtherBankTransfer() {
                           setStep(2);
                         }}
                       >
-                        <p className="font-bold text-[#0A6DC0] text-[16px] -mt-3 flex items-center gap-4 cursor-pointer">
+                        <p
+                          onClick={handleStep1}
+                          className="font-bold text-[#0A6DC0] text-[16px] -mt-3 flex items-center gap-4 cursor-pointer"
+                        >
                           {accountName} <MoveRight className="text-[#0A6DC0]" />
                         </p>
                       </div>
@@ -472,21 +515,6 @@ export default function OtherBankTransfer() {
                     )}
                   </div>
                 )}
-
-                <Button
-                  type="button"
-                  onClick={handleStep1}
-                  className="w-full bg-[#0A6DC0] hover:bg-[#09599a] py-6 mt-7"
-                  disabled={
-                    beneficiaryType === "new" &&
-                    (!selectedBankCode ||
-                      accountNumber.length !== 10 ||
-                      !accountName ||
-                      isEnquiring)
-                  }
-                >
-                  Proceed
-                </Button>
               </>
             )}
 
@@ -498,32 +526,36 @@ export default function OtherBankTransfer() {
                   confirm transfer
                 </p>
 
-                <div className="bg-[url('/balance-bg.svg')] my-6 bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6">
+                <div className="bg-[url('/balance-bg.svg')] my-6 bg-cover bg-no-repeat bg-center  h-[100px] rounded-2xl p-6">
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <p className="text-white font-dm-sans font-regular text-[14px]">
-                        Wallet Balance
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setShowBalance(!showBalance)}
-                      >
-                        {showBalance ? (
-                          <EyeOff size={18} color="white" />
+                    <div className=" flex items-center gap-2">
+                      <div className="space-y-1 md:space-y-2">
+                        <div className="flex items-center gap-4">
+                          <h1 className="font-bold font-dm-sans font-regular text-[13px]   text-white">
+                            Wallet Balance
+                          </h1>
+                          <button
+                            type="button"
+                            onClick={() => setShowBallance(!showBallance)}
+                          >
+                            {showBallance ? (
+                              <EyeOff size={21} color="white" />
+                            ) : (
+                              <Eye size={23} color="white" />
+                            )}
+                          </button>
+                        </div>
+                        {showBallance ? (
+                          <h1 className="text-[28px] text-white font-clash font-bold">
+                            * * * *
+                          </h1>
                         ) : (
-                          <Eye size={20} color="white" />
+                          <h1 className="font-clash text-white text-[20px]  font-semibold">
+                            # {wallet?.balance}
+                          </h1>
                         )}
-                      </button>
+                      </div>
                     </div>
-                    {showBalance ? (
-                      <h1 className="text-[20px] text-white font-clash font-bold">
-                        ******
-                      </h1>
-                    ) : (
-                      <h1 className="text-[20px] text-white font-clash font-bold">
-                        ₦300,500,750
-                      </h1>
-                    )}
                   </div>
                 </div>
 
@@ -554,7 +586,34 @@ export default function OtherBankTransfer() {
                             type="number"
                             placeholder="Enter amount"
                             className="h-[55px]"
-                            {...field}
+                            onKeyDown={(e) => {
+                              // Prevent special characters except numbers, backspace, delete, tab, arrow keys
+                              if (
+                                !/[\d.eE+-]|Backspace|Delete|Tab|Arrow/.test(
+                                  e.key
+                                ) &&
+                                !(e.ctrlKey || e.metaKey)
+                              ) {
+                                e.preventDefault();
+                              }
+                            }}
+                            onChange={(e) => {
+                              // Remove any non-numeric characters except decimal point
+                              const value = e.target.value.replace(
+                                /[^\d.]/g,
+                                ""
+                              );
+
+                              // Prevent multiple decimal points
+                              const parts = value.split(".");
+                              if (parts.length > 2) {
+                                return;
+                              }
+
+                              // Update field value
+                              field.onChange(value === "" ? "" : Number(value));
+                            }}
+                            value={field.value || ""}
                           />
                         </FormControl>
                         <FormMessage />
@@ -606,12 +665,6 @@ export default function OtherBankTransfer() {
                 </p>
                 <div className="space-y-4 text-left mt-5">
                   {/* Destination */}
-                  <div>
-                    <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
-                      Destination
-                    </h2>
-                    <p className="text-[#0A6DC0] font-medium">Other Bank</p>
-                  </div>
 
                   <div>
                     <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
@@ -643,6 +696,12 @@ export default function OtherBankTransfer() {
                       Narration:
                     </h2>{" "}
                     {watch("narration") || "None"}
+                  </div>
+                  <div>
+                    <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
+                      Destination
+                    </h2>
+                    <p className="text-[#2F2F2F] font-medium">Other Bank</p>
                   </div>
                 </div>
                 <Button
@@ -766,22 +825,24 @@ export default function OtherBankTransfer() {
       {/* Success Modal with 🎉 */}
       <AlertDialog open={showSuccess} onOpenChange={setShowSuccess}>
         <AlertDialogContent className="text-center w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[600px] p-8">
-          <AlertDialogHeader className="space-y-6">
-            <div className="text-[100px] md:text-[140px]">🎉🎉🎉</div>
-            <div className="space-y-4">
-              <AlertDialogTitle className="text-center text-[#2F2F2F] text-[24px] md:text-[28px] font-bold font-clash">
-                Transfer Successful!
+          <AlertDialogHeader className="">
+            <Lottie
+              animationData={animationData}
+              loop={true}
+              className="w-40 md:w-64 md:h-64 mx-auto drop-shadow-lg"
+            />
+            <div className="">
+              <AlertDialogTitle className="text-center text-[#2F2F2F] text-[20px] md:text-[28px] font-bold font-clash">
+                🎉 Transfer Successful! 🎉
               </AlertDialogTitle>
-              <AlertDialogDescription className="text-[16px] md:text-[18px] font-medium text-[#2F2F2F] font-dm-sans space-y-3">
+              <AlertDialogDescription className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans text-center">
                 <p>You have successfully sent</p>
                 <p className="text-[22px] md:text-[28px] font-bold text-[#0A6DC0]">
                   ₦{watch("amount")?.toLocaleString()}
                 </p>
                 <p>to</p>
                 <p className="text-[18px] md:text-[22px] font-bold text-[#2F2F2F]">
-                  {finalAccountName ||
-                    selectedBeneficiary?.name ||
-                    "the recipient"}
+                  {finalAccountName || selectedBeneficiary?.name}
                 </p>
               </AlertDialogDescription>
             </div>

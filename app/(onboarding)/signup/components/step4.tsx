@@ -1,215 +1,223 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { MessageSquare } from "lucide-react";
+import { BsWhatsapp } from "react-icons/bs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/Input";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { verifyPhoneSchema, type VerifyPhoneData, type SignupFormData } from "@/types/auth"; 
+import {
+  confirmPhoneSchema,
+  type ConfirmPhoneData,
+  type SignupFormData,
+} from "@/types/auth";
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
 import { toast } from "sonner";
+import { handleConfirmPhoneNumber } from "@/lib/utils/api/apiHelper";
+import ProgressHeader from "./ProgressHeader";
 import { ClipLoader } from "react-spinners";
 
-import {
-  handleVerifyPhoneNumber,
-  handleResendPhoneVerificationToken,
-} from "@/lib/utils/api/apiHelper";
-import ProgressHeader from "./ProgressHeader";
-
 interface Props {
-  onNext: (data: Partial<SignupFormData>) => void; 
+  onNext: (data: Partial<SignupFormData>) => void;
   data: SignupFormData;
 }
 
 export default function Step4({ onNext, data }: Props) {
-  const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(20);
-  const [canResend, setCanResend] = useState(false);
+  const [method, setMethod] = useState<"whatsapp" | "sms">(
+    data.isWhatsappNo === "true" ? "whatsapp" : "sms"
+  );
 
-  const form = useForm<VerifyPhoneData>({
-    resolver: zodResolver(verifyPhoneSchema),
-    defaultValues: { phoneVerificationCode: "" }, 
+  const form = useForm<ConfirmPhoneData>({
+    resolver: zodResolver(confirmPhoneSchema),
+    defaultValues: {
+      phone: data.phone || "",
+      isWhatsappNo: method === "whatsapp" ? "true" : "false",
+    },
   });
 
-  useEffect(() => {
-    if (timeLeft === 0) {
-      setCanResend(true);
-      return;
-    }
-    const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [timeLeft]);
+  const onSubmit = async (values: ConfirmPhoneData) => {
+    form.setValue("isWhatsappNo", method === "whatsapp" ? "true" : "false");
 
-  const handleResend = async () => {
-    setResending(true);
-    
-    if (!data.phone) {
-        toast.error("Phone number not found. Please go back to step 3.");
-        setResending(false);
-        return;
+    let finalPhone = values.phone.replace(/\D/g, ""); 
+    if (finalPhone.startsWith("234")) {
+      finalPhone = finalPhone.substring(3);
+    }
+    if (finalPhone.startsWith("0")) {
+      finalPhone = finalPhone.substring(1);
     }
 
     try {
-      const channel = data.isWhatsappNo === "true" ? "whatsapp" : "phone";
-
-      const res = await handleResendPhoneVerificationToken(data.phone, channel);
-
-      if (res.status === "success") {
-        toast.success(
-          `New code sent via ${channel === "whatsapp" ? "WhatsApp" : "SMS"}!`
-        );
-        setTimeLeft(20); 
-        setCanResend(false);
-      } else {
-        toast.error(res.msg || "Failed to resend code");
-      }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      const backendMessage = error.response?.data?.msg;
-      const errorMsg = backendMessage || error.message || "Network error";
-      toast.error(errorMsg);
-    } finally {
-      setResending(false);
-    }
-  };
-
-  const onSubmit = async (values: VerifyPhoneData) => {
-    setLoading(true);
-    try {
-      const response = await handleVerifyPhoneNumber(values.phoneVerificationCode);
+      const response = await handleConfirmPhoneNumber({
+        phone: finalPhone,
+        isWhatsappNo: method === "whatsapp" ? "true" : "false",
+      });
 
       if (response.status === "success") {
-        toast.success(response.msg || "Phone verified!");
-        onNext({ phoneVerificationCode: values.phoneVerificationCode });
+        const serverMessage = response.msg || "Verification code sent!";
+        toast.success(serverMessage);
+
+        onNext({
+          phone: finalPhone,
+          isWhatsappNo: method === "whatsapp" ? "true" : "false",
+        });
       } else {
-        const msg = response.msg || "Invalid code";
-        toast.error(msg);
-        form.setError("phoneVerificationCode", { message: msg }); 
+        if (
+          response.msg?.includes("Duplicate entry") ||
+          response.msg?.includes("users_phone_unique")
+        ) {
+          toast.error(
+            "This phone number is already registered. Please use a different number"
+          );
+        } else {
+          toast.error(
+            response.msg ||
+              "Failed to send verification code. Please try again."
+          );
+        }
       }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      const backendMessage = error.response?.data?.msg;
-      const errorMsg = backendMessage || error.message || "Verification failed";
-
-      toast.error(errorMsg);
-      form.setError("phoneVerificationCode", { message: errorMsg }); 
-    } finally {
-      setLoading(false);
+      toast.error(
+        error.message ||
+          "An unexpected error occurred. Please check your connection and try again."
+      );
     }
   };
 
-  const code = form.watch("phoneVerificationCode") || "";
-
   return (
-    <div className="">
+    <div>
       <ProgressHeader currentStep={4} />
 
-      <h1 className="font-clash text-[22px] font-semibold text-[#2F2F2F] mb-3">
-        Verify Phone Number
+      <h1 className="text-[22px] font-semibold mb-3 font-clash">
+        Phone Number
       </h1>
       <p className="text-[#9E9A9A] mb-8">
-        We&apos;ve sent a one-time code via{" "}
-        <strong>{data.isWhatsappNo === "true" ? "WhatsApp" : "SMS"}</strong>
+        We&apos;ll use this number to keep your account safe and send important
+        updates.
       </p>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
             control={form.control}
-            name="phoneVerificationCode" 
+            name="phone"
             render={({ field }) => (
               <FormItem>
+                <FormLabel>Phone Number</FormLabel>
                 <FormControl>
-                  <div className="flex gap-4">
-                    {[0, 1, 2, 3, 4, 5].map((index) => (
-                      <Input
-                        key={index}
-                        id={`otp-${index}`}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={field.value?.[index] || ""} 
-                        onChange={(e) => {
-                          const digit = e.target.value.replace(/\D/g, "");
-                          if (!digit && e.target.value !== "") return;
-
-                          const newCode = (field.value || "")
-                            .padEnd(6, " ")
-                            .split("");
-                          newCode[index] = digit;
-                          const joined = newCode.join("").trim().slice(0, 6);
-                          field.onChange(joined);
-
-                          if (digit && index < 5) {
-                            document
-                              .getElementById(`otp-${index + 1}`)
-                              ?.focus();
-                          } else if (!digit && index > 0) {
-                            document
-                              .getElementById(`otp-${index - 1}`)
-                              ?.focus();
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (
-                            e.key === "Backspace" &&
-                            !field.value?.[index] &&
-                            index > 0
-                          ) {
-                            e.preventDefault();
-                            document
-                              .getElementById(`otp-${index - 1}`)
-                              ?.focus();
-                          }
-                        }}
-                        onFocus={(e) => e.target.select()}
-                        className="w-12 h-12 text-[13px] text-[#333333] lg:w-14 lg:h-14 text-center  rounded-xl border-2 bg-[#D8D8D866] focus:border-[#0A6DC0] focus:bg-white transition-all"
-                        disabled={loading}
-                      />
-                    ))}
-                  </div>
+                  <PhoneInput
+                    country={"ng"}
+                    value={field.value}
+                    onChange={field.onChange}
+                    inputStyle={{
+                      width: "100%",
+                      height: "56px",
+                      backgroundColor: "#F3F4F6",
+                      borderRadius: "8px",
+                      border: "none",
+                    }}
+                    containerStyle={{ width: "100%" }}
+                    buttonStyle={{ borderRadius: "8px 0 0 8px" }}
+                  />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
 
-          <div className="flex justify-between text-sm text-[#9E9A9A]">
-            <p>
-              Didn&apos;t receive code?{" "}
+          <div>
+            <div className="mb-4">
+              <p className="text-[#2F2F2F] font-clash font-bold ">
+                Choose verification method
+              </p>
+              <p className="text-[#9E9A9A] text-[13px]">
+                Select method that&apos;s easiest for you to get your OTP.
+              </p>
+            </div>{" "}
+            <div className="space-y-3">
               <button
                 type="button"
-                onClick={handleResend}
-                disabled={!canResend || resending}
-                className="text-[#0A6DC0] font-medium hover:underline disabled:opacity-50"
+                onClick={() => setMethod("whatsapp")}
+                className={`w-full flex items-center justify-between px-5 py-4 rounded-lg border-2 transition-all ${
+                  method === "whatsapp"
+                    ? "border-[#0A6DC0] bg-[#0A6DC012]"
+                    : "border-[#E5E7EB] bg-white"
+                }`}
               >
-                {resending ? "Sending..." : "Resend"}
+                <div className="flex items-center gap-4">
+                  <BsWhatsapp className="text-[#25D366] text-2xl" />
+                  <span className="font-medium">WhatsApp</span>
+                </div>
+                {method === "whatsapp" && (
+                  <div className="w-6 h-6 rounded-full bg-[#0A6DC0] flex items-center justify-center">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                )}
               </button>
-            </p>
-            {timeLeft > 0 && (
-              <p className="mt-1 text-[16px] text-[#2F2F2F] font-clash">
-                {timeLeft}s
-              </p>
-            )}
+
+              <button
+                type="button"
+                onClick={() => setMethod("sms")}
+                className={`w-full flex items-center justify-between px-5 py-4 rounded-lg border-2 transition-all ${
+                  method === "sms"
+                    ? "border-[#0A6DC0] bg-[#0A6DC012]"
+                    : "border-[#E5E7EB] bg-white"
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <MessageSquare className="text-[#0A6DC0] text-2xl" />
+                  <span className="font-medium">SMS</span>
+                </div>
+                {method === "sms" && (
+                  <div className="w-6 h-6 rounded-full bg-[#0A6DC0] flex items-center justify-center">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            </div>
           </div>
 
           <Button
             type="submit"
-            disabled={loading || code.length !== 6}
+            disabled={form.formState.isSubmitting}
             className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] text-white font-bold py-6 rounded-xl"
           >
-            {loading ? (
+            {form.formState.isSubmitting ? (
               <>
+                Sending...
                 <ClipLoader size={20} color="white" />
-                Verifying...
               </>
             ) : (
-              "Verify Phone"
+              "Send Verification Code"
             )}
           </Button>
         </form>

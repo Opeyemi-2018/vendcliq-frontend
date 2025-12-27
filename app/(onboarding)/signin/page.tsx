@@ -10,7 +10,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/Input";
-import { ChevronLeft, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import {  Eye, EyeOff, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -78,13 +78,7 @@ const SignIN = () => {
 
   return (
     <div className="w-full lg:max-w-[40rem] mx-auto  px-3 lg:px-10 xl:px-24">
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-[#2F2F2F] pb-4 md:pb-10 hover:opacity-70 mb-4"
-      >
-        <ChevronLeft className="w-5 h-5" />
-        Back
-      </button>
+     
       <h1 className="font-clash  text-[22px] font-semibold mb-2 text-[#2F2F2F]">
         Welcome Back
       </h1>

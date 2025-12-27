@@ -12,14 +12,12 @@ import Step5 from "./components/step5";
 import Step6 from "./components/step6";
 import Step7 from "./components/step7";
 import Step8 from "./components/step8";
-import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<SignupFormData>({});
   const [isInitialized, setIsInitialized] = useState(false);
-  const isRestoredSession = useRef(false); // Track if this is a restored session
-  const router = useRouter();
+  const isRestoredSession = useRef(false);
 
   // Restore progress on mount
   useEffect(() => {
@@ -29,26 +27,27 @@ export default function SignupPage() {
       const accessToken = localStorage.getItem("accessToken");
       const authToken = localStorage.getItem("authToken");
 
-      // If user has completed Step 1 (has tokens) but browser closed
-      if ((accessToken || authToken) && savedData) {
+      if (savedData && savedStep) {
         const parsedData = JSON.parse(savedData);
+        const stepNum = parseInt(savedStep, 10);
+
         setData(parsedData);
 
-        // If savedStep exists and is > 1, continue from there
-        if (savedStep) {
-          const stepNum = parseInt(savedStep, 10);
-          // Make sure we don't go back to step 1 if tokens exist
-          setStep(stepNum > 1 ? stepNum : 2);
-        } else {
-          // No saved step but has token - start from step 2
-          setStep(2);
+        // If step is 1 or 2 (before signup API), restore without checking tokens
+        if (stepNum <= 2) {
+          setStep(stepNum);
+          isRestoredSession.current = true;
         }
-        isRestoredSession.current = true; // Mark as restored session
-      } else if (savedData && savedStep) {
-        // Normal restoration without tokens (user hasn't completed Step 1 yet)
-        setData(JSON.parse(savedData));
-        setStep(parseInt(savedStep, 10));
-        isRestoredSession.current = true; // Mark as restored session
+        // If step is 3+ (after signup API), only restore if tokens exist
+        else if (stepNum >= 3 && (accessToken || authToken)) {
+          setStep(stepNum);
+          isRestoredSession.current = true;
+        }
+        // Otherwise start from step 1
+        else {
+          setStep(1);
+          isRestoredSession.current = false;
+        }
       }
 
       setIsInitialized(true);
@@ -58,9 +57,8 @@ export default function SignupPage() {
     }
   }, []);
 
-  // Only save to localStorage after initialization and if it's not the first render
+  // Only save to localStorage after initialization
   useEffect(() => {
-    // Only save if initialized AND (it's a restored session OR not the very first render)
     if (
       isInitialized &&
       (isRestoredSession.current || step !== 1 || Object.keys(data).length > 0)
@@ -78,23 +76,23 @@ export default function SignupPage() {
     setData((prev) => ({ ...prev, ...newData }));
 
     if (step === 8) {
-      // Final step → go to thanks page
-      // Clear signup progress
-      try {
-        localStorage.removeItem("signupFormData");
-        localStorage.removeItem("signupStep");
-      } catch (error) {
-        console.error("Error clearing signup progress:", error);
-      }
-      router.push("/thanks");
+      // Final step → go to congrats page (handled in Step8 component)
+      // Clear signup progress is done in Step8 after API success
+      return;
     } else {
       setStep((s) => s + 1);
     }
   };
 
+  const prev = () => {
+    if (step > 1) {
+      setStep((s) => s - 1);
+    }
+  };
+
   const steps = {
     1: <Step1 onNext={next} data={data} />,
-    2: <Step2 onNext={next} data={data} />,
+    2: <Step2 onNext={next} onPrev={prev} data={data} />,
     3: <Step3 onNext={next} data={data} />,
     4: <Step4 onNext={next} data={data} />,
     5: <Step5 onNext={next} data={data} />,

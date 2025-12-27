@@ -139,7 +139,7 @@ export default function ForgotPassword() {
           </h1>
           <p className="text-[#9E9A9A] mb-8 text-[16px] leading-relaxed">
             Enter your email address and we&apos;ll send you a code to reset your
-            password.
+            password. vv
           </p>
 
           <Form {...step1Form}>

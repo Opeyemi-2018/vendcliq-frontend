@@ -138,7 +138,6 @@ export default function Step7({ onNext, data }: Props) {
         <label className="block text-[#2F2F2F] font-medium mb-2">
           Business Address
         </label>
-        {/* This will show Google Places dropdown when user types */}
         <PlacesAutocompleteInput
           value={businessAddress}
           onChange={(value) => {
