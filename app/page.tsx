@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -21,7 +22,7 @@ export default function Home() {
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0A6DC0]"></div>
+      <Image src={"/vendcliq.svg"} width={400} height={400} alt="logo" />
     </div>
   );
 }
