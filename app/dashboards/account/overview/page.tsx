@@ -26,6 +26,7 @@ const Home = () => {
   const [showBalance, setShowBallance] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const router = useRouter();
+
   useEffect(() => {
     const hasSeenWelcomeModal = localStorage.getItem("hasSeenWelcomeModal");
 
@@ -51,6 +52,10 @@ const Home = () => {
   };
 
   const accountNumber = wallet?.accountNumbers?.WEMA;
+  const hasWalletAccount =
+    wallet &&
+    wallet.accountNumbers &&
+    Object.keys(wallet.accountNumbers).length > 0;
 
   const handleCopyAccountNumber = async () => {
     if (!accountNumber) return;
@@ -63,27 +68,44 @@ const Home = () => {
     }
   };
 
+  const handleCreateWallet = () => {
+    // Navigate to wallet creation page
+    router.push("/dashboards/account/create-wallet");
+    // Or show a modal, or trigger wallet creation API
+    toast.info("Redirecting to wallet creation...");
+  };
+
   return (
     <div className="">
       <h1 className="font-bold font-dm-sans text-[#2F2F2F] text-[20px] md:text-[25px]">
         Welcome back, {user?.firstname}
       </h1>
 
-      <div className="bg-white font-dm-sans text-center text-[14px] md:font-bold text-[#2F2F2F] py-3 px-4 md:px-6 items-center justify-between gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
-        <p className="flex-shrink-0">
-          {Object.keys(wallet?.accountNumbers || {})[0]}
-        </p>
-        <Separator orientation="vertical" className="h-4" />
-        <h1 className="flex-shrink-0">
-          {wallet?.accountNumbers?.WEMA || "N/A"}
-        </h1>
-        <Separator orientation="vertical" className="h-4" />
-        <h1 className="flex-shrink-0">{wallet?.accountName || "Loading..."}</h1>
-        <Copy
-          className="w-5 h-5 text-[#0A6DC0] flex-shrink-0 cursor-pointer"
-          onClick={handleCopyAccountNumber}
-        />{" "}
-      </div>
+      {/* Conditional rendering for wallet account details */}
+      {hasWalletAccount ? (
+        <div className="bg-white font-dm-sans text-center text-[14px] md:font-bold text-[#2F2F2F] py-3 px-4 md:px-6 items-center justify-between gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
+          <p className="flex-shrink-0">
+            {Object.keys(wallet?.accountNumbers || {})[0]}
+          </p>
+          <Separator orientation="vertical" className="h-4" />
+          <h1 className="flex-shrink-0">
+            {wallet?.accountNumbers?.WEMA || "N/A"}
+          </h1>
+          <Separator orientation="vertical" className="h-4" />
+          <h1 className="flex-shrink-0">{wallet?.accountName || "N/A"}</h1>
+          <Copy
+            className="w-5 h-5 text-[#0A6DC0] flex-shrink-0 cursor-pointer"
+            onClick={handleCopyAccountNumber}
+          />
+        </div>
+      ) : (
+        <button
+          onClick={handleCreateWallet}
+          className=" font-dm-sans text-center text-[14px] md:font-bold text-[#0A6DC0] border-b-2 border-[#0A6DC0]"
+        >
+          Create Wallet
+        </button>
+      )}
 
       <div className="bg-[url('/blue.svg')] bg-no-repeat bg-cover bg-center  overflow-hidden h-[218px] mt-6 flex justify-between rounded-2xl">
         <div className="max-w-[50rem] justify-between h-full p-6 flex flex-col ">
@@ -123,7 +145,7 @@ const Home = () => {
                 <h1 className="text-[28px] font-clash font-bold">* * * *</h1>
               ) : (
                 <h1 className="font-clash text-[#2F2F2F] text-[20px] lg:text-[25px] font-semibold">
-                  # {wallet?.balance}
+                  ₦ {wallet?.balance || "0.00"}
                 </h1>
               )}
             </div>

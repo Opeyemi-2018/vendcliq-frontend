@@ -113,10 +113,10 @@ export default function Step5({ onNext, data }: Props) {
       <h1 className="font-clash text-[22px] font-semibold text-[#2F2F2F] mb-3">
         Verify Phone Number
       </h1>
-      <p className="text-[#9E9A9A] mb-8">
+      <div className="text-[#9E9A9A] mb-8 flex items-center gap-2">
         We&apos;ve sent a one-time code via{" "}
-        <strong>{data.isWhatsappNo === "true" ? "WhatsApp" : "SMS"}</strong>
-      </p>
+        <p className="text-[#2F2F2F]">{data.isWhatsappNo === "true" ? "WhatsApp" : "SMS"}</p>
+      </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

@@ -29,7 +29,7 @@ import { useUser } from "@/context/userContext";
 
 interface Props {
   onNext: (data: Partial<SignupFormData>) => void;
-  onPrev: () => void; 
+  onPrev: () => void;
   data: SignupFormData;
 }
 
@@ -37,7 +37,7 @@ export default function Step2({ onNext, onPrev, data }: Props) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { setUser } = useUser();
+  const { setUser, clearUserData } = useUser();
 
   const form = useForm<CreatePasswordFormData>({
     resolver: zodResolver(createPasswordSchema),
@@ -62,16 +62,18 @@ export default function Step2({ onNext, onPrev, data }: Props) {
   const onSubmit = async (values: CreatePasswordFormData) => {
     setLoading(true);
 
+    // Clear any existing user data before creating new account
+    clearUserData();
+
     try {
       const payload = {
         firstName: data.firstName!.trim(),
         lastName: data.lastName!.trim(),
         email: data.email!.toLowerCase().trim(),
         password: values.password,
-        confirmPassword: values.confirmPassword, // Added
-        referralCode: data.referralCode?.trim() || "", // Send empty string if none
+        confirmPassword: values.confirmPassword,
+        referralCode: data.referralCode?.trim() || "",
         device_info: {
-          // Full dummy device_info object
           device_id: "",
           device_name: "",
           device_model: "",
@@ -96,8 +98,6 @@ export default function Step2({ onNext, onPrev, data }: Props) {
         },
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      console.log("Signup payload:", payload);
       const response = await poster<any>(SIGN_UP, payload);
 
       if (response.status === "success") {
@@ -127,7 +127,6 @@ export default function Step2({ onNext, onPrev, data }: Props) {
       } else {
         toast.error(response.msg || "Signup failed");
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const msg =
         error?.response?.data?.msg ||
@@ -141,10 +140,10 @@ export default function Step2({ onNext, onPrev, data }: Props) {
 
   return (
     <div>
-      <ProgressHeader currentStep={2} />{" "}
+      <ProgressHeader currentStep={2} />
       <button
         type="button"
-        onClick={onPrev} // ← Now uses the proper prev function
+        onClick={onPrev}
         className="flex items-center gap-2 text-[#2F2F2F] pb-4 md:pb-10 hover:opacity-70 mb-4"
       >
         <ChevronLeft className="w-5 h-5" />

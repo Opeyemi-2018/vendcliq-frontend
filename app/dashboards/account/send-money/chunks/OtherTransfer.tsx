@@ -793,7 +793,7 @@ export default function OtherBankTransfer() {
                 <Button
                   type="button"
                   onClick={handleFinalSubmit}
-                  className="w-full bg-[#0A6DC0] hover:bg-[#09599a] py-6 text-lg font-medium"
+                  className="w-full bg-[#0A6DC0] hover:bg-[#09599a] py-5 md:py-6 text-lg font-medium"
                   disabled={pin?.length !== 4 || isTransferring}
                 >
                   {isTransferring ? (
@@ -804,7 +804,7 @@ export default function OtherBankTransfer() {
                   ) : pin?.length === 4 ? (
                     "Send Money"
                   ) : (
-                    `Enter PIN (${pin?.length || 0}/4)`
+                    `Send Money`
                   )}
                 </Button>
 

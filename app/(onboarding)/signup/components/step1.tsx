@@ -61,7 +61,7 @@ export default function Step1({ onNext, data }: Props) {
       <h1 className="font-clash  text-[22px] font-semibold mb-2 text-[#2F2F2F]">
         Create Account
       </h1>
-      <p className="text-[#9E9A9A] mb-4 text-[16px] leading">
+      <p className="text-[#9E9A9A] mb-4 text-[16px] leading-relaxed">
         Join thousands of business owners transforming how they manage and grow
         their stores.
       </p>

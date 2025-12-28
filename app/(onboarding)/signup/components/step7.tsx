@@ -8,13 +8,12 @@ import { type SignupFormData } from "@/types/auth";
 import { toast } from "sonner";
 import ProgressHeader from "./ProgressHeader";
 import { Input } from "@/components/ui/Input";
-import PlacesAutocompleteInput from "@/hooks/googleMap"; 
+import PlacesAutocompleteInput from "@/hooks/googleMap";
 
 interface Props {
   onNext: (data: Partial<SignupFormData>) => void;
   data: SignupFormData;
 }
-
 
 export default function Step7({ onNext, data }: Props) {
   const [businessName, setBusinessName] = useState(data.businessName || "");
@@ -49,6 +48,28 @@ export default function Step7({ onNext, data }: Props) {
   const removeLogo = () => {
     setLogoFile(null);
     setLogoPreview(null);
+  };
+
+  const handleAddressChange = (
+    value:
+      | string
+      | {
+          name?: string;
+          lat?: number;
+          lng?: number;
+          formatted_address?: string;
+        }
+  ) => {
+    if (typeof value === "string") {
+      // User is typing manually
+      setBusinessAddress(value);
+    } else if (value && value.name) {
+      // User selected from dropdown - use the 'name' field
+      setBusinessAddress(value.name);
+    } else if (value && value.formatted_address) {
+      // Fallback to formatted_address if name doesn't exist
+      setBusinessAddress(value.formatted_address);
+    }
   };
 
   const handleContinue = () => {
@@ -140,13 +161,7 @@ export default function Step7({ onNext, data }: Props) {
         </label>
         <PlacesAutocompleteInput
           value={businessAddress}
-          onChange={(value) => {
-            if (typeof value === "string") {
-              setBusinessAddress(value);
-            } else {
-              setBusinessAddress(value.formatted_address || "");
-            }
-          }}
+          onChange={handleAddressChange}
           placeholder="Enter full business address"
           className="bg-[#D8D8D866] h-12 border-0"
         />

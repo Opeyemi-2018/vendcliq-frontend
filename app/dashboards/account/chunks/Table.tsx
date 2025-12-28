@@ -89,9 +89,18 @@ const Table = () => {
         const response = await handleGetTransactions(currentPage);
 
         setTransactions(response.data.data);
-      } catch (err) {
-        setError("Failed to load transactions");
-        console.error("Error fetching transactions:", err);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
+        if (
+          err?.response?.status === 404 ||
+          err?.message?.includes("No transactions")
+        ) {
+          setTransactions([]);
+          setError(null); // Don't show error for "no data"
+        } else {
+          setError("Failed to load transactions. Please try again.");
+          console.error("Error fetching transactions:", err);
+        }
       } finally {
         setLoading(false);
       }
@@ -169,8 +178,13 @@ const Table = () => {
             )}
 
             {!loading && !error && transactions.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                No transactions found
+              <div className="text-center py-8 text-[#2F2F2F] flex items-center justify-center flex-col mt-20">
+                <Image src={"/ts.svg"} alt="ts" height={50} width={50} />
+                <p className="font-bold font-dm-sans text-[16px] ">
+                  {" "}
+                  No transactions found
+                </p>{" "}
+                <p>Your recent transactions will appear here</p>
               </div>
             )}
 
@@ -203,7 +217,7 @@ const Table = () => {
                   counterpartyName =
                     transaction.beneficiaryAccount?.name || "Unknown";
                   counterpartyBank =
-                    transaction.beneficiaryAccount?.provider || "N/A";
+                    transaction.beneficiaryAccount?.provider || "";
                 }
 
                 // For amount formatting (already good)
@@ -235,7 +249,7 @@ const Table = () => {
 
                       <div className="sm:w-[50%]">
                         <h1 className="font-medium uppercase lg:font-bold text-[14px] font-dm-sans">
-                          {counterpartyBank} | {counterpartyName}
+                          {counterpartyBank} {counterpartyName}
                         </h1>
                         <p className="text-[13px] text-[#797979]">
                           Ref: {transaction.transactionReference}

@@ -24,7 +24,7 @@ export default function ThanksPage() {
         />
 
         <h1 className="font-clash font-semibold text-[20px] md:text-[25px] text-[#2F2F2F] leading-tight">
-          Account Creation Successful
+         🎉 Account Creation Successful🎉
         </h1>
 
         <p className="text-[#9E9A9A] text-[14px] max-w-[26rem] mx-auto font-medium md:text-[16px] leading-relaxed">
