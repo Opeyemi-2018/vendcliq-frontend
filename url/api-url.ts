@@ -18,6 +18,7 @@ const TRANSACTION_HISTORY = "/client/v2/wallets/transactions";
 const VENDCLIQ_TRANSFER = "/client/v2/wallets/transfers/vendcliq";
 const OTHERBANK_TRANSFER = "/client/v2/wallets/transfer"
 const PIN_VALIDATE = "/client/v2/wallets/validate-pin";
+const CREATE_WALLET = "/client/v2/wallets/virtual-accounts/create"
 
 // v1 endpoint
 const BUSINESS_INFORMATION_SETUP_STEP_ONE =
@@ -62,6 +63,8 @@ const PAY_LOAN = (id: string) =>
 const CREATE_STORE = "inventory/stores";
 const CREATE_STOCK = "inventory/stocks";
 const GET_PRODUCTS = "inventory/products?page=1&limit=50&all=false&search=";
+const ADD_SHOP_ATTENDANT = "client/v2/attendants"
+
 export {
   // v2 endpoint
   VERIFY_EMAIL,
@@ -85,7 +88,8 @@ export {
   VENDCLIQ_TRANSFER,
   OTHERBANK_TRANSFER,
   PIN_VALIDATE,
-
+CREATE_WALLET,
+ADD_SHOP_ATTENDANT,
   // v1 endpoint
   GET_PROFILE,
   DASHBOARD,

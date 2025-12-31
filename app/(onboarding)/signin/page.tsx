@@ -10,7 +10,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/Input";
-import {  Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -25,7 +25,7 @@ const SignIN = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { setUser, setWallet } = useUser();
+  const { setUserAndWallet, clearUserData } = useUser(); // Use setUserAndWallet and clearUserData
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -38,39 +38,71 @@ const SignIN = () => {
   const onSubmit = async (values: SignInFormData) => {
     try {
       setIsLoading(true);
+
+      // Clear any existing user data BEFORE logging in
+      clearUserData();
+
+      // Optional: Force clear localStorage to ensure clean state
+      localStorage.clear();
+
       const response = await handleSignIn(values);
 
       if (response.status === "success") {
         const token = response.data?.tokens?.accessToken?.token;
-        localStorage.setItem("accessToken", token);
-        localStorage.setItem("authToken", token);
+
+        // Store token first
+        if (token) {
+          localStorage.setItem("accessToken", token);
+          localStorage.setItem("authToken", token);
+        }
 
         const userData = response.data?.user;
         const walletData = response.data?.user?.wallet;
 
         if (userData) {
-          setUser({
+          const formattedUserData = {
             firstname: userData.firstname,
             lastname: userData.lastname,
             email: userData.email.email,
             status: userData.account.status,
             userId: userData.userId,
             phone: userData.phone,
-          });
-        }
-        if (walletData) {
-          setWallet(walletData);
+          };
+
+          const formattedWalletData = walletData
+            ? {
+                walletId: walletData.walletId,
+                balance: walletData.balance,
+                currency: walletData.currency,
+                accountName: walletData.accountName,
+                accountNumbers: walletData.accountNumbers || {},
+                createdAt: walletData.createdAt,
+                updatedAt: walletData.updatedAt,
+              }
+            : null;
+
+          // Use setUserAndWallet to update both at once
+          setUserAndWallet(formattedUserData, formattedWalletData);
+
+          // Also store in localStorage directly
+          localStorage.setItem("user", JSON.stringify(formattedUserData));
+          if (formattedWalletData) {
+            localStorage.setItem("wallet", JSON.stringify(formattedWalletData));
+          }
+
+          toast.success("Signed in successfully!");
+          router.push("/dashboards/account/overview");
+
+          return;
         }
 
-        toast.success("Signed in successfully!");
-        router.push("/dashboards/account/overview");
-        return;
+        toast.error("User data not found in response");
+      } else {
+        toast.error(response.msg || "Sign in failed");
       }
-
-      toast.error(response.msg);
     } catch (error) {
-      console.log(error);
-      toast.error("No internet connection");
+      console.log("Sign in error:", error);
+      toast.error("No internet connection or server error");
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +110,6 @@ const SignIN = () => {
 
   return (
     <div className="w-full lg:max-w-[40rem] mx-auto  px-3 lg:px-10 xl:px-24">
-     
       <h1 className="font-clash  text-[22px] font-semibold mb-2 text-[#2F2F2F]">
         Welcome Back
       </h1>
@@ -86,7 +117,10 @@ const SignIN = () => {
         Enter your email and password to continue right where you stopped
       </p>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4 md:space-y-6"
+        >
           {/* EMAIL FIELD */}
           <FormField
             control={form.control}

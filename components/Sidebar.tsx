@@ -69,10 +69,7 @@ const items = [
       { title: "Sell", url: "/dashboards/inventory/sell" },
       { title: "Buy", url: "/dashboards/inventory/buy" },
       { title: "My Store", url: "/dashboards/inventory/my-store" },
-      {
-        title: "Create Store",
-        url: "/dashboards/inventory/create-store",
-      },
+     
     ],
   },
   { title: "Loan", url: "/dashboards/loan", icon: BriefcaseBusiness },

@@ -92,8 +92,8 @@ const Navbar = () => {
 
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
+                  <AlertDialogTitle className="font-dm-sans">Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription className="font-dm-sans">
                     This action will log you out of the system
                   </AlertDialogDescription>
                 </AlertDialogHeader>

@@ -75,6 +75,7 @@ import {
   TRANSACTION_HISTORY,
   VENDCLIQ_TRANSFER,
   OTHERBANK_TRANSFER,
+  CREATE_WALLET,
   PIN_VALIDATE,
   CREATE_LOAN,
   CREATE_PIN,
@@ -105,13 +106,23 @@ import {
   GET_PRODUCTS,
   CREATE_STORE,
   CREATE_STOCK,
+  ADD_SHOP_ATTENDANT
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
 import { CreateStoreFormData, CreateStoreResponse } from "@/types/store";
 import { CreateStockResponse, ProductsResponse } from "@/types/stock";
 import { TransactionHistoryResponse } from "@/types/transactions";
-import { OtherBankTransferPayload, OtherBankTransferResponse, PinValidatePayload, PinValidateResponse, VendCliqTransferPayload, VendCliqTransferResponse } from "@/types/transfer";
+import {
+  OtherBankTransferPayload,
+  OtherBankTransferResponse,
+  PinValidatePayload,
+  PinValidateResponse,
+  VendCliqTransferPayload,
+  VendCliqTransferResponse,
+} from "@/types/transfer";
+import { CreateWalletResponse } from "@/types/wallet";
+import { AddShopAttendantPayload, AddShopAttendantResponse } from "@/types/shopAttendant";
 
 interface UserProfile {
   data: {
@@ -182,7 +193,7 @@ export const posterWithMultipart = async <T>(
   headers?: Record<string, string>
 ): Promise<T> => {
   const response = await axiosInstance.post<T>("", formData, {
-    params: { endpoint: url }, // ← sends ?endpoint=/real/url
+    params: { endpoint: url },
     headers: {
       Accept: "*/*",
       ...headers,
@@ -338,7 +349,6 @@ export const handleSubmitBusinessVerification = (payload: FormData) => {
   );
 };
 
-
 export const handleGetTransactions = async (
   page: number = 1
 ): Promise<TransactionHistoryResponse> => {
@@ -374,6 +384,12 @@ export const handleOtherBankTransfer = async (
     OTHERBANK_TRANSFER,
     payload
   );
+};
+
+// Add this to your apiHelper.ts file
+
+export const handleCreateWallet = async (): Promise<CreateWalletResponse> => {
+  return await poster<CreateWalletResponse>(CREATE_WALLET, {});
 };
 
 
@@ -601,4 +617,13 @@ export const handleCreateStock = async (
   payload: any
 ): Promise<CreateStockResponse> => {
   return await poster<CreateStockResponse, any>(CREATE_STOCK, payload);
+};
+
+export const handleAddShopAttendant = async (
+  payload: AddShopAttendantPayload
+): Promise<AddShopAttendantResponse> => {
+  return await poster<AddShopAttendantResponse, AddShopAttendantPayload>(
+    ADD_SHOP_ATTENDANT,
+    payload
+  );
 };

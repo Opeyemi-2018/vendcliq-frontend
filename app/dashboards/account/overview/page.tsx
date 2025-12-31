@@ -7,9 +7,7 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import Table from "../chunks/Table";
-{
-  /* <LayoutDashboard />; */
-}
+import { ClipLoader } from "react-spinners";
 import {
   Dialog,
   DialogContent,
@@ -20,11 +18,14 @@ import {
 import { useUser } from "@/context/userContext";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { handleCreateWallet } from "@/lib/utils/api/apiHelper";
 
 const Home = () => {
   const { user, isUserPending, wallet } = useUser();
   const [showBalance, setShowBallance] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [creatingWallet, setCreatingWallet] = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -41,7 +42,6 @@ const Home = () => {
   };
 
   const handleCreateStore = () => {
-    // Navigate to create store page
     window.location.href = "/dashboards/inventory/my-store";
     setShowWelcomeModal(false);
   };
@@ -68,11 +68,28 @@ const Home = () => {
     }
   };
 
-  const handleCreateWallet = () => {
-    // Navigate to wallet creation page
-    router.push("/dashboards/account/create-wallet");
-    // Or show a modal, or trigger wallet creation API
-    toast.info("Redirecting to wallet creation...");
+  const handleCreateWalletClick = async () => {
+    setCreatingWallet(true);
+    try {
+      const response = await handleCreateWallet();
+
+      if (response.status === "success") {
+        toast.success(response.msg || "Virtual account created successfully!");
+
+        window.location.reload();
+      } else {
+        toast.error(response.msg || "Failed to create wallet");
+        setCreatingWallet(false);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const errorMsg =
+        error?.response?.data?.msg ||
+        error?.message ||
+        "Failed to create wallet. Please try again.";
+      toast.error(errorMsg);
+      setCreatingWallet(false);
+    }
   };
 
   return (
@@ -100,10 +117,18 @@ const Home = () => {
         </div>
       ) : (
         <button
-          onClick={handleCreateWallet}
-          className=" font-dm-sans text-center text-[14px] md:font-bold text-[#0A6DC0] border-b-2 border-[#0A6DC0]"
+          onClick={handleCreateWalletClick}
+          disabled={creatingWallet}
+          className="font-dm-sans text-center text-[14px] md:font-bold text-[#0A6DC0] border-b-2 border-[#0A6DC0] hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          Create Wallet
+          {creatingWallet ? (
+            <>
+              Creating Wallet...
+              <ClipLoader size={16} color="#0A6DC0" />
+            </>
+          ) : (
+            "Create Wallet"
+          )}
         </button>
       )}
 
@@ -204,7 +229,6 @@ const Home = () => {
       </div>
 
       <Dialog open={showWelcomeModal} onOpenChange={setShowWelcomeModal}>
-        {/* <DialogTrigger>Open</DialogTrigger> */}
         <DialogContent className="border-none flex items-center  gap-4 p-0 w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[600px] h-[360px] md:h-[418px] overflow-hidden">
           <Image
             src={"/modal-woman.svg"}

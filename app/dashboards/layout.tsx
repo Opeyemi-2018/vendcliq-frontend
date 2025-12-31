@@ -1,6 +1,6 @@
 "use client";
-import Navbar from "@/component/Navbar";
-import { AppSidebar } from "@/component/Sidebar";
+import Navbar from "@/components/Navbar";
+import { AppSidebar } from "@/components/Sidebar";
 import { ReactNode } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
