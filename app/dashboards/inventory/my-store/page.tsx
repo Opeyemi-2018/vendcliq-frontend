@@ -113,7 +113,7 @@ if (error) {
                       key={store.id}
                       className="hover:bg-gray-50 cursor-pointer transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]"
                       onClick={() =>
-                        router.push(`/dashboards/inventory/store/${store.id}`)
+                        router.push(`/dashboards/inventory/my-store/${store.id}`)
                       }
                     >
                       <td className="py-4 pl-4 font-medium">{store.name}</td>

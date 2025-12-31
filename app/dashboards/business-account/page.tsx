@@ -141,7 +141,7 @@ export default function SignupPage() {
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl px-4 lg:px-8 py-8 mt-10">
+      <div className="bg-white max-w-[50rem] mx-auto rounded-2xl px-4 lg:px-8 py-8 mt-10">
         {step === 1 && <Step1 onNext={handleStep1Complete} onPrev={prevStep} />}
         {step === 2 && (
           <Step2

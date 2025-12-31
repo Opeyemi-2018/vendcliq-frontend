@@ -33,6 +33,28 @@ export interface StoreResponse {
   };
 }
 
+export interface StoreDetailResponse {
+  statusCode: number;
+  error: string | null;
+  data: {
+    id: string;
+    name: string;
+    address: {
+      lat: number;
+      lng: number;
+      name: string;
+    };
+    phone: string;
+    stock_value: number;
+    stock_count: number;
+    low_stock_count: number;
+    attributes?: any | null;
+    meta?: any | null;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
 export interface CreateStoreResponse {
   statusCode: number;
   error: null | string;
