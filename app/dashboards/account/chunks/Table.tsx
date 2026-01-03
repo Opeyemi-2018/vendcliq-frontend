@@ -335,6 +335,7 @@ const Table = () => {
           <table className="w-full my-6">
             <thead className="">
               <tr>
+                
                 <th className="text-left px-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   ID
                 </th>

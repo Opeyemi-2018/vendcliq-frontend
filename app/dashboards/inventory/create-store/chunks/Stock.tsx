@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -11,7 +9,16 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
+import PhoneInput from "react-phone-input-2";
+import "react-phone-input-2/lib/style.css";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createStockSchema,
+  CreateStockFormData,
+  Product,
+} from "@/types/stock";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -29,40 +36,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  createStockSchema,
-  CreateStockFormData,
-  ProductsResponse,
-  CreateStockResponse,
-  Product,
-} from "@/types/stock";
 import { Info } from "lucide-react";
-import { useState, useEffect } from "react";
-
+import { useState } from "react";
 import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
-import {
-  handleGetProducts,
-  handleCreateStock,
-} from "@/lib/utils/api/apiHelper";
+import { handleCreateStock } from "@/lib/utils/api/apiHelper";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useProducts } from "@/hooks/useProduct";
 
 interface StockProps {
   storeId: string;
 }
 
 const Stock: React.FC<StockProps> = ({ storeId }) => {
+  const { products, isLoading: loadingProducts } = useProducts();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEmptiesModalOpen, setIsEmptiesModalOpen] = useState(false);
   const [tempEmptiesQty, setTempEmptiesQty] = useState("");
   const [tempEmptiesPrice, setTempEmptiesPrice] = useState("");
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const router = useRouter();
+
   const form = useForm<CreateStockFormData>({
     resolver: zodResolver(createStockSchema),
     defaultValues: {
@@ -81,30 +76,6 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
       supplier: "",
     },
   });
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoadingProducts(true);
-        const response: ProductsResponse = await handleGetProducts();
-
-        if (response.statusCode === 200 && response.data) {
-          setProducts(response.data);
-        } else {
-          toast.error("Failed to load products");
-          setProducts([]);
-        }
-      } catch (error) {
-        console.error("Error fetching products:", error);
-        toast.error("Failed to load products");
-        setProducts([]);
-      } finally {
-        setLoadingProducts(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
 
   // Handle product selection change
   const handleProductChange = (productId: string) => {
@@ -163,7 +134,7 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
     console.log("Stock Payload:", JSON.stringify(payload, null, 2));
 
     try {
-      const response: CreateStockResponse = await handleCreateStock(payload);
+      const response = await handleCreateStock(payload);
 
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Stock added successfully!");
@@ -173,7 +144,6 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
       } else {
         toast.error(response.error || "Failed to add stock. Please try again.");
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error creating stock:", error);
       toast.error(error.message || "Failed to add stock. Please try again.");
@@ -351,7 +321,7 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
                               onChange={(e) =>
                                 setTempEmptiesQty(e.target.value)
                               }
-                              className="mt-2  h-12"
+                              className="mt-2 h-12"
                             />
                           </div>
                           <div>
@@ -365,7 +335,7 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
                               onChange={(e) =>
                                 setTempEmptiesPrice(e.target.value)
                               }
-                              className="mt-2  h-12"
+                              className="mt-2 h-12"
                             />
                           </div>
                         </div>
@@ -529,7 +499,7 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
               />
             </div>
 
-            <div className="flex items-center gap-4 ">
+            <div className="flex items-center gap-4">
               {/* Expiry Date */}
               <FormField
                 control={form.control}

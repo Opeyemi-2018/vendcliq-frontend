@@ -64,6 +64,9 @@ const CREATE_STORE = "inventory/stores";
 const CREATE_STOCK = "inventory/stocks";
 const GET_PRODUCTS = "inventory/products?page=1&limit=50&all=false&search=";
 const ADD_SHOP_ATTENDANT = "client/v2/attendants"
+const CREATE_INVOICE = "inventory/invoices"
+const CREATE_CUSTOMER ="inventory/customers"
+
 
 export {
   // v2 endpoint
@@ -90,6 +93,8 @@ export {
   PIN_VALIDATE,
 CREATE_WALLET,
 ADD_SHOP_ATTENDANT,
+CREATE_INVOICE,
+CREATE_CUSTOMER,
   // v1 endpoint
   GET_PROFILE,
   DASHBOARD,

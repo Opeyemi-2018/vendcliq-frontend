@@ -76,6 +76,8 @@ import {
   VENDCLIQ_TRANSFER,
   OTHERBANK_TRANSFER,
   CREATE_WALLET,
+  CREATE_INVOICE,
+  CREATE_CUSTOMER,
   PIN_VALIDATE,
   CREATE_LOAN,
   CREATE_PIN,
@@ -123,6 +125,8 @@ import {
 } from "@/types/transfer";
 import { CreateWalletResponse } from "@/types/wallet";
 import { AddShopAttendantPayload, AddShopAttendantResponse } from "@/types/shopAttendant";
+import { CreateInvoicePayload, CreateInvoiceResponse } from "@/types/invoice";
+import { CreateCustomerPayload, CreateCustomerResponse } from "@/types/customer";
 
 interface UserProfile {
   data: {
@@ -624,6 +628,24 @@ export const handleAddShopAttendant = async (
 ): Promise<AddShopAttendantResponse> => {
   return await poster<AddShopAttendantResponse, AddShopAttendantPayload>(
     ADD_SHOP_ATTENDANT,
+    payload
+  );
+};
+
+export const handleCreateInvoice = async (
+  payload: CreateInvoicePayload
+): Promise<CreateInvoiceResponse> => {
+  return await poster<CreateInvoiceResponse, CreateInvoicePayload>(
+    CREATE_INVOICE,
+    payload
+  );
+};
+
+export const handleCreateCustomer = async (
+  payload: CreateCustomerPayload
+): Promise<CreateCustomerResponse> => {
+  return await poster<CreateCustomerResponse, CreateCustomerPayload>(
+    CREATE_CUSTOMER,
     payload
   );
 };
