@@ -78,6 +78,7 @@ import {
   CREATE_WALLET,
   CREATE_INVOICE,
   CREATE_CUSTOMER,
+  CREATE_CART,
   PIN_VALIDATE,
   CREATE_LOAN,
   CREATE_PIN,
@@ -127,6 +128,7 @@ import { CreateWalletResponse } from "@/types/wallet";
 import { AddShopAttendantPayload, AddShopAttendantResponse } from "@/types/shopAttendant";
 import { CreateInvoicePayload, CreateInvoiceResponse } from "@/types/invoice";
 import { CreateCustomerPayload, CreateCustomerResponse } from "@/types/customer";
+import { CreateCartPayload, CreateCartResponse } from "@/types/cart";
 
 interface UserProfile {
   data: {
@@ -646,6 +648,15 @@ export const handleCreateCustomer = async (
 ): Promise<CreateCustomerResponse> => {
   return await poster<CreateCustomerResponse, CreateCustomerPayload>(
     CREATE_CUSTOMER,
+    payload
+  );
+};
+
+export const handleAddToCart = async (
+  payload: CreateCartPayload
+): Promise<CreateCartResponse> => {
+  return await poster<CreateCartResponse, CreateCartPayload>(
+    CREATE_CART,
     payload
   );
 };

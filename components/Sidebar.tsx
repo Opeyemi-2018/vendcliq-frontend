@@ -69,7 +69,6 @@ const items = [
       { title: "Sell", url: "/dashboards/inventory/sell" },
       { title: "Buy", url: "/dashboards/inventory/buy" },
       { title: "My Store", url: "/dashboards/inventory/my-store" },
-     
     ],
   },
   { title: "Loan", url: "/dashboards/loan", icon: BriefcaseBusiness },
@@ -137,7 +136,12 @@ export function AppSidebar() {
         <SidebarGroup>
           {!isCollapsed && (
             <div className="px-4 py-4">
-              <Image src={"/vl.svg"} width={150} height={150} alt="logo" />
+              <Image
+                src={"/vendcliq.webp"}
+                width={150}
+                height={150}
+                alt="logo"
+              />
             </div>
           )}
 
@@ -257,7 +261,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild className="">
                   <div
                     style={{
-                      backgroundImage: "url('/mesh.svg')",
+                      backgroundImage: "url('/mesh.webp')",
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                       height: "127px",

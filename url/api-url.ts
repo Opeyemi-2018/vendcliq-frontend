@@ -16,9 +16,9 @@ const SEND_OTP_FOR_FORGET_PASSWORD = "/client/v2/auth/forgot-password";
 const RESET_PASSWORD = "/client/v2/auth/reset-password";
 const TRANSACTION_HISTORY = "/client/v2/wallets/transactions";
 const VENDCLIQ_TRANSFER = "/client/v2/wallets/transfers/vendcliq";
-const OTHERBANK_TRANSFER = "/client/v2/wallets/transfer"
+const OTHERBANK_TRANSFER = "/client/v2/wallets/transfer";
 const PIN_VALIDATE = "/client/v2/wallets/validate-pin";
-const CREATE_WALLET = "/client/v2/wallets/virtual-accounts/create"
+const CREATE_WALLET = "/client/v2/wallets/virtual-accounts/create";
 
 // v1 endpoint
 const BUSINESS_INFORMATION_SETUP_STEP_ONE =
@@ -63,10 +63,10 @@ const PAY_LOAN = (id: string) =>
 const CREATE_STORE = "inventory/stores";
 const CREATE_STOCK = "inventory/stocks";
 const GET_PRODUCTS = "inventory/products?page=1&limit=50&all=false&search=";
-const ADD_SHOP_ATTENDANT = "client/v2/attendants"
-const CREATE_INVOICE = "inventory/invoices"
-const CREATE_CUSTOMER ="inventory/customers"
-
+const ADD_SHOP_ATTENDANT = "client/v2/attendants";
+const CREATE_INVOICE = "inventory/invoices";
+const CREATE_CUSTOMER = "inventory/customers";
+const CREATE_CART = "inventory/carts";
 
 export {
   // v2 endpoint
@@ -91,10 +91,11 @@ export {
   VENDCLIQ_TRANSFER,
   OTHERBANK_TRANSFER,
   PIN_VALIDATE,
-CREATE_WALLET,
-ADD_SHOP_ATTENDANT,
-CREATE_INVOICE,
-CREATE_CUSTOMER,
+  CREATE_WALLET,
+  ADD_SHOP_ATTENDANT,
+  CREATE_INVOICE,
+  CREATE_CUSTOMER,
+  CREATE_CART,
   // v1 endpoint
   GET_PROFILE,
   DASHBOARD,

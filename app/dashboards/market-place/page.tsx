@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/dashboards/market-place/page.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { Heart, Search, ShoppingCart } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   getMarketplaceStocks,
   getMarketplaceOffers,
@@ -14,25 +13,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
-
-interface RegularStock {
-  id: string;
-  product: { name: string; image: string };
-  selling_price: string;
-  total_qty: string;
-  isOffer?: false;
-}
-
-interface OfferStock {
-  id: string;
-  product: { name: string; image: string };
-  price: number;
-  qty: number;
-  minimum_qty: number;
-  isOffer: true;
-}
-
-type CombinedStock = RegularStock | OfferStock;
+import { CombinedStock, OfferStock, RegularStock } from "@/types/marketPlace";
 
 const SkeletonCard = () => (
   <div className="rounded-lg overflow-hidden animate-pulse">
@@ -156,10 +137,11 @@ const MarketPlace = () => {
             {item.isOffer
               ? item.price.toFixed(2)
               : parseFloat(item.selling_price).toFixed(2)}
+            /unit
           </p>
           <h3 className="font-medium text-[13px]">{item.product.name}</h3>
           <p className="font-semibold text-[10px] font-regular mb-2">
-            {item.isOffer ? item.qty : item.total_qty} available
+            {item.isOffer ? item.qty : item.total_qty} pieces left
           </p>
         </div>
         <Button
@@ -181,11 +163,11 @@ const MarketPlace = () => {
           <h1 className="font-semibold font-clash text-[20px] md:text-[20px] text-[#2F2F2F]">
             Market Place
           </h1>
-          <p className="font-medium text-[#9E9A9A] font-dm-sans">
+          <p className="font-medium text-[13px] md:text-[16px] text-[#9E9A9A] font-dm-sans">
             Order any product from the market place
           </p>
         </div>
-        <Button className="bg-[#0A6DC0] hover:bg-[#09599a]">
+        <Button onClick={()=> router.push("/dashboards/cart")} className="bg-[#0A6DC0] hover:bg-[#09599a]">
           <ShoppingCart /> My Cart
         </Button>
       </div>
@@ -201,14 +183,14 @@ const MarketPlace = () => {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {[...Array(10)].map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
       ) : (
         <>
-          <Card className="p-6">
+          <Card className=" p-3  md:p-6">
             {/* Offer Products Section */}
             {displayItems.some((item) => item.isOffer) && (
               <div className="mb-8">
@@ -221,7 +203,7 @@ const MarketPlace = () => {
                       HOT DEALS
                     </h2>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                  <div className="grid  grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                     {displayItems
                       .filter((item) => item.isOffer)
                       .map(renderProductCard)}
@@ -237,7 +219,7 @@ const MarketPlace = () => {
                   All Products
                 </h2>
                 <div className="">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                  <div className="grid  grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                     {displayItems
                       .filter((item) => !item.isOffer)
                       .map(renderProductCard)}

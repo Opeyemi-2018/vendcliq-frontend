@@ -3,7 +3,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { MapPin, ShoppingCart, MoveLeft } from "lucide-react";
+import {
+  MapPin,
+  ShoppingCart,
+  MoveLeft,
+  Heart,
+  Plus,
+  Minus,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
 import {
   getMarketplaceStockDetail,
@@ -13,6 +20,9 @@ import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { handleAddToCart as addToCartApi } from "@/lib/utils/api/apiHelper";
+import { CreateCartPayload } from "@/types/cart";
+import { ClipLoader } from "react-spinners";
 
 interface Stock {
   id: string;
@@ -121,6 +131,8 @@ const StockDetailPage = () => {
   const [relatedOffers, setRelatedOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
 
   useEffect(() => {
     if (stockId) {
@@ -143,22 +155,17 @@ const StockDetailPage = () => {
 
       if (isOffer) {
         const result = await getOfferDetail(token, stockId);
-        console.log("Offer API Response:", result);
-        console.log("Offer data:", result.offer);
-
         if (result.success && result.offer) {
-          console.log("Setting offer:", result.offer);
           setOffer(result.offer);
           setStock(null);
           setRelatedStocks([]);
+          setRelatedOffers(result.relatedOffers || []);
         } else {
           setError(true);
           toast.error(result.error || "Failed to load offer details");
         }
       } else {
         const result = await getMarketplaceStockDetail(token, stockId);
-        console.log("Stock API Response:", result);
-
         if (result.success && result.stock) {
           setStock(result.stock);
           setOffer(null);
@@ -177,8 +184,65 @@ const StockDetailPage = () => {
     }
   };
 
-  const handleAddToCart = () => {
-    alert("Added to cart!");
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity < 1) return;
+    setQuantity(newQuantity);
+  };
+
+  const currentItem = isOffer ? offer : stock;
+
+  const onAddToCart = async () => {
+    if (!currentItem) {
+      toast.error("Product information is missing");
+      return;
+    }
+
+    const store = isOffer && offer ? offer.store : stock ? stock.store : null;
+
+    if (!store?.address?.lat || !store?.address?.lng || !store?.id) {
+      toast.error("Store location information is missing");
+      return;
+    }
+
+    const itemId = isOffer && offer ? offer.id : stock ? stock.id : null;
+    if (!itemId) {
+      toast.error("Product ID is missing");
+      return;
+    }
+
+    const payload: CreateCartPayload = {
+      quantity,
+      delivery: false,
+      attributes: {
+        latitude: store.address.lat,
+        longitude: store.address.lng,
+        address: store.address.name,
+        storeId: store.id,
+      },
+    };
+
+    if (isOffer) {
+      payload.offer_id = itemId;
+    } else {
+      payload.stock_id = itemId;
+    }
+
+    try {
+      setAddingToCart(true);
+      const rawResponse = await addToCartApi(payload);
+
+      if (rawResponse && rawResponse.error === null && rawResponse.data) {
+        toast.success("Added to cart successfully!");
+        setQuantity(1);
+      } else {
+        toast.error(rawResponse?.error || "Failed to add to cart");
+      }
+    } catch (error) {
+      console.error("Add to cart failed:", error);
+      toast.error("An error occurred while adding to cart");
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   const handleRelatedStockClick = (id: string) => {
@@ -188,8 +252,6 @@ const StockDetailPage = () => {
   const handleRelatedOfferClick = (id: string) => {
     router.push(`/dashboards/market-place/${id}?type=offer`);
   };
-
-  const currentItem = isOffer ? offer : stock;
 
   if (error) {
     return (
@@ -221,7 +283,7 @@ const StockDetailPage = () => {
             See more about this product before you order
           </p>
         </div>
-        <Button className="bg-[#0A6DC0] hover:bg-[#09599a]">
+        <Button onClick={()=> router.push("/dashboards/cart")} className="bg-[#0A6DC0] hover:bg-[#09599a]">
           <ShoppingCart /> My Cart
         </Button>
       </div>
@@ -229,14 +291,17 @@ const StockDetailPage = () => {
       {loading || !currentItem ? (
         <MainProductSkeleton />
       ) : (
-        <Card className="flex flex-col gap-3 p-5 rounded-lg">
+        <Card className="flex flex-col gap-3 p-2 md:p-5 rounded-lg">
           {/* Product Image */}
           <div className="bg-[#FAFAFA] rounded-lg border border-gray-200 overflow-hidden relative">
             {isOffer && (
-              <div className="absolute top-3 left-3 bg-red-500 text-white text-xs px-3 py-1.5 rounded z-10 font-semibold">
-                OFFER
+              <div className="absolute top-2 z-20 left-2 text-[#E33629] bg-[#FFE7E5] text-[8px] font-bold font-dm-sans px-2 py-1 rounded">
+                20% OFF
               </div>
             )}
+            <div className="absolute top-2 z-20 right-2 text-[#292D32] bg-[#F2F2F7] text-[8px] font-bold font-dm-sans p-1 rounded cursor-pointer">
+              <Heart size={15} />
+            </div>
             <div className="relative h-56 w-full">
               {currentItem.product?.image ? (
                 <Image
@@ -256,34 +321,55 @@ const StockDetailPage = () => {
           {/* Product Details */}
           <div>
             <div className="space-y-1">
-              <h1 className="font-medium font-dm-sans text-[16px] text-[#313131]">
-                {currentItem.product?.name || "Product Name"}
-              </h1>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="font-medium font-dm-sans text-[16px] text-[#313131]">
+                    {currentItem.product?.name || "Product Name"}
+                  </h1>
 
-              <p className="text-[16px] font-dm-sans font-bold text-[#313131]">
-                ₦
-                {isOffer && offer
-                  ? (offer.price ?? 0).toFixed(2)
-                  : stock
-                  ? parseFloat(stock.selling_price || "0").toFixed(2)
-                  : "0.00"}
-              </p>
+                  <p className="text-[16px] font-dm-sans font-bold text-[#313131]">
+                    ₦{" "}
+                    {isOffer && offer
+                      ? (offer.price ?? 0).toFixed(2)
+                      : stock
+                      ? parseFloat(stock.selling_price || "0").toFixed(2)
+                      : "0.00"}
+                  </p>
 
-              <p className="text-[13px] font-dm-sans text-[#8E8E93]">
-                {isOffer && offer
-                  ? `${offer.qty ?? 0} available`
-                  : stock
-                  ? `${stock.total_qty || "0"} available`
-                  : "0 available"}
-              </p>
+                  <p className="text-[13px] font-dm-sans text-[#8E8E93]">
+                    {isOffer && offer
+                      ? `${offer.qty ?? 0} available`
+                      : stock
+                      ? `${stock.total_qty || "0"} available`
+                      : "0 available"}
+                  </p>
+                </div>
 
-              {!isOffer && stock && stock.store && (
+                <div className="flex items-center gap-6 border border-[#D8D8D866] p-2 rounded-full w-auto">
+                  <button
+                    onClick={() => handleQuantityChange(quantity + 1)}
+                    className="hover:bg-[#0A6DC0] hover:text-white duration-200 rounded-full"
+                  >
+                    <Plus />
+                  </button>
+                  <span>{quantity}</span>
+                  <button
+                    disabled={quantity === 1}
+                    onClick={() => handleQuantityChange(quantity - 1)}
+                    className="hover:bg-[#0A6DC0] hover:text-white duration-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Minus />
+                  </button>
+                </div>
+              </div>
+
+              {!isOffer && stock?.store && (
                 <div className="text-[#8E8E93] flex items-center gap-2 text-[13px] font-regular font-dm-sans pt-2">
                   <MapPin size={20} /> {stock.store.address.name}
                 </div>
               )}
 
-              {isOffer && offer && offer.store && (
+              {isOffer && offer?.store && (
                 <div className="text-[#8E8E93] flex items-center gap-2 text-[13px] font-regular font-dm-sans pt-2">
                   <MapPin size={20} /> {offer.store.address.name}
                 </div>
@@ -307,14 +393,29 @@ const StockDetailPage = () => {
                   )}
                 </>
               )}
+
+              {!isOffer && stock?.exp_date && (
+                <p className="text-[12px] font-dm-sans text-[#8E8E93] pt-1">
+                  Expires: {new Date(stock.exp_date).toLocaleDateString()}
+                </p>
+              )}
             </div>
 
             {/* Add to Cart Button */}
             <Button
-              onClick={handleAddToCart}
-              className="w-full mt-4 bg-[#0A6DC0] hover:bg-[#09599a] py-6 text-lg"
+              onClick={onAddToCart}
+              disabled={addingToCart}
+              className="w-full mt-4 bg-[#0A6DC0] hover:bg-[#09599a] py-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ShoppingCart className="mr-2" /> Add to Cart
+              <ShoppingCart className="mr-2" />{" "}
+              {addingToCart ? (
+                <>
+                  Adding...
+                  <ClipLoader size={24} color="white" />
+                </>
+              ) : (
+                "Add to Cart"
+              )}
             </Button>
           </div>
         </Card>
@@ -326,54 +427,43 @@ const StockDetailPage = () => {
           <h2 className="font-medium mb-4 font-dm-sans text-[16px] text-[#2F2F2F]">
             Other products you might like
           </h2>
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, index) => (
-                <SkeletonCard key={index} />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {relatedStocks.map((relatedStock) => (
-                <div
-                  key={relatedStock.id}
-                  className="rounded-xl overflow-hidden hover:shadow-lg flex flex-col transition-shadow cursor-pointer"
-                  onClick={() => handleRelatedStockClick(relatedStock.id)}
-                >
-                  <div className="relative rounded-tr-xl rounded-tl-xl h-[153px] border-t-2 border-r-2 border-l-2 border-[#E3E3E3] bg-[#FAFAFA]">
-                    <Image
-                      src={`https:${relatedStock.product.image}`}
-                      alt={relatedStock.product.name}
-                      fill
-                      className="object-contain p-5"
-                    />
-                  </div>
-                  <div className="px-3 py-2 flex flex-col justify-between h-[140px] bg-[#0A6DC0] text-white font-dm-sans">
-                    <div>
-                      <p className="font-bold">
-                        ₦{parseFloat(relatedStock.selling_price).toFixed(2)}
-                      </p>
-
-                      <h3 className="font-medium text-[13px]">
-                        {relatedStock.product.name}
-                      </h3>
-
-                      <p className="font-semibold text-[10px] font-regular mb-2">
-                        {relatedStock.total_qty} pieces left
-                      </p>
-                    </div>
-
-                    <Button
-                      variant={"outline"}
-                      className="w-full text-[13px] text-[#2F2F2F]"
-                    >
-                      Order
-                    </Button>
-                  </div>
+          <div className="grid  grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {relatedStocks.map((relatedStock) => (
+              <div
+                key={relatedStock.id}
+                className="rounded-xl overflow-hidden hover:shadow-lg flex flex-col transition-shadow cursor-pointer"
+                onClick={() => handleRelatedStockClick(relatedStock.id)}
+              >
+                <div className="relative rounded-tr-xl rounded-tl-xl h-[153px] border-t-2 border-r-2 border-l-2 border-[#E3E3E3] bg-[#FAFAFA]">
+                  <Image
+                    src={`https:${relatedStock.product.image}`}
+                    alt={relatedStock.product.name}
+                    fill
+                    className="object-contain p-5"
+                  />
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="px-3 py-2 flex flex-col justify-between h-[140px] bg-[#0A6DC0] text-white font-dm-sans">
+                  <div>
+                    <p className="font-bold">
+                      ₦{parseFloat(relatedStock.selling_price).toFixed(2)}
+                    </p>
+                    <h3 className="font-medium text-[13px]">
+                      {relatedStock.product.name}
+                    </h3>
+                    <p className="font-semibold text-[10px] font-regular mb-2">
+                      {relatedStock.total_qty} pieces left
+                    </p>
+                  </div>
+                  <Button
+                    variant={"outline"}
+                    className="w-full text-[13px] text-[#2F2F2F]"
+                  >
+                    Order
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -383,7 +473,7 @@ const StockDetailPage = () => {
           <h2 className="font-medium mb-4 font-dm-sans text-[16px] text-[#2F2F2F]">
             Other offers you might like
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div className="grid  grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {relatedOffers.map((relatedOffer) => (
               <div
                 key={relatedOffer.id}
@@ -391,8 +481,8 @@ const StockDetailPage = () => {
                 onClick={() => handleRelatedOfferClick(relatedOffer.id)}
               >
                 <div className="relative rounded-tr-xl rounded-tl-xl h-[153px] border-t-2 border-r-2 border-l-2 border-[#E3E3E3] bg-[#FAFAFA]">
-                  <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-                    OFFER
+                  <div className="absolute top-2 z-20 left-2 text-[#E33629] bg-[#FFE7E5] text-[8px] font-bold font-dm-sans px-2 py-1 rounded">
+                    20% OFF
                   </div>
                   <Image
                     src={`https:${relatedOffer.product.image}`}
@@ -406,16 +496,13 @@ const StockDetailPage = () => {
                     <p className="font-bold">
                       ₦{relatedOffer.price.toFixed(2)}
                     </p>
-
                     <h3 className="font-medium text-[13px]">
                       {relatedOffer.product.name}
                     </h3>
-
                     <p className="font-semibold text-[10px] font-regular mb-2">
                       {relatedOffer.qty} available
                     </p>
                   </div>
-
                   <Button
                     variant={"outline"}
                     className="w-full text-[13px] text-[#2F2F2F]"
