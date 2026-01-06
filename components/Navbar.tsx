@@ -28,6 +28,7 @@ import Link from "next/link";
 
 const Navbar = () => {
   const { user, isUserPending } = useUser();
+  // ! 
 
   return (
     <nav className="p-4 flex items-center justify-between sticky top-0 border-b-2 border-[#0000001A] z-10 bg-white ">
@@ -78,21 +79,23 @@ const Navbar = () => {
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem
                   onSelect={(e) => e.preventDefault()}
-                  className="text-[#FF0000] bg-[#FF0000]/20 cursor-pointer focus:bg-red-700"
+                  className="text-[#FF0000]  bg-[#FF0000]/20  cursor-pointer focus:bg-red-100"
                 >
                   <div
-                    className="flex gap-3 items-center"
+                    className="flex gap-3 items-center "
                     style={{ color: "#FF0000" }}
                   >
-                    <LogOut className="h-[1.2rem] w-[1.2rem] mr-2" />
-                    <span>Log out</span>
+                    <LogOut className="h-[1.2rem] w-[1.2rem] mr-2 " />
+                    <span className="">Log out</span>
                   </div>
                 </DropdownMenuItem>
               </AlertDialogTrigger>
 
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="font-dm-sans">Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogTitle className="font-dm-sans">
+                    Are you absolutely sure?
+                  </AlertDialogTitle>
                   <AlertDialogDescription className="font-dm-sans">
                     This action will log you out of the system
                   </AlertDialogDescription>
