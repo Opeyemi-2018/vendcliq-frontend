@@ -14,20 +14,9 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { CombinedStock, OfferStock, RegularStock } from "@/types/marketPlace";
+import { MarketSkeletonCard } from "@/components/SkeletonLoader";
 
-const SkeletonCard = () => (
-  <div className="rounded-lg overflow-hidden animate-pulse">
-    <div className="h-[153px] border border-[#E5E5EA] bg-gray-200"></div>
-    <div className="px-3 py-2 flex flex-col justify-between h-[150px] bg-gray-300">
-      <div>
-        <div className="h-5 bg-gray-400 rounded mb-2 w-20"></div>
-        <div className="h-4 bg-gray-400 rounded mb-2 w-full"></div>
-        <div className="h-3 bg-gray-400 rounded w-24"></div>
-      </div>
-      <div className="h-10 bg-gray-400 rounded"></div>
-    </div>
-  </div>
-);
+
 
 const MarketPlace = () => {
   const router = useRouter();
@@ -185,7 +174,7 @@ const MarketPlace = () => {
       {loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {[...Array(10)].map((_, i) => (
-            <SkeletonCard key={i} />
+            <MarketSkeletonCard key={i} />
           ))}
         </div>
       ) : (

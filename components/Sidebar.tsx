@@ -71,7 +71,7 @@ const items = [
       { title: "My Store", url: "/dashboards/inventory/my-store" },
     ],
   },
-  { title: "Loan", url: "/dashboards/loan", icon: BriefcaseBusiness },
+  { title: "Loans", url: "/dashboards/loans", icon: BriefcaseBusiness },
   {
     title: "Market Place",
     url: "/dashboards/market-place",
@@ -86,8 +86,8 @@ const items = [
     icon: RectangleEllipsis,
     children: [
       { title: "Business Report", url: "/dashboards/business-report" },
-      { title: "Supplier List", url: "/dashboards/supplier-list" },
-      { title: "Customer List", url: "/dashboards/customer-list" },
+      { title: "Supplier List", url: "/dashboards/supplier" },
+      { title: "Customer List", url: "/dashboards/customer" },
       { title: "Expenses", url: "/dashboards/expenses" },
     ],
   },
