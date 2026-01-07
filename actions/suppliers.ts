@@ -1,4 +1,5 @@
-import { GetSuppliersResponse, Supplier } from "@/types/supplier-types";
+"use server"
+import { GetSuppliersResponse, Supplier } from "@/types/supplier";
 
 export async function getSuppliers(
   token: string

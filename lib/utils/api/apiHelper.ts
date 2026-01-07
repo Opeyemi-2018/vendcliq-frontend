@@ -109,7 +109,7 @@ import {
   GET_PRODUCTS,
   CREATE_STORE,
   CREATE_STOCK,
-  ADD_SHOP_ATTENDANT
+  ADD_SHOP_ATTENDANT,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -125,9 +125,18 @@ import {
   VendCliqTransferResponse,
 } from "@/types/transfer";
 import { CreateWalletResponse } from "@/types/wallet";
-import { AddShopAttendantPayload, AddShopAttendantResponse } from "@/types/shopAttendant";
-import { CreateInvoicePayload, CreateInvoiceResponse } from "@/types/invoice";
-import { CreateCustomerPayload, CreateCustomerResponse } from "@/types/customer";
+import {
+  AddShopAttendantPayload,
+  AddShopAttendantResponse,
+} from "@/types/shopAttendant";
+import {
+  CreatePurchaseInvoicePayload,
+  CreateInvoiceResponse,
+} from "@/types/invoice";
+import {
+  CreateCustomerPayload,
+  CreateCustomerResponse,
+} from "@/types/customer";
 import { CreateCartPayload, CreateCartResponse } from "@/types/cart";
 
 interface UserProfile {
@@ -398,8 +407,6 @@ export const handleCreateWallet = async (): Promise<CreateWalletResponse> => {
   return await poster<CreateWalletResponse>(CREATE_WALLET, {});
 };
 
-
-
 // export const handleGetProducts = async (): Promise<{ data: any[] }> => {
 //   return await fetcher<{ data: any[] }>(GET_PRODUCTS);
 // };
@@ -635,9 +642,9 @@ export const handleAddShopAttendant = async (
 };
 
 export const handleCreateInvoice = async (
-  payload: CreateInvoicePayload
+  payload: CreatePurchaseInvoicePayload
 ): Promise<CreateInvoiceResponse> => {
-  return await poster<CreateInvoiceResponse, CreateInvoicePayload>(
+  return await poster<CreateInvoiceResponse, CreatePurchaseInvoicePayload>(
     CREATE_INVOICE,
     payload
   );

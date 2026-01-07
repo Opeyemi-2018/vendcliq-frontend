@@ -1,20 +1,15 @@
-export interface CreateInvoicePayload {
-  customer_id: string | null;
+export interface CreatePurchaseInvoicePayload {
+  supplier_id?: string;
+  customer_id?: string | null;
   store_id: string;
   items: Array<{
-    stock_id: string ;
+    stock_id: string;
     quantity: number;
-    delivery: boolean;
     mode: "PACKS" | "PIECES";
     discounted_amount: number;
     empties?: {
       type: "CREDIT" | "SELL";
       quantity: number;
-    };
-    attributes?: {
-      address?: string;
-      latitude?: number;
-      longitude?: number;
     };
   }>;
 }

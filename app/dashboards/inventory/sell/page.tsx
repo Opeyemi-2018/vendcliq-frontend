@@ -105,7 +105,6 @@ const Sell = () => {
   >(null);
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   const [isSubmittingInvoice, setIsSubmittingInvoice] = useState(false);
-
   const [storeStock, setStoreStock] = useState<StockItem[]>([]);
   const [isLoadingStock, setIsLoadingStock] = useState(false);
 
