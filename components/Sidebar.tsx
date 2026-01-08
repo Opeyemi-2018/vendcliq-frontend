@@ -71,7 +71,7 @@ const items = [
       { title: "My Store", url: "/dashboards/inventory/my-store" },
     ],
   },
-  { title: "Loans", url: "/dashboards/loans", icon: BriefcaseBusiness },
+  { title: "Loans", url: "/dashboards/loan", icon: BriefcaseBusiness },
   {
     title: "Market Place",
     url: "/dashboards/market-place",

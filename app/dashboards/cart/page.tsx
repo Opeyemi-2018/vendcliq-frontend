@@ -296,7 +296,7 @@ const Cart = () => {
                         <Trash2 size={20} />
                       </button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent className="">
+                    <AlertDialogContent className="font-dm-sans">
                       <AlertDialogHeader className="text-left">
                         <AlertDialogTitle>
                           Are you absolutely sure?
