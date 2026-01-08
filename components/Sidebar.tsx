@@ -137,7 +137,7 @@ export function AppSidebar() {
           {!isCollapsed && (
             <div className="px-4 py-4">
               <Image
-                src={"/vendcliq.webp"}
+                src={"/vl.svg"}
                 width={150}
                 height={150}
                 alt="logo"
@@ -261,7 +261,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild className="">
                   <div
                     style={{
-                      backgroundImage: "url('/mesh.webp')",
+                      backgroundImage: "url('/mesh.svg')",
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                       height: "127px",
