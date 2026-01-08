@@ -268,6 +268,8 @@ export function AppSidebar() {
                     }}
                     className="h-[127px] w-[217px]"
                   >
+
+                    
                     {!isCollapsed && (
                       <div className="space-y-3">
                         <h1 className="text-white font-clash text-[14px] font-semibold">
