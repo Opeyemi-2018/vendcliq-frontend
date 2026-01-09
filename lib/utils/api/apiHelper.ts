@@ -110,6 +110,8 @@ import {
   CREATE_STORE,
   CREATE_STOCK,
   ADD_SHOP_ATTENDANT,
+  CHECKOUT_CART,
+  PAY_CART,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -137,7 +139,13 @@ import {
   CreateCustomerPayload,
   CreateCustomerResponse,
 } from "@/types/customer";
-import { CreateCartPayload, CreateCartResponse } from "@/types/cart";
+import {
+  CreateCartPayload,
+  CreateCartResponse,
+  PayInvoicePayload,
+  PayInvoiceResponse,
+} from "@/types/cart";
+import { CheckoutResponse } from "@/types/checkOut";
 
 interface UserProfile {
   data: {
@@ -213,6 +221,22 @@ export const posterWithMultipart = async <T>(
       Accept: "*/*",
       ...headers,
     },
+  });
+  return response.data;
+};
+
+export const putter = async <T, U = unknown>(
+  url: string,
+  data?: U,
+  headers?: Record<string, string>
+): Promise<T> => {
+  const response = await axiosInstance.put<T>(url, data, {
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...headers,
+    },
+    validateStatus: () => true,
   });
   return response.data;
 };
@@ -664,6 +688,20 @@ export const handleAddToCart = async (
 ): Promise<CreateCartResponse> => {
   return await poster<CreateCartResponse, CreateCartPayload>(
     CREATE_CART,
+    payload
+  );
+};
+
+export const handleCheckoutCart = async (): Promise<CheckoutResponse> => {
+  return await poster<CheckoutResponse>(CHECKOUT_CART, {});
+};
+
+export const handlePayInvoice = async (
+  invoiceId: string,
+  payload: PayInvoicePayload
+): Promise<PayInvoiceResponse> => {
+  return await putter<PayInvoiceResponse, PayInvoicePayload>(
+    PAY_CART(invoiceId),
     payload
   );
 };

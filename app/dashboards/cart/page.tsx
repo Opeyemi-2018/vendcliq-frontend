@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { getCartData, updateCartItem, deleteCartItem } from "@/actions/cart";
-import { Plus, Minus, Trash2 } from "lucide-react";
+import { handleCheckoutCart } from "@/lib/utils/api/apiHelper";
+import { Plus, Minus, Trash2, ShoppingCart } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
@@ -22,10 +22,28 @@ import { Switch } from "@/components/ui/switch";
 import { ClipLoader } from "react-spinners";
 import { Button } from "@/components/ui/button";
 import { CartSkeletonCard } from "@/components/SkeletonLoader";
+import { useRouter } from "next/navigation";
+
+interface CartItem {
+  id: string;
+  product: {
+    name: string;
+    image: string;
+  };
+  price: number;
+  quantity: number;
+  delivery: boolean;
+  attributes?: {
+    address?: string;
+  };
+}
 
 const Cart = () => {
-  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const [updatingQuantityId, setUpdatingQuantityId] = useState<string | null>(
     null
   );
@@ -35,12 +53,13 @@ const Cart = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState<string | null>(null);
 
+  const router = useRouter();
+
   const calculateSubtotal = useCallback(() => {
-    return cartItems.reduce((total, item) => {
-      const price = item.price || 0;
-      const quantity = item.quantity || 0;
-      return total + price * quantity;
-    }, 0);
+    return cartItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
   }, [cartItems]);
 
   const fetchCart = useCallback(async () => {
@@ -56,7 +75,7 @@ const Cart = () => {
       setLoading(true);
       const result = await getCartData(token);
       if (result.success) {
-        setCartItems(result.data);
+        setCartItems(result.data || []);
       } else {
         toast.error(result.error || "Failed to load cart");
       }
@@ -79,10 +98,7 @@ const Cart = () => {
       const token =
         localStorage.getItem("accessToken") ||
         localStorage.getItem("authToken");
-      if (!token) {
-        toast.error("Authentication required");
-        return;
-      }
+      if (!token) return toast.error("Please log in");
 
       setUpdatingQuantityId(itemId);
       const result = await updateCartItem(token, itemId, {
@@ -98,40 +114,35 @@ const Cart = () => {
       } else {
         toast.error(result.error || "Failed to update quantity");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to update quantity");
     } finally {
       setUpdatingQuantityId(null);
     }
   };
 
-  const handleToggleDelivery = async (
-    itemId: string,
-    currentStatus: boolean
-  ) => {
+  const handleToggleDelivery = async (itemId: string, current: boolean) => {
     try {
       const token =
         localStorage.getItem("accessToken") ||
         localStorage.getItem("authToken");
-      if (!token) {
-        toast.error("Authentication required");
-        return;
-      }
+      if (!token) return toast.error("Please log in");
 
       setUpdatingDeliveryId(itemId);
       const result = await updateCartItem(token, itemId, {
-        delivery: !currentStatus,
+        delivery: !current,
       });
+
       if (result.success) {
         setCartItems((prev) =>
           prev.map((item) =>
-            item.id === itemId ? { ...item, delivery: !currentStatus } : item
+            item.id === itemId ? { ...item, delivery: !current } : item
           )
         );
       } else {
         toast.error(result.error || "Failed to update delivery");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to update delivery");
     } finally {
       setUpdatingDeliveryId(null);
@@ -143,212 +154,248 @@ const Cart = () => {
       const token =
         localStorage.getItem("accessToken") ||
         localStorage.getItem("authToken");
-      if (!token) {
-        toast.error("Authentication required");
-        return;
-      }
+      if (!token) return toast.error("Please log in");
 
       setDeletingId(itemId);
       const result = await deleteCartItem(token, itemId);
+
       if (result.success) {
         setCartItems((prev) => prev.filter((item) => item.id !== itemId));
         setOpenDeleteDialog(null);
-        toast.success("Item removed");
+        toast.success("Item removed from cart");
       } else {
         toast.error(result.error || "Failed to remove item");
       }
-    } catch (error) {
-      console.error("Error deleting item:", error);
+    } catch {
       toast.error("Failed to remove item");
     } finally {
       setDeletingId(null);
     }
   };
 
-  const handleDeleteClick = (itemId: string) => {
-    setOpenDeleteDialog(itemId);
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) return;
+
+    try {
+      setCheckingOut(true);
+      setError(null);
+
+      const response = await handleCheckoutCart();
+
+      if (response.statusCode === 201 && response.data) {
+        const { id: invoiceId, total, items } = response.data;
+
+        const totalQuantity = items.reduce(
+          (sum: number, item: any) => sum + parseFloat(item.quantity),
+          0
+        );
+        const totalCost = items.reduce(
+          (sum: number, item: any) => sum + item.cost,
+          0
+        );
+
+        const checkoutData = {
+          invoiceId,
+          total,
+          cost: totalCost,
+          quantity: Math.round(totalQuantity),
+          itemsCount: items.length,
+        };
+
+        // Save to localStorage for the Pay page
+        localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
+
+        // Navigate to Pay page
+        router.push("/dashboards/cart/pay");
+      } else {
+        setError("Checkout failed. Please try again.");
+        toast.error("Checkout failed");
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+      setError("Network error. Please check your connection.");
+      toast.error("Network error during checkout");
+    } finally {
+      setCheckingOut(false);
+    }
   };
-  {
-    cartItems.length === 0 && (
-      <div className="text-center py-20 text-gray-500">Your cart is empty.</div>
-    );
-  }
 
   return (
     <div className="">
-      <h1 className="text-[#2F2F2F] text-[20px] md:text-[25px] font-clash font-semibold mb-2">
+      <h1 className="text-[#2F2F2F] text-[20px] md:text-[25px] font-clash font-semibold mb-6">
         My Cart ({cartItems.length} items)
       </h1>
+
       {loading ? (
-        <div className="space-y-2">
+        <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
             <CartSkeletonCard key={i} />
           ))}
         </div>
+      ) : cartItems.length === 0 ? (
+        <div className="text-center py-20 flex flex-col items-center gap-4">
+          <ShoppingCart size={60} className="text-gray-300" />
+          <p className="font-bold text-[18px]">Your cart is empty</p>
+          <p className="text-gray-500">Your recent carts will appear here</p>
+          <Button
+            onClick={() => router.push("/dashboards/market-place")}
+            className="py-6 bg-[#0A6DC0] hover:bg-[#085a9e] text-[16px] font-bold w-full max-w-xs"
+          >
+            Shop Now
+          </Button>
+        </div>
       ) : (
-        <div className="space-y-2">
-          {cartItems.map((item) => (
-            <Card
-              key={item.id}
-              className="bg-white p-4  flex flex-col md:flex-row  justify-between md:items-center md:gap-0 gap-2"
-            >
-              <div className="flex flex-col md:flex-row md:items-center gap-3">
-                <div className="md:w-20 h-20 border border-[#E3E3E3] p-3 bg-[#FAFAFA] rounded-xl overflow-hidden flex-shrink-0">
-                  <Image
-                    height={100}
-                    width={100}
-                    src={
-                      item.product.image.startsWith("//")
-                        ? `https:${item.product.image}`
-                        : item.product.image
-                    }
-                    alt={item.product.name}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <div className="space-y-1 font-dm-sans">
-                  <h3 className="text-[#2F2F2F] font-bold text-[16px] leading-tight">
-                    {item.product.name}
-                  </h3>
-                  <p className="text-[#2F2F2F] font-medium text-[16px]">
-                    ₦{item.price.toLocaleString()} / unit
-                  </p>
-                  <p className="text-gray-400 text-xs mb-1 line-clamp-1">
-                    {item.attributes?.address}
-                  </p>
-                </div>
-              </div>
-
-              {/* right side */}
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-6 border border-[#D8D8D866] p-1 rounded-full w-fit">
-                  <button
-                    disabled={updatingQuantityId === item.id}
-                    onClick={() =>
-                      handleUpdateQuantity(item.id, item.quantity + 1)
-                    }
-                    className="hover:bg-[#0A6DC0] hover:text-white duration-200 rounded-full p-1"
-                  >
-                    <Plus size={18} />
-                  </button>
-                  <span className="font-semibold min-w-[20px] text-center">
-                    {updatingQuantityId === item.id ? (
-                      <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
-                    ) : (
-                      item.quantity
-                    )}
-                  </span>
-                  <button
-                    disabled={
-                      updatingQuantityId === item.id || item.quantity <= 1
-                    }
-                    onClick={() =>
-                      handleUpdateQuantity(item.id, item.quantity - 1)
-                    }
-                    className="hover:bg-[#0A6DC0] hover:text-white duration-200 rounded-full p-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Minus size={18} />
-                  </button>
+        <>
+          <div className="space-y-4 mb-8">
+            {cartItems.map((item) => (
+              <Card
+                key={item.id}
+                className="bg-white p-4 flex flex-col md:flex-row justify-between gap-4"
+              >
+                <div className="flex gap-4">
+                  <div className="w-20 h-20 border border-[#E3E3E3] bg-[#FAFAFA] rounded-xl overflow-hidden flex-shrink-0">
+                    <Image
+                      height={80}
+                      width={80}
+                      src={
+                        item.product.image.startsWith("//")
+                          ? `https:${item.product.image}`
+                          : item.product.image
+                      }
+                      alt={item.product.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-[16px] text-[#2F2F2F] line-clamp-2">
+                      {item.product.name}
+                    </h3>
+                    <p className="font-medium text-[16px]">
+                      ₦{item.price.toLocaleString()} / unit
+                    </p>
+                    <p className="text-xs text-gray-400 line-clamp-1">
+                      {item.attributes?.address || "No address"}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex justify-between items-center">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] text-gray-400 uppercase font-bold">
-                      Delivery ({item.delivery ? "yes" : "no"})
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-6 border border-[#D8D8D866] p-1 rounded-full w-fit">
+                    <button
+                      disabled={updatingQuantityId === item.id}
+                      onClick={() =>
+                        handleUpdateQuantity(item.id, item.quantity + 1)
+                      }
+                      className="p-1 rounded-full hover:bg-[#0A6DC0] hover:text-white transition"
+                    >
+                      <Plus size={18} />
+                    </button>
+                    <span className="font-semibold min-w-8 text-center">
+                      {updatingQuantityId === item.id ? (
+                        <div className="w-5 h-5 border-2 border-t-blue-600 border-gray-300 rounded-full animate-spin" />
+                      ) : (
+                        item.quantity
+                      )}
                     </span>
-                    <div className="flex items-center gap-2">
+                    <button
+                      disabled={
+                        updatingQuantityId === item.id || item.quantity <= 1
+                      }
+                      onClick={() =>
+                        handleUpdateQuantity(item.id, item.quantity - 1)
+                      }
+                      className="p-1 rounded-full hover:bg-[#0A6DC0] hover:text-white transition disabled:opacity-50"
+                    >
+                      <Minus size={18} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] uppercase font-bold text-gray-400">
+                        Delivery ({item.delivery ? "Yes" : "No"})
+                      </span>
                       {updatingDeliveryId === item.id ? (
-                        <div className="flex items-center justify-center w-12">
-                          <ClipLoader
-                            size={16}
-                            color="#0A6DC0"
-                            speedMultiplier={0.8}
-                          />
-                        </div>
+                        <ClipLoader size={16} color="#0A6DC0" />
                       ) : (
                         <Switch
                           checked={item.delivery}
                           onCheckedChange={() =>
                             handleToggleDelivery(item.id, item.delivery)
                           }
-                          disabled={updatingDeliveryId === item.id}
-                          className={`data-[state=checked]:bg-[#0A6DC0] ${
-                            updatingDeliveryId === item.id
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
-                          }`}
+                          className="data-[state=checked]:bg-[#0A6DC0]"
                         />
                       )}
                     </div>
-                  </div>
 
-                  <AlertDialog
-                    open={openDeleteDialog === item.id}
-                    onOpenChange={(open) => {
-                      if (!open) setOpenDeleteDialog(null);
-                    }}
-                  >
-                    <AlertDialogTrigger asChild>
-                      <button
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-full duration-200"
-                        onClick={() => handleDeleteClick(item.id)}
-                      >
-                        <Trash2 size={20} />
-                      </button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="font-dm-sans">
-                      <AlertDialogHeader className="text-left">
-                        <AlertDialogTitle>
-                          Are you absolutely sure?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently
-                          remove this item from your cart.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter className="flex flex-row items-center justify-end">
-                        <AlertDialogCancel disabled={deletingId === item.id}>
-                          Cancel
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-[#E33629] hover:bg-[#c72b1f] min-w-[80px] h-[40px] flex items-center justify-center"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleDelete(item.id);
-                          }}
-                          disabled={deletingId === item.id}
+                    <AlertDialog
+                      open={openDeleteDialog === item.id}
+                      onOpenChange={(open) =>
+                        !open && setOpenDeleteDialog(null)
+                      }
+                    >
+                      <AlertDialogTrigger asChild>
+                        <button
+                          onClick={() => setOpenDeleteDialog(item.id)}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-full"
                         >
-                          {deletingId === item.id ? (
-                            <ClipLoader size={20} color="white" />
-                          ) : (
-                            "Continue"
-                          )}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                          <Trash2 size={20} />
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remove item?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently remove this item from your
+                            cart.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDelete(item.id)}
+                            disabled={deletingId === item.id}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            {deletingId === item.id ? (
+                              <ClipLoader size={20} color="white" />
+                            ) : (
+                              "Remove"
+                            )}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ))}
+          </div>
 
-          <div className="px-4">
-            <div className="flex justify-between items-center">
-              <p className="font-dm-sans font-medium text-[#9E9A9A] text-[14px] md:text-[16px]">
-                calculateSubtotal
-              </p>
-              <span className="font-dm-sans text-[#2F2F2F] font-medium">
-                {calculateSubtotal()}
-              </span>
+          {/* Subtotal */}
+          <div className="bg-gray-50 rounded-xl p-6 mb-8">
+            <div className="flex justify-between items-center text-xl font-bold">
+              <span>Subtotal</span>
+              <span>₦{calculateSubtotal().toLocaleString()}</span>
             </div>
           </div>
-        </div>
+
+          {/* Error Message */}
+          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+
+          {/* Checkout Button */}
+          <Button
+            onClick={handleCheckout}
+            disabled={checkingOut || cartItems.length === 0}
+            className="w-full py-5 md:py-6  bg-[#0A6DC0] hover:bg-[#085a9e] disabled:opacity-70"
+          >
+            {checkingOut ? <>
+               checking out ...
+                <ClipLoader size={24} color="white" />
+              </>: "Check Out"}
+          </Button>
+        </>
       )}
-      <div className="mt-4">
-        <Button className=" py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#085a9e] text-[16px] font-bold w-full">
-          Make Payment
-        </Button>
-      </div>
     </div>
   );
 };

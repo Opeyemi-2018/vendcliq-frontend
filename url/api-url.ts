@@ -67,6 +67,8 @@ const ADD_SHOP_ATTENDANT = "client/v2/attendants";
 const CREATE_INVOICE = "inventory/invoices";
 const CREATE_CUSTOMER = "inventory/customers";
 const CREATE_CART = "inventory/carts";
+const CHECKOUT_CART = "inventory/carts/checkout";
+const PAY_CART = (invoiceId: string) => `inventory/invoices/${invoiceId}/pay`;
 
 export {
   // v2 endpoint
@@ -96,6 +98,8 @@ export {
   CREATE_INVOICE,
   CREATE_CUSTOMER,
   CREATE_CART,
+  CHECKOUT_CART,
+  PAY_CART,
   // v1 endpoint
   GET_PROFILE,
   DASHBOARD,

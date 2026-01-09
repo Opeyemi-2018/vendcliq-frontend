@@ -18,3 +18,30 @@ export interface CreateCartResponse {
   data?: any;
   error?: string;
 }
+
+
+export interface PayInvoicePayload {
+  paymentType: "WALLET" | "TRANSFER";
+  transactionPin?: string;
+  narration?: string;
+  terminal_id?: string;
+}
+
+export interface PayInvoiceResponse {
+  statusCode: number;
+  error: string | null;
+  data: {
+    message: string;
+    type: string;
+    invoiceId: string;
+    paymentPayload?: {
+      accountNumber: string;
+      accountName: string;
+      bankName: string;
+      bankCode: string;
+      paymentReference: string;
+      expiresAt: string;
+      expectedAmount: number;
+    };
+  };
+}

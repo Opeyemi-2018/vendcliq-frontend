@@ -34,6 +34,8 @@ import {
   CREATE_INVOICE,
   CREATE_CUSTOMER,
   CREATE_CART,
+  CHECKOUT_CART,
+  PAY_CART,
 
   // v1 endpoint
 
@@ -199,6 +201,8 @@ const INVENTORY_ENDPOINTS = [
   CREATE_INVOICE,
   CREATE_CUSTOMER,
   CREATE_CART,
+  CHECKOUT_CART,
+  PAY_CART,
 ];
 
 const ALLOWED_ENDPOINTS = [...VERA_ENDPOINTS, ...INVENTORY_ENDPOINTS];
@@ -208,7 +212,9 @@ const getApiBaseUrl = (endpoint: string): string => {
   const normalized = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   if (
     INVENTORY_ENDPOINTS.some(
-      (e) => normalized.startsWith(e) || normalized.includes("/inventory/")
+      (e) =>
+        typeof e === "string" &&
+        (normalized.startsWith(e) || normalized.includes("inventory"))
     )
   ) {
     return INVENTORY_API_BASE_URL;
@@ -449,6 +455,93 @@ export async function GET(request: Request) {
     return nextResponse;
   } catch (error) {
     console.error("API proxy error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT Handler - almost identical to POST
+export async function PUT(request: Request) {
+  try {
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const clientIp = forwardedFor ? forwardedFor.split(",")[0] : "unknown";
+
+    if (isRateLimited(clientIp)) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
+    const contentType = request.headers.get("content-type") || "";
+    let endpoint: string;
+    let data: FormData | Record<string, unknown>;
+
+    if (contentType.includes("multipart/form-data")) {
+      const { searchParams } = new URL(request.url);
+      endpoint = decodeURIComponent(searchParams.get("endpoint") || "");
+      data = await request.formData();
+    } else {
+      const body = await request.json();
+      endpoint = body.endpoint;
+      data = body.data;
+    }
+
+    if (!endpoint || typeof endpoint !== "string") {
+      return NextResponse.json({ error: "Invalid endpoint" }, { status: 400 });
+    }
+
+    if (!isValidEndpoint(endpoint)) {
+      return NextResponse.json(
+        { error: "Endpoint not allowed" },
+        { status: 403 }
+      );
+    }
+
+    const token = getAuthToken(request);
+
+    const baseHeaders: Record<string, string> = {
+      "x-api-key": API_KEY,
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "X-XSS-Protection": "1; mode=block",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    if (!contentType.includes("multipart/form-data")) {
+      baseHeaders["Content-Type"] = "application/json";
+    }
+
+    // Important: pass "PUT" as method for signature
+    const secureHeaders = await addSecurityHeaders(
+      baseHeaders,
+      "PUT",  // ← This was "POST" before — now correct
+      endpoint
+    );
+
+    const apiBaseUrl = getApiBaseUrl(endpoint);
+
+    console.log(`Routing PUT ${endpoint} to ${apiBaseUrl}`);
+
+    const response = await fetch(`${apiBaseUrl}${endpoint}`, {
+      method: "PUT",  // ← Forward as PUT
+      headers: secureHeaders,
+      body: contentType.includes("multipart/form-data")
+        ? (data as FormData)
+        : JSON.stringify(data),
+    });
+
+    const responseData = await response.json();
+    const nextResponse = NextResponse.json(responseData, {
+      status: response.status,
+    });
+
+    nextResponse.headers.set("X-Content-Type-Options", "nosniff");
+    nextResponse.headers.set("X-Frame-Options", "DENY");
+    nextResponse.headers.set("X-XSS-Protection", "1; mode=block");
+
+    return nextResponse;
+  } catch (error) {
+    console.error("API proxy PUT error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
