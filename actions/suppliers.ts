@@ -1,4 +1,4 @@
-"use server"
+"use server";
 import { GetSuppliersResponse, Supplier } from "@/types/supplier";
 
 export async function getSuppliers(
@@ -51,5 +51,44 @@ export async function getSuppliers(
       success: false,
       error: "Network error. Please try again.",
     };
+  }
+}
+
+export async function getSupplierStock(token: string, supplierId: string) {
+  try {
+    const res = await fetch(
+      `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/suppliers/${supplierId}/stocks`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      }
+    );
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        success: false,
+        error: errorData.msg || "Failed to fetch supplier stock",
+      };
+    }
+
+    const data = await res.json();
+
+    if (data.statusCode === 200) {
+      return {
+        success: true,
+        data: data.data,
+        pagination: data.pagination || null,
+      };
+    }
+
+    return { success: false, error: "Failed to load supplier stock" };
+  } catch (err) {
+    console.error("Supplier stock fetch error:", err);
+    return { success: false, error: "Network error. Please try again." };
   }
 }

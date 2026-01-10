@@ -18,6 +18,8 @@ const TRANSACTION_HISTORY = "/client/v2/wallets/transactions";
 const VENDCLIQ_TRANSFER = "/client/v2/wallets/transfers/vendcliq";
 const OTHERBANK_TRANSFER = "/client/v2/wallets/transfer";
 const PIN_VALIDATE = "/client/v2/wallets/validate-pin";
+const BUY_AIRTIME = "/client/v2/payments/airtime";
+const BUY_DATA = "/client/v2/payments/data";
 const CREATE_WALLET = "/client/v2/wallets/virtual-accounts/create";
 
 // v1 endpoint
@@ -93,6 +95,8 @@ export {
   VENDCLIQ_TRANSFER,
   OTHERBANK_TRANSFER,
   PIN_VALIDATE,
+  BUY_AIRTIME,
+  BUY_DATA,
   CREATE_WALLET,
   ADD_SHOP_ATTENDANT,
   CREATE_INVOICE,

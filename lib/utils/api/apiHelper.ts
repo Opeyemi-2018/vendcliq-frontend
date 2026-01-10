@@ -112,6 +112,8 @@ import {
   ADD_SHOP_ATTENDANT,
   CHECKOUT_CART,
   PAY_CART,
+  BUY_AIRTIME,
+  BUY_DATA,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -146,6 +148,7 @@ import {
   PayInvoiceResponse,
 } from "@/types/cart";
 import { CheckoutResponse } from "@/types/checkOut";
+import { BuyAirtimePayload, BuyAirtimeResponse, BuyDataPayload, BuyDataResponse } from "@/types/utilityBills";
 
 interface UserProfile {
   data: {
@@ -425,7 +428,18 @@ export const handleOtherBankTransfer = async (
   );
 };
 
-// Add this to your apiHelper.ts file
+export const handleBuyAirtime = async (
+  payload: BuyAirtimePayload
+): Promise<BuyAirtimeResponse> => {
+  return await poster<BuyAirtimeResponse, BuyAirtimePayload>(
+    BUY_AIRTIME,
+    payload
+  );
+};
+
+export const handleBuyData = async (payload: BuyDataPayload): Promise<BuyDataResponse> => {
+  return await poster<BuyDataResponse, BuyDataPayload>(BUY_DATA, payload);
+};
 
 export const handleCreateWallet = async (): Promise<CreateWalletResponse> => {
   return await poster<CreateWalletResponse>(CREATE_WALLET, {});

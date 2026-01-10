@@ -16,10 +16,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CustomerForm, customerSchema } from "@/types/customer";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
-import { Mail, Search, Trash2, UserRound, X } from "lucide-react";
+import { ArrowLeft, Mail, Search, Trash2, UserRound, X } from "lucide-react";
 import { getStores } from "@/actions/stores";
 import { getCustomers } from "@/actions/getcustomers";
-import { getStoreStock } from "@/actions/getUserStocks"; 
+import { getStoreStock } from "@/actions/getUserStocks";
 import Image from "next/image";
 import {
   AlertDialog,
@@ -49,6 +49,7 @@ import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ThreeDots } from "react-loader-spinner";
+import { useRouter } from "next/navigation";
 
 interface StoreType {
   id: string;
@@ -85,6 +86,8 @@ interface InvoiceItem {
 }
 
 const Sell = () => {
+  const router = useRouter();
+
   const [stage, setStage] = useState<
     "select-store" | "select-customer" | "invoice"
   >("select-store");
@@ -302,14 +305,26 @@ const Sell = () => {
 
     try {
       const response = await handleCreateInvoice(payload);
+
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Invoice created successfully!");
+
+        const invoiceId = response.data?.id;
+
+        if (invoiceId) {
+          // Redirect to payment page with invoice ID
+          router.push(`/dashboards/inventory/sell/pay?invoiceId=${invoiceId}`);
+        } else {
+          toast.warning("Invoice created but payment page could not be loaded");
+        }
+
+        // Reset form and state
         setInvoiceItems([]);
-        setStage("select-store");
         setSelectedStore(null);
         setSelectedCustomer(null);
         setIsWalkIn(false);
         setCustomerOptionSelected(null);
+        invoiceForm.reset();
       } else {
         toast.error(response.error || "Failed to create invoice");
       }
@@ -439,7 +454,7 @@ const Sell = () => {
                   <div
                     key={store.id}
                     onClick={() => setSelectedStore(store)}
-                    className={`border rounded-lg px-3 py-4 cursor-pointer transition-colors ${
+                    className={`flex justify-between border rounded-lg px-3 py-4 cursor-pointer transition-colors ${
                       selectedStore?.id === store.id
                         ? "bg-[#0A6DC012] border border-[#0A6DC0]"
                         : "bg-gray-50 hover:bg-gray-100 border-[#D8D8D866]"
@@ -456,6 +471,7 @@ const Sell = () => {
                         {store.name}
                       </p>
                     </div>
+                    <div></div>
                   </div>
                 ))
               )}
@@ -521,6 +537,9 @@ const Sell = () => {
   if (stage === "select-customer") {
     return (
       <div>
+        <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2">
+          <ArrowLeft size={20} onClick={() => setStage("select-store")} />
+        </button>
         <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
           Customer
         </h1>
@@ -735,7 +754,10 @@ const Sell = () => {
               {customers.map((customer) => (
                 <div
                   key={customer.id}
-                  onClick={() => setSelectedCustomer(customer)}
+                  onClick={() => {
+                    setSelectedCustomer(customer);
+                    setStage("invoice");
+                  }}
                   className={`flex items-center gap-3 border rounded-lg p-4 cursor-pointer transition-colors ${
                     selectedCustomer?.id === customer.id
                       ? "border-[#0A6DC0] bg-[#0A6DC0]/10"
@@ -755,14 +777,6 @@ const Sell = () => {
               ))}
             </div>
           )}
-
-          <Button
-            className="w-full mt-8 bg-[#0A6DC0] hover:bg-[#085a9e] h-12"
-            disabled={!selectedCustomer}
-            onClick={() => setStage("invoice")}
-          >
-            Proceed with {selectedCustomer?.name || "selected customer"}
-          </Button>
         </Card>
       </div>
     );
@@ -772,8 +786,11 @@ const Sell = () => {
   if (stage === "invoice") {
     return (
       <div>
+        <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2">
+          <ArrowLeft size={20} onClick={() => setStage("select-customer")} />
+        </button>
         <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
-          Create Invoicev
+          Create Invoice
         </h1>
         <p className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans">
           Kindly fill the details below to create invoice

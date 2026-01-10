@@ -1,7 +1,7 @@
 "use client";
-import { getSuppliers } from "@/actions/suppliers";
+import { getSuppliers, getSupplierStock } from "@/actions/suppliers";
 import { getStores } from "@/actions/stores";
-import { getStoreStock } from "@/actions/getUserStocks";
+
 import { handleCreateInvoice } from "@/lib/utils/api/apiHelper"; // Adjust if you have a separate purchase endpoint
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -59,8 +59,9 @@ interface StockItem {
   sku: string;
   product: {
     name: string;
-    image: string;
+    images: string;
   };
+  // ... possibly available_quantity, price, etc.
 }
 
 interface InvoiceItem {
@@ -91,8 +92,8 @@ const Buy = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredSupplier, setFilteredSupplier] = useState<Supplier[]>([]);
-  const [storeStock, setStoreStock] = useState<StockItem[]>([]);
-  const [isLoadingStock, setIsLoadingStock] = useState(false);
+  const [supplierStock, setSupplierStock] = useState<StockItem[]>([]);
+  const [isLoadingSupplierStock, setIsLoadingSupplierStock] = useState(false);
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   const [isSubmittingInvoice, setIsSubmittingInvoice] = useState(false);
 
@@ -196,30 +197,39 @@ const Buy = () => {
 
   // Fetch stock when entering invoice stage
   useEffect(() => {
-    if (stage === "invoice" && selectedStore) {
-      const fetchStock = async () => {
-        setIsLoadingStock(true);
+    if (stage === "invoice" && selectedSupplier) {
+      // ← changed from selectedStore
+      const fetchSupplierStock = async () => {
+        setIsLoadingSupplierStock(true);
         try {
           const token =
             localStorage.getItem("accessToken") ||
             localStorage.getItem("authToken");
-          if (!token) return;
+          if (!token) {
+            toast.error("Authentication required");
+            return;
+          }
 
-          const result = await getStoreStock(token, selectedStore.id);
+          const result = await getSupplierStock(
+            token,
+            selectedSupplier.user_id
+          );
+
           if (result.success && result.data) {
-            setStoreStock(result.data);
+            setSupplierStock(result.data);
           } else {
-            toast.error("Failed to load store stock");
+            toast.error(result.error || "Failed to load supplier's stock");
           }
         } catch (err) {
-          toast.error("Network error loading stock");
+          toast.error("Network error while loading supplier stock");
         } finally {
-          setIsLoadingStock(false);
+          setIsLoadingSupplierStock(false);
         }
       };
-      fetchStock();
+
+      fetchSupplierStock();
     }
-  }, [stage, selectedStore]);
+  }, [stage, selectedSupplier]); // ← dependency changed
 
   const addItemToInvoice = () => {
     const values = invoiceForm.getValues();
@@ -229,7 +239,7 @@ const Buy = () => {
       return;
     }
 
-    const stockItem = storeStock.find((s) => s.id === values.stock_id);
+    const stockItem = supplierStock.find((s) => s.id === values.stock_id);
     if (!stockItem) return;
 
     const newItem: InvoiceItem = {
@@ -319,7 +329,7 @@ const Buy = () => {
               style={{ background: "#E0E0E0" }}
             />
 
-            <div className="mt-3 flex items-center gap-2 justify-between border border-[#D8D8D866] rounded-lg px-3 py-2">
+            <div className="cursor-pointer hover:bg-[#0A6DC012] mt-3 flex items-center gap-2 justify-between border border-[#D8D8D866] rounded-lg px-3 py-2">
               <Truck size={30} className="shrink-0" />
               <div>
                 <p className="text-[#2F2F2F] font-dm-sans font-medium">
@@ -503,7 +513,6 @@ const Buy = () => {
               <p>{selectedSupplier.wallet.account_name}</p>
             </div>
           </div>
-
           <Button
             size="lg"
             onClick={() => setStage("Store")}
@@ -678,54 +687,60 @@ const Buy = () => {
                   name="stock_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>SKU</FormLabel>
+                      <FormLabel>SKU (from Supplier)</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
-                        disabled={isLoadingStock}
+                        disabled={isLoadingSupplierStock}
                       >
                         <FormControl>
                           <SelectTrigger className="bg-[#F3F4F6] h-12">
                             <SelectValue
                               placeholder={
-                                isLoadingStock
-                                  ? "Loading stock..."
-                                  : "Choose SKU"
+                                isLoadingSupplierStock
+                                  ? "Loading supplier stock..."
+                                  : "Choose product from supplier"
                               }
                             />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {storeStock.map((stock) => (
-                            <SelectItem key={stock.id} value={stock.id}>
-                              <div className="flex gap-2 lowercase text-left">
-                                <div className="w-10 h-10 flex-shrink-0 rounded overflow-hidden bg-gray-100">
-                                  {stock.product.image && (
-                                    <Image
-                                      src={stock.product.image}
-                                      alt={stock.sku}
-                                      width={40}
-                                      height={40}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  )}
+                          {supplierStock.length === 0 &&
+                          !isLoadingSupplierStock ? (
+                            <div className="p-4 text-center text-gray-500">
+                              No stock available from this supplier
+                            </div>
+                          ) : (
+                            supplierStock.map((stock) => (
+                              <SelectItem key={stock.id} value={stock.id}>
+                                <div className="flex gap-3 items-center lowercase text-left">
+                                  <div className="w-10 h-10 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                                    {stock.product?.images && (
+                                      <Image
+                                        src={stock.product.images}
+                                        alt={stock.sku}
+                                        width={40}
+                                        height={40}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{stock.sku}</p>
+                                    <p className="text-sm text-gray-500">
+                                      {stock.product?.name}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="font-medium">{stock.sku}</p>
-                                  <p className="text-sm text-gray-500">
-                                    {stock.product.name}
-                                  </p>
-                                </div>
-                              </div>
-                            </SelectItem>
-                          ))}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={invoiceForm.control}
                   name="mode"

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Check, Copy, Eye, EyeOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/Input";
@@ -59,6 +59,14 @@ const PayPage = () => {
   const [transferDetails, setTransferDetails] =
     useState<TransferDetails | null>(null);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
+
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   // Refs for PIN inputs
   const pinRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -218,7 +226,7 @@ const PayPage = () => {
           <div
             onClick={() => {
               setPaymentMethod("TRANSFER");
-              setTransferDetails(null);
+              // setTransferDetails(null);
             }}
             className={`p-4 rounded-lg border cursor-pointer transition ${
               paymentMethod === "TRANSFER"
@@ -272,9 +280,7 @@ const PayPage = () => {
             </div>
             <div className="flex justify-between">
               <span>Cost</span>
-              <span className="">
-                ₦{checkoutData.cost.toLocaleString()}
-              </span>
+              <span className="">₦{checkoutData.cost.toLocaleString()}</span>
             </div>
             <Separator />
             <div className="flex justify-between  font-bold">
@@ -330,7 +336,9 @@ const PayPage = () => {
                       onChange={(e) => handlePinChange(index, e.target.value)}
                       onKeyDown={(e) => handlePinKeyDown(e, index)}
                       onFocus={(e) => e.target.select()}
-                      ref={(el) => { pinRefs.current[index] = el; }}
+                      ref={(el) => {
+                        pinRefs.current[index] = el;
+                      }}
                       id={`pin-${index}`}
                       className="absolute inset-0 opacity-0 cursor-default"
                       autoFocus={index === 0 && paymentMethod === "WALLET"}
@@ -402,28 +410,110 @@ const PayPage = () => {
           </AlertDialogHeader>
 
           {transferDetails && (
-            <div className="space-y-3">
-              <div>
+            <div className="space-y-3 mt-2">
+              <div className="bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg p-2 flex justify-between items-start">
+                <div>
+                  <p className="text-gray-600 text-sm">Account Number</p>
+                  <p className=" font-medium">
+                    {transferDetails.accountNumber || "N/A"}
+                  </p>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    copyToClipboard(
+                      transferDetails.accountNumber || "",
+                      "accountNumber"
+                    )
+                  }
+                  className="text-[#0A6DC0] hover:text-blue-700 hover:bg-blue-50"
+                >
+                  {copiedField === "accountNumber" ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+
+              <div className="bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg p-2 flex justify-between items-start">
+                <div>
+                  <p className="text-gray-600 text-sm">Account Name</p>
+                  <p className="font-medium">
+                    {transferDetails.accountName || "N/A"}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    copyToClipboard(
+                      transferDetails.accountName || "",
+                      "accountName"
+                    )
+                  }
+                  className="text-[#0A6DC0] hover:text-blue-700 hover:bg-blue-50"
+                >
+                  {copiedField === "accountName" ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </Button>
+              </div>
+              <div className="bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg p-2">
                 <p className="text-gray-600 text-sm">Bank</p>
-                <p className="">{transferDetails.bankName}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">Account Number</p>
-                <p className="text-[18px]">{transferDetails.accountNumber}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">Account Name</p>
-                <p className="">{transferDetails.accountName}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">Amount</p>
-                <p className="text-[18px] font-bold text-[#0A6DC0]">
-                  ₦{transferDetails.expectedAmount.toLocaleString()}
+                <p className="font-medium">
+                  {transferDetails.bankName || "N/A"}
                 </p>
               </div>
-              <p className="text-red-600 text-sm pt-2">
-                Expires: {new Date(transferDetails.expiresAt).toLocaleString()}
-              </p>
+              {transferDetails.expectedAmount && (
+                <div className="bg-[#F7FAFF] border border-[#0A6DC0] rounded-lg p-2  text-center">
+                  <p className="text-gray-600 text-sm">Amount</p>
+                  <p className=" font-bold text-[#0A6DC0]">
+                    ₦{transferDetails.expectedAmount.toLocaleString()}
+                  </p>
+                </div>
+              )}
+              {transferDetails.expiresAt && (
+                <div className="bg-[#FFF4E6] border-[#FFB020] border rounded-lg p-2 text-[#FFB020] text-sm pt-2">
+                  Expires:{" "}
+                  {new Date(transferDetails.expiresAt).toLocaleString()}
+                </div>
+              )}
+
+              {transferDetails.paymentReference && (
+                <div className="bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg p-4 flex justify-between items-start">
+                  <div className="flex-1">
+                    <p className="text-xs text-[#6B7280] mb-1">
+                      Payment Reference
+                    </p>
+                    <p className="text-[10px] font-mono text-[#191D23] break-all">
+                      {transferDetails.paymentReference}
+                    </p>
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      copyToClipboard(
+                        transferDetails.paymentReference || "",
+                        "paymentReference"
+                      )
+                    }
+                    className="text-[#0A6DC0] hover:text-blue-700 hover:bg-blue-50"
+                  >
+                    {copiedField === "paymentReference" ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
