@@ -154,7 +154,7 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
 
   return (
     <div>
-      <Card className="p-6 max-w-[50rem] mx-auto">
+      <Card className=" md:p-6 max-w-[50rem] mx-auto">
         <div className="flex items-center gap-2 mb-6">
           <h2 className="text-[18px] text-[#2F2F2F] font-semibold font-clash">
             Add New Stock

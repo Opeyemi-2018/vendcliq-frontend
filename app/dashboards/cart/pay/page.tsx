@@ -208,7 +208,7 @@ const PayPage = () => {
 
       <div className="flex flex-col lg:flex-row gap-8 mt-8">
         {/* Left: Payment Method */}
-        <Card className="p-3 md:p-6 lg:w-[35%] bg-white">
+        <Card className=" md:p-6 lg:w-[35%] bg-white">
           <h1 className="font-semibold font-clash mb-4">Mode of Payment</h1>
           <Separator className="mb-6" />
 
@@ -239,7 +239,7 @@ const PayPage = () => {
         </Card>
 
         {/* Right: Summary & Form */}
-        <Card className="p-3 md:p-6 lg:w-[65%] bg-white">
+        <Card className=" md:p-6 lg:w-[65%] bg-white">
           <h1 className="font-semibold font-clash mb-2">Summary</h1>
           <Separator className="mb-4" />
           <p className="font-dm-sans text-[#9E9A9A] mb-6">

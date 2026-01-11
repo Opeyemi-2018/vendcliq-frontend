@@ -29,7 +29,7 @@ const SendMoney = () => {
         {/* Mobile Tabs + Desktop Sidebar */}
         <div className="flex flex-col lg:flex-row gap-2 lg:gap-4">
           {/* Selector Panel */}
-          <Card className="py-6 px-4 w-full lg:w-[35%] bg-white">
+          <Card className="py-6 px-0 md:px-6 w-full lg:w-[35%] bg-white ">
             <h2 className="text-[16px] text-[#2F2F2F] font-clash font-semibold mb-2">
               Transfer Destination
             </h2>

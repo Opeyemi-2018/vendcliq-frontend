@@ -133,7 +133,7 @@ const PayUtility = () => {
           </Card>
 
           {/* MOBILE TABS - Only visible on mobile */}
-          <div className="md:hidden flex gap-2 mb-3 bg-white p-1 rounded-lg">
+          <div className="md:hidden flex gap-2 mb-3 bg-[#ECECF080] p-1 rounded-lg">
             <button
               onClick={() => setSelectedUtility("airtime")}
               className={`
@@ -141,7 +141,7 @@ const PayUtility = () => {
                 ${
                   selectedUtility === "airtime"
                     ? "bg-[#0A6DC0] text-white"
-                    : "bg-white text-[#9E9A9A] "
+                    : " text-[#9E9A9A] "
                 }
               `}
             >
@@ -154,7 +154,7 @@ const PayUtility = () => {
                 ${
                   selectedUtility === "data"
                     ? "bg-[#0A6DC0] text-white"
-                    : "bg-white text-[#9E9A9A] "
+                    : " text-[#9E9A9A] "
                 }
               `}
             >

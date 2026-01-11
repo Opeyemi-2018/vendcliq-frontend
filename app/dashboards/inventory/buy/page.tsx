@@ -319,7 +319,7 @@ const Buy = () => {
         </p>
 
         <div className="mt-8 flex flex-col lg:flex-row gap-4">
-          <Card className="py-6 px-4 w-full lg:w-[35%] bg-white">
+          <Card className="py-6 md:px-4 w-full lg:w-[35%] bg-white">
             <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
               Select where to buy from
             </h1>
@@ -360,7 +360,7 @@ const Buy = () => {
             </div>
           </Card>
 
-          <Card className="py-6 px-4 w-full lg:w-[70%] bg-white">
+          <Card className="py-6 md:px-4 w-full lg:w-[70%] bg-white">
             <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
               Buy from Suppliers
             </h1>
@@ -478,7 +478,7 @@ const Buy = () => {
           All info you need to know about this store
         </p>
 
-        <Card className="p-3 lg:p-8 bg-white">
+        <Card className="md:p-4 lg:p-8 bg-white">
           <div className="grid md:grid-cols-2 md:gap-y-5 gap-y-2 font-dm-sans text-[#2F2F2F]">
             <div className="font-regular lowercase">
               <p className="font-bold">Supplier Name</p>
@@ -535,7 +535,7 @@ const Buy = () => {
           }}
           className="mr-2 h-4 w-4 mb-3"
         />
-        <Card className="p-3 lg:p-8 bg-white">
+        <Card className="md:p-4 lg:p-8 bg-white">
           <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
             Select the store you want to restock
           </h1>
@@ -632,7 +632,7 @@ const Buy = () => {
           Kindly fill the details below to create invoice
         </p>
 
-        <Card className="py-6 px-4 mt-8 bg-white">
+        <Card className="py-6 md:px-4 mt-8 bg-white">
           <div className="mb-2 flex items-center justify-between font-dm-sans font-medium">
             <p className="text-[16px] text-[#000000]">Supplier</p>
             <button
@@ -870,7 +870,7 @@ const Buy = () => {
           </Form>
         </Card>
 
-        <Card className="mt-5 px-4 pb-6">
+        <Card className="mt-5 md:px-4 pb-6">
           {invoiceItems.length > 0 && (
             <div className="mt-8">
               <h3 className="font-semibold mb-4">

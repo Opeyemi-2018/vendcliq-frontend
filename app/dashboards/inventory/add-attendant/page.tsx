@@ -106,7 +106,7 @@ const AddAttendant = () => {
       <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
         Fill in the details below to add a new shop attendant to your store.
       </p>
-      <Card className="p-5 mt-5 max-w-[50rem] mx-auto">
+      <Card className=" md:p-5 mt-5 max-w-[50rem] mx-auto">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}

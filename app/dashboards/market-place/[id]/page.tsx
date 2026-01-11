@@ -291,7 +291,7 @@ const StockDetailPage = () => {
       {loading || !currentItem ? (
         <MainProductSkeleton />
       ) : (
-        <Card className="flex flex-col gap-3 p-2 md:p-5 rounded-lg">
+        <Card className="flex flex-col gap-3  md:p-5 rounded-lg">
           {/* Product Image */}
           <div className="bg-[#FAFAFA] rounded-lg border border-gray-200 overflow-hidden relative">
             {isOffer && (

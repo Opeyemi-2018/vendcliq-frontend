@@ -49,7 +49,7 @@ if (error) {
           </Button>
         </div>
       </div>
-      <Card className="p-5 mt-5">
+      <Card className="md:p-5  mt-5">
         <h1 className="font-dm-sans text-[#2F2F2F] font-bold">
           My Stores ({stores.length})
         </h1>

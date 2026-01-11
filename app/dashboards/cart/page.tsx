@@ -250,7 +250,7 @@ const Cart = () => {
             {cartItems.map((item) => (
               <Card
                 key={item.id}
-                className="bg-white p-4 flex flex-col md:flex-row justify-between gap-4"
+                className="bg-white  p-2 border border-[#E6E6E6] rounded-lg md:p-4 flex flex-col md:flex-row justify-between gap-4"
               >
                 <div className="flex gap-4">
                   <div className="w-20 h-20 border border-[#E3E3E3] bg-[#FAFAFA] rounded-xl overflow-hidden flex-shrink-0">

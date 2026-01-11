@@ -403,7 +403,7 @@ const Sell = () => {
 
         <div className="mt-8 flex flex-col lg:flex-row gap-4">
           {/* Left Card - Store Selection */}
-          <Card className="py-6 px-4 w-full lg:w-[35%] bg-white">
+          <Card className="py-6 md:px-3  w-full lg:w-[35%] bg-white">
             <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
               Select the store you want to sell from
             </h1>
@@ -479,7 +479,7 @@ const Sell = () => {
           </Card>
 
           {/* Right Card - Customer Options */}
-          <Card className="py-6 px-4 w-full lg:w-[70%] bg-white">
+          <Card className="py-6 md:px-3  w-full lg:w-[70%] bg-white">
             <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
               {selectedStore ? selectedStore.name : "Select a store"}
             </h1>
@@ -547,7 +547,7 @@ const Sell = () => {
           Sell the customer that you want to sell to
         </p>
 
-        <Card className="py-6 px-4 mt-8 bg-white">
+        <Card className="py-6 md:px-3  mt-8 bg-white">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-[18px] font-semibold text-[#2F2F2F] font-clash">
               Select Customer
@@ -796,7 +796,7 @@ const Sell = () => {
           Kindly fill the details below to create invoice
         </p>
 
-        <Card className="py-6 px-4 mt-8 bg-white">
+        <Card className="py-6 md:px-6   mt-8 bg-white">
           <div className="mb-2 flex items-center justify-between font-dm-sans font-medium">
             <p className="text-[16px]   text-[#000000] ">Store</p>
             <button
@@ -1053,7 +1053,7 @@ const Sell = () => {
           </Form>
         </Card>
 
-        <Card className="mt-5 px-4 pb-6 ">
+        <Card className="mt-5  md:px-6  pb-6 ">
           {invoiceItems.length > 0 && (
             <div className="mt-8">
               <h3 className="font-semibold mb-4">

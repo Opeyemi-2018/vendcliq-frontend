@@ -15,9 +15,9 @@ const DashboardContent = ({ children }: { children: ReactNode }) => {
   return (
     <>
       <AppSidebar />
-      <main className="w-full bg-background ">
+      <main className="w-full md:bg-background ">
         <Navbar />
-        <div className=" px-3 lg:px-5 py-7">{children}</div>
+        <div className=" px-4 lg:px-5 py-7">{children}</div>
       </main>
     </>
   );

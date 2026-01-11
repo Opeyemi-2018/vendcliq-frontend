@@ -74,7 +74,7 @@ const Store: React.FC<StoreProps> = ({ onCreateStore }) => {
   };
 
   return (
-    <Card className="p-6 max-w-[50rem] mx-auto">
+    <Card className="md:p-6 max-w-[50rem] mx-auto">
       <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash mb-2">
         Create Store Myself
       </h2>

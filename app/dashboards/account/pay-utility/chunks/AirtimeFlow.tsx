@@ -250,7 +250,7 @@ export default function AirtimeFlow() {
   return (
     <Form {...form}>
       <form>
-        <Card className=" p-3 md:p-6">
+        <Card className=" md:p-6 ">
           <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash mb-2">
             Airtime
           </h2>
