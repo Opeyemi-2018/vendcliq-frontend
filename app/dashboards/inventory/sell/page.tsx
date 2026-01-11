@@ -403,7 +403,7 @@ const Sell = () => {
 
         <div className="mt-8 flex flex-col lg:flex-row gap-4">
           {/* Left Card - Store Selection */}
-          <Card className="py-6 md:px-3  w-full lg:w-[35%] bg-white">
+          <Card className="py-6 md:px-3 w-full lg:w-[35%] bg-white">
             <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
               Select the store you want to sell from
             </h1>
@@ -412,22 +412,11 @@ const Sell = () => {
               className="h-[1px] mt-3"
               style={{ background: "#E0E0E0" }}
             />
-            <div className="relative mt-6">
-              <Search className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-              <Input
-                placeholder="Type to search"
-                className="pl-10 bg-transparent border-2 border-[#E7EBED]"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                disabled={isLoadingStores || !!error}
-              />
-            </div>
-            <div className="mt-6 space-y-2">
+
+            <div className="mt-6">
               {isLoadingStores ? (
-                <div className="flex items-center gap-2 justify-center">
-                  <p className="text-center py-4 text-gray-500">
-                    Loading stores...
-                  </p>
+                <div className="flex items-center gap-2 justify-center py-4">
+                  <p className="text-center text-gray-500">Loading stores...</p>
                   <ThreeDots
                     height="40"
                     width="40"
@@ -436,10 +425,10 @@ const Sell = () => {
                   />
                 </div>
               ) : error ? (
-                <div className="">
-                  <p className="text-center py-4 text-red-500">{error}</p>
+                <div className="text-center py-4">
+                  <p className="text-red-500">{error}</p>
                   <button
-                    className="bg-[#0A6DC0] hover:bg-[#085a9e] flex flex-col justify-center rounded-lg p-2 text-white"
+                    className="mt-2 bg-[#0A6DC0] hover:bg-[#085a9e] rounded-lg px-4 py-2 text-white"
                     onClick={() => window.location.reload()}
                   >
                     Retry
@@ -450,36 +439,94 @@ const Sell = () => {
                   No stores found
                 </p>
               ) : (
-                filteredStores.map((store) => (
-                  <div
-                    key={store.id}
-                    onClick={() => setSelectedStore(store)}
-                    className={`flex justify-between border rounded-lg px-3 py-4 cursor-pointer transition-colors ${
-                      selectedStore?.id === store.id
-                        ? "bg-[#0A6DC012] border border-[#0A6DC0]"
-                        : "bg-gray-50 hover:bg-gray-100 border-[#D8D8D866]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Image
-                        src="/store.svg"
-                        width={20}
-                        height={20}
-                        alt="store"
-                      />
-                      <p className="font-medium text-[16px] font-dm-sans text-[#2F2F2F]">
-                        {store.name}
-                      </p>
-                    </div>
-                    <div></div>
+                <>
+                  {/* Desktop: Original List View */}
+                  <div className="hidden lg:block space-y-2 max-h-[400px] overflow-y-auto">
+                    {filteredStores.map((store) => (
+                      <div
+                        key={store.id}
+                        onClick={() => setSelectedStore(store)}
+                        className={`flex justify-between border rounded-lg px-3 py-4 cursor-pointer transition-colors ${
+                          selectedStore?.id === store.id
+                            ? "bg-[#0A6DC012] border border-[#0A6DC0]"
+                            : "bg-gray-50 hover:bg-gray-100 border-[#D8D8D866]"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Image
+                            src="/store.svg"
+                            width={20}
+                            height={20}
+                            alt="store"
+                          />
+                          <p className="font-medium text-[16px] font-dm-sans text-[#2F2F2F]">
+                            {store.name}
+                          </p>
+                        </div>
+                        <div></div>
+                      </div>
+                    ))}
                   </div>
-                ))
+
+                  {/* Mobile: Shadcn Select Dropdown */}
+                  <div className="lg:hidden">
+                    <Select
+                      value={selectedStore?.id?.toString() || ""}
+                      onValueChange={(value) => {
+                        const store = filteredStores.find(
+                          (s) => s.id.toString() === value
+                        );
+                        if (store) setSelectedStore(store);
+                      }}
+                      disabled={isLoadingStores || !!error}
+                    >
+                      <SelectTrigger className="w-full bg-transparent border-2 border-[#E7EBED] h-12">
+                        <SelectValue placeholder="Select a store">
+                          {selectedStore && (
+                            <div className="flex items-center gap-3">
+                              <Image
+                                src="/store.svg"
+                                width={20}
+                                height={20}
+                                alt="store"
+                              />
+                              <span className="font-medium text-[16px] font-dm-sans text-[#2F2F2F]">
+                                {selectedStore.name}
+                              </span>
+                            </div>
+                          )}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredStores.map((store) => (
+                          <SelectItem
+                            key={store.id}
+                            value={store.id.toString()}
+                            className="py-3"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Image
+                                src="/store.svg"
+                                width={20}
+                                height={20}
+                                alt="store"
+                              />
+                              <span className="font-medium text-[16px] font-dm-sans text-[#2F2F2F]">
+                                {store.name}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
               )}
             </div>
           </Card>
 
-          {/* Right Card - Customer Options */}
-          <Card className="py-6 md:px-3  w-full lg:w-[70%] bg-white">
+          {/* Right Card - Customer Options (unchanged) */}
+          <Card className="py-6 md:px-3 w-full lg:w-[70%] bg-white">
             <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
               {selectedStore ? selectedStore.name : "Select a store"}
             </h1>
@@ -796,7 +843,7 @@ const Sell = () => {
           Kindly fill the details below to create invoice
         </p>
 
-        <Card className="py-6 md:px-6   mt-8 bg-white">
+        <Card className="py-6 md:px-6   md:mt-8 bg-white">
           <div className="mb-2 flex items-center justify-between font-dm-sans font-medium">
             <p className="text-[16px]   text-[#000000] ">Store</p>
             <button
@@ -834,7 +881,7 @@ const Sell = () => {
 
           <Form {...invoiceForm}>
             <form className="space-y-6  mb-2">
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid md:grid-cols-2 gap-5">
                 {/* SKU Selection from Store Stock */}
                 <FormField
                   control={invoiceForm.control}
