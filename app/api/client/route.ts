@@ -16,7 +16,6 @@ import {
   REQUEST_BVN_TOKEN,
   VERIFY_BVN_TOKEN,
   UPLOAD_BUSINESS_VERIFICATION,
-  CHANGE_PASSWORD,
   SEND_OTP_FOR_FORGET_PASSWORD,
   RESET_PASSWORD,
   CREATE_PASSWORD,
@@ -38,6 +37,9 @@ import {
   CREATE_CART,
   CHECKOUT_CART,
   PAY_CART,
+  UPDATE_TRANSFER_PIN,
+  CHANGE_PASSWORD,
+  ASSIGN_ATTENDANT_PERMISSIONS,
 
   // v1 endpoint
 
@@ -168,6 +170,9 @@ const VERA_ENDPOINTS = [
   BUY_AIRTIME,
   BUY_DATA,
   CREATE_WALLET,
+  ADD_SHOP_ATTENDANT,
+  UPDATE_TRANSFER_PIN,
+  CHANGE_PASSWORD
 
   // v1 endpoint
   // GET_PROFILE,
@@ -201,7 +206,7 @@ const INVENTORY_ENDPOINTS = [
   CREATE_STORE,
   CREATE_STOCK,
   GET_PRODUCTS,
-  ADD_SHOP_ATTENDANT,
+ASSIGN_ATTENDANT_PERMISSIONS,
   CREATE_INVOICE,
   CREATE_CUSTOMER,
   CREATE_CART,
@@ -518,7 +523,7 @@ export async function PUT(request: Request) {
     // Important: pass "PUT" as method for signature
     const secureHeaders = await addSecurityHeaders(
       baseHeaders,
-      "PUT",  // ← This was "POST" before — now correct
+      "PUT", // ← This was "POST" before — now correct
       endpoint
     );
 
@@ -527,7 +532,7 @@ export async function PUT(request: Request) {
     console.log(`Routing PUT ${endpoint} to ${apiBaseUrl}`);
 
     const response = await fetch(`${apiBaseUrl}${endpoint}`, {
-      method: "PUT",  // ← Forward as PUT
+      method: "PUT", // ← Forward as PUT
       headers: secureHeaders,
       body: contentType.includes("multipart/form-data")
         ? (data as FormData)

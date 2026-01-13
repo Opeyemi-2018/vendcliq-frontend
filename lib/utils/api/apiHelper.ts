@@ -60,7 +60,7 @@ import {
 
 import axiosInstance from ".";
 import {
-  CHANGE_PASSWORD,
+  
   CONFIRM_PHONE_NUMBER,
   CREATE_PASSWORD,
   CREATE_BUSINESS_DETAILS,
@@ -82,6 +82,7 @@ import {
   PIN_VALIDATE,
   CREATE_LOAN,
   CREATE_PIN,
+  UPDATE_TRANSFER_PIN,
   DASHBOARD,
   GET_ACCOUNT,
   GET_ACCOUNT_BY_ID,
@@ -99,11 +100,13 @@ import {
   POST_REPAYMENT_PATTERN,
   REQUEST_PIN_TOKEN,
   RESEND_EMAIL_OTP,
-  UPDATE_PIN,
+ CHANGE_PASSWORD,
   VERIFY_BANK_ACCOUNT,
   VERIFY_EMAIL,
   VERIFY_PHONE_NUMBER,
   VERIFY_VERA_BANK_ACCOUNT,
+  BUY_AIRTIME,
+  BUY_DATA,
 
   // inventory endpoints
   GET_PRODUCTS,
@@ -112,8 +115,7 @@ import {
   ADD_SHOP_ATTENDANT,
   CHECKOUT_CART,
   PAY_CART,
-  BUY_AIRTIME,
-  BUY_DATA,
+  ASSIGN_ATTENDANT_PERMISSIONS,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -132,6 +134,8 @@ import { CreateWalletResponse } from "@/types/wallet";
 import {
   AddShopAttendantPayload,
   AddShopAttendantResponse,
+  AssignAttendantPermissionsPayload,
+  AssignAttendantPermissionsResponse,
 } from "@/types/shopAttendant";
 import {
   CreatePurchaseInvoicePayload,
@@ -149,6 +153,8 @@ import {
 } from "@/types/cart";
 import { CheckoutResponse } from "@/types/checkOut";
 import { BuyAirtimePayload, BuyAirtimeResponse, BuyDataPayload, BuyDataResponse } from "@/types/utilityBills";
+import { UpdatePinResponse } from "@/types/transferPin";
+import { ChangePasswordResponse } from "@/types/passwordChange";
 
 interface UserProfile {
   data: {
@@ -445,6 +451,24 @@ export const handleCreateWallet = async (): Promise<CreateWalletResponse> => {
   return await poster<CreateWalletResponse>(CREATE_WALLET, {});
 };
 
+export const handleUpdateTransactionPin = async (
+  payload: UpdatePinPayload
+): Promise<UpdatePinResponse> => {
+  return await poster<UpdatePinResponse, UpdatePinPayload>(
+    UPDATE_TRANSFER_PIN,
+    payload
+  );
+};
+
+export const handleChangePassword = async (
+  payload: ChangePasswordPayload
+): Promise<ChangePasswordResponse> => {
+  return await poster<ChangePasswordResponse, ChangePasswordPayload>(
+    CHANGE_PASSWORD,
+    payload
+  );
+};
+
 // export const handleGetProducts = async (): Promise<{ data: any[] }> => {
 //   return await fetcher<{ data: any[] }>(GET_PRODUCTS);
 // };
@@ -531,14 +555,14 @@ export const handleVerifyBankAccount = async (
   );
 };
 
-export const handleChangePassword = async (
-  payload: ChangePasswordPayload
-): Promise<ApiResponse> => {
-  return await poster<ApiResponse, ChangePasswordPayload>(
-    CHANGE_PASSWORD,
-    payload
-  );
-};
+// export const handleChangePassword = async (
+//   payload: ChangePasswordPayload
+// ): Promise<ApiResponse> => {
+//   return await poster<ApiResponse, ChangePasswordPayload>(
+//     CHANGE_PASSWORD,
+//     payload
+//   );
+// };
 
 export const handleCreatePin = async (
   payload: PinPayload
@@ -546,11 +570,11 @@ export const handleCreatePin = async (
   return await poster<ApiResponse, PinPayload>(CREATE_PIN, payload);
 };
 
-export const handleUpdatePin = async (
-  payload: UpdatePinPayload
-): Promise<ApiResponse> => {
-  return await poster<ApiResponse, UpdatePinPayload>(UPDATE_PIN, payload);
-};
+// export const handleUpdatePin = async (
+//   payload: UpdatePinPayload
+// ): Promise<ApiResponse> => {
+//   return await poster<ApiResponse, UpdatePinPayload>(UPDATE_PIN, payload);
+// };
 
 export const handleRequestPinToken = async (): Promise<ApiResponse> => {
   return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
@@ -716,6 +740,15 @@ export const handlePayInvoice = async (
 ): Promise<PayInvoiceResponse> => {
   return await putter<PayInvoiceResponse, PayInvoicePayload>(
     PAY_CART(invoiceId),
+    payload
+  );
+};
+
+export const handleAssignAttendantPermissions = async (
+  payload: AssignAttendantPermissionsPayload
+): Promise<AssignAttendantPermissionsResponse> => {
+  return await poster<AssignAttendantPermissionsResponse, AssignAttendantPermissionsPayload>(
+    ASSIGN_ATTENDANT_PERMISSIONS,
     payload
   );
 };

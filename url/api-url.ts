@@ -21,6 +21,10 @@ const PIN_VALIDATE = "/client/v2/wallets/validate-pin";
 const BUY_AIRTIME = "/client/v2/payments/airtime";
 const BUY_DATA = "/client/v2/payments/data";
 const CREATE_WALLET = "/client/v2/wallets/virtual-accounts/create";
+const ADD_SHOP_ATTENDANT = "/client/v2/attendants";
+const UPDATE_TRANSFER_PIN = "/client/v2/auth/pin-update"
+const CHANGE_PASSWORD = "/client/v2/change-password"
+const ASSIGN_ATTENDANT_PERMISSIONS = "inventory/attendant-permissions"
 
 // v1 endpoint
 const BUSINESS_INFORMATION_SETUP_STEP_ONE =
@@ -37,9 +41,9 @@ const LIST_BANKS = "/client/v1/bank-accounts/banks/all";
 const VERIFY_BANK_ACCOUNT =
   "/client/v1/bank-accounts/banks/verify-bank-account";
 const RESEND_EMAIL_OTP = "/client/v1/auth/resend-otp";
-const CHANGE_PASSWORD = "/client/v1/auth/change-password";
+// const CHANGE_PASSWORD = "/client/v1/auth/change-password";
 const CREATE_PIN = "/client/v1/auth/pin";
-const UPDATE_PIN = "/client/v1/auth/pin-update";
+// const UPDATE_PIN = "/client/v1/auth/pin-update";
 const REQUEST_PIN_TOKEN = "/client/v1/auth/request-pin-token";
 const GET_TENURES = "/client/v1/loans/list/tenures";
 const REPAYMENT_PATTERN = (tenure: string) =>
@@ -65,7 +69,7 @@ const PAY_LOAN = (id: string) =>
 const CREATE_STORE = "inventory/stores";
 const CREATE_STOCK = "inventory/stocks";
 const GET_PRODUCTS = "inventory/products?page=1&limit=50&all=false&search=";
-const ADD_SHOP_ATTENDANT = "client/v2/attendants";
+
 const CREATE_INVOICE = "inventory/invoices";
 const CREATE_CUSTOMER = "inventory/customers";
 const CREATE_CART = "inventory/carts";
@@ -104,6 +108,9 @@ export {
   CREATE_CART,
   CHECKOUT_CART,
   PAY_CART,
+  UPDATE_TRANSFER_PIN,
+  CHANGE_PASSWORD,
+  ASSIGN_ATTENDANT_PERMISSIONS,
   // v1 endpoint
   GET_PROFILE,
   DASHBOARD,
@@ -114,9 +121,8 @@ export {
   LIST_BANKS,
   VERIFY_BANK_ACCOUNT,
   RESEND_EMAIL_OTP,
-  CHANGE_PASSWORD,
   CREATE_PIN,
-  UPDATE_PIN,
+  // UPDATE_PIN,
   REQUEST_PIN_TOKEN,
   GET_TENURES,
   REPAYMENT_PATTERN,

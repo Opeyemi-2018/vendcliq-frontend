@@ -89,6 +89,7 @@ const items = [
       { title: "Supplier List", url: "/dashboards/supplier" },
       { title: "Customer List", url: "/dashboards/customer" },
       { title: "Expenses", url: "/dashboards/expenses" },
+      { title: "Profile Settings", url: "/dashboards/profile-settings" },
     ],
   },
 ];

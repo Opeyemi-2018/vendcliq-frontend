@@ -50,12 +50,10 @@ export default function RootLayout({
       </Head>
 
       <body className="antialiased bg-white">
-        <QueryClientProvider client={queryClient}>
-          <UserProvider>
-            {children}
-          </UserProvider>
-          <Toaster position="top-center" richColors />
-        </QueryClientProvider>
+        {/* <QueryClientProvider client={queryClient}> */}
+        <UserProvider>{children}</UserProvider>
+        <Toaster position="top-center" richColors />
+        {/* </QueryClientProvider> */}
       </body>
     </html>
   );

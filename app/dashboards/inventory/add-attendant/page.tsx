@@ -60,25 +60,25 @@ const AddAttendant = () => {
         email: data.email.toLowerCase().trim(),
         phone: data.phone.startsWith("+") ? data.phone : `+${data.phone}`,
         password: data.password,
-        store_ids: [selectedStoreId], // Only the selected store ID
+        store_ids: [selectedStoreId], 
       };
 
       const response = await handleAddShopAttendant(payload);
 
       if (response.status === "success") {
         toast.success(
-          response.message || "Shop attendant created successfully!"
+          response.msg || "Shop attendant created successfully!"
         );
         form.reset();
         setSelectedStoreId(null);
 
         router.push("/dashboards/inventory/my-store");
       } else {
-        toast.error(response.message || "Failed to create attendant");
+        toast.error(response.msg || "Failed to create attendant");
       }
     } catch (error: any) {
       toast.error(
-        error?.message || "Failed to create attendant. Please try again."
+        error?.msg || "Failed to create attendant. Please try again."
       );
       console.error("Add attendant error:", error);
     }

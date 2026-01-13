@@ -1,7 +1,7 @@
 // app/dashboards/inventory/my-store/[id]/page.tsx
 "use client";
 
-import { MoveLeft, Trash2 } from "lucide-react";
+import { MoveLeft, Trash2, Loader2, Delete, MoveRight, Search } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getStoreById } from "@/actions/stores";
@@ -9,13 +9,19 @@ import { ThreeDots } from "react-loader-spinner";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/Input";
 import StockForm from "../chunks/StockForm";
+
+// New server action import
+import { getStoreStock } from "@/actions/stores";
 
 interface Store {
   id: string;
@@ -27,52 +33,70 @@ interface Store {
   low_stock_count: number;
 }
 
+interface StockItem {
+  id: string;
+  sku: string;
+  quantity: string;
+  selling_price: string;
+  cost_price: string;
+  product: {
+    name: string;
+    image?: string;
+  };
+  status: string;
+  // you can add more fields later (exp_date, stock_value, etc.)
+}
+
 const StoreDetailPage = () => {
   const router = useRouter();
   const params = useParams();
   const storeId = params.id as string;
 
   const [store, setStore] = useState<Store | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [stocks, setStocks] = useState<StockItem[]>([]);
+  const [isLoadingStore, setIsLoadingStore] = useState(true);
+  const [isLoadingStock, setIsLoadingStock] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddStockOpen, setIsAddStockOpen] = useState(false);
 
   useEffect(() => {
-    const fetchStore = async () => {
-      setIsLoading(true);
-      setError(null);
+    const token =
+      localStorage.getItem("accessToken") || localStorage.getItem("authToken");
+    if (!token) return;
+    const fetchData = async () => {
+      // 1. Fetch store details
+      setIsLoadingStore(true);
+      const storeResult = await getStoreById(storeId, token);
 
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
-
-      if (!token) {
-        setError("Please log in to view store details");
-        setIsLoading(false);
-        return;
-      }
-
-      const result = await getStoreById(storeId, token);
-
-      if (result && result.data) {
-        setStore(result.data);
+      if (storeResult?.data) {
+        setStore(storeResult.data);
       } else {
         setError("Failed to load store details");
       }
+      setIsLoadingStore(false);
 
-      setIsLoading(false);
+      // 2. Fetch stock for this store
+      setIsLoadingStock(true);
+      const stockResult = await getStoreStock(storeId, token);
+
+      if (stockResult.success && Array.isArray(stockResult.data)) {
+        setStocks(stockResult.data);
+      } else {
+        setError(stockResult.message || "Failed to load stock items");
+      }
+      setIsLoadingStock(false);
     };
 
     if (storeId) {
-      fetchStore();
+      fetchData();
     }
   }, [storeId]);
 
-  if (isLoading) {
+  if (isLoadingStore || isLoadingStock) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <ThreeDots height="80" width="80" color="#0A6DC0" visible={true} />
-        <p className="mt-4 text-[#9E9A9A]">Loading store details...</p>
+        <p className="mt-4 text-[#9E9A9A]">Loading store & stock details...</p>
       </div>
     );
   }
@@ -95,22 +119,21 @@ const StoreDetailPage = () => {
     <div className="">
       <button
         onClick={() => router.back()}
-        className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors"
+        className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors mb-4"
       >
         <MoveLeft className="w-5 h-5" />
       </button>
 
       <div className="flex flex-col gap-2 md:flex-row md:items-center justify-between">
         <div>
-          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
+          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F] dark:text-white">
             {store.name}
           </h1>
-          <p className="text-[16px] font-dm-sans text-[#9E9A9A]">
+          <p className="text-[16px] font-dm-sans text-[#9E9A9A] dark:text-gray-400">
             Here are all the details about this store
           </p>
         </div>
 
-        {/* Add Stock Button → Opens Modal */}
         <Button
           onClick={() => setIsAddStockOpen(true)}
           className="bg-[#0A6DC0] hover:bg-[#09599a] py-5 md:py-6"
@@ -119,6 +142,7 @@ const StoreDetailPage = () => {
         </Button>
       </div>
 
+      {/* Stock Value Card */}
       <div className="bg-[url('/balance-bg.svg')] my-6 bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6">
         <div className="space-y-2">
           <div className="flex items-center gap-1">
@@ -131,36 +155,86 @@ const StoreDetailPage = () => {
         </div>
       </div>
 
+      {/* Store Info Card */}
       <Card className="mt-6 p-6">
-        <div className="grid grid-cols-2 gap-y-3 md:gap-4 text-[#2F2F2F] font-dm-sans">
-          <div>
-            <p className="font-bold">Store Name:</p>
-            <p>{store.name}</p>
-          </div>
-          <div>
-            <p className="font-bold">Address:</p>
-            <p>{store.address.name}</p>
-          </div>
-          <div>
-            <p className="font-bold">Phone:</p>
-            <p>{store.phone}</p>
-          </div>
-          <div>
-            <p className="font-bold">Product Count:</p>
-            <p>{store.stock_count}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+          {/* Store Name */}
+          <div className="space-y-2">
+            <Label
+              htmlFor="store-name"
+              className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
+            >
+              Store Name
+            </Label>
+            <Input
+              id="store-name"
+              value={store.name}
+              readOnly
+              className="bg-[#F9F9F9] py-5 md:py-6 cursor-default "
+            />
           </div>
 
+          {/* Address */}
+          <div className="space-y-2">
+            <Label
+              htmlFor="store-address"
+              className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
+            >
+              Address
+            </Label>
+            <Input
+              id="store-address"
+              value={store.address.name}
+              readOnly
+              className="bg-[#F9F9F9] py-5 md:py-6 cursor-default "
+            />
+          </div>
+
+          {/* Phone */}
+          <div className="space-y-2">
+            <Label
+              htmlFor="store-phone"
+              className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
+            >
+              Phone
+            </Label>
+            <Input
+              id="store-phone"
+              value={store.phone}
+              readOnly
+              className="bg-[#F9F9F9] py-5 md:py-6 cursor-default "
+            />
+          </div>
+
+          {/* Product Count */}
+          <div className="space-y-2">
+            <Label
+              htmlFor="product-count"
+              className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
+            >
+              Product Count
+            </Label>
+            <Input
+              id="product-count"
+              value={store.stock_count}
+              readOnly
+              className="bg-[#F9F9F9] py-5 md:py-6 cursor-default "
+            />
+          </div>
+
+          {/* Low Stock Warning (kept as-is, spans full width) */}
           {store.low_stock_count > 0 && (
-            <div className="col-span-2">
-              <p className="text-red-600 font-medium">
-                ⚠️ {store.low_stock_count} items low in stock
+            <div className="col-span-1 sm:col-span-2 mt-2">
+              <p className="text-red-600 dark:text-red-400 font-medium flex items-center gap-2">
+                <span className="text-lg">⚠️</span>
+                {store.low_stock_count} items low in stock
               </p>
             </div>
           )}
         </div>
-
+        {/* Payment Options - unchanged */}
         <div className="space-y-2 font-dm-sans mt-8">
-          <div className="text-[#2F2F2F] flex justify-between items-center">
+          <div className="text-[#2F2F2F] dark:text-gray-200 flex justify-between items-center">
             <p className="font-bold text-[13px] md:text-[16px]">
               Payment Options
             </p>
@@ -168,41 +242,163 @@ const StoreDetailPage = () => {
               + New Payment Method
             </button>
           </div>
-          <div className="flex justify-between items-center border border-[#D8D8D866] p-2 rounded-lg">
+          <div className="flex justify-between items-center border border-[#D8D8D866] dark:border-gray-700 p-2 rounded-lg">
             <p className="text-[13px] md:text-[16px]">Opay POS</p>
             <Trash2 color="#9E9A9A" size={20} />
           </div>
-          <div className="flex justify-between items-center border border-[#D8D8D866] p-2 rounded-lg">
+          <div className="flex justify-between items-center border border-[#D8D8D866] dark:border-gray-700 p-2 rounded-lg">
             <p className="text-[13px] md:text-[16px]">Ajo POS</p>
             <Trash2 color="#9E9A9A" size={20} />
           </div>
         </div>
-
         <div className="flex items-center justify-between mt-8 gap-4">
           <Button className="bg-[#0A6DC0] hover:bg-[#09599a] w-full py-5 md:py-6">
             Edit Store
           </Button>
-          <Button variant="outline" className="w-full py-5 md:py-6 bg-white">
+          <Button
+            variant="outline"
+            className="w-full py-5 md:py-6 bg-white dark:bg-gray-900"
+          >
             Store Settings
           </Button>
         </div>
       </Card>
 
+      {/* Stock Items Table */}
+      <Card className="mt-8 p-6">
+        <div className="flex justify-between items-center my-3 ">
+          <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
+            Products Added to Invoice ({stocks.length})
+          </h2>
+          <Button className="bg-[#0A2540] hover:bg-[#304c6a] py-5 md:py-6">
+            Move Selected
+          </Button>
+        </div>
+   <div className="relative mb-6">
+        <Search className="absolute left-3 top-3.5 w-5 h-5 text-[#313131]" />
+        <Input
+          placeholder="Search products..."
+          className="bg-[#F2F2F7] pl-10 py-6"
+          // value={searchQuery}
+          // onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+        {isLoadingStock ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-10 w-10 animate-spin text-[#0A6DC0]" />
+            <p className="mt-4 text-[#9E9A9A] dark:text-gray-400">
+              Loading stock items...
+            </p>
+          </div>
+        ) : stocks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Image src="/box.svg" alt="No stock" width={80} height={80} />
+            <p className="mt-4 font-bold text-[16px] text-[#2F2F2F] dark:text-white">
+              No stock items found
+            </p>
+            <p className="text-[#9E9A9A] dark:text-gray-400 mt-2">
+              Add stock to see items here
+            </p>
+          </div>
+        ) : (
+          <Card className="overflow-x-auto">
+            <table className="w-full min-w-[600px] ">
+              <thead className="border-b border-[#E6E6E6]">
+                <tr className="border-b dark:border-gray-700">
+                  <th className="text-left py-3 pl-4 font-medium text-[#2F2F2F] dark:text-gray-300">
+                    SKU
+                  </th>
+                  <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                    Quantity
+                  </th>
+                  <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                    Selling Price
+                  </th>
+                  <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                    Cost Price
+                  </th>
+                  <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                    Action
+                  </th>
+                  <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                    More
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y dark:divide-gray-700">
+                {stocks.map((item) => (
+                  <tr
+                    key={item.id}
+                    className="hover:bg-gray-50  cursor-pointer transition-colors font-medium font-dm-sans text-[16px] text-[#2F2F2F] "
+                  >
+                    <td className="py-4 pl-4">
+                      <div className="flex items-center gap-3">
+                        <Checkbox className="h-[20px] w-[20px]" />
+                        {/* {item.product.image && (
+                          <Image
+                            src={item.product.image}
+                            alt={item.product.name}
+                            width={40}
+                            height={40}
+                            className="object-contain w-7 rounded"
+                          />
+                        )} */}
+                        <div>
+                          <p className="font-medium text-[#2F2F2F] dark:text-gray-200">
+                            {item.sku}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 font-medium text-[#2F2F2F] dark:text-gray-200">
+                      {parseFloat(item.quantity).toFixed(0)}
+                    </td>
+                    <td className="py-4 font-medium text-[#2F2F2F] dark:text-gray-200">
+                      ₦{parseFloat(item.selling_price).toLocaleString()}
+                    </td>
+                    <td className="py-4 font-medium text-[#2F2F2F] dark:text-gray-200">
+                      ₦{parseFloat(item.cost_price).toLocaleString()}
+                    </td>
+
+                    <td className="py-4">
+                      <Trash2 color="#FF3B30" />
+                      {/* <span
+                        className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
+                          item.status === "in_stock"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        }`}
+                      >
+                        {item.status.replace("_", " ")}
+                      </span> */}
+                    </td>
+                    <td className="py-4 font-medium text-[#2F2F2F] dark:text-gray-200">
+                      <MoveRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        )}
+      </Card>
+
       {/* Add Stock Modal */}
       <Dialog open={isAddStockOpen} onOpenChange={setIsAddStockOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] bg-white max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="">
-            <DialogTitle className="text-[20px] font-clash font-semibold">
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] bg-white dark:bg-gray-900 max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] dark:text-white">
               Add Stock to {store.name}
             </DialogTitle>
           </DialogHeader>
-          {/* Reuse your full Stock form */}
-          <div className="">
-            <StockForm
-              storeId={store.id}
-              onSuccess={() => setIsAddStockOpen(false)}
-            />
-          </div>
+          <StockForm
+            storeId={store.id}
+            onSuccess={() => {
+              setIsAddStockOpen(false);
+              // Optional: refetch stock here after success
+              // You can call the fetch logic again or pass a refresh callback
+            }}
+          />
         </DialogContent>
       </Dialog>
     </div>

@@ -11,7 +11,7 @@ export interface AddShopAttendantPayload {
 
 export interface AddShopAttendantResponse {
   status: string;
-  message: string;
+  msg: string;
   data?: any;
 }
 
@@ -30,3 +30,71 @@ export const shopAttendantSchema = z.object({
 });
 
 export type ShopAttendantForm = z.infer<typeof shopAttendantSchema>;
+
+export interface Attendant {
+  id: number;
+  firstname: string;
+  lastname: string;
+  fullname: string;
+  email: string;
+  phone: string;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  accountRole: "ATTENDANTS";
+  accountStatus: "ACTIVE" | "INACTIVE" | string;
+  accessLevel: number;
+  storeIds: string[];
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+}
+
+export interface AttendantsData {
+  attendants: Attendant[];
+  totalCount: number;
+}
+
+export interface GetAttendantsResponse {
+  status: "success" | "error";
+  msg: string;
+  data: AttendantsData;
+}
+
+
+export interface AssignAttendantPermissionsPayload {
+  attendant_id: number;
+  can_buy: boolean;
+  can_sell: boolean;
+  can_update_stock: boolean;
+  can_move_stock: boolean;
+  can_add_stock: boolean;
+  can_market_place: boolean;
+  can_push_to_market: boolean;
+  can_view_store_info: boolean;
+  can_reporting: boolean;
+  can_expenses: boolean;
+}
+
+export interface AssignAttendantPermissionsResponse {
+  message: any;
+  statusCode: number;
+  error: null | any;
+  data: {
+    attendant_id: number;
+    user_id: number;
+    can_buy: boolean;
+    can_sell: boolean;
+    can_update_stock: boolean;
+    can_move_stock: boolean;
+    can_add_stock: boolean;
+    can_market_place: boolean;
+    can_push_to_market: boolean;
+    can_view_store_info: boolean;
+    can_reporting: boolean;
+    can_expenses: boolean;
+    uuid: string;
+    id: number;
+    created_at: string;
+    updated_at: string;
+  } | null;
+}
+
