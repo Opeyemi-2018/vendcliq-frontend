@@ -266,7 +266,7 @@ export default function DataFlow() {
         network: getValues("network"),
         pinToken,
         idempotencyKey: generateIdempotencyKey(),
-        deviceFingerprint: "web-client-" + Date.now(),
+        deviceFingerprint: "3.345",
         ipAddress: "127.0.0.1",
       };
 
@@ -403,11 +403,15 @@ export default function DataFlow() {
                           key={startIndex + index}
                           type="button"
                           onClick={() =>
-                            setValue("dataBundle", {
-                              size: plan.dataBundle,
-                              validity: plan.validity,
-                              price: Number(plan.amount),
-                            }, { shouldValidate: true })
+                            setValue(
+                              "dataBundle",
+                              {
+                                size: plan.dataBundle,
+                                validity: plan.validity,
+                                price: Number(plan.amount),
+                              },
+                              { shouldValidate: true }
+                            )
                           }
                           className={`p-2 h-[110px] md:h-[95px] flex flex-col items-center justify-center text-[12px] font-medium font-dm-sans rounded-xl transition-all ${
                             dataBundle?.size === plan.dataBundle
@@ -615,7 +619,9 @@ export default function DataFlow() {
                         }
                       }}
                       onFocus={(e) => e.target.select()}
-                      ref={(el) => { pinInputRefs.current[index] = el; }}
+                      ref={(el) => {
+                        pinInputRefs.current[index] = el;
+                      }}
                       className="absolute inset-0 opacity-0 cursor-default"
                       autoFocus={index === 0}
                     />
@@ -652,6 +658,7 @@ export default function DataFlow() {
       </form>
 
       {/* Success Modal */}
+      {/* Success Modal */}
       <AlertDialog open={showSuccess} onOpenChange={setShowSuccess}>
         <AlertDialogContent className="text-center w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[600px]">
           <AlertDialogHeader>
@@ -661,10 +668,23 @@ export default function DataFlow() {
               className="w-64 h-64 mx-auto drop-shadow-lg"
             />
             <AlertDialogTitle className="text-center text-[#2F2F2F] text-[20px] md:text-[25px] font-semibold font-clash">
-              Data Purchased Successfully
+              🎉 Data Purchase Successful 🎉
             </AlertDialogTitle>
             <AlertDialogDescription className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans text-center">
-              Your data bundle has been sent to {formData.phoneNumber}
+              <div>
+                <span className="font-bold text-[#2F2F2F]">
+                  {formData.dataBundle?.size} . {formData.dataBundle?.validity}
+                </span>{" "}
+                data has been sent!
+              </div>
+
+              <div className="text-[#0A6DC0] font-semibold tracking-wide text-[17px]">
+                to {formData.phoneNumber}
+              </div>
+
+              <div className="text-[#9E9A9A] text-[14px] mt-4">
+                Thank you for using Vendcliq!
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -25,7 +25,7 @@ const SendMoney = () => {
         </p>
       </div>
 
-      <div className="mt-5">
+      <div className="md:mt-5">
         {/* Mobile Tabs + Desktop Sidebar */}
         <div className="flex flex-col lg:flex-row gap-2 lg:gap-4">
           {/* Selector Panel */}
@@ -45,7 +45,7 @@ const SendMoney = () => {
               <div className="flex lg:hidden gap-8 justify-between border-b border-gray-200">
                 <button
                   onClick={() => setSelectTransfer("vendcliq")}
-                  className={`flex  items-center gap-2 pb-4 transition-all ${
+                  className={`flex  items-center gap-2 pb-2 transition-all ${
                     selectTransfer === "vendcliq"
                       ? "text-[#0A6DC0] font-semibold border-b-4 border-[#0A6DC0]"
                       : "text-[#9E9A9A] font-medium"
@@ -57,7 +57,7 @@ const SendMoney = () => {
 
                 <button
                   onClick={() => setSelectTransfer("other")}
-                  className={`flex  items-center gap-2 pb-4 transition-all ${
+                  className={`flex  items-center gap-2 pb-2 transition-all ${
                     selectTransfer === "other"
                       ? "text-[#0A6DC0] font-semibold border-b-4 border-[#0A6DC0]"
                       : "text-[#9E9A9A] font-medium"

@@ -161,91 +161,95 @@ export default function AirtimeFlow() {
   };
 
   const handleMakePayment = async () => {
-  const pinValue = watch("pin");
-  const phoneNumber = getValues("phoneNumber");
-  const amountRaw = getValues("amount");
-  const network = getValues("network");
+    const pinValue = watch("pin");
+    const phoneNumber = getValues("phoneNumber");
+    const amountRaw = getValues("amount");
+    const network = getValues("network");
 
-  if (!pinValue || pinValue.length !== 4) {
-    toast.error("Please enter your 4-digit PIN");
-    pinInputRef.current?.focus();
-    return;
-  }
-
-  if (!phoneNumber || phoneNumber.replace(/\D/g, "").length !== 11) {
-    toast.error("Invalid phone number");
-    return;
-  }
-
-  if (!amountRaw || Number(amountRaw) < 100) {
-    toast.error("Amount must be at least ₦100");
-    return;
-  }
-
-  if (!network) {
-    toast.error("Network not detected");
-    return;
-  }
-
-  setIsTransferring(true);
-
-  try {
-    // 1. Validate PIN
-    const pinRes = await handleValidatePin({ pin: pinValue });
-
-    if (pinRes.status !== "success" || !pinRes.data?.validated) {
-      toast.error(pinRes.msg || "Invalid PIN");
+    if (!pinValue || pinValue.length !== 4) {
+      toast.error("Please enter your 4-digit PIN");
+      pinInputRef.current?.focus();
       return;
     }
 
-    const pinToken = pinRes.data.pinToken;
-
-    // 2. Idempotency key
-    const idempotencyKey = generateIdempotencyKey();
-
-    // 3. Build payload - match Postman exactly
-    const payload = {
-      phoneNumber: phoneNumber.replace(/\D/g, ""),
-      amount: amountRaw.toString(),          // ← force string like Postman
-      pinToken,
-      idempotencyKey,
-      deviceFingerprint: "web-client-" + Date.now(), // ← non-empty, realistic
-      ipAddress: "127.0.0.1",                // ← non-empty, common fallback
-    };
-
-
-    // 4. Buy airtime
-    const response = await handleBuyAirtime(payload);
-
-    console.log("[AIR] Full response:", JSON.stringify(response, null, 2));
-
-    // Success check - matches both success and your error structure
-    if (response.status === "success") {
-      const ref = response?.data?.transactionReference || "N/A";
-      toast.success(response.msg || `Airtime of ₦${amountRaw} sent! Ref: ${ref}`);
-      setShowSuccess(true);
-    } else {
-      // Show the REAL backend message
-      const errorMsg = response.msg || "Airtime purchase failed";
-      toast.error(errorMsg);
-    }
-  } catch (error: any) {
-    console.error("[AIR] Exception:", error);
-
-    let msg = "Something went wrong. Please try again.";
-    if (error?.response?.data?.msg) {
-      msg = error.response.data.msg; // proxy-wrapped error
-    } else if (error?.response?.data) {
-      msg = error.response.data.msg || error.response.data.error || "Server error";
-    } else if (error?.message) {
-      msg = error.message;
+    if (!phoneNumber || phoneNumber.replace(/\D/g, "").length !== 11) {
+      toast.error("Invalid phone number");
+      return;
     }
 
-    toast.error(msg);
-  } finally {
-    setIsTransferring(false);
-  }
-};
+    if (!amountRaw || Number(amountRaw) < 100) {
+      toast.error("Amount must be at least ₦100");
+      return;
+    }
+
+    if (!network) {
+      toast.error("Network not detected");
+      return;
+    }
+
+    setIsTransferring(true);
+
+    try {
+      // 1. Validate PIN
+      const pinRes = await handleValidatePin({ pin: pinValue });
+
+      if (pinRes.status !== "success" || !pinRes.data?.validated) {
+        toast.error(pinRes.msg || "Invalid PIN");
+        return;
+      }
+
+      const pinToken = pinRes.data.pinToken;
+
+      // 2. Idempotency key
+      const idempotencyKey = generateIdempotencyKey();
+
+      // 3. Build payload - match Postman exactly
+      const payload = {
+        phoneNumber: phoneNumber.replace(/\D/g, ""),
+        amount: amountRaw.toString(), // ← force string like Postman
+        pinToken,
+        idempotencyKey,
+        deviceFingerprint: "web-client-" + Date.now(), // ← non-empty, realistic
+        ipAddress: "127.0.0.1", // ← non-empty, common fallback
+      };
+
+      // 4. Buy airtime
+      const response = await handleBuyAirtime(payload);
+
+      console.log("[AIR] Full response:", JSON.stringify(response, null, 2));
+
+      // Success check - matches both success and your error structure
+      if (response.status === "success") {
+        const ref = response?.data?.transactionReference || "N/A";
+        toast.success(
+          response.msg || `Airtime of ₦${amountRaw} sent! Ref: ${ref}`
+        );
+        setShowSuccess(true);
+      } else {
+        // Show the REAL backend message
+        const errorMsg = response.msg || "Airtime purchase failed";
+        toast.error(errorMsg);
+      }
+    } catch (error: any) {
+      console.error("[AIR] Exception:", error);
+
+      let msg = "Something went wrong. Please try again.";
+      if (error?.response?.data?.msg) {
+        msg = error.response.data.msg; // proxy-wrapped error
+      } else if (error?.response?.data) {
+        msg =
+          error.response.data.msg ||
+          error.response.data.error ||
+          "Server error";
+      } else if (error?.message) {
+        msg = error.message;
+      }
+
+      toast.error(msg);
+    } finally {
+      setIsTransferring(false);
+    }
+  };
 
   return (
     <Form {...form}>
@@ -303,7 +307,9 @@ export default function AirtimeFlow() {
                     </span>
                   ) : detectedNetwork && networkLogos[detectedNetwork] ? (
                     <>
-                      <Image height={20} width={20}
+                      <Image
+                        height={20}
+                        width={20}
                         src={networkLogos[detectedNetwork]}
                         alt={detectedNetwork}
                         className="h-8 w-8 object-contain rounded-full"
@@ -375,13 +381,8 @@ export default function AirtimeFlow() {
           {/* Step 2 - Confirm */}
           {step === 2 && formData && (
             <div className="space-y-2 mt-1">
-              <button
-                type="button"
-                
-                onClick={() => setStep(1)}
-                className="mt-2"
-              >
-                <ChevronLeft size={30} className="" /> 
+              <button type="button" onClick={() => setStep(1)} className="mt-2">
+                <ChevronLeft size={30} className="" />
               </button>
               <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
                 Confirm this purchase before you input PIN
@@ -452,22 +453,16 @@ export default function AirtimeFlow() {
                 onClick={() => setStep(3)}
                 className="w-full bg-[#0A6DC0] hover:bg-[#09599a] py-5 md:py-6"
               >
-              Proceed
+                Proceed
               </Button>
-              
             </div>
           )}
 
           {/* Step 3 - PIN */}
           {step === 3 && (
             <div className="space-y-8 mt-3">
-              <button
-                type="button"
-                
-                onClick={() => setStep(2)}
-                className="mt-2"
-              >
-                <ChevronLeft size={30} className="" /> 
+              <button type="button" onClick={() => setStep(2)} className="mt-2">
+                <ChevronLeft size={30} className="" />
               </button>
               <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
                 To proceed with this transaction, please enter your PIN
@@ -573,7 +568,6 @@ export default function AirtimeFlow() {
                   "Make Payment"
                 )}
               </Button>
-
             </div>
           )}
         </Card>
@@ -589,11 +583,18 @@ export default function AirtimeFlow() {
               className="w-64 h-64 mx-auto drop-shadow-lg"
             />
             <AlertDialogTitle className="text-center text-[#2F2F2F] text-[20px] md:text-[25px] font-semibold font-clash">
-              Airtime Purchased Successfully
+              🎉 Airtime Purchased Successfully🎉
             </AlertDialogTitle>
             <AlertDialogDescription className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans text-center">
-              Your airtime purchase is successful and has been sent to the phone
-              number.
+              <div>
+                <span className="font-bold text-[#2F2F2F]">
+                  ₦{formData.amount?.toLocaleString()}
+                </span>{" "}
+                airtime has been successfully sent to
+              </div>
+              <div className="font-bold text-[#0A6DC0] text-[18px] tracking-wide">
+                {formData.phoneNumber}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

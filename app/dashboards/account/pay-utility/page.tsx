@@ -137,7 +137,7 @@ const PayUtility = () => {
             <button
               onClick={() => setSelectedUtility("airtime")}
               className={`
-                flex-1  px-6 rounded-lg font-dm-sans font-medium text-[14px] transition-all
+                flex-1   rounded-lg font-dm-sans font-medium text-[14px] transition-all
                 ${
                   selectedUtility === "airtime"
                     ? "bg-[#0A6DC0] text-white"
@@ -150,7 +150,7 @@ const PayUtility = () => {
             <button
               onClick={() => setSelectedUtility("data")}
               className={`
-                flex-1 py-3 px-6 rounded-lg font-dm-sans font-medium text-[14px] transition-all
+                flex-1 py-2 rounded-lg font-dm-sans font-medium text-[14px] transition-all
                 ${
                   selectedUtility === "data"
                     ? "bg-[#0A6DC0] text-white"

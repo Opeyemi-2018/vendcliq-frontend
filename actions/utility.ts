@@ -80,7 +80,6 @@ export async function fetchDataPlans(token: string, phone: string) {
   if (!phone || phone.length !== 11) {
     return { success: false, error: "Phone number must be exactly 11 digits" };
   }
-
   try {
     const cleanPhone = phone.startsWith("0")
       ? phone

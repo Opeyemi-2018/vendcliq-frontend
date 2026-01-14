@@ -1,60 +1,107 @@
-'use client'
+"use client";
 
-import  { useState } from 'react';
+import { Separator } from "@/components/ui/separator";
+import { TbWorld } from "react-icons/tb";
+import Image from "next/image";
+import { useState } from "react";
+import { FaXTwitter } from "react-icons/fa6";
+import { FaWhatsapp } from "react-icons/fa6";
+import { FaFacebook } from "react-icons/fa";
+import { FaInstagram } from "react-icons/fa";
+import { BiSolidMessageError } from "react-icons/bi";
 
 const CustomerSupport = () => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
 
   const handleSubmit = () => {
-   
-    console.log('Support message:', message);
-    alert('Your message has been sent to support!');
-    setMessage('');
+    console.log("Support message:", message);
+    alert("Your message has been sent to support!");
+    setMessage("");
   };
 
   return (
-    <div className="bg-white rounded-lg p-6">
-      <h2 className="text-2xl font-semibold mb-2">Customer Support</h2>
-      <p className="text-gray-500 text-sm mb-6">
-        Get help from our support team
-      </p>
+    <div className="">
+      <div className="">
+        <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
+          Customer Support
+        </h1>
+        <Separator
+          orientation="horizontal"
+          className="h-[1px] mt-3"
+          style={{ background: "#E0E0E0" }}
+        />
+        <p className="text-[16px] font-dm-sans text-[#9E9A9A]">
+          Get help easily through our live chat feature or message us on our
+          social media platforms
+        </p>
+      </div>
 
-      <div className="space-y-4 mb-6">
-        <div className="border border-gray-200 rounded-lg p-4">
-          <h3 className="font-medium mb-2">Email Support</h3>
-          <p className="text-sm text-gray-600 mb-2">support@example.com</p>
-          <p className="text-xs text-gray-500">Response time: Within 24 hours</p>
+      <div className="flex items-center justify-center flex-col">
+        <Image
+          src={"/call.svg"}
+          width={30}
+          height={30}
+          alt="call center"
+          className="w-[480px] h-[299px]"
+        />
+        <h1 className="font-semibold -mt-10 font-clash text-[16px] md:text-[20px]">
+          We are here to support you!
+        </h1>
+      </div>
+
+      <div className="bg-[#E6E6E6AA] mt-6 p-5 rounded-lg flex flex-col  justify-center items-center gap-3">
+        <div className="flex gap-4">
+          <a
+            href="https://www.instagram.com/vendcliq"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <FaInstagram size={22} color="#F35355" />
+          </a>
+          <a
+            href="https://x.com/vendcliq"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <FaXTwitter size={22} color="#000000c" />
+          </a>
+          <FaWhatsapp size={22} color="#25D366" />
+          <a
+            href="https://www.facebook.com/groups/1080464810962647"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {" "}
+            <FaFacebook size={22} color="#0866FF" />
+          </a>
         </div>
-
-        <div className="border border-gray-200 rounded-lg p-4">
-          <h3 className="font-medium mb-2">Phone Support</h3>
-          <p className="text-sm text-gray-600 mb-2">+1 (555) 123-4567</p>
-          <p className="text-xs text-gray-500">Available: Mon-Fri, 9AM-5PM EST</p>
-        </div>
-
-        <div className="border border-gray-200 rounded-lg p-4">
-          <h3 className="font-medium mb-2">Live Chat</h3>
-          <button className="text-sm text-blue-600 hover:underline">Start Chat</button>
-          <p className="text-xs text-gray-500 mt-1">Average wait time: 2 minutes</p>
+        <div>
+          <p className="font-medium text-[16px] font-dm-sans text-[#2F2F2F] flex items-center gap-2">
+            <a
+              href="https://vendcliq.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <TbWorld size={22} color="#0A6DC0" />
+            </a>{" "}
+            Follow us on all social media
+          </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <label className="block text-sm font-medium mb-2">Send us a message</label>
-        <textarea
-          placeholder="Describe your issue..."
-      
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-        />
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition"
-        >
-          Send Message
-        </button>
-      </form>
+      <div className="bg-[#0A6DC0] p-6 flex gap-3 items-center mt-6">
+        <div className="bg-[#91c7f4] p-2 rounded-full">
+          <BiSolidMessageError size={22} color="#ffffff" />
+        </div>
+        <div>
+          <h1 className="text-white font-medium font-dm-sans">
+            Live Chat Support
+          </h1>
+          <p className="text-[10px] font-dm-sans text-white ">
+            We are standing by to answer your questions right now
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

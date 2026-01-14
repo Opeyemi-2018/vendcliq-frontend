@@ -19,13 +19,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema, SignInFormData } from "@/types/auth";
 import { toast } from "sonner";
 import { handleSignIn } from "@/lib/utils/api/apiHelper";
-import { useUser } from "@/context/userContext";
+import { useUser, extractVerificationStatus } from "@/context/userContext";
 
 const SignIN = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { setUserAndWallet, clearUserData } = useUser(); // Use setUserAndWallet and clearUserData
+  const { setAllUserData, clearUserData } = useUser(); // Changed from setUserAndWallet to setAllUserData
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -58,6 +58,7 @@ const SignIN = () => {
 
         const userData = response.data?.user;
         const walletData = response.data?.user?.wallet;
+        const businessData = response.data?.user?.business; // Get business data
 
         if (userData) {
           const formattedUserData = {
@@ -81,13 +82,28 @@ const SignIN = () => {
               }
             : null;
 
-          // Use setUserAndWallet to update both at once
-          setUserAndWallet(formattedUserData, formattedWalletData);
+          // Extract verification status from business data
+          const verificationStatus = businessData
+            ? extractVerificationStatus(businessData)
+            : null;
+
+          // Use setAllUserData to update user, wallet, AND verification status
+          setAllUserData(
+            formattedUserData,
+            formattedWalletData,
+            verificationStatus
+          );
 
           // Also store in localStorage directly
           localStorage.setItem("user", JSON.stringify(formattedUserData));
           if (formattedWalletData) {
             localStorage.setItem("wallet", JSON.stringify(formattedWalletData));
+          }
+          if (verificationStatus) {
+            localStorage.setItem(
+              "verificationStatus",
+              JSON.stringify(verificationStatus)
+            );
           }
 
           toast.success("Signed in successfully!");

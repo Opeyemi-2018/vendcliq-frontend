@@ -162,7 +162,8 @@ const AssignAttendantPermissions = () => {
                   value={att.id.toString()}
                   className="space-y-2"
                 >
-                  {att.fullname} ({att.email})
+                  {att.fullname}
+                   {/* ({att.email}) */}
                 </SelectItem>
               ))}
             </SelectContent>
