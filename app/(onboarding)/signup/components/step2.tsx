@@ -282,7 +282,7 @@ export default function Step2({ onNext, onPrev, data }: Props) {
           <Button
             type="submit"
             disabled={loading || !form.formState.isValid}
-            className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] text-white font-bold py-6 rounded-xl "
+            className="w-full bg-[#0A6DC0] hover:bg-[#085a9e]  py-5 md:py-6  "
           >
             {loading ? (
               <>

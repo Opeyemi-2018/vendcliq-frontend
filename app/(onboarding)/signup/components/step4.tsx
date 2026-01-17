@@ -47,7 +47,7 @@ export default function Step4({ onNext, data }: Props) {
   const onSubmit = async (values: ConfirmPhoneData) => {
     form.setValue("isWhatsappNo", method === "whatsapp" ? "true" : "false");
 
-    let finalPhone = values.phone.replace(/\D/g, ""); 
+    let finalPhone = values.phone.replace(/\D/g, "");
     if (finalPhone.startsWith("234")) {
       finalPhone = finalPhone.substring(3);
     }
@@ -84,7 +84,7 @@ export default function Step4({ onNext, data }: Props) {
           );
         }
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast.error(
         error.message ||
