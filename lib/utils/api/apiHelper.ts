@@ -116,6 +116,7 @@ import {
   CHECKOUT_CART,
   PAY_CART,
   ASSIGN_ATTENDANT_PERMISSIONS,
+  UPDATE_ATTENDANT_PERMISSIONS
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -752,3 +753,11 @@ export const handleAssignAttendantPermissions = async (
     payload
   );
 };
+
+export const handleUpdateAttendantPermissions = async (
+  payload: AssignAttendantPermissionsPayload
+): Promise<AssignAttendantPermissionsResponse> => {
+  const url = UPDATE_ATTENDANT_PERMISSIONS(payload.attendant_id.toString());
+  return await putter<AssignAttendantPermissionsResponse>(url, payload);
+};
+

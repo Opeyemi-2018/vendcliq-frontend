@@ -405,7 +405,7 @@ const StockDetailPage = () => {
             <Button
               onClick={onAddToCart}
               disabled={addingToCart}
-              className="w-full mt-4 bg-[#0A6DC0] hover:bg-[#09599a] py-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full mt-4 bg-[#0A6DC0] hover:bg-[#09599a] py-6 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ShoppingCart className="mr-2" />{" "}
               {addingToCart ? (

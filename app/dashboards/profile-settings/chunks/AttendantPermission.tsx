@@ -14,7 +14,10 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { getAttendants } from "@/actions/getAttendant";
-import { handleAssignAttendantPermissions } from "@/lib/utils/api/apiHelper"; // ← your helper
+import {
+  handleAssignAttendantPermissions,
+  handleUpdateAttendantPermissions,
+} from "@/lib/utils/api/apiHelper"; // ← your helper
 import { Separator } from "@/components/ui/separator";
 import { ClipLoader } from "react-spinners";
 
@@ -86,6 +89,7 @@ const AssignAttendantPermissions = () => {
     };
 
     try {
+      // Step 1: Try to ASSIGN (POST)
       const res = await handleAssignAttendantPermissions(payload);
 
       if (res.statusCode === 201) {
@@ -93,13 +97,41 @@ const AssignAttendantPermissions = () => {
         setSelectedAttendantId(""); // reset selection
       } else {
         const errorMsg =
-          res.error || res.message || "Failed to assign permissions";
-        toast.error(errorMsg);
+          res.error ||
+          res.message ||
+          (res as any).msg ||
+          "Failed to assign permissions";
+
+        // Step 2: Check if it's the "already exists" error
+        if (
+          typeof errorMsg === "string" &&
+          (errorMsg.toLowerCase().includes("permission already exists") ||
+            errorMsg.toLowerCase().includes("use update instead"))
+        ) {
+          // Switch to UPDATE (PUT)
+          const updateRes = await handleUpdateAttendantPermissions(payload);
+
+          if (updateRes.statusCode === 200) {
+            toast.success("Permissions updated successfully!");
+          } else {
+            toast.error(
+              updateRes.error ||
+                updateRes.message ||
+                "Failed to update permissions"
+            );
+          }
+        } else {
+          // Some other error from assign attempt
+          toast.error(errorMsg);
+        }
       }
     } catch (err: any) {
-      toast.error(
-        err?.response?.data?.message || "Error assigning permissions"
-      );
+      const errMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Error processing permissions";
+
+      toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -152,7 +184,7 @@ const AssignAttendantPermissions = () => {
             value={selectedAttendantId}
             onValueChange={setSelectedAttendantId}
           >
-            <SelectTrigger className="w-full py-6">
+            <SelectTrigger className="w-full py-5 md:py-6">
               <SelectValue placeholder="Choose an attendant" />
             </SelectTrigger>
             <SelectContent>
@@ -163,7 +195,7 @@ const AssignAttendantPermissions = () => {
                   className="space-y-2"
                 >
                   {att.fullname}
-                   {/* ({att.email}) */}
+                  {/* ({att.email}) */}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -172,7 +204,7 @@ const AssignAttendantPermissions = () => {
       </div>
 
       {/* Permissions Switches */}
-      <div className="space-y-2 mb-10">
+      <div className="space-y-2 mb-5 md:mb-10">
         {permissionList.map(({ key, label }) => (
           <div
             key={key}
@@ -197,15 +229,15 @@ const AssignAttendantPermissions = () => {
       <Button
         onClick={handleConfirm}
         disabled={isSubmitting || !selectedAttendantId}
-        className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] text-white py-6 text-lg font-medium transition disabled:opacity-50"
+        className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] text-white py-5 md:py-6  transition disabled:opacity-50"
       >
         {isSubmitting ? (
           <>
-            Assigning...
-            <ClipLoader size={24} color="white" />
+            Processing...
+            <ClipLoader size={24} color="white" className="ml-2" />
           </>
         ) : (
-          "Update Permission for Attendant"
+          "Save Attendant Permissions"
         )}
       </Button>
     </div>

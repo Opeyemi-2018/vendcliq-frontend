@@ -92,3 +92,73 @@ export async function getSupplierStock(token: string, supplierId: string) {
     return { success: false, error: "Network error. Please try again." };
   }
 }
+
+
+export interface SupplierStockItem {
+  id: string;
+  sku: string;
+  quantity: string;
+  selling_price: string;
+  product: {
+    name: string;
+    images?: string;
+  };
+}
+
+export async function getSupplierStocks(
+  userId: string,
+  token: string
+): Promise<{
+  success: boolean;
+  data?: SupplierStockItem[];
+  error?: string;
+}> {
+  if (!token) {
+    return {
+      success: false,
+      error: "No authentication token provided",
+    };
+  }
+
+  try {
+    const res = await fetch(
+      `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/suppliers/${userId}/stocks`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      }
+    );
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        success: false,
+        error: errorData.message || `Failed to fetch supplier stocks (HTTP ${res.status})`,
+      };
+    }
+
+    const data = await res.json();
+
+    if (data.statusCode === 200 && Array.isArray(data.data)) {
+      return {
+        success: true,
+        data: data.data as SupplierStockItem[],
+      };
+    }
+
+    return {
+      success: false,
+      error: data.message || "Invalid response from server",
+    };
+  } catch (err) {
+    console.error("Supplier stocks fetch error:", err);
+    return {
+      success: false,
+      error: "Network error. Please try again.",
+    };
+  }
+}

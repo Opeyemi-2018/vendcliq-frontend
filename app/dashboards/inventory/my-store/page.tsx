@@ -92,10 +92,10 @@ const MyStore = () => {
       {/* Header & Actions */}
       <div className="flex md:items-center md:gap-0 gap-3 justify-between flex-col md:flex-row">
         <div>
-          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F] dark:text-white">
+          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F] ">
             My Stores
           </h1>
-          <p className="font-medium font-dm-sans text-[#9E9A9A] dark:text-gray-400">
+          <p className="font-medium font-dm-sans text-[#9E9A9A] ">
             Here are all the details about your stores
           </p>
         </div>
@@ -157,19 +157,19 @@ const MyStore = () => {
               <table className="w-full min-w-[600px] ">
                 <thead className="border-b border-[#E6E6E6]">
                   <tr>
-                    <th className="text-left pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-300">
+                    <th className="text-left pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                       Store Name
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-300">
+                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                       Store Address
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-300">
+                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                       Product Count
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-300">
+                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                       Inventory Value
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-300">
+                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                       Actions
                     </th>
                   </tr>
@@ -178,7 +178,7 @@ const MyStore = () => {
                   {stores.map((store) => (
                     <tr
                       key={store.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
+                      className="hover:bg-gray-50  cursor-pointer transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
                       onClick={() =>
                         router.push(
                           `/dashboards/inventory/my-store/${store.id}`
@@ -254,19 +254,19 @@ const MyStore = () => {
               <table className="w-full min-w-[600px]">
                 <thead className="border-b border-[#E6E6E6]">
                   <tr>
-                    <th className="text-left pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-300">
+                    <th className="text-left pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                       Full Name
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-300">
+                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                       Email
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-300">
+                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                       Phone Number
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-300">
+                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                       Status
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-300">
+                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                       Actions
                     </th>
                   </tr>

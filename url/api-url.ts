@@ -22,9 +22,8 @@ const BUY_AIRTIME = "/client/v2/payments/airtime";
 const BUY_DATA = "/client/v2/payments/data";
 const CREATE_WALLET = "/client/v2/wallets/virtual-accounts/create";
 const ADD_SHOP_ATTENDANT = "/client/v2/attendants";
-const UPDATE_TRANSFER_PIN = "/client/v2/auth/pin-update"
-const CHANGE_PASSWORD = "/client/v2/change-password"
-const ASSIGN_ATTENDANT_PERMISSIONS = "inventory/attendant-permissions"
+const UPDATE_TRANSFER_PIN = "/client/v2/auth/pin-update";
+const CHANGE_PASSWORD = "/client/v2/change-password";
 
 // v1 endpoint
 const BUSINESS_INFORMATION_SETUP_STEP_ONE =
@@ -75,6 +74,9 @@ const CREATE_CUSTOMER = "inventory/customers";
 const CREATE_CART = "inventory/carts";
 const CHECKOUT_CART = "inventory/carts/checkout";
 const PAY_CART = (invoiceId: string) => `inventory/invoices/${invoiceId}/pay`;
+const ASSIGN_ATTENDANT_PERMISSIONS = "inventory/attendant-permissions";
+const UPDATE_ATTENDANT_PERMISSIONS = (attendantId: string) =>
+  `inventory/attendant-permissions/attendant/${attendantId}`;
 
 export {
   // v2 endpoint
@@ -111,6 +113,7 @@ export {
   UPDATE_TRANSFER_PIN,
   CHANGE_PASSWORD,
   ASSIGN_ATTENDANT_PERMISSIONS,
+  UPDATE_ATTENDANT_PERMISSIONS,
   // v1 endpoint
   GET_PROFILE,
   DASHBOARD,

@@ -40,7 +40,7 @@ const DashboardContent = ({ children }: { children: ReactNode }) => {
       <AppSidebar />
       <main
         ref={mainRef}
-        className="w-full md:bg-background overflow-auto"
+        className="w-full md:bg-[#FAFAFA] overflow-auto"
         data-scroll-container
       >
         <Navbar />

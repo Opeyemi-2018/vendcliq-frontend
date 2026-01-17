@@ -100,19 +100,18 @@ const ChangePassword = () => {
     <div className="">
       <div className="mb-4">
         <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
-          Settings Options
+          Change Password
         </h1>
         <Separator
           orientation="horizontal"
           className="h-[1px] mt-3"
           style={{ background: "#E0E0E0" }}
         />
+        <p className="text-[16px] font-dm-sans text-[#9E9A9A]">
+          Create a strong password (Min 8 characters, include letters numbers
+          and symbols)
+        </p>
       </div>
-
-      <p className="text-gray-500 text-sm mb-6">
-        Create a strong password (Min 8 characters, include letters, numbers and
-        symbols)
-      </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Old Password */}

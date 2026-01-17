@@ -28,7 +28,7 @@ import Link from "next/link";
 
 const Navbar = () => {
   const { user, isUserPending } = useUser();
-  // ! 
+  // !
 
   return (
     <nav className="p-4 flex items-center justify-between sticky top-0 border-b-2 border-[#0000001A] z-10 bg-white ">
@@ -91,25 +91,27 @@ const Navbar = () => {
                 </DropdownMenuItem>
               </AlertDialogTrigger>
 
-              <AlertDialogContent>
+              <AlertDialogContent className="">
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="font-dm-sans">
-                    Are you absolutely sure?
+                  <AlertDialogTitle className="text-left  font-clash font-semibold text-[25px]">
+                    Log Out{" "}
                   </AlertDialogTitle>
-                  <AlertDialogDescription className="font-dm-sans">
-                    This action will log you out of the system
+                  <AlertDialogDescription className="text-left  font-dm-sans text-[#464343] text-[16px]">
+                    Are you sure you want to Log Out of your Vendcliq Account?{" "}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogFooter className="flex items-center flex-col gap-3 sm:flex-row justify-center">
+                  <AlertDialogCancel className="w-full sm:w-auto hover:bg-[#0A6DC012] bg-[#0A6DC0] text-white">
+                    No, Keep Vending
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
                       clearAuthTokens();
                       window.location.href = "/signin";
                     }}
-                    className="alert-danger"
+                    className="bg-white text-[#2F2F2F] hover:bg-[#0A6DC012] w-full sm:w-auto"
                   >
-                    Continue
+                    Yes, Log Out
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

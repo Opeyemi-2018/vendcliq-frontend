@@ -26,7 +26,7 @@ const BusinessVerification = () => {
   ];
 
   return (
-    <div className="bg-white rounded-lg p-6">
+    <div className="">
       <div className="mb-4">
         <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
           Business Verification{" "}

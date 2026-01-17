@@ -401,9 +401,9 @@ const Sell = () => {
           Sell your stock to a customer
         </p>
 
-        <div className="mt-8 flex flex-col lg:flex-row gap-4">
+        <div className="md:mt-8 flex flex-col lg:flex-row gap-4">
           {/* Left Card - Store Selection */}
-          <Card className="py-6 md:px-3 w-full lg:w-[35%] bg-white">
+          <Card className="py-3 md:py-6 md:px-3 w-full lg:w-[35%] bg-white">
             <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
               Select the store you want to sell from
             </h1>
@@ -526,7 +526,7 @@ const Sell = () => {
           </Card>
 
           {/* Right Card - Customer Options (unchanged) */}
-          <Card className="py-6 md:px-3 w-full lg:w-[70%] bg-white">
+          <Card className="md:py-6 md:px-3 w-full lg:w-[70%] bg-white">
             <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
               {selectedStore ? selectedStore.name : "Select a store"}
             </h1>

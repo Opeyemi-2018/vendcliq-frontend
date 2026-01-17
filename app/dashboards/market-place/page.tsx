@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
-import { Heart, Search, ShoppingCart } from "lucide-react";
+import { Heart, Milk, Search, ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   getMarketplaceStocks,
@@ -15,8 +15,6 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { CombinedStock, OfferStock, RegularStock } from "@/types/marketPlace";
 import { MarketSkeletonCard } from "@/components/SkeletonLoader";
-
-
 
 const MarketPlace = () => {
   const router = useRouter();
@@ -112,12 +110,16 @@ const MarketPlace = () => {
         <div className="absolute top-2 z-20 right-2 text-[#292D32] bg-[#F2F2F7] text-[8px] font-bold font-dm-sans p-1 rounded">
           <Heart size={15} />
         </div>
-        <Image
-          src={`https:${item.product.image}`}
-          alt={item.product.name}
-          fill
-          className="object-contain p-5"
-        />
+        {item.product.image ? (
+          <Image
+            src={`https:${item.product.image}`}
+            alt={item.product.name}
+            fill
+            className="object-contain p-5"
+          />
+        ) : (
+          <Milk />
+        )}
       </div>
       <div className="px-3 py-2 flex flex-col justify-between h-[140px] bg-[#0A6DC0] text-white font-dm-sans">
         <div>
@@ -156,7 +158,10 @@ const MarketPlace = () => {
             Order any product from the market place
           </p>
         </div>
-        <Button onClick={()=> router.push("/dashboards/cart")} className="bg-[#0A6DC0] hover:bg-[#09599a]">
+        <Button
+          onClick={() => router.push("/dashboards/cart")}
+          className="bg-[#0A6DC0] hover:bg-[#09599a]"
+        >
           <ShoppingCart /> My Cart
         </Button>
       </div>

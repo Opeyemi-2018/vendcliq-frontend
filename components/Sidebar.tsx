@@ -86,7 +86,7 @@ const items = [
     icon: RectangleEllipsis,
     children: [
       { title: "Business Report", url: "/dashboards/business-report" },
-      { title: "Supplier List", url: "/dashboards/supplier" },
+      { title: "Supplier List", url: "/dashboards/suppliers" },
       { title: "Customer List", url: "/dashboards/customer" },
       { title: "Expenses", url: "/dashboards/expenses" },
       { title: "Profile Settings", url: "/dashboards/profile-settings" },
@@ -137,12 +137,7 @@ export function AppSidebar() {
         <SidebarGroup>
           {!isCollapsed && (
             <div className="px-4 py-4">
-              <Image
-                src={"/vl.svg"}
-                width={150}
-                height={150}
-                alt="logo"
-              />
+              <Image src={"/vl.svg"} width={150} height={150} alt="logo" />
             </div>
           )}
 
@@ -269,8 +264,6 @@ export function AppSidebar() {
                     }}
                     className="h-[127px] w-[217px]"
                   >
-
-                    
                     {!isCollapsed && (
                       <div className="space-y-3">
                         <h1 className="text-white font-clash text-[14px] font-semibold">
@@ -317,27 +310,28 @@ export function AppSidebar() {
                       </span>
                     </SidebarMenuButton>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className=" ">
+                  <AlertDialogContent className="">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="font-dm-sans">
-                        Are you absolutely sure?
+                      <AlertDialogTitle className="text-left  font-clash font-semibold text-[25px]">
+                        Log Out{" "}
                       </AlertDialogTitle>
-                      <AlertDialogDescription className="font-dm-sans">
-                        This action will log you out of the system
+                      <AlertDialogDescription className="text-left  font-dm-sans text-[#464343] text-[16px]">
+                        Are you sure you want to Log Out of your Vendcliq
+                        Account?{" "}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex items-center flex-col gap-3 sm:flex-row justify-center">
-                      <AlertDialogCancel className="w-full sm:w-auto">
-                        Cancel
+                      <AlertDialogCancel className="w-full sm:w-auto hover:bg-[#0A6DC012] bg-[#0A6DC0] text-white">
+                        No, Keep Vending
                       </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => {
                           clearAuthTokens();
                           window.location.href = "/signin";
                         }}
-                        className="alert-danger w-full sm:w-auto"
+                        className="bg-white text-[#2F2F2F] hover:bg-[#0A6DC012] w-full sm:w-auto"
                       >
-                        Continue
+                        Yes, Log Out
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

@@ -114,3 +114,164 @@ export async function getStoreStock(storeId: string, token: string) {
     };
   }
 }
+
+// actions/stores.ts
+
+export async function moveStock(
+  targetStoreId: string,
+  items: Array<{
+    stock_id: string;
+    quantity: number;
+    selling_price: number;
+  }>,
+  token: string
+) {
+  try {
+    const response = await fetch(
+      `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/stocks/move`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          target_store_id: targetStoreId,
+          items,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        message: errData.message || `Failed to move stock (HTTP ${response.status})`,
+      };
+    }
+
+    const json = await response.json();
+
+    if (json.statusCode !== 200) {
+      return {
+        success: false,
+        message: json.message || "Failed to move stock",
+      };
+    }
+
+    return {
+      success: true,
+      data: json.data,
+    };
+  } catch (error) {
+    console.error("Move stock error:", error);
+    return {
+      success: false,
+      message: "Network or server error while moving stock",
+    };
+  }
+}
+
+export async function getStockDetail(stockId: string, storeId: string, token: string) {
+  try {
+    const response = await fetch(
+      `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/stocks/${stockId}/${storeId}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        message: errData.message || `Failed to fetch stock details (HTTP ${response.status})`,
+      };
+    }
+
+    const json = await response.json();
+
+    if (json.statusCode !== 200 || !json.data) {
+      return {
+        success: false,
+        message: json.message || "Invalid stock detail response format",
+      };
+    }
+
+    return {
+      success: true,
+      data: json.data,
+    };
+  } catch (error) {
+    console.error("Fetch stock detail error:", error);
+    return {
+      success: false,
+      message: "Network or server error while loading stock details",
+    };
+  }
+}
+
+export async function updateStock(
+  stockId: string,
+  data: {
+    cost_price: number;
+    selling_price: number;
+    selling_price_pieces: number;
+    empties_price: number;
+    exp_date: string;
+    stock_alert_no: number;
+    sku: string;
+    remark: string;
+  },
+  token: string
+) {
+  try {
+    const response = await fetch(
+      `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/stocks/${stockId}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(data),
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        message: errData.message || `Failed to update stock (HTTP ${response.status})`,
+      };
+    }
+
+    const json = await response.json();
+
+    if (json.statusCode !== 200) {
+      return {
+        success: false,
+        message: json.message || "Failed to update stock",
+      };
+    }
+
+    return {
+      success: true,
+      data: json.data,
+      message: "Stock updated successfully",
+    };
+  } catch (error) {
+    console.error("Update stock error:", error);
+    return {
+      success: false,
+      message: "Network or server error while updating stock",
+    };
+  }
+}
