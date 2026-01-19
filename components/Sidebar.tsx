@@ -86,7 +86,7 @@ const items = [
     icon: RectangleEllipsis,
     children: [
       { title: "Business Report", url: "/dashboards/business-report" },
-      { title: "Supplier List", url: "/dashboards/supplier" },
+      { title: "Supplier List", url: "/dashboards/suppliers" },
       { title: "Customer List", url: "/dashboards/customer" },
       { title: "Expenses", url: "/dashboards/expenses" },
       { title: "Profile Settings", url: "/dashboards/profile-settings" },
