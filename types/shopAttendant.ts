@@ -1,32 +1,47 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import z from "zod";
+
 export interface AddShopAttendantPayload {
   firstname: string;
   lastname: string;
   email: string;
-  phone: string;
+  phone: string; // Should be sent without country code
   password: string;
   store_ids: string[];
 }
 
+// Single unified interface for AddShopAttendantResponse
 export interface AddShopAttendantResponse {
-  status: string;
+  status: "success" | "failed";
   msg: string;
-  data?: any;
+  data?:
+    | Attendant
+    | Array<{
+        message: string;
+        rule: string;
+        field: string;
+        meta?: Record<string, any>;
+      }>;
 }
 
 export const shopAttendantSchema = z.object({
-  firstname: z.string().min(1, " first name is required"),
-  lastname: z.string().min(1, "last name is required"),
+  firstname: z.string().min(1, "First name is required"),
+  lastname: z.string().min(1, "Last name is required"),
   email: z
     .string()
-    .email("must be a valid email address")
-    .min(1, "email is required"),
-  password: z.string().min(1, "password is required"),
+    .email("Must be a valid email address")
+    .min(1, "Email is required"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+    ),
   phone: z
     .string()
-    .min(9, "Phone number must be at least 10 digits")
-    .regex(/^\d+$/, "Phone number must contain only digits"),
+    .min(10, "Phone number must be at least 10 digits")
+    .regex(/^\+?\d+$/, "Phone number must contain only digits"),
 });
 
 export type ShopAttendantForm = z.infer<typeof shopAttendantSchema>;
@@ -58,7 +73,6 @@ export interface GetAttendantsResponse {
   msg: string;
   data: AttendantsData;
 }
-
 
 export interface AssignAttendantPermissionsPayload {
   attendant_id: number;
@@ -97,4 +111,3 @@ export interface AssignAttendantPermissionsResponse {
     updated_at: string;
   } | null;
 }
-

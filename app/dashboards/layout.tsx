@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import { AppSidebar } from "@/components/Sidebar";
 import { ReactNode, useEffect, useRef } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 // Create an inner component that uses the sidebar hook
 const DashboardContent = ({ children }: { children: ReactNode }) => {
@@ -56,8 +56,70 @@ const DashboardContent = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Wrap with SidebarProvider in the main component
+// Wrap with SidebarProvider and add auth protection
 const DashboardLayout = ({ children }: { children: ReactNode }) => {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check authentication on mount and route changes
+    const checkAuth = () => {
+      const token =
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("authToken");
+
+      if (!token) {
+        // No token found, redirect to signin
+        window.location.replace("/signin");
+        return false;
+      }
+      return true;
+    };
+
+    // Initial auth check
+    if (!checkAuth()) return;
+
+    // Prevent back navigation after logout
+    const handlePopState = () => {
+      const currentToken =
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("authToken");
+      if (!currentToken) {
+        // User logged out, prevent navigation back
+        window.history.pushState(null, "", window.location.href);
+        window.location.replace("/signin");
+      }
+    };
+
+    // Listen for browser back/forward button
+    window.addEventListener("popstate", handlePopState);
+
+    // Periodically check auth status (every 2 seconds)
+    const authCheckInterval = setInterval(() => {
+      const currentToken =
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("authToken");
+      if (!currentToken) {
+        window.location.replace("/signin");
+      }
+    }, 2000);
+
+    // Listen for storage changes (logout in another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if ((e.key === "accessToken" || e.key === "authToken") && !e.newValue) {
+        // Token was removed, user logged out
+        window.location.replace("/signin");
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(authCheckInterval);
+    };
+  }, [router]);
+
   return (
     <SidebarProvider>
       <DashboardContent>{children}</DashboardContent>

@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { MoveRight, Loader2 } from "lucide-react";
+import { MoveRight, Loader2, UserPen } from "lucide-react";
 import { ThreeDots } from "react-loader-spinner";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -235,12 +235,7 @@ const MyStore = () => {
             </div>
           ) : attendants.length === 0 ? (
             <div className="py-20 px-4 flex flex-col items-center justify-center space-y-4">
-              <Image
-                src="/users.svg"
-                alt="No attendants"
-                height={90}
-                width={90}
-              />{" "}
+            <UserPen size={40} />
               {/* change icon if needed */}
               <p className="font-bold font-dm-sans text-[16px] text-[#2F2F2F] dark:text-white">
                 No attendants found

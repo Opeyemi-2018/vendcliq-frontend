@@ -138,13 +138,13 @@ function PayInvoiceContent() {
 
   const handleSuccessClose = () => {
     setShowSuccessModal(false);
-    router.push("/dashboards/market-place");
+    router.push("/dashboards/inventory/sell");
   };
 
   const handleTransferSent = () => {
     setShowTransferModal(false);
     toast.success("Thank you! We'll confirm your payment shortly.");
-    router.push("/dashboard/sell");
+    router.push("/dashboards/inventory/sell");
   };
 
   const handleTransferNotSent = () => {
@@ -159,7 +159,6 @@ function PayInvoiceContent() {
         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
       >
         <ArrowLeft size={20} />
-        <span>Back to Invoice</span>
       </button>
 
       <div>
@@ -172,41 +171,81 @@ function PayInvoiceContent() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 mt-8">
-        <Card className="p-3 md:p-6 lg:w-[35%] bg-white">
+        <Card className="md:p-6 lg:w-[35%] bg-white">
           <h1 className="font-semibold font-clash mb-4">Mode of Payment</h1>
-          <Separator className="mb-6" />
+          <Separator className="mb-6 hidden md:block" />
 
-          <div
-            onClick={() => setPaymentType("TRANSFER")}
-            className={`p-4 rounded-lg border cursor-pointer transition mb-4 ${
-              paymentType === "TRANSFER"
-                ? "border-[#0A6DC0] bg-[#0A6DC012]"
-                : "border-gray-200"
-            }`}
-          >
-            <h3 className="font-medium font-dm-sans">Bank Transfer</h3>
+          {/* Mobile Tabs - Exact same style as PayUtility */}
+          <div className="md:hidden flex gap-2  bg-[#ECECF080] p-1 rounded-lg">
+            <button
+              onClick={() => setPaymentType("TRANSFER")}
+              className={`
+        flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all
+        ${
+          paymentType === "TRANSFER"
+            ? "bg-[#0A6DC0] text-white"
+            : "text-[#9E9A9A]"
+        }
+      `}
+            >
+              Transfer
+            </button>
+
+            <button
+              onClick={() => setPaymentType("CASH")}
+              className={`
+        flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all
+        ${paymentType === "CASH" ? "bg-[#0A6DC0] text-white" : "text-[#9E9A9A]"}
+      `}
+            >
+              Cash
+            </button>
+
+            <button
+              onClick={() => setPaymentType("POS")}
+              className={`
+        flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all
+        ${paymentType === "POS" ? "bg-[#0A6DC0] text-white" : "text-[#9E9A9A]"}
+      `}
+            >
+              POS
+            </button>
           </div>
 
-          <div
-            onClick={() => setPaymentType("CASH")}
-            className={`p-4 rounded-lg border cursor-pointer transition mb-4 ${
-              paymentType === "CASH"
-                ? "border-[#0A6DC0] bg-[#0A6DC012]"
-                : "border-gray-200"
-            }`}
-          >
-            <h3 className="font-medium font-dm-sans">Cash Payment</h3>
-          </div>
+          {/* Desktop Cards - YOUR ORIGINAL CODE, UNCHANGED */}
+          <div className="hidden md:block space-y-4">
+            <div
+              onClick={() => setPaymentType("TRANSFER")}
+              className={`p-4 rounded-lg border cursor-pointer transition mb-4 ${
+                paymentType === "TRANSFER"
+                  ? "border-[#0A6DC0] bg-[#0A6DC012]"
+                  : "border-gray-200"
+              }`}
+            >
+              <h3 className="font-medium font-dm-sans">Bank Transfer</h3>
+            </div>
 
-          <div
-            onClick={() => setPaymentType("POS")}
-            className={`p-4 rounded-lg border cursor-pointer transition ${
-              paymentType === "POS"
-                ? "border-[#0A6DC0] bg-[#0A6DC012]"
-                : "border-gray-200"
-            }`}
-          >
-            <h3 className="font-medium font-dm-sans">POS</h3>
+            <div
+              onClick={() => setPaymentType("CASH")}
+              className={`p-4 rounded-lg border cursor-pointer transition mb-4 ${
+                paymentType === "CASH"
+                  ? "border-[#0A6DC0] bg-[#0A6DC012]"
+                  : "border-gray-200"
+              }`}
+            >
+              <h3 className="font-medium font-dm-sans">Cash Payment</h3>
+            </div>
+
+            <div
+              onClick={() => setPaymentType("POS")}
+              className={`p-4 rounded-lg border cursor-pointer transition ${
+                paymentType === "POS"
+                  ? "border-[#0A6DC0] bg-[#0A6DC012]"
+                  : "border-gray-200"
+              }`}
+            >
+              <h3 className="font-medium font-dm-sans">POS</h3>
+            </div>
           </div>
         </Card>
 

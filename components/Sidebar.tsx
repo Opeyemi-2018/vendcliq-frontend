@@ -37,7 +37,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { clearAuthTokens } from "@/lib/utils/api";
 import {
   Collapsible,
   CollapsibleContent,
@@ -310,14 +309,14 @@ export function AppSidebar() {
                       </span>
                     </SidebarMenuButton>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="">
+                  <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="text-left  font-clash font-semibold text-[25px]">
-                        Log Out{" "}
+                      <AlertDialogTitle className="text-left font-clash font-semibold text-[25px]">
+                        Log Out
                       </AlertDialogTitle>
-                      <AlertDialogDescription className="text-left  font-dm-sans text-[#464343] text-[16px]">
+                      <AlertDialogDescription className="text-left font-dm-sans text-[#464343] text-[16px]">
                         Are you sure you want to Log Out of your Vendcliq
-                        Account?{" "}
+                        Account?
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex items-center flex-col gap-3 sm:flex-row justify-center">
@@ -326,8 +325,19 @@ export function AppSidebar() {
                       </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => {
-                          clearAuthTokens();
-                          window.location.href = "/signin";
+                          // Clear all storage
+                          localStorage.clear();
+                          sessionStorage.clear();
+
+                          // Prevent back navigation
+                          window.history.pushState(
+                            null,
+                            "",
+                            window.location.href
+                          );
+
+                          // Use replace instead of href to prevent back navigation
+                          window.location.replace("/api/auth/logout");
                         }}
                         className="bg-white text-[#2F2F2F] hover:bg-[#0A6DC012] w-full sm:w-auto"
                       >

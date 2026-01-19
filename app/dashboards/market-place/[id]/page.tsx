@@ -197,14 +197,16 @@ const StockDetailPage = () => {
       return;
     }
 
-    const store = isOffer && offer ? offer.store : stock ? stock.store : null;
+    // Safely get store
+    const store = isOffer && offer ? offer.store : stock?.store;
 
-    if (!store?.address?.lat || !store?.address?.lng || !store?.id) {
-      toast.error("Store location information is missing");
+    // Guard: if no store → can't add to cart
+    if (!store || !store.address || !store.id) {
+      toast.error("Store information is missing. Please try again.");
       return;
     }
 
-    const itemId = isOffer && offer ? offer.id : stock ? stock.id : null;
+    const itemId = isOffer && offer ? offer.id : stock?.id;
     if (!itemId) {
       toast.error("Product ID is missing");
       return;
@@ -283,7 +285,10 @@ const StockDetailPage = () => {
             See more about this product before you order
           </p>
         </div>
-        <Button onClick={()=> router.push("/dashboards/cart")} className="bg-[#0A6DC0] hover:bg-[#09599a]">
+        <Button
+          onClick={() => router.push("/dashboards/cart")}
+          className="bg-[#0A6DC0] hover:bg-[#09599a]"
+        >
           <ShoppingCart /> My Cart
         </Button>
       </div>

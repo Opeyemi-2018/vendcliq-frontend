@@ -189,13 +189,13 @@ const PayPage = () => {
 
   return (
     <div className="">
-      <button
+      {/* <button
         onClick={() => router.back()}
         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
       >
         <ArrowLeft size={20} />
         <span>Back to Cart</span>
-      </button>
+      </button> */}
 
       <div>
         <h1 className="font-semibold font-clash text-[20px] md:text-[25px]">
@@ -207,34 +207,62 @@ const PayPage = () => {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8 mt-8">
-        {/* Left: Payment Method */}
-        <Card className=" md:p-6 lg:w-[35%] bg-white">
+        <Card className=" lg:p-6 lg:w-[35%] bg-white">
           <h1 className="font-semibold font-clash mb-4">Mode of Payment</h1>
-          <Separator className="mb-6" />
+          <Separator className="mb-6 hidden md:block" />
 
-          <div
-            onClick={() => setPaymentMethod("WALLET")}
-            className={`p-4 rounded-lg border cursor-pointer transition mb-4 ${
-              paymentMethod === "WALLET"
-                ? "border-[#0A6DC0] bg-[#0A6DC012]"
-                : "border-gray-200"
-            }`}
-          >
-            <h3 className="font-medium font-dm-sans">Cliq Wallet</h3>
+          <div className="md:hidden flex gap-2  bg-[#ECECF080] p-1 rounded-lg">
+            <button
+              onClick={() => setPaymentMethod("WALLET")}
+              className={`
+              flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all
+              ${
+                paymentMethod === "WALLET"
+                  ? "bg-[#0A6DC0] text-white"
+                  : "text-[#9E9A9A]"
+              }
+            `}
+            >
+              Cliq Wallet
+            </button>
+            <button
+              onClick={() => setPaymentMethod("TRANSFER")}
+              className={`
+        flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all
+        ${
+          paymentMethod === "TRANSFER"
+            ? "bg-[#0A6DC0] text-white"
+            : "text-[#9E9A9A]"
+        }
+      `}
+            >
+              Bank Transfer
+            </button>
           </div>
 
-          <div
-            onClick={() => {
-              setPaymentMethod("TRANSFER");
-              // setTransferDetails(null);
-            }}
-            className={`p-4 rounded-lg border cursor-pointer transition ${
-              paymentMethod === "TRANSFER"
-                ? "border-[#0A6DC0] bg-[#0A6DC012]"
-                : "border-gray-200"
-            }`}
-          >
-            <h3 className="font-medium font-dm-sans">Bank Transfer</h3>
+          {/* Desktop Cards - YOUR ORIGINAL CODE, UNTOUCHED */}
+          <div className="hidden md:block space-y-4">
+            <div
+              onClick={() => setPaymentMethod("WALLET")}
+              className={`p-4 rounded-lg border cursor-pointer transition mb-4 ${
+                paymentMethod === "WALLET"
+                  ? "border-[#0A6DC0] bg-[#0A6DC012]"
+                  : "border-gray-200"
+              }`}
+            >
+              <h3 className="font-medium font-dm-sans">Cliq Wallet</h3>
+            </div>
+
+            <div
+              onClick={() => setPaymentMethod("TRANSFER")}
+              className={`p-4 rounded-lg border cursor-pointer transition ${
+                paymentMethod === "TRANSFER"
+                  ? "border-[#0A6DC0] bg-[#0A6DC012]"
+                  : "border-gray-200"
+              }`}
+            >
+              <h3 className="font-medium font-dm-sans">Bank Transfer</h3>
+            </div>
           </div>
         </Card>
 

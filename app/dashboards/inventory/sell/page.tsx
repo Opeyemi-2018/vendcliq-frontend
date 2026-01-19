@@ -212,7 +212,6 @@ const Sell = () => {
     }
   }, [stage, selectedStore]);
 
-  // Fetch stock for selected store when entering invoice stage
   useEffect(() => {
     if (stage === "invoice" && selectedStore) {
       const fetchStock = async () => {

@@ -20,6 +20,7 @@ export interface CreateCartResponse {
 }
 
 
+
 export interface PayInvoicePayload {
   paymentType: "WALLET" | "TRANSFER";
   transactionPin?: string;

@@ -17,7 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ShopAttendantForm, shopAttendantSchema } from "@/types/shopAttendant";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
-import { Lock, Mail, MoveLeft, User } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, MoveLeft, User } from "lucide-react";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { useStores } from "@/hooks/useStores";
@@ -26,10 +26,43 @@ import { handleAddShopAttendant } from "@/lib/utils/api/apiHelper";
 import { useRouter } from "next/navigation";
 import { ClipLoader } from "react-spinners";
 
+// Helper function to format validation errors
+const formatValidationErrors = (errors: any[]): string => {
+  if (!errors || errors.length === 0) return "Validation failed";
+
+  return errors
+    .map((error) => {
+      const field = error.field || "Field";
+      const message = error.message || "is invalid";
+      return `${field.charAt(0).toUpperCase() + field.slice(1)}: ${message}`;
+    })
+    .join(", ");
+};
+
+// Helper function to format phone number - remove country code for backend
+const formatPhoneForBackend = (phone: string): string => {
+  // Remove all non-digit characters
+  const digitsOnly = phone.replace(/\D/g, '');
+  
+  // If it starts with country code (234 for Nigeria), remove it
+  if (digitsOnly.startsWith('234')) {
+    return digitsOnly.substring(3);
+  }
+  
+  // If it starts with 0, remove it
+  if (digitsOnly.startsWith('0')) {
+    return digitsOnly.substring(1);
+  }
+  
+  return digitsOnly;
+};
+
 const AddAttendant = () => {
   const { stores } = useStores();
+  const [showPassword, setShowPassword] = useState(false);
+
   const [step, setStep] = useState<1 | 2>(1);
-  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null); // Only one selected at a time
+  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const router = useRouter();
 
   const form = useForm<ShopAttendantForm>({
@@ -44,7 +77,7 @@ const AddAttendant = () => {
   });
 
   const toggleStoreSelection = (storeId: string) => {
-    setSelectedStoreId((prev) => (prev === storeId ? null : storeId)); // Deselect if same, else select new
+    setSelectedStoreId((prev) => (prev === storeId ? null : storeId));
   };
 
   const onSubmit = async (data: ShopAttendantForm) => {
@@ -54,37 +87,90 @@ const AddAttendant = () => {
     }
 
     try {
+      // Format phone number - remove country code
+      const formattedPhone = formatPhoneForBackend(data.phone);
+      
       const payload = {
         firstname: data.firstname.trim(),
         lastname: data.lastname.trim(),
         email: data.email.toLowerCase().trim(),
-        phone: data.phone.startsWith("+") ? data.phone : `+${data.phone}`,
+        phone: formattedPhone, // Send without country code
         password: data.password,
-        store_ids: [selectedStoreId], 
+        store_ids: [selectedStoreId],
       };
+
+      console.log("Sending payload:", payload); // Debug log
 
       const response = await handleAddShopAttendant(payload);
 
+      console.log("API Response:", response); // Debug log
+
       if (response.status === "success") {
-        toast.success(
-          response.msg || "Shop attendant created successfully!"
-        );
+        toast.success(response.msg || "Shop attendant created successfully!");
         form.reset();
         setSelectedStoreId(null);
-
         router.push("/dashboards/inventory/my-store");
       } else {
-        toast.error(response.msg || "Failed to create attendant");
+        // Handle validation errors from the data array
+        if (
+          response.data &&
+          Array.isArray(response.data) &&
+          response.data.length > 0
+        ) {
+          const errorMessage = formatValidationErrors(response.data);
+          toast.error(errorMessage);
+
+          // Optionally set form errors for specific fields
+          response.data.forEach((error: any) => {
+            if (error.field && form.setError) {
+              form.setError(error.field as any, {
+                type: "manual",
+                message: error.message,
+              });
+            }
+          });
+        } else {
+          // Fallback to msg if no validation errors
+          toast.error(response.msg || "Failed to create attendant");
+        }
       }
     } catch (error: any) {
-      toast.error(
-        error?.msg || "Failed to create attendant. Please try again."
-      );
       console.error("Add attendant error:", error);
+
+      // Extract error from response if available
+      if (error.response?.data) {
+        const errorData = error.response.data;
+
+        if (
+          errorData.data &&
+          Array.isArray(errorData.data) &&
+          errorData.data.length > 0
+        ) {
+          const errorMessage = formatValidationErrors(errorData.data);
+          toast.error(errorMessage);
+
+          // Set form errors
+          errorData.data.forEach((err: any) => {
+            if (err.field && form.setError) {
+              form.setError(err.field as any, {
+                type: "manual",
+                message: err.message,
+              });
+            }
+          });
+        } else {
+          toast.error(errorData.msg || "Failed to create attendant");
+        }
+      } else {
+        toast.error(
+          error?.message || "Failed to create attendant. Please try again."
+        );
+      }
     }
   };
 
   const handleContinue = async () => {
+    // Trigger validation for all fields
     const isValid = await form.trigger([
       "firstname",
       "lastname",
@@ -94,7 +180,32 @@ const AddAttendant = () => {
     ]);
 
     if (isValid) {
+      // Additional check: ensure password is at least 8 characters
+      const password = form.getValues("password");
+      if (password.length < 8) {
+        form.setError("password", {
+          type: "manual",
+          message: "Password must be at least 8 characters",
+        });
+        toast.error("Password must be at least 8 characters");
+        return;
+      }
+
+      // Additional check: ensure phone is at least 10 digits (without country code)
+      const phone = form.getValues("phone");
+      const formattedPhone = formatPhoneForBackend(phone);
+      if (formattedPhone.length < 10) {
+        form.setError("phone", {
+          type: "manual",
+          message: "Phone number must be at least 10 digits",
+        });
+        toast.error("Phone number must be at least 10 digits");
+        return;
+      }
+
       setStep(2);
+    } else {
+      toast.error("Please fill in all required fields correctly");
     }
   };
 
@@ -106,7 +217,7 @@ const AddAttendant = () => {
       <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
         Fill in the details below to add a new shop attendant to your store.
       </p>
-      <Card className=" md:p-5 mt-5 max-w-[50rem] mx-auto">
+      <Card className="md:p-5 mt-5 max-w-[50rem] mx-auto">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -235,14 +346,29 @@ const AddAttendant = () => {
                         <div className="relative">
                           <Lock className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
                           <Input
-                            type="password"
-                            placeholder="Create a strong password"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Create a strong password (min. 8 characters)"
                             {...field}
                             className="pl-10 bg-[#D8D8D866] h-12 border-0"
                           />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-3 text-gray-500"
+                          >
+                            {showPassword ? (
+                              <EyeOff className="w-5 h-5" />
+                            ) : (
+                              <Eye className="w-5 h-5" />
+                            )}
+                          </button>
                         </div>
                       </FormControl>
                       <FormMessage />
+                      {/* Show character count for password */}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {field.value.length}/8 characters minimum
+                      </p>
                     </FormItem>
                   )}
                 />
@@ -260,7 +386,10 @@ const AddAttendant = () => {
             {/* Step 2: Store Selection */}
             {step === 2 && (
               <>
-                <MoveLeft onClick={() => setStep(1)} />
+                <MoveLeft
+                  onClick={() => setStep(1)}
+                  className="cursor-pointer"
+                />
                 <div>
                   <h1 className="text-[14px] md:text-[16px] font-clash text-[#2F2F2F] font-semibold">
                     Select Store you want this attendant to manage
@@ -309,10 +438,10 @@ const AddAttendant = () => {
                   className="bg-[#0A6DC0] hover:bg-[#085a9e] disabled:bg-gray-400 text-white px-4 py-2 rounded-lg w-full h-11 transition-all mt-6"
                 >
                   {form.formState.isSubmitting ? (
-                    <>
+                    <span className="flex items-center gap-2 justify-center">
                       Creating Attendant...
-                      <ClipLoader size={24} color="white" />
-                    </>
+                      <ClipLoader size={20} color="white" />
+                    </span>
                   ) : (
                     "Create Attendant"
                   )}

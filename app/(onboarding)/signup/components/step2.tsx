@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff, Check, X, ChevronLeft } from "lucide-react";
+import { Eye, EyeOff, Check, X, ChevronLeft, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import {
@@ -38,6 +38,7 @@ export default function Step2({ onNext, onPrev, data }: Props) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const { setUser, clearUserData } = useUser();
+
 
   const form = useForm<CreatePasswordFormData>({
     resolver: zodResolver(createPasswordSchema),
@@ -172,19 +173,7 @@ export default function Step2({ onNext, onPrev, data }: Props) {
                       className="pl-10 pr-12 bg-[#FAFAFA] h-12"
                     />
                     <div className="absolute left-3 top-3 text-gray-400">
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 11c1.104 0 2-.896 2-2s-.896-2-2-2-2 .896-2 2 .896 2 2 2zm0 2c-2.67 0-8 1.335-8 4v2h16v-2c0-2.665-5.33-4-8-4z"
-                        />
-                      </svg>
+                     <Lock />
                     </div>
                     <button
                       type="button"
@@ -219,19 +208,7 @@ export default function Step2({ onNext, onPrev, data }: Props) {
                       className="pl-10 pr-12 bg-[#FAFAFA] h-12"
                     />
                     <div className="absolute left-3 top-3 text-gray-400">
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 11c1.104 0 2-.896 2-2s-.896-2-2-2-2 .896-2 2 .896 2 2 2zm0 2c-2.67 0-8 1.335-8 4v2h16v-2c0-2.665-5.33-4-8-4z"
-                        />
-                      </svg>
+                      <Lock />
                     </div>
                     <button
                       type="button"

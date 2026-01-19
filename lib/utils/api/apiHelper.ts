@@ -58,7 +58,7 @@ import {
   UploadCacResponse,
 } from "@/types/business";
 
-import axiosInstance from ".";
+import api from "./index";
 import {
   
   CONFIRM_PHONE_NUMBER,
@@ -200,7 +200,7 @@ export const fetcher = async <T>(
   url: string,
   params?: Record<string, unknown>
 ): Promise<T> => {
-  const response = await axiosInstance.get<T>(url, { params });
+  const response = await api.get<T>(url, { params });
   return response.data;
 };
 
@@ -209,7 +209,7 @@ export const poster = async <T, U = unknown>(
   data?: U,
   headers?: Record<string, string>
 ): Promise<T> => {
-  const response = await axiosInstance.post<T>(url, data, {
+  const response = await api.post<T>(url, data, {
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
@@ -225,7 +225,7 @@ export const posterWithMultipart = async <T>(
   formData: FormData,
   headers?: Record<string, string>
 ): Promise<T> => {
-  const response = await axiosInstance.post<T>("", formData, {
+  const response = await api.post<T>("", formData, {
     params: { endpoint: url },
     headers: {
       Accept: "*/*",
@@ -240,7 +240,7 @@ export const putter = async <T, U = unknown>(
   data?: U,
   headers?: Record<string, string>
 ): Promise<T> => {
-  const response = await axiosInstance.put<T>(url, data, {
+  const response = await api.put<T>(url, data, {
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",

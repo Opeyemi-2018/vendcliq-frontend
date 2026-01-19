@@ -38,3 +38,41 @@ export async function getCustomers(token: string) {
     return { success: false, error: "Network error. Try again." };
   }
 }
+
+export async function deleteCustomer(token: string, customerId: string) {
+  try {
+    const res = await fetch(
+      `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/customers/${customerId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      }
+    );
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      return {
+        success: false,
+        error: errorData.msg || "Failed to delete customer",
+      };
+    }
+
+    const data = await res.json();
+
+    if (data.statusCode === 200 || data.statusCode === 204) {
+      return {
+        success: true,
+        message: data.msg || "Customer deleted successfully",
+      };
+    }
+
+    return { success: false, error: "Failed to delete customer" };
+  } catch (err) {
+    console.error("Delete customer error:", err);
+    return { success: false, error: "Network error. Try again." };
+  }
+}

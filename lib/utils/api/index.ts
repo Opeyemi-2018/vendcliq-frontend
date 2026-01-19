@@ -99,11 +99,16 @@ api.interceptors.response.use(
 /**
  * Clears authentication tokens and redirects to logout
  * This is called when authentication errors occur
+ * Updated to use replace() to prevent back navigation
  */
 const clearAuthTokens = () => {
-  // Redirect to logout endpoint which will clear the cookie and redirect to login
   if (typeof window !== "undefined") {
-    window.location.href = "/api/auth/logout";
+    // Clear all storage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Use replace instead of href to prevent back navigation
+    window.location.replace("/api/auth/logout");
   }
 };
 
