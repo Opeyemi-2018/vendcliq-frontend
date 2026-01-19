@@ -58,9 +58,8 @@ import {
   UploadCacResponse,
 } from "@/types/business";
 
-import api from "./index";
+import axiosInstance from ".";
 import {
-  
   CONFIRM_PHONE_NUMBER,
   CREATE_PASSWORD,
   CREATE_BUSINESS_DETAILS,
@@ -100,7 +99,7 @@ import {
   POST_REPAYMENT_PATTERN,
   REQUEST_PIN_TOKEN,
   RESEND_EMAIL_OTP,
- CHANGE_PASSWORD,
+  CHANGE_PASSWORD,
   VERIFY_BANK_ACCOUNT,
   VERIFY_EMAIL,
   VERIFY_PHONE_NUMBER,
@@ -116,7 +115,8 @@ import {
   CHECKOUT_CART,
   PAY_CART,
   ASSIGN_ATTENDANT_PERMISSIONS,
-  UPDATE_ATTENDANT_PERMISSIONS
+  CREATE_EXPENSE,
+  UPDATE_ATTENDANT_PERMISSIONS,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -153,9 +153,15 @@ import {
   PayInvoiceResponse,
 } from "@/types/cart";
 import { CheckoutResponse } from "@/types/checkOut";
-import { BuyAirtimePayload, BuyAirtimeResponse, BuyDataPayload, BuyDataResponse } from "@/types/utilityBills";
+import {
+  BuyAirtimePayload,
+  BuyAirtimeResponse,
+  BuyDataPayload,
+  BuyDataResponse,
+} from "@/types/utilityBills";
 import { UpdatePinResponse } from "@/types/transferPin";
 import { ChangePasswordResponse } from "@/types/passwordChange";
+import { CreateExpensePayload, CreateExpenseResponse } from "@/types/expenses";
 
 interface UserProfile {
   data: {
@@ -200,7 +206,7 @@ export const fetcher = async <T>(
   url: string,
   params?: Record<string, unknown>
 ): Promise<T> => {
-  const response = await api.get<T>(url, { params });
+  const response = await axiosInstance.get<T>(url, { params });
   return response.data;
 };
 
@@ -209,7 +215,7 @@ export const poster = async <T, U = unknown>(
   data?: U,
   headers?: Record<string, string>
 ): Promise<T> => {
-  const response = await api.post<T>(url, data, {
+  const response = await axiosInstance.post<T>(url, data, {
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
@@ -225,7 +231,7 @@ export const posterWithMultipart = async <T>(
   formData: FormData,
   headers?: Record<string, string>
 ): Promise<T> => {
-  const response = await api.post<T>("", formData, {
+  const response = await axiosInstance.post<T>("", formData, {
     params: { endpoint: url },
     headers: {
       Accept: "*/*",
@@ -240,7 +246,7 @@ export const putter = async <T, U = unknown>(
   data?: U,
   headers?: Record<string, string>
 ): Promise<T> => {
-  const response = await api.put<T>(url, data, {
+  const response = await axiosInstance.put<T>(url, data, {
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
@@ -444,7 +450,9 @@ export const handleBuyAirtime = async (
   );
 };
 
-export const handleBuyData = async (payload: BuyDataPayload): Promise<BuyDataResponse> => {
+export const handleBuyData = async (
+  payload: BuyDataPayload
+): Promise<BuyDataResponse> => {
   return await poster<BuyDataResponse, BuyDataPayload>(BUY_DATA, payload);
 };
 
@@ -748,8 +756,17 @@ export const handlePayInvoice = async (
 export const handleAssignAttendantPermissions = async (
   payload: AssignAttendantPermissionsPayload
 ): Promise<AssignAttendantPermissionsResponse> => {
-  return await poster<AssignAttendantPermissionsResponse, AssignAttendantPermissionsPayload>(
-    ASSIGN_ATTENDANT_PERMISSIONS,
+  return await poster<
+    AssignAttendantPermissionsResponse,
+    AssignAttendantPermissionsPayload
+  >(ASSIGN_ATTENDANT_PERMISSIONS, payload);
+};
+
+export const handleCreateExpense = async (
+  payload: CreateExpensePayload
+): Promise<CreateExpenseResponse> => {
+  return await poster<CreateExpenseResponse, CreateExpensePayload>(
+    CREATE_EXPENSE,
     payload
   );
 };
@@ -760,4 +777,3 @@ export const handleUpdateAttendantPermissions = async (
   const url = UPDATE_ATTENDANT_PERMISSIONS(payload.attendant_id.toString());
   return await putter<AssignAttendantPermissionsResponse>(url, payload);
 };
-

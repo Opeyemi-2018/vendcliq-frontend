@@ -27,7 +27,7 @@ const PayUtility = () => {
       <div className="h-[calc(100vh-120px)] mt-2 md:mt-5">
         <div className="flex justify-between md:gap-4 flex-col md:flex-row">
           {/* LEFT PANEL - Utility Selector (Desktop) */}
-          <Card className="hidden md:block py-6 px-4 md:w-[35%] bg-white">
+          <Card className="hidden md:block py-6 px-4 md:w-[35%] h-full bg-white">
             <h2 className="text-[16px] text-[#2F2F2F] font-clash font-semibold mb-2">
               Utility Type
             </h2>

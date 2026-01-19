@@ -81,35 +81,35 @@ const Table = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showAll, setShowAll] = useState(false);
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await handleGetTransactions(currentPage);
+  // useEffect(() => {
+  //   const fetchTransactions = async () => {
+  //     try {
+  //       setLoading(true);
+  //       setError(null);
+  //       const response = await handleGetTransactions(currentPage);
 
-        setTransactions(response.data.data);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (err: any) {
-        if (
-          err?.response?.status === 404 ||
-          err?.message?.includes("No transactions")
-        ) {
-          setTransactions([]);
-          setError(null); // Don't show error for "no data"
-        } else {
-          setError("Failed to load transactions. Please try again.");
-          console.error("Error fetching transactions:", err);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+  //       setTransactions(response.data.data);
+  //       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  //     } catch (err: any) {
+  //       if (
+  //         err?.response?.status === 404 ||
+  //         err?.message?.includes("No transactions")
+  //       ) {
+  //         setTransactions([]);
+  //         setError(null); // Don't show error for "no data"
+  //       } else {
+  //         setError("Failed to load transactions. Please try again.");
+  //         console.error("Error fetching transactions:", err);
+  //       }
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    if (activeTab === "Payment Transaction") {
-      fetchTransactions();
-    }
-  }, [activeTab, currentPage]);
+  //   if (activeTab === "Payment Transaction") {
+  //     fetchTransactions();
+  //   }
+  // }, [activeTab, currentPage]);
 
   const displayedTransactions = showAll
     ? transactions

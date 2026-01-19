@@ -91,27 +91,25 @@ const Navbar = () => {
                 </DropdownMenuItem>
               </AlertDialogTrigger>
 
-              <AlertDialogContent className="">
+              <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="text-left  font-clash font-semibold text-[25px]">
-                    Log Out{" "}
+                  <AlertDialogTitle className="font-dm-sans">
+                    Are you absolutely sure?
                   </AlertDialogTitle>
-                  <AlertDialogDescription className="text-left  font-dm-sans text-[#464343] text-[16px]">
-                    Are you sure you want to Log Out of your Vendcliq Account?{" "}
+                  <AlertDialogDescription className="font-dm-sans">
+                    This action will log you out of the system
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter className="flex items-center flex-col gap-3 sm:flex-row justify-center">
-                  <AlertDialogCancel className="w-full sm:w-auto hover:bg-[#0A6DC012] bg-[#0A6DC0] text-white">
-                    No, Keep Vending
-                  </AlertDialogCancel>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
                       clearAuthTokens();
                       window.location.href = "/signin";
                     }}
-                    className="bg-white text-[#2F2F2F] hover:bg-[#0A6DC012] w-full sm:w-auto"
+                    className="alert-danger"
                   >
-                    Yes, Log Out
+                    Continue
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

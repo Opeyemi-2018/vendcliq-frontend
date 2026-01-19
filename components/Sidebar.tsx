@@ -37,6 +37,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { clearAuthTokens } from "@/lib/utils/api";
 import {
   Collapsible,
   CollapsibleContent,
@@ -85,7 +86,7 @@ const items = [
     icon: RectangleEllipsis,
     children: [
       { title: "Business Report", url: "/dashboards/business-report" },
-      { title: "Supplier List", url: "/dashboards/suppliers" },
+      { title: "Supplier List", url: "/dashboards/supplier" },
       { title: "Customer List", url: "/dashboards/customer" },
       { title: "Expenses", url: "/dashboards/expenses" },
       { title: "Profile Settings", url: "/dashboards/profile-settings" },
@@ -309,14 +310,14 @@ export function AppSidebar() {
                       </span>
                     </SidebarMenuButton>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className=" ">
                     <AlertDialogHeader>
-                      <AlertDialogTitle className="text-left font-clash font-semibold text-[25px]">
-                        Log Out
+                      <AlertDialogTitle className="font-clash font-semibold text-[25px]">
+                        Log Out{" "}
                       </AlertDialogTitle>
-                      <AlertDialogDescription className="text-left font-dm-sans text-[#464343] text-[16px]">
+                      <AlertDialogDescription className="font-dm-sans text-[#464343] ">
                         Are you sure you want to Log Out of your Vendcliq
-                        Account?
+                        Account?{" "}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex items-center flex-col gap-3 sm:flex-row justify-center">
@@ -325,19 +326,8 @@ export function AppSidebar() {
                       </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => {
-                          // Clear all storage
-                          localStorage.clear();
-                          sessionStorage.clear();
-
-                          // Prevent back navigation
-                          window.history.pushState(
-                            null,
-                            "",
-                            window.location.href
-                          );
-
-                          // Use replace instead of href to prevent back navigation
-                          window.location.replace("/api/auth/logout");
+                          clearAuthTokens();
+                          window.location.href = "/signin";
                         }}
                         className="bg-white text-[#2F2F2F] hover:bg-[#0A6DC012] w-full sm:w-auto"
                       >

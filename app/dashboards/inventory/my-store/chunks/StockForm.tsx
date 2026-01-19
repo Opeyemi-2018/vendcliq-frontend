@@ -135,7 +135,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
         toast.success("Stock added successfully!");
         form.reset();
         setSelectedProduct(null);
-        onSuccess?.(); // Close modal or refresh
+        onSuccess?.(); 
       } else {
         toast.error(response.error || "Failed to add stock. Please try again.");
       }

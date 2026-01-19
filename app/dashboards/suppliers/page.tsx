@@ -8,8 +8,8 @@ import Image from "next/image";
 import { useEffect, useState, useMemo } from "react";
 import { ThreeDots } from "react-loader-spinner";
 import { toast } from "sonner";
-import { SupplierFullDetails } from "./chunks/SupplierInfo";
-import { SupplierProducts } from "./chunks/SupplierProduct";
+import { SupplierFullDetails } from "./detail/SupplierInfo";
+import { SupplierProducts } from "./detail/SupplierProduct";
 
 export default function Suppliers() {
   const [error, setError] = useState<string | null>(null);

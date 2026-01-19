@@ -100,7 +100,7 @@ const Settings = () => {
         </div>
 
         <div className="flex flex-col md:flex-row gap-6 md:mt-6">
-          <Card className="hidden md:block py-6 md:px-7 w-full md:w-[35%] bg-white">
+          <Card className="hidden h-full md:block py-6 md:px-7 w-full md:w-[35%] bg-white">
             <div className="mb-4">
               <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
                 Settings Options

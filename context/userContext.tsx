@@ -265,7 +265,9 @@ export function extractVerificationStatus(
     !!(documents.ninImage || documents.ninId) ||
     !!(documents.votersCardImage || documents.votersCardId) ||
     !!(documents.driversLicenseImage || documents.driversLicenseId) ||
-    !!(documents.internationalPassportImage || documents.internationalPassportId);
+    !!(
+      documents.internationalPassportImage || documents.internationalPassportId
+    );
 
   return {
     bvn: {
@@ -285,12 +287,17 @@ export function extractVerificationStatus(
         idNumber: documents.votersCardId || null,
       },
       driversLicense: {
-        submitted: !!(documents.driversLicenseImage || documents.driversLicenseId),
+        submitted: !!(
+          documents.driversLicenseImage || documents.driversLicenseId
+        ),
         imageUrl: documents.driversLicenseImage || null,
         idNumber: documents.driversLicenseId || null,
       },
       internationalPassport: {
-        submitted: !!(documents.internationalPassportImage || documents.internationalPassportId),
+        submitted: !!(
+          documents.internationalPassportImage ||
+          documents.internationalPassportId
+        ),
         imageUrl: documents.internationalPassportImage || null,
         idNumber: documents.internationalPassportId || null,
       },
