@@ -19,6 +19,7 @@ import { useUser } from "@/context/userContext";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { handleCreateWallet } from "@/lib/utils/api/apiHelper";
+import { useStores } from "@/hooks/useStores";
 
 const Home = () => {
   const { user, isUserPending, wallet } = useUser();
@@ -27,6 +28,7 @@ const Home = () => {
   const [creatingWallet, setCreatingWallet] = useState(false);
 
   const router = useRouter();
+  const { stores } = useStores();
 
   useEffect(() => {
     const hasSeenWelcomeModal = localStorage.getItem("hasSeenWelcomeModal");
@@ -42,7 +44,7 @@ const Home = () => {
   };
 
   const handleCreateStore = () => {
-    window.location.href = "/dashboards/inventory/my-store";
+    window.location.href = "/dashboards/inventory/create-store";
     setShowWelcomeModal(false);
   };
 
@@ -287,9 +289,14 @@ const Home = () => {
               </div>
             </div>
             <div className="flex flex-col gap-3 ">
-              <Button className="bg-[#0A6DC0] hover:bg-[#09599a] font-dm-sans">
-                Create a Store
-              </Button>
+              {stores.length === 0 && (
+                <Button
+                  onClick={handleCreateStore}
+                  className="bg-[#0A6DC0] hover:bg-[#09599a] font-dm-sans"
+                >
+                  Create a Store
+                </Button>
+              )}
               <Button
                 onClick={handleCreateBusinessAccount}
                 className="bg-[#0A2540] hover:bg-[#304c6a] font-dm-sans"

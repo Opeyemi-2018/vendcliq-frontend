@@ -116,7 +116,7 @@ const Subscription = () => {
       setLoading(true);
       setError(null);
       const response = await fetchPricingPlans(
-        localStorage.getItem("authToken") || "",
+        localStorage.getItem("accessToken") ||'',
       );
 
       if (response.statusCode === 200 && response.data) {

@@ -56,7 +56,7 @@ const items = [
       { title: "Pay Utility Bill", url: "/dashboards/account/pay-utility" },
       {
         title: "Transaction History",
-        url: "/dashboards/home/transaction-history",
+        url: "/dashboards/account/transactionHistory",
       },
       { title: "Payment & Subscription", url: "/dashboards/subscription" },
     ],
