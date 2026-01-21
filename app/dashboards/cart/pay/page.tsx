@@ -106,7 +106,7 @@ const PayPage = () => {
 
   const handlePinKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
-    index: number
+    index: number,
   ) => {
     if (e.key === "Backspace" && !transactionPin[index] && index > 0) {
       e.preventDefault();
@@ -206,42 +206,38 @@ const PayPage = () => {
         </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8 mt-8">
-        <Card className=" lg:p-6 lg:w-[35%] bg-white">
-          <h1 className="font-semibold font-clash mb-4">Mode of Payment</h1>
-          <Separator className="mb-6 hidden md:block" />
-
-          <div className="md:hidden flex gap-2  bg-[#ECECF080] p-1 rounded-lg">
-            <button
-              onClick={() => setPaymentMethod("WALLET")}
-              className={`
-              flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all
-              ${
-                paymentMethod === "WALLET"
-                  ? "bg-[#0A6DC0] text-white"
-                  : "text-[#9E9A9A]"
-              }
-            `}
-            >
-              Cliq Wallet
-            </button>
-            <button
-              onClick={() => setPaymentMethod("TRANSFER")}
-              className={`
-        flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all
-        ${
-          paymentMethod === "TRANSFER"
-            ? "bg-[#0A6DC0] text-white"
-            : "text-[#9E9A9A]"
-        }
-      `}
-            >
-              Bank Transfer
-            </button>
-          </div>
-
+      <div className="flex flex-col lg:flex-row items-start gap-8 mt-8">
+        <div className="block lg:hidden flex gap-2  bg-[#ECECF080] p-1 rounded-lg">
+          <button
+            onClick={() => setPaymentMethod("WALLET")}
+            className={`
+                flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all
+                ${
+                  paymentMethod === "WALLET"
+                    ? "bg-[#0A6DC0] text-white"
+                    : "text-[#9E9A9A]"
+                }
+              `}
+          >
+            Cliq Wallet
+          </button>
+          <button
+            onClick={() => setPaymentMethod("TRANSFER")}
+            className={`
+                flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all
+                ${
+                  paymentMethod === "TRANSFER"
+                    ? "bg-[#0A6DC0] text-white"
+                    : "text-[#9E9A9A]"
+                }
+        `}
+          >
+            Bank Transfer
+          </button>
+        </div>
+        <Card className=" lg:p-6 lg:w-[35%] bg-white hidden lg:block">
           {/* Desktop Cards - YOUR ORIGINAL CODE, UNTOUCHED */}
-          <div className="hidden md:block space-y-4">
+          <div className="hidden lg:block space-y-4">
             <div
               onClick={() => setPaymentMethod("WALLET")}
               className={`p-4 rounded-lg border cursor-pointer transition mb-4 ${
@@ -389,8 +385,8 @@ const PayPage = () => {
             {paying
               ? "Processing..."
               : paymentMethod === "WALLET"
-              ? `Pay ₦${checkoutData.total.toLocaleString()} with Wallet`
-              : "Get Transfer Details"}
+                ? `Pay ₦${checkoutData.total.toLocaleString()} with Wallet`
+                : "Get Transfer Details"}
           </Button>
         </Card>
       </div>
@@ -453,7 +449,7 @@ const PayPage = () => {
                   onClick={() =>
                     copyToClipboard(
                       transferDetails.accountNumber || "",
-                      "accountNumber"
+                      "accountNumber",
                     )
                   }
                   className="text-[#0A6DC0] hover:text-blue-700 hover:bg-blue-50"
@@ -479,7 +475,7 @@ const PayPage = () => {
                   onClick={() =>
                     copyToClipboard(
                       transferDetails.accountName || "",
-                      "accountName"
+                      "accountName",
                     )
                   }
                   className="text-[#0A6DC0] hover:text-blue-700 hover:bg-blue-50"
@@ -529,7 +525,7 @@ const PayPage = () => {
                     onClick={() =>
                       copyToClipboard(
                         transferDetails.paymentReference || "",
-                        "paymentReference"
+                        "paymentReference",
                       )
                     }
                     className="text-[#0A6DC0] hover:text-blue-700 hover:bg-blue-50"

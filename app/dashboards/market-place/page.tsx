@@ -77,7 +77,7 @@ const MarketPlace = () => {
     }
 
     const filtered = items.filter((item) =>
-      item.product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      item.product.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
     if (filtered.length === 0) {
@@ -130,7 +130,11 @@ const MarketPlace = () => {
               : parseFloat(item.selling_price).toFixed(2)}
             /unit
           </p>
-          <h3 className="font-medium text-[13px]">{item.product.name}</h3>
+          <h3 className="font-medium text-[13px]">
+            {item.product.name.length > 15
+              ? `${item.product.name.slice(0, 20)}...`
+              : item.product.name}
+          </h3>
           <p className="font-semibold text-[10px] font-regular mb-2">
             {item.isOffer ? item.qty : item.total_qty} pieces left
           </p>
@@ -213,7 +217,7 @@ const MarketPlace = () => {
                   All Products
                 </h2>
                 <div className="">
-                  <div className="grid  grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                  <div className="grid  grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
                     {displayItems
                       .filter((item) => !item.isOffer)
                       .map(renderProductCard)}

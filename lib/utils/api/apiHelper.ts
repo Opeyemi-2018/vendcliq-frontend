@@ -117,6 +117,7 @@ import {
   ASSIGN_ATTENDANT_PERMISSIONS,
   CREATE_EXPENSE,
   UPDATE_ATTENDANT_PERMISSIONS,
+  PAY_SUB,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -162,6 +163,7 @@ import {
 import { UpdatePinResponse } from "@/types/transferPin";
 import { ChangePasswordResponse } from "@/types/passwordChange";
 import { CreateExpensePayload, CreateExpenseResponse } from "@/types/expenses";
+import { SubscriptionPaymentPayload, SubscriptionPaymentResponse } from "@/types/plans";
 
 interface UserProfile {
   data: {
@@ -776,4 +778,11 @@ export const handleUpdateAttendantPermissions = async (
 ): Promise<AssignAttendantPermissionsResponse> => {
   const url = UPDATE_ATTENDANT_PERMISSIONS(payload.attendant_id.toString());
   return await putter<AssignAttendantPermissionsResponse>(url, payload);
+};
+
+// Subscription Payment
+export const handlePaySubscription = async (
+  payload: SubscriptionPaymentPayload
+): Promise<SubscriptionPaymentResponse> => {
+  return await poster<SubscriptionPaymentResponse>(PAY_SUB, payload);
 };

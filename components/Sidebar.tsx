@@ -58,6 +58,7 @@ const items = [
         title: "Transaction History",
         url: "/dashboards/home/transaction-history",
       },
+      { title: "Payment & Subscription", url: "/dashboards/subscription" },
     ],
   },
   {
@@ -114,7 +115,7 @@ export function AppSidebar() {
     setOpenItems((prev) =>
       prev.includes(title)
         ? prev.filter((item) => item !== title)
-        : [...prev, title]
+        : [...prev, title],
     );
   };
 
@@ -125,7 +126,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="">
       <SidebarContent
         style={{
           backgroundColor: "#0A2540",
@@ -228,12 +229,12 @@ export function AppSidebar() {
                       >
                         <Link
                           href={item.url}
-                          className="flex"
+                          className="flex "
                           onClick={handleLinkClick}
                         >
                           <item.icon
                             style={{ width: "30px", height: "30px" }}
-                            className="text-white pr-2"
+                            className="text-white pr-2 "
                             strokeWidth={2}
                           />
                           <span className="text-white font-dm-sans text-[16px]">

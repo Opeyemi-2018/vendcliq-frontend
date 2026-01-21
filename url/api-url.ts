@@ -77,7 +77,9 @@ const PAY_CART = (invoiceId: string) => `inventory/invoices/${invoiceId}/pay`;
 const ASSIGN_ATTENDANT_PERMISSIONS = "inventory/attendant-permissions";
 const UPDATE_ATTENDANT_PERMISSIONS = (attendantId: string) =>
   `inventory/attendant-permissions/attendant/${attendantId}`;
-const CREATE_EXPENSE = "inventory/expenses"
+const CREATE_EXPENSE = "inventory/expenses";
+const PAY_SUB = "inventory/subscriptions";
+
 
 export {
   // v2 endpoint
@@ -116,6 +118,7 @@ export {
   ASSIGN_ATTENDANT_PERMISSIONS,
   UPDATE_ATTENDANT_PERMISSIONS,
   CREATE_EXPENSE,
+  PAY_SUB,
   // v1 endpoint
   GET_PROFILE,
   DASHBOARD,
