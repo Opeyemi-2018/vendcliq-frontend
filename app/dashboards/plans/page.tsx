@@ -115,9 +115,7 @@ const Subscription = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetchPricingPlans(
-        localStorage.getItem("accessToken") ||'',
-      );
+      const response = await fetchPricingPlans();
 
       if (response.statusCode === 200 && response.data) {
         const sortedPlans = response.data.sort((a, b) => {

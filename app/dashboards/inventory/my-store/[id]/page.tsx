@@ -19,6 +19,11 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/Input";
 import StockForm from "../chunks/StockForm";
+import { Switch } from "@/components/ui/switch";
+import { ClipLoader } from "react-spinners";
+import { handleUpdateStoreSettings } from "@/lib/utils/api/apiHelper";
+import { StoreSettingsPayload } from "@/types/store";
+import { toast } from "sonner";
 
 interface Store {
   id: string;
@@ -28,6 +33,9 @@ interface Store {
   stock_value: number;
   stock_count: number;
   low_stock_count: number;
+  is_default?: boolean;
+  show_on_marketplace?: boolean;
+  is_archived?: boolean;
 }
 
 interface StockItem {
@@ -47,6 +55,13 @@ const StoreDetailPage = () => {
   const router = useRouter();
   const params = useParams();
   const storeId = params.id as string;
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
+  const [storeSettings, setStoreSettings] = useState<StoreSettingsPayload>({
+    is_default: false,
+    show_on_marketplace: false,
+    is_archived: false,
+  });
 
   const [store, setStore] = useState<Store | null>(null);
   const [stocks, setStocks] = useState<StockItem[]>([]);
@@ -57,8 +72,47 @@ const StoreDetailPage = () => {
   const [isAddStockOpen, setIsAddStockOpen] = useState(false);
 
   useEffect(() => {
+    if (store) {
+      setStoreSettings({
+        is_default: store.is_default || false,
+        show_on_marketplace: store.show_on_marketplace || false,
+        is_archived: store.is_archived || false,
+      });
+    }
+  }, [store]);
+
+  // Add this handler function
+  const handleSaveSettings = async () => {
+    try {
+      setIsUpdatingSettings(true);
+      const response = await handleUpdateStoreSettings(storeId, storeSettings);
+
+      if (response.statusCode === 200) {
+        toast.success("Store settings updated successfully");
+        // Update local store state with new settings
+        setStore((prev) =>
+          prev
+            ? {
+                ...prev,
+                ...response.data,
+              }
+            : null,
+        );
+        setIsSettingsOpen(false);
+      } else {
+        toast.error(response.error || "Failed to update settings");
+      }
+    } catch (error: any) {
+      console.error("Update settings error:", error);
+      toast.error(error?.message || "Failed to update settings");
+    } finally {
+      setIsUpdatingSettings(false);
+    }
+  };
+
+  useEffect(() => {
     const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("authToken");
+      localStorage.getItem("accessToken") ;
     if (!token) return;
 
     const fetchData = async () => {
@@ -114,7 +168,7 @@ const StoreDetailPage = () => {
     // Store selected stocks in sessionStorage to pass to move page
     sessionStorage.setItem(
       "selectedStocksToMove",
-      JSON.stringify(selectedStockItems)
+      JSON.stringify(selectedStockItems),
     );
 
     // Navigate to move stock page
@@ -283,6 +337,7 @@ const StoreDetailPage = () => {
           <Button
             variant="outline"
             className="w-full py-5 md:py-6 bg-white dark:bg-gray-900"
+            onClick={() => setIsSettingsOpen(true)}
           >
             Store Settings
           </Button>
@@ -392,7 +447,7 @@ const StoreDetailPage = () => {
                       <button
                         onClick={() =>
                           router.push(
-                            `/dashboards/inventory/my-store/${storeId}/stock/${item.id}`
+                            `/dashboards/inventory/my-store/${storeId}/stock/${item.id}`,
                           )
                         }
                         className="text-[#0A6DC0] hover:text-[#09599a] underline font-medium"
@@ -422,6 +477,87 @@ const StoreDetailPage = () => {
               setIsAddStockOpen(false);
             }}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* settings dialog  */}
+      {/* Store Settings Modal */}
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-white font-dm-sans">
+          <DialogHeader>
+            <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] dark:text-white">
+              Store Settings
+            </DialogTitle>
+            <p className="text-[#9E9A9A]">Manage your settings here</p>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Set as Default Store */}
+            <div className="flex items-center justify-between space-x-2">
+              <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
+                Make Default Store
+              </p>
+
+              <Switch
+                id="is_default"
+                checked={storeSettings.is_default}
+                onCheckedChange={(checked) =>
+                  setStoreSettings((prev) => ({
+                    ...prev,
+                    is_default: checked,
+                  }))
+                }
+              />
+            </div>
+
+            {/* Show on Marketplace */}
+            <div className="flex items-center justify-between space-x-2">
+              <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
+                Show Store Contents on Marketplace
+              </p>
+              <Switch
+                id="show_on_marketplace"
+                checked={storeSettings.show_on_marketplace}
+                onCheckedChange={(checked) =>
+                  setStoreSettings((prev) => ({
+                    ...prev,
+                    show_on_marketplace: checked,
+                  }))
+                }
+              />
+            </div>
+
+            {/* Archive Store */}
+            <div className="flex items-center justify-between space-x-2">
+              <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
+                Temporary Archive Store{" "}
+              </p>
+              <Switch
+                id="is_archived"
+                checked={storeSettings.is_archived}
+                onCheckedChange={(checked) =>
+                  setStoreSettings((prev) => ({
+                    ...prev,
+                    is_archived: checked,
+                  }))
+                }
+              />
+            </div>
+          </div>
+
+          <div className=" pt-4">
+            <Button
+              className="w-full py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#09599a]"
+              onClick={handleSaveSettings}
+              disabled={isUpdatingSettings}
+            >
+              {isUpdatingSettings ? (
+                <ClipLoader size={20} color="#ffffff" />
+              ) : (
+                "Save Settings"
+              )}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

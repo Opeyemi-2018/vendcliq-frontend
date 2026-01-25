@@ -2,7 +2,7 @@
 import { GetSuppliersResponse, Supplier } from "@/types/supplier";
 
 export async function getSuppliers(
-  token: string
+  token: string,
 ): Promise<GetSuppliersResponse> {
   if (!token) {
     return {
@@ -21,7 +21,7 @@ export async function getSuppliers(
           Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!res.ok) {
@@ -65,7 +65,7 @@ export async function getSupplierStock(token: string, supplierId: string) {
           Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!res.ok) {
@@ -93,7 +93,6 @@ export async function getSupplierStock(token: string, supplierId: string) {
   }
 }
 
-
 export interface SupplierStockItem {
   id: string;
   sku: string;
@@ -107,19 +106,12 @@ export interface SupplierStockItem {
 
 export async function getSupplierStocks(
   userId: string,
-  token: string
+  token: string,
 ): Promise<{
   success: boolean;
   data?: SupplierStockItem[];
   error?: string;
 }> {
-  if (!token) {
-    return {
-      success: false,
-      error: "No authentication token provided",
-    };
-  }
-
   try {
     const res = await fetch(
       `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/suppliers/${userId}/stocks`,
@@ -130,14 +122,16 @@ export async function getSupplierStocks(
           Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
       return {
         success: false,
-        error: errorData.message || `Failed to fetch supplier stocks (HTTP ${res.status})`,
+        error:
+          errorData.message ||
+          `Failed to fetch supplier stocks (HTTP ${res.status})`,
       };
     }
 

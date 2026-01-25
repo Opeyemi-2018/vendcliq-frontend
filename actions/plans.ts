@@ -2,9 +2,7 @@
 
 import { PlansApiResponse } from "@/types/plans";
 
-
-
-export async function fetchPricingPlans(token: string) {
+export async function fetchPricingPlans() {
   try {
     const response = await fetch(
       `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/plans?page=1&limit=10&all=true`,
@@ -12,7 +10,6 @@ export async function fetchPricingPlans(token: string) {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
       },

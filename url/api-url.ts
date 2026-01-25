@@ -68,7 +68,6 @@ const PAY_LOAN = (id: string) =>
 const CREATE_STORE = "inventory/stores";
 const CREATE_STOCK = "inventory/stocks";
 const GET_PRODUCTS = "inventory/products?page=1&limit=50&all=false&search=";
-
 const CREATE_INVOICE = "inventory/invoices";
 const CREATE_CUSTOMER = "inventory/customers";
 const CREATE_CART = "inventory/carts";
@@ -78,8 +77,18 @@ const ASSIGN_ATTENDANT_PERMISSIONS = "inventory/attendant-permissions";
 const UPDATE_ATTENDANT_PERMISSIONS = (attendantId: string) =>
   `inventory/attendant-permissions/attendant/${attendantId}`;
 const CREATE_EXPENSE = "inventory/expenses";
+const GET_EXPENSES = "inventory/expenses";
+const DELETE_EXPENSE = (expenseId: string) => `inventory/expenses/${expenseId}`;
 const PAY_SUB = "inventory/subscriptions";
+const GET_PURCHASED_INVOICES = "inventory/invoices/purchases";
+const CREATE_PURCHASE = "inventory/invoices/purchases";
+const USER_STOCKS = "inventory/stocks/user/stocks";
 
+const GET_SUPPLIERS = "inventory/suppliers";
+const GET_PURCHASED_INVOICE_BY_ID = (invoiceId: string) =>
+  `inventory/invoices/${invoiceId}`;
+const GET_ITEM_TRACKING_STATUS = (itemId: string) => `/bids/track/${itemId}`;
+const UPDATE_STORE_SETTINGS = (storeId: string) => `inventory/stores/${storeId}/settings`;
 
 export {
   // v2 endpoint
@@ -118,7 +127,16 @@ export {
   ASSIGN_ATTENDANT_PERMISSIONS,
   UPDATE_ATTENDANT_PERMISSIONS,
   CREATE_EXPENSE,
+  GET_EXPENSES,
+  DELETE_EXPENSE,
   PAY_SUB,
+  GET_SUPPLIERS,
+  GET_PURCHASED_INVOICES,
+  CREATE_PURCHASE,
+  USER_STOCKS,
+  GET_PURCHASED_INVOICE_BY_ID,
+  GET_ITEM_TRACKING_STATUS,
+  UPDATE_STORE_SETTINGS,
   // v1 endpoint
   GET_PROFILE,
   DASHBOARD,

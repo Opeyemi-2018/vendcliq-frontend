@@ -30,10 +30,11 @@ const PlansSelection: React.FC<PlansSelectionProps> = ({
     <div>
       <div className="mb-6">
         <h1 className="font-clash text-[20px] md:text-[25px] lg:text-[32px] font-semibold text-[#2F2F2F] dark:text-white">
-          Payment and Subscriptions
+          Upgrade Plan
         </h1>
         <p className="font-medium font-dm-sans text-[#9E9A9A] text-[13px] md:text-[16px]">
-          View your current subscription, manage your plan and upgrade when necessary.
+          Upgrade your plan today to enjoy more features and opportunities on
+          Vendcliq{" "}
         </p>
       </div>
 

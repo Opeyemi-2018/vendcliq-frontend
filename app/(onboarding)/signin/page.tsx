@@ -39,26 +39,23 @@ const SignIN = () => {
     try {
       setIsLoading(true);
 
-      // Clear any existing user data BEFORE logging in
       clearUserData();
-
-      // Optional: Force clear localStorage to ensure clean state
-      localStorage.clear();
 
       const response = await handleSignIn(values);
 
       if (response.status === "success") {
         const token = response.data?.tokens?.accessToken?.token;
 
-        // Store token first
+        // Store ONLY accessToken in localStorage (for axios)
         if (token) {
           localStorage.setItem("accessToken", token);
-          localStorage.setItem("authToken", token);
+          // DO NOT store authToken in localStorage
+          // The authToken cookie is already set by the API route
         }
 
         const userData = response.data?.user;
         const walletData = response.data?.user?.wallet;
-        const businessData = response.data?.user?.business; // Get business data
+        const businessData = response.data?.user?.business;
 
         if (userData) {
           const formattedUserData = {
@@ -82,19 +79,17 @@ const SignIN = () => {
               }
             : null;
 
-          // Extract verification status from business data
           const verificationStatus = businessData
             ? extractVerificationStatus(businessData)
             : null;
 
-          // Use setAllUserData to update user, wallet, AND verification status
           setAllUserData(
             formattedUserData,
             formattedWalletData,
-            verificationStatus
+            verificationStatus,
           );
 
-          // Also store in localStorage directly
+          // Store in localStorage for persistence
           localStorage.setItem("user", JSON.stringify(formattedUserData));
           if (formattedWalletData) {
             localStorage.setItem("wallet", JSON.stringify(formattedWalletData));
@@ -102,17 +97,15 @@ const SignIN = () => {
           if (verificationStatus) {
             localStorage.setItem(
               "verificationStatus",
-              JSON.stringify(verificationStatus)
+              JSON.stringify(verificationStatus),
             );
           }
 
           toast.success("Signed in successfully!");
           router.push("/dashboards/account/overview");
-
-          return;
+        } else {
+          toast.error("User data not found in response");
         }
-
-        toast.error("User data not found in response");
       } else {
         toast.error(response.msg || "Sign in failed");
       }
@@ -123,7 +116,6 @@ const SignIN = () => {
       setIsLoading(false);
     }
   };
-
   return (
     <div className="w-full lg:max-w-[40rem] mx-auto  px-3 lg:px-10 xl:px-24">
       <h1 className="font-clash  text-[22px] font-semibold mb-2 text-[#2F2F2F]">

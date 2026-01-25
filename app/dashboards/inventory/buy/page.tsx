@@ -80,7 +80,7 @@ const Buy = () => {
 
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
-    null
+    null,
   );
   const [stores, setStores] = useState<StoreType[]>([]);
   const [filteredStores, setFilteredStores] = useState<StoreType[]>([]);
@@ -148,7 +148,7 @@ const Buy = () => {
     }
 
     const filtered = suppliers.filter((supplier) =>
-      supplier.name.toLowerCase().includes(searchTerm.toLowerCase())
+      supplier.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     setFilteredSupplier(filtered);
@@ -200,8 +200,8 @@ const Buy = () => {
     } else {
       setFilteredStores(
         stores.filter((s) =>
-          s.name.toLowerCase().includes(searchStore.toLowerCase())
-        )
+          s.name.toLowerCase().includes(searchStore.toLowerCase()),
+        ),
       );
     }
   }, [searchStore, stores]);
@@ -223,7 +223,7 @@ const Buy = () => {
 
           const result = await getSupplierStock(
             token,
-            selectedSupplier.user_id
+            selectedSupplier.user_id,
           );
 
           if (result.success && result.data) {
@@ -330,11 +330,11 @@ const Buy = () => {
         </p>
 
         {/* MOBILE TABS - Only visible on mobile */}
-        <div className="md:hidden flex gap-2  bg-[#ECECF080] p-1 rounded-lg">
+        <div className="lg:hidden flex gap-2  bg-[#ECECF080] p-1 rounded-lg">
           <button
             onClick={() => setSupplierOptionSelected("suppliers")}
             className={`
-            flex-1 py-3 px-6 rounded-lg font-dm-sans font-medium text-[14px] transition-all
+            flex-1 py-3  rounded-lg font-dm-sans font-medium text-[13px] transition-all
             ${
               supplierOptionSelected === "suppliers"
                 ? "bg-[#0A6DC0] text-white"
@@ -347,7 +347,7 @@ const Buy = () => {
           <button
             onClick={() => router.push("/dashboards/market-place")}
             className={`
-            flex-1 py-3 px-6 rounded-lg font-dm-sans font-medium text-[14px] transition-all
+            flex-1 rounded-lg font-dm-sans font-medium text-[13px] transition-all
             ${
               supplierOptionSelected === "marketplace"
                 ? "bg-[#0A6DC0] text-white"
@@ -361,54 +361,77 @@ const Buy = () => {
 
         <div className="md:mt-8 flex flex-col lg:flex-row gap-4">
           {/* Left Card - Only visible on desktop (lg+) */}
-          <Card className="hidden lg:block py-6 md:px-4 w-full lg:w-[35%] bg-white">
-            <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
-              Select where to buy from
-            </h1>
-            <Separator
-              orientation="horizontal"
-              className="h-[1px] mt-3"
-              style={{ background: "#E0E0E0" }}
-            />
+          <Card className="hidden lg:flex flex-col justify-between py-6 md:px-4 w-full lg:w-[35%] bg-white h-[550px] ">
+            <div className=" ">
+              <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
+                Select where to buy from
+              </h1>
+              <Separator
+                orientation="horizontal"
+                className="h-[1px] mt-3"
+                style={{ background: "#E0E0E0" }}
+              />
 
-            <div className="mt-6 space-y-4">
-              <div
-                onClick={() => setSupplierOptionSelected("suppliers")}
-                className={`cursor-pointer hover:bg-[#0A6DC012] flex items-center gap-2 justify-between border border-[#D8D8D866] rounded-lg px-3 py-2 transition-colors ${
-                  supplierOptionSelected === "suppliers"
-                    ? "bg-[#0A6DC012] border-[#0A6DC0]"
-                    : ""
-                }`}
-              >
-                <Truck size={30} className="shrink-0" />
+              <div className="mt-6 space-y-4">
+                <div
+                  onClick={() => setSupplierOptionSelected("suppliers")}
+                  className={`cursor-pointer hover:bg-[#0A6DC012] flex items-center gap-2 justify-between border border-[#D8D8D866] rounded-lg px-3 py-2 transition-colors ${
+                    supplierOptionSelected === "suppliers"
+                      ? "bg-[#0A6DC012] border-[#0A6DC0]"
+                      : ""
+                  }`}
+                >
+                  <Truck size={30} className="shrink-0" />
+                  <div>
+                    <p className="text-[#2F2F2F] font-dm-sans font-medium">
+                      Buy from Suppliers
+                    </p>
+                    <p className="text-[#2F2F2F] text-[13px] font-regular">
+                      Buy from other suppliers near you, that are also on the
+                      Vendcliq network.
+                    </p>
+                  </div>
+                  <ChevronRight />
+                </div>
+
+                <div
+                  onClick={() => router.push("/dashboards/market-place")}
+                  className="cursor-pointer hover:bg-[#0A6DC012] flex items-center gap-2 justify-between border border-[#D8D8D866] rounded-lg px-3 py-2 transition-colors"
+                >
+                  <ShoppingCart size={30} className="shrink-0" />
+                  <div>
+                    <p className="text-[#2F2F2F] font-dm-sans font-medium">
+                      Buy from Marketplace
+                    </p>
+                    <p className="text-[#2F2F2F] text-[13px] font-regular">
+                      Place an order on the marketplace and receive bids from
+                      vendors around you.
+                    </p>
+                  </div>
+                  <ChevronRight />
+                </div>
+              </div>
+            </div>
+            <div
+              onClick={() => router.push("/dashboards/my-purchase")}
+              className="cursor-pointer bg-[#0A6DC0] font-dm-sans p-4 rounded-lg text-white flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <Image
+                  src={"/buy.svg"}
+                  width={20}
+                  height={20}
+                  alt="wallet"
+                  className="rotate-180"
+                />
                 <div>
-                  <p className="text-[#2F2F2F] font-dm-sans font-medium">
-                    Buy from Suppliers
-                  </p>
-                  <p className="text-[#2F2F2F] text-[13px] font-regular">
-                    Buy from other suppliers near you, that are also on the
-                    Vendcliq network.
+                  <h1 className="font-bold ">My Purchases</h1>
+                  <p className="text-[13px] font-regular">
+                    View your purchases or add new purchases
                   </p>
                 </div>
-                <ChevronRight />
               </div>
-
-              <div
-                onClick={() => router.push("/dashboards/market-place")}
-                className="cursor-pointer hover:bg-[#0A6DC012] flex items-center gap-2 justify-between border border-[#D8D8D866] rounded-lg px-3 py-2 transition-colors"
-              >
-                <ShoppingCart size={30} className="shrink-0" />
-                <div>
-                  <p className="text-[#2F2F2F] font-dm-sans font-medium">
-                    Buy from Marketplace
-                  </p>
-                  <p className="text-[#2F2F2F] text-[13px] font-regular">
-                    Place an order on the marketplace and receive bids from
-                    vendors around you.
-                  </p>
-                </div>
-                <ChevronRight />
-              </div>
+              <ChevronRight color="#fafafa" />
             </div>
           </Card>
 
@@ -432,7 +455,7 @@ const Buy = () => {
 
             {supplierOptionSelected !== "suppliers" ? (
               <div className="mt-6 text-center py-8 text-gray-500">
-                Click "Buy from Suppliers" on the left to see available
+                Click Buy from Suppliers&quot; on the left to see available
                 suppliers
               </div>
             ) : (
@@ -481,7 +504,7 @@ const Buy = () => {
                     {filteredSupplier.map((supplier) => (
                       <div
                         key={supplier.id}
-                        className="mb-4 flex items-center justify-between border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                        className="mb-4 flex items-center justify-between border border-gray-200 rounded-lg py-3 md:p-4 hover:shadow-md transition-shadow cursor-pointer"
                         onClick={() => {
                           setSelectedSupplier(supplier);
                           setStage("supplier-info");
@@ -495,28 +518,30 @@ const Buy = () => {
                                 width={50}
                                 src={supplier.logo}
                                 alt={supplier.name}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover hidden md:inline "
                               />
                             </div>
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                            <div className="hidden md:flex w-12 h-12 rounded-full bg-blue-100  items-center justify-center">
                               <span className="text-lg font-bold text-blue-600">
                                 {supplier.name.charAt(0).toUpperCase()}
                               </span>
                             </div>
                           )}
                           <div>
-                            <h3 className="font-medium capitalize">
+                            <h3 className="font-medium capitalize text-[14px] md:text-[16px]">
                               {supplier.name}
                             </h3>
                             <div className="text-[13px] flex items-center gap-1 text-gray-600">
-                              <MapPin size={14} />
-                              <span>{supplier.address}</span>
-                              <span>|</span>
+                              <MapPin size={14} className="hidden md:inline" />
+                              <span className="hidden md:inline">
+                                {supplier.address}
+                              </span>
+                              <span className="hidden md:inline">|</span>
                               <Phone size={14} />
                               <span>{supplier.phone}</span>
                             </div>
-                            <p className="text-[13px] text-gray-600">
+                            <p className="text-[13px] hidden md:inline text-gray-600">
                               {supplier.email}
                             </p>
                           </div>
@@ -988,7 +1013,7 @@ const Buy = () => {
                           <button
                             onClick={() => {
                               setInvoiceItems((prev) =>
-                                prev.filter((_, index) => index !== i)
+                                prev.filter((_, index) => index !== i),
                               );
                               toast.success("Item removed from invoice");
                             }}

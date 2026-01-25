@@ -24,6 +24,15 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+
+import {
   Form,
   FormControl,
   FormField,
@@ -59,7 +68,8 @@ const Customer = () => {
   const [customers, setCustomers] = useState<CustomerType[]>([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [deletingId, setDeletingId] = useState<string | null>(null); // only for delete loader
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
 
   const customerForm = useForm<CustomerForm>({
     resolver: zodResolver(customerSchema),
@@ -169,6 +179,7 @@ const Customer = () => {
       toast.error(err?.message || "Error deleting customer");
     } finally {
       setDeletingId(null);
+      setDeleteDialogOpen(null);
     }
   };
 
@@ -177,7 +188,7 @@ const Customer = () => {
       customer.address || ""
     }`
       .toLowerCase()
-      .includes(searchQuery.toLowerCase())
+      .includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -447,8 +458,13 @@ const Customer = () => {
                     <td className="py-4">{customer.type}</td>
                     <td className="py-4">{customer.address?.address}</td>
                     <td className="py-4">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                      <Dialog
+                        open={deleteDialogOpen === customer.id}
+                        onOpenChange={(open) =>
+                          setDeleteDialogOpen(open ? customer.id : null)
+                        }
+                      >
+                        <DialogTrigger asChild>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -456,41 +472,50 @@ const Customer = () => {
                           >
                             <Trash2 size={18} />
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Customer</AlertDialogTitle>
-                            <AlertDialogDescription>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Delete Customer</DialogTitle>
+                            <DialogDescription>
                               Are you sure you want to delete{" "}
                               <strong className="text-black">
                                 {customer.name}
                               </strong>
                               ?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => onDeleteCustomer(customer.id)}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="flex justify-end gap-3 mt-4">
+                            <Button
+                              variant="outline"
+                              onClick={() => setDeleteDialogOpen(null)}
+                              disabled={deletingId === customer.id}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={async () => {
+                                await onDeleteCustomer(customer.id);
+                                setDeleteDialogOpen(null);
+                              }}
                               className="bg-red-600 hover:bg-red-700 text-white"
                               disabled={deletingId === customer.id}
                             >
                               {deletingId === customer.id ? (
                                 <>
+                                  Deleting...
                                   <ClipLoader
                                     size={18}
                                     color="white"
                                     className="mr-2"
                                   />
-                                  Deleting...
                                 </>
                               ) : (
                                 "Delete"
                               )}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </td>
                   </tr>
                 ))

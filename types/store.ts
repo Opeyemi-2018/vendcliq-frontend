@@ -77,3 +77,27 @@ export const createStoreSchema = z.object({
 });
 
 export type CreateStoreFormData = z.infer<typeof createStoreSchema>;
+
+
+// types/store.ts (add these to your existing store types)
+
+export interface StoreSettingsPayload {
+  is_default: boolean;
+  show_on_marketplace: boolean;
+  is_archived: boolean;
+}
+
+export interface StoreSettings {
+  id: string;
+  is_default: boolean;
+  show_on_marketplace: boolean;
+  is_archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StoreSettingsResponse {
+  statusCode: number;
+  error: string | null;
+  data: StoreSettings;
+}

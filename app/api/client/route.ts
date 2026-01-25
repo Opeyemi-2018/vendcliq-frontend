@@ -42,7 +42,15 @@ import {
   ASSIGN_ATTENDANT_PERMISSIONS,
   UPDATE_ATTENDANT_PERMISSIONS,
   CREATE_EXPENSE,
-  PAY_SUB
+  GET_EXPENSES,
+  DELETE_EXPENSE,
+  PAY_SUB,
+  GET_SUPPLIERS,
+  GET_PURCHASED_INVOICES,
+  CREATE_PURCHASE,
+  USER_STOCKS,
+  GET_ITEM_TRACKING_STATUS,
+  UPDATE_STORE_SETTINGS
 
   // v1 endpoint
 
@@ -77,10 +85,14 @@ export const runtime = "edge";
 const VERA_API_BASE_URL = process.env.VERA_API_BASE_URL as string;
 const INVENTORY_API_BASE_URL = process.env
   .VERA_INVENTORY_API_BASE_URL as string;
+const LOGISTIC_API_BASE_URL = process.env
+  .VENDCLIQ_LOGISTIC_API_BASE_URL as string;
 
 if (!VERA_API_BASE_URL) throw new Error("VERA_API_BASE_URL not set");
 if (!INVENTORY_API_BASE_URL)
   throw new Error("VERA_INVENTORY_API_BASE_URL not set");
+if (!LOGISTIC_API_BASE_URL)
+  throw new Error("VENDCLIQ_LOGISTIC_API_BASE_URL not set");
 
 const API_KEY = process.env.PRODUCT_API_KEY as string;
 if (!API_KEY) throw new Error("PRODUCT_API_KEY not set");
@@ -102,7 +114,7 @@ const AUTH_SIGNIN_PATH = SIGN_IN;
 const RATE_LIMIT = parseInt(process.env.RATE_LIMIT || "100", 10);
 const RATE_LIMIT_WINDOW = parseInt(
   process.env.RATE_LIMIT_WINDOW || "60000",
-  10
+  10,
 );
 
 // Security Signature
@@ -110,7 +122,7 @@ const generateSignature = async (
   clientId: string,
   timestamp: string,
   method: string,
-  path: string
+  path: string,
 ): Promise<string> => {
   const data = `${clientId}:${timestamp}:${method}:${path}`;
   const encoder = new TextEncoder();
@@ -119,7 +131,7 @@ const generateSignature = async (
     encoder.encode(APP_SECRET_KEY),
     { name: "HMAC", hash: "SHA-256" },
     false,
-    ["sign"]
+    ["sign"],
   );
   const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(data));
   return Array.from(new Uint8Array(signature))
@@ -131,7 +143,7 @@ const generateSignature = async (
 const addSecurityHeaders = async (
   headers: Record<string, string>,
   method: string,
-  path: string
+  path: string,
 ): Promise<Record<string, string>> => {
   const timestamp = Date.now().toString();
   const clientId = CLIENT_ID;
@@ -175,7 +187,7 @@ const VERA_ENDPOINTS = [
   CREATE_WALLET,
   ADD_SHOP_ATTENDANT,
   UPDATE_TRANSFER_PIN,
-  CHANGE_PASSWORD
+  CHANGE_PASSWORD,
 
   // v1 endpoint
   // GET_PROFILE,
@@ -209,7 +221,7 @@ const INVENTORY_ENDPOINTS = [
   CREATE_STORE,
   CREATE_STOCK,
   GET_PRODUCTS,
-ASSIGN_ATTENDANT_PERMISSIONS,
+  ASSIGN_ATTENDANT_PERMISSIONS,
   CREATE_INVOICE,
   CREATE_CUSTOMER,
   CREATE_CART,
@@ -217,23 +229,43 @@ ASSIGN_ATTENDANT_PERMISSIONS,
   PAY_CART,
   UPDATE_ATTENDANT_PERMISSIONS,
   CREATE_EXPENSE,
-  PAY_SUB
+  GET_EXPENSES,
+  DELETE_EXPENSE,
+  PAY_SUB,
+  GET_SUPPLIERS,
+  GET_PURCHASED_INVOICES,
+  CREATE_PURCHASE,
+  USER_STOCKS,
+  UPDATE_STORE_SETTINGS
 ];
 
-const ALLOWED_ENDPOINTS = [...VERA_ENDPOINTS, ...INVENTORY_ENDPOINTS];
+const LOGISTIC_ENDPOINTS = [GET_ITEM_TRACKING_STATUS];
 
+const ALLOWED_ENDPOINTS = [
+  ...VERA_ENDPOINTS,
+  ...INVENTORY_ENDPOINTS,
+  ...LOGISTIC_ENDPOINTS, // ← Add this
+];
+// API Base URL Router
 // API Base URL Router
 const getApiBaseUrl = (endpoint: string): string => {
   const normalized = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
+  // Check for logistics endpoints (like /bids/track/...)
+  if (normalized.startsWith("/bids/")) {
+    return LOGISTIC_API_BASE_URL;
+  }
+
   if (
     INVENTORY_ENDPOINTS.some(
       (e) =>
         typeof e === "string" &&
-        (normalized.startsWith(e) || normalized.includes("inventory"))
+        (normalized.startsWith(e) || normalized.includes("inventory")),
     )
   ) {
     return INVENTORY_API_BASE_URL;
   }
+
   return VERA_API_BASE_URL;
 };
 
@@ -265,7 +297,8 @@ const isValidEndpoint = (endpoint: string): boolean => {
     normalized.match(/^\/client\/v1\/loans\/list\/repayment[-_]pattern.*$/) ||
     normalized.match(/^\/client\/v1\/bank-accounts\/accounts\/verify\/\d+$/) ||
     normalized.match(/^\/v1\/inventory\/.*$/) ||
-    normalized.match(/^\/inventory\/.*$/)
+    normalized.match(/^\/inventory\/.*$/) ||
+    normalized.match(/^\/bids\/track\/[a-f0-9-]+$/) // ← Add this pattern
   ) {
     return true;
   }
@@ -280,11 +313,14 @@ const getAuthToken = (request: Request): string | null => {
 
   const cookieHeader = request.headers.get("cookie");
   if (cookieHeader) {
-    const cookies = cookieHeader.split(";").reduce((acc, cookie) => {
-      const [key, value] = cookie.trim().split("=");
-      acc[key] = value;
-      return acc;
-    }, {} as Record<string, string>);
+    const cookies = cookieHeader.split(";").reduce(
+      (acc, cookie) => {
+        const [key, value] = cookie.trim().split("=");
+        acc[key] = value;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
     return cookies["authToken"];
   }
@@ -344,7 +380,7 @@ export async function POST(request: Request) {
     if (!isValidEndpoint(endpoint)) {
       return NextResponse.json(
         { error: "Endpoint not allowed" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -365,7 +401,7 @@ export async function POST(request: Request) {
     const secureHeaders = await addSecurityHeaders(
       baseHeaders,
       "POST",
-      endpoint
+      endpoint,
     );
 
     const apiBaseUrl = getApiBaseUrl(endpoint);
@@ -407,11 +443,12 @@ export async function POST(request: Request) {
     console.error("API proxy error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
+// GET Handler
 // GET Handler
 export async function GET(request: Request) {
   try {
@@ -432,11 +469,13 @@ export async function GET(request: Request) {
     if (!isValidEndpoint(endpoint)) {
       return NextResponse.json(
         { error: "Endpoint not allowed" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     const token = getAuthToken(request);
+    const apiBaseUrl = getApiBaseUrl(endpoint);
+    const isLogisticsEndpoint = apiBaseUrl === LOGISTIC_API_BASE_URL;
 
     const baseHeaders = {
       "x-api-key": API_KEY,
@@ -446,20 +485,54 @@ export async function GET(request: Request) {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
-    const secureHeaders = await addSecurityHeaders(
-      baseHeaders,
-      "GET",
-      endpoint
-    );
+    // Skip security headers for logistics endpoints
+    const headers = isLogisticsEndpoint
+      ? baseHeaders
+      : await addSecurityHeaders(baseHeaders, "GET", endpoint);
 
-    const apiBaseUrl = getApiBaseUrl(endpoint);
-
-    console.log(`Routing GET ${endpoint} to ${apiBaseUrl}`);
+    console.log(`Routing GET ${endpoint} to ${apiBaseUrl}${endpoint}`);
 
     const response = await fetch(`${apiBaseUrl}${endpoint}`, {
-      headers: secureHeaders,
+      headers,
     });
 
+    console.log(`Response status: ${response.status}`);
+
+    // Handle logistics endpoints differently
+    if (isLogisticsEndpoint) {
+      try {
+        // Try to read as text first
+        const text = await response.text();
+        console.log(`Logistics response text: ${text}`);
+
+        // Try to parse as JSON, if it fails, return as plain message
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          // If not JSON, wrap the text in a message object
+          data = { message: text };
+        }
+
+        const nextResponse = NextResponse.json(data, {
+          status: response.status,
+        });
+
+        nextResponse.headers.set("X-Content-Type-Options", "nosniff");
+        nextResponse.headers.set("X-Frame-Options", "DENY");
+        nextResponse.headers.set("X-XSS-Protection", "1; mode=block");
+
+        return nextResponse;
+      } catch (error) {
+        console.error("Error processing logistics response:", error);
+        return NextResponse.json(
+          { message: "Failed to process logistics response" },
+          { status: 500 },
+        );
+      }
+    }
+
+    // Handle regular JSON responses for non-logistics endpoints
     const data = await response.json();
     const nextResponse = NextResponse.json(data, { status: response.status });
 
@@ -471,8 +544,11 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("API proxy error:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
+      {
+        error: "Internal Server Error",
+        message: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 },
     );
   }
 }
@@ -508,7 +584,7 @@ export async function PUT(request: Request) {
     if (!isValidEndpoint(endpoint)) {
       return NextResponse.json(
         { error: "Endpoint not allowed" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -530,7 +606,7 @@ export async function PUT(request: Request) {
     const secureHeaders = await addSecurityHeaders(
       baseHeaders,
       "PUT", // ← This was "POST" before — now correct
-      endpoint
+      endpoint,
     );
 
     const apiBaseUrl = getApiBaseUrl(endpoint);
@@ -559,7 +635,72 @@ export async function PUT(request: Request) {
     console.error("API proxy PUT error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const clientIp = forwardedFor ? forwardedFor.split(",")[0] : "unknown";
+
+    if (isRateLimited(clientIp)) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const endpoint = searchParams.get("endpoint");
+
+    if (!endpoint || typeof endpoint !== "string") {
+      return NextResponse.json({ error: "Invalid endpoint" }, { status: 400 });
+    }
+
+    if (!isValidEndpoint(endpoint)) {
+      return NextResponse.json(
+        { error: "Endpoint not allowed" },
+        { status: 403 },
+      );
+    }
+
+    const token = getAuthToken(request);
+
+    const baseHeaders: Record<string, string> = {
+      "x-api-key": API_KEY,
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "X-XSS-Protection": "1; mode=block",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    const secureHeaders = await addSecurityHeaders(
+      baseHeaders,
+      "DELETE",
+      endpoint,
+    );
+
+    const apiBaseUrl = getApiBaseUrl(endpoint);
+
+    console.log(`Routing DELETE ${endpoint} to ${apiBaseUrl}`);
+
+    const response = await fetch(`${apiBaseUrl}${endpoint}`, {
+      method: "DELETE",
+      headers: secureHeaders,
+    });
+
+    const data = await response.json();
+    const nextResponse = NextResponse.json(data, { status: response.status });
+
+    nextResponse.headers.set("X-Content-Type-Options", "nosniff");
+    nextResponse.headers.set("X-Frame-Options", "DENY");
+    nextResponse.headers.set("X-XSS-Protection", "1; mode=block");
+
+    return nextResponse;
+  } catch (error) {
+    console.error("API proxy DELETE error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
     );
   }
 }

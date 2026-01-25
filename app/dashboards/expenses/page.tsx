@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -30,38 +31,32 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { handleCreateExpense } from "@/lib/utils/api/apiHelper";
+import {
+  handleCreateExpense,
+  handleDeleteExpense,
+  handleGetExpenses,
+} from "@/lib/utils/api/apiHelper";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/Input";
 import { useStores } from "@/hooks/useStores";
-import { deleteExpenses, getExpenses } from "@/actions/expense";
+// import { deleteExpenses, getExpenses } from "@/actions/expense";
 import { Expense } from "@/types/expenses";
 import { ClipLoader } from "react-spinners";
 import { ThreeDots } from "react-loader-spinner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+
 import { Card } from "@/components/ui/card";
 
 const expenseCategories = [
-  "RENT",
-  "UTILITIES",
-  "SALARIES",
-  "SUPPLIES",
-  "MARKETING",
-  "TRANSPORTATION",
-  "MAINTENANCE",
-  "INSURANCE",
-  "TAXES",
-  "OTHER",
+  "Rent",
+  "Utilities",
+  "Salaries",
+  "Suppliers",
+  "Marketing",
+  "Transportation",
+  "Maintenance",
+  "Insurance",
+  "Taxes",
+  "Other",
 ];
 
 const expenseFormSchema = z.object({
@@ -83,6 +78,7 @@ const Expenses = () => {
   const [expenses, setExpense] = useState<Expense[]>([]);
   const [expenseLoading, setExpenseLoading] = useState(false);
   const { stores, isLoading: isLoadingStores } = useStores();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const form = useForm({
@@ -123,20 +119,14 @@ const Expenses = () => {
     const fetchExpenses = async () => {
       setExpenseLoading(true);
       try {
-        const token =
-          localStorage.getItem("accessToken") ||
-          localStorage.getItem("authToken");
-        if (!token) return;
+        const result = await handleGetExpenses();
 
-        const result = await getExpenses(token);
-
-        if (result.success && result.data) {
+        if (result.statusCode === 200 && Array.isArray(result.data)) {
           setExpense(result.data);
         } else {
-          // Use the actual error message from the result
-          toast.error(result.error || "Failed to load expense");
+          toast.error(result.error || "Failed to load expenses");
         }
-      } catch (err) {
+      } catch (err: any) {
         toast.error("Network error");
       } finally {
         setExpenseLoading(false);
@@ -146,30 +136,29 @@ const Expenses = () => {
     fetchExpenses();
   }, []);
 
-  const onDeleteCustomer = async (customerId: string) => {
+  const onDeleteExpense = async (expenseId: string) => {
     try {
-      setDeletingId(customerId);
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
-      if (!token) {
-        toast.error("No authentication token found");
-        return;
-      }
+      setDeletingId(expenseId);
+      const result = await handleDeleteExpense(expenseId);
 
-      const result = await deleteExpenses(token, customerId);
+      // Check the response structure from delete
+      if (
+        result?.data?.statusCode === 200 ||
+        result?.data?.statusCode === 204
+      ) {
+        toast.success(result?.data?.msg || "Expense deleted successfully");
 
-      if (result.success) {
-        toast.success(result.message || "Customer deleted successfully");
-        const refreshResult = await getExpenses(token);
-        if (refreshResult.success && refreshResult.data) {
+        // Refresh the list
+        const refreshResult = await handleGetExpenses();
+        if (refreshResult && refreshResult.data) {
           setExpense(refreshResult.data);
         }
+        setDeleteDialogOpen(null);
       } else {
-        toast.error(result.error || "Failed to delete expense");
+        toast.error(result?.data?.error || "Failed to delete expense");
       }
     } catch (err: any) {
-      toast.error(err?.message || "Error deleting expense");
+      toast.error(err?.response?.data?.message || "Error deleting expense");
     } finally {
       setDeletingId(null);
     }
@@ -193,6 +182,26 @@ const Expenses = () => {
 
   const highestCategory = highestCategoryEntry[0];
   // const highestCategoryTotal = highestCategoryEntry[1];
+
+  const getCurrentMonthExpenses = (expenses: Expense[]) => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // JavaScript months are 0-indexed
+
+    return expenses.filter((expense) => {
+      // Parse the expense date (format: "2026-01-22")
+      const [year, month] = expense.date.split("-").map(Number);
+
+      return year === currentYear && month === currentMonth;
+    });
+  };
+
+  // Calculate total for current month
+  const currentMonthExpenses = getCurrentMonthExpenses(expenses);
+  const currentMonthTotal = currentMonthExpenses.reduce(
+    (sum, exp) => sum + Number(exp.amount || 0),
+    0,
+  );
 
   return (
     <div>
@@ -411,14 +420,14 @@ const Expenses = () => {
             Expenses This Month
           </p>
           <h2 className="font-semibold text-[16px] md:text-[20px] font-clash">
-            coming soon
+            ₦{currentMonthTotal}
           </h2>
         </div>
         <div className="bg-[url('/balance-bg.svg')] text-white bg-cover bg-no-repeat bg-center min-w-[260px] w-[280px] flex-shrink-0 h-[117px] rounded-2xl p-6">
           <p className="font-regular font-dm-sans text-[13px] md:text-[16px]">
             Highest Expenses Category
           </p>
-          <h2 className="font-semibold text-[16px] md:text-[20px] font-clash">
+          <h2 className="font-semibold  text-[16px] md:text-[20px] font-clash">
             {highestCategory}
           </h2>
         </div>
@@ -502,9 +511,15 @@ const Expenses = () => {
                       <td className="py-4">{expense.category}</td>
                       <td className="py-4">{expense.date}</td>
                       <td className="py-4">{expense.description}</td>
+
                       <td className="py-4">
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
+                        <Dialog
+                          open={deleteDialogOpen === expense.id}
+                          onOpenChange={(open) =>
+                            setDeleteDialogOpen(open ? expense.id : null)
+                          }
+                        >
+                          <DialogTrigger asChild>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -512,43 +527,46 @@ const Expenses = () => {
                             >
                               <Trash2 size={18} />
                             </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Delete Customer
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete{" "}
-                                <strong className="text-black">
-                                  {expense.category}
-                                </strong>
-                                ?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => onDeleteCustomer(expense.id)}
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Delete Expense</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to delete this expense ?
+                                This action cannot be undone.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="flex justify-end gap-3 mt-4">
+                              <Button
+                                variant="outline"
+                                onClick={() => setDeleteDialogOpen(null)}
+                                disabled={deletingId === expense.id}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                onClick={() => {
+                                  onDeleteExpense(expense.id);
+                                }}
                                 className="bg-red-600 hover:bg-red-700 text-white"
                                 disabled={deletingId === expense.id}
                               >
                                 {deletingId === expense.id ? (
                                   <>
+                                    Deleting...
                                     <ClipLoader
                                       size={18}
                                       color="white"
                                       className="mr-2"
                                     />
-                                    Deleting...
                                   </>
                                 ) : (
                                   "Delete"
                                 )}
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       </td>
                     </tr>
                   ))

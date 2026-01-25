@@ -39,7 +39,6 @@ export default function Step2({ onNext, onPrev, data }: Props) {
   const [loading, setLoading] = useState(false);
   const { setUser, clearUserData } = useUser();
 
-
   const form = useForm<CreatePasswordFormData>({
     resolver: zodResolver(createPasswordSchema),
     defaultValues: {
@@ -114,11 +113,11 @@ export default function Step2({ onNext, onPrev, data }: Props) {
         }
 
         localStorage.setItem("accessToken", token);
-        localStorage.setItem("authToken", token);
+
         localStorage.setItem("email", data.email!.toLowerCase().trim());
 
         toast.success(
-          "Account created! Check your email for verification code"
+          "Account created! Check your email for verification code",
         );
 
         onNext({
@@ -173,7 +172,7 @@ export default function Step2({ onNext, onPrev, data }: Props) {
                       className="pl-10 pr-12 bg-[#FAFAFA] h-12"
                     />
                     <div className="absolute left-3 top-3 text-gray-400">
-                     <Lock />
+                      <Lock />
                     </div>
                     <button
                       type="button"

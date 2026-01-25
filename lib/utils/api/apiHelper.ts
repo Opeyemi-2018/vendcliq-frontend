@@ -118,10 +118,19 @@ import {
   CREATE_EXPENSE,
   UPDATE_ATTENDANT_PERMISSIONS,
   PAY_SUB,
+  GET_EXPENSES,
+  DELETE_EXPENSE,
+  GET_SUPPLIERS,
+  GET_PURCHASED_INVOICES,
+  CREATE_PURCHASE,
+  USER_STOCKS,
+  GET_PURCHASED_INVOICE_BY_ID,
+  GET_ITEM_TRACKING_STATUS,
+  UPDATE_STORE_SETTINGS,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
-import { CreateStoreFormData, CreateStoreResponse } from "@/types/store";
+import { CreateStoreFormData, CreateStoreResponse, StoreSettingsPayload, StoreSettingsResponse } from "@/types/store";
 import { CreateStockResponse, ProductsResponse } from "@/types/stock";
 import { TransactionHistoryResponse } from "@/types/transactions";
 import {
@@ -162,8 +171,18 @@ import {
 } from "@/types/utilityBills";
 import { UpdatePinResponse } from "@/types/transferPin";
 import { ChangePasswordResponse } from "@/types/passwordChange";
-import { CreateExpensePayload, CreateExpenseResponse } from "@/types/expenses";
-import { SubscriptionPaymentPayload, SubscriptionPaymentResponse } from "@/types/plans";
+import {
+  CreateExpensePayload,
+  CreateExpenseResponse,
+  Expense,
+} from "@/types/expenses";
+import {
+  SubscriptionPaymentPayload,
+  SubscriptionPaymentResponse,
+} from "@/types/plans";
+import { GetSuppliersResponse, Supplier } from "@/types/supplier";
+import { CreatePurchasePayload, CreatePurchaseResponse, InvoiceDetailsResponse, PurchasedInvoicesResponse, TrackingStatusResponse } from "@/types/purchase";
+import { UserStocksResponse } from "@/types/allMyStocks";
 
 interface UserProfile {
   data: {
@@ -206,7 +225,7 @@ export type BusinessVerificationPayload = UploadCacPayload &
 
 export const fetcher = async <T>(
   url: string,
-  params?: Record<string, unknown>
+  params?: Record<string, unknown>,
 ): Promise<T> => {
   const response = await axiosInstance.get<T>(url, { params });
   return response.data;
@@ -215,7 +234,7 @@ export const fetcher = async <T>(
 export const poster = async <T, U = unknown>(
   url: string,
   data?: U,
-  headers?: Record<string, string>
+  headers?: Record<string, string>,
 ): Promise<T> => {
   const response = await axiosInstance.post<T>(url, data, {
     headers: {
@@ -231,7 +250,7 @@ export const poster = async <T, U = unknown>(
 export const posterWithMultipart = async <T>(
   url: string,
   formData: FormData,
-  headers?: Record<string, string>
+  headers?: Record<string, string>,
 ): Promise<T> => {
   const response = await axiosInstance.post<T>("", formData, {
     params: { endpoint: url },
@@ -246,7 +265,7 @@ export const posterWithMultipart = async <T>(
 export const putter = async <T, U = unknown>(
   url: string,
   data?: U,
-  headers?: Record<string, string>
+  headers?: Record<string, string>,
 ): Promise<T> => {
   const response = await axiosInstance.put<T>(url, data, {
     headers: {
@@ -259,15 +278,30 @@ export const putter = async <T, U = unknown>(
   return response.data;
 };
 
+export const deleter = async <T>(
+  url: string,
+  headers?: Record<string, string>,
+): Promise<T> => {
+  const response = await axiosInstance.delete<T>(url, {
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...headers,
+    },
+    validateStatus: () => true,
+  });
+  return response.data;
+};
+
 export const handleEmailVerification = async (
-  verificationCode: string
+  verificationCode: string,
 ): Promise<OtpApiResponse> => {
   const res = await poster<OtpApiResponse>(
     VERIFY_EMAIL,
     { verificationCode },
     {
       "X-Skip-Proxy-Wrap": "true",
-    }
+    },
   );
   return res;
 };
@@ -279,19 +313,19 @@ export const handleResendEmailVerificationToken =
       { channel: "email" },
       {
         "X-Skip-Proxy-Wrap": "true",
-      }
+      },
     );
   };
 
 export const handleVerifyPhoneNumber = async (
-  verificationCode: string
+  verificationCode: string,
 ): Promise<OtpApiResponse> => {
   return await poster<OtpApiResponse>(
     VERIFY_PHONE_NUMBER,
     { verificationCode },
     {
       "X-Skip-Proxy-Wrap": "true",
-    }
+    },
   );
 };
 
@@ -306,7 +340,7 @@ export const handleConfirmPhoneNumber = async (payload: {
 
 export const handleResendPhoneVerificationToken = async (
   phone?: string,
-  channel: "phone" | "whatsapp" = "phone"
+  channel: "phone" | "whatsapp" = "phone",
 ): Promise<OtpApiResponse> => {
   return await poster<OtpApiResponse>(
     RESEND_VERIFICATION_TOKEN,
@@ -316,12 +350,12 @@ export const handleResendPhoneVerificationToken = async (
     },
     {
       "X-Skip-Proxy-Wrap": "true",
-    }
+    },
   );
 };
 
 export const handleCreatePassword = async (
-  password: string
+  password: string,
 ): Promise<ApiResponse> => {
   return await poster<ApiResponse>(
     CREATE_PASSWORD,
@@ -331,12 +365,12 @@ export const handleCreatePassword = async (
     },
     {
       "x-skip-proxy-wrap": "true",
-    }
+    },
   );
 };
 
 export const handleCreateBusinessDetails = async (
-  payload: BusinessInfoPayload
+  payload: BusinessInfoPayload,
 ): Promise<BusinessInfoResponse> => {
   const { logo, ...data } = payload;
   if (logo) {
@@ -348,14 +382,14 @@ export const handleCreateBusinessDetails = async (
 
     return await posterWithMultipart<BusinessInfoResponse>(
       CREATE_BUSINESS_DETAILS,
-      formData
+      formData,
     );
   }
   return await poster<BusinessInfoResponse>(CREATE_BUSINESS_DETAILS, data);
 };
 
 export const handleSignIn = async (
-  payload: SignInPayload
+  payload: SignInPayload,
 ): Promise<SignInResponse> => {
   return await poster<SignInResponse>(SIGN_IN, payload);
 };
@@ -363,38 +397,38 @@ export const handleSignIn = async (
 // business verification
 
 export const handleValidateBvn = async (
-  payload: ValidateBvnPayload
+  payload: ValidateBvnPayload,
 ): Promise<ValidateBvnResponse> => {
   return await poster<ValidateBvnResponse, ValidateBvnPayload>(
     VALIDATE_BVN,
     payload,
     {
       "X-Skip-Proxy-Wrap": "true",
-    }
+    },
   );
 };
 
 export const handleRequestBvnToken = async (
-  payload: RequestBvnTokenPayload
+  payload: RequestBvnTokenPayload,
 ): Promise<RequestBvnTokenResponse> => {
   return await poster<RequestBvnTokenResponse, RequestBvnTokenPayload>(
     REQUEST_BVN_TOKEN,
     payload,
     {
       "X-Skip-Proxy-Wrap": "true",
-    }
+    },
   );
 };
 
 export const handleVerifyBvnToken = async (
-  payload: VerifyBvnTokenPayload
+  payload: VerifyBvnTokenPayload,
 ): Promise<VerifyBvnTokenResponse> => {
   return await poster<VerifyBvnTokenResponse, VerifyBvnTokenPayload>(
     VERIFY_BVN_TOKEN,
     payload,
     {
       "X-Skip-Proxy-Wrap": "true",
-    }
+    },
   );
 };
 
@@ -402,58 +436,58 @@ export const handleSubmitBusinessVerification = (payload: FormData) => {
   return posterWithMultipart<UploadCacResponse>(
     UPLOAD_BUSINESS_VERIFICATION,
     payload,
-    { "X-Skip-Proxy-Wrap": "true" }
+    { "X-Skip-Proxy-Wrap": "true" },
   );
 };
 
 export const handleGetTransactions = async (
-  page: number = 1
+  page: number = 1,
 ): Promise<TransactionHistoryResponse> => {
   return await fetcher<TransactionHistoryResponse>(
-    `${TRANSACTION_HISTORY}?page=${page}`
+    `${TRANSACTION_HISTORY}?page=${page}`,
   );
 };
 
 // Validate PIN to get pinToken
 export const handleValidatePin = async (
-  payload: PinValidatePayload
+  payload: PinValidatePayload,
 ): Promise<PinValidateResponse> => {
   return await poster<PinValidateResponse, PinValidatePayload>(
     PIN_VALIDATE,
-    payload
+    payload,
   );
 };
 
 // Execute VendCliq Transfer
 export const handleVendCliqTransfer = async (
-  payload: VendCliqTransferPayload
+  payload: VendCliqTransferPayload,
 ): Promise<VendCliqTransferResponse> => {
   return await poster<VendCliqTransferResponse, VendCliqTransferPayload>(
     VENDCLIQ_TRANSFER,
-    payload
+    payload,
   );
 };
 // Other Bank Transfer
 export const handleOtherBankTransfer = async (
-  payload: OtherBankTransferPayload
+  payload: OtherBankTransferPayload,
 ): Promise<OtherBankTransferResponse> => {
   return await poster<OtherBankTransferResponse, OtherBankTransferPayload>(
     OTHERBANK_TRANSFER,
-    payload
+    payload,
   );
 };
 
 export const handleBuyAirtime = async (
-  payload: BuyAirtimePayload
+  payload: BuyAirtimePayload,
 ): Promise<BuyAirtimeResponse> => {
   return await poster<BuyAirtimeResponse, BuyAirtimePayload>(
     BUY_AIRTIME,
-    payload
+    payload,
   );
 };
 
 export const handleBuyData = async (
-  payload: BuyDataPayload
+  payload: BuyDataPayload,
 ): Promise<BuyDataResponse> => {
   return await poster<BuyDataResponse, BuyDataPayload>(BUY_DATA, payload);
 };
@@ -463,89 +497,32 @@ export const handleCreateWallet = async (): Promise<CreateWalletResponse> => {
 };
 
 export const handleUpdateTransactionPin = async (
-  payload: UpdatePinPayload
+  payload: UpdatePinPayload,
 ): Promise<UpdatePinResponse> => {
   return await poster<UpdatePinResponse, UpdatePinPayload>(
     UPDATE_TRANSFER_PIN,
-    payload
+    payload,
   );
 };
 
 export const handleChangePassword = async (
-  payload: ChangePasswordPayload
+  payload: ChangePasswordPayload,
 ): Promise<ChangePasswordResponse> => {
   return await poster<ChangePasswordResponse, ChangePasswordPayload>(
     CHANGE_PASSWORD,
-    payload
+    payload,
   );
 };
 
-// export const handleGetProducts = async (): Promise<{ data: any[] }> => {
-//   return await fetcher<{ data: any[] }>(GET_PRODUCTS);
-// };
 
-export const handleGetProfile = async (
-  payload: SignInPayload
-): Promise<SignInResponse> => {
-  return await poster<SignInResponse, SignInPayload>(SIGN_IN, payload);
-};
 
-export const handleGetDashboard = async (): Promise<UserProfile> => {
-  return await fetcher<UserProfile>(GET_PROFILE);
-};
-export const handleGetInventory = async (): Promise<InventoryResponse> => {
-  if (!process.env.PRODUCT_API_KEY) throw new Error("API Key is missing");
-  return await fetcher<InventoryResponse>(INVENTORY_LIST);
-};
-
-export const handleCreateLoan = async (
-  payload: CreateLoanPayload
-): Promise<CreateLoanResponse> => {
-  return await poster<CreateLoanResponse, CreateLoanPayload>(
-    CREATE_LOAN,
-    payload
-  );
-};
-
-export const handleGetRepaymentPattern = async (
-  tenure: string
-): Promise<RepaymentPatternResponse> => {
-  return await fetcher<RepaymentPatternResponse>(
-    `/client/v1/loans/list/repayment_pattern?tenure=${encodeURIComponent(
-      tenure
-    )}`
-  );
-};
-
-export const handleGetLoanDetails = async (
-  id: string
-): Promise<LoanDetailsResponse> => {
-  return await fetcher<LoanDetailsResponse>(GET_LOAN_DETAILS(id));
-};
-
-export const handleGetLoan = async (): Promise<LoanResponse> => {
-  return await fetcher<LoanResponse>(GET_LOAN);
-};
-
-export const handlePostRepaymentPattern = async (
-  payload: RepaymentPatternPayload
-): Promise<PostRepaymentPatternResponse> => {
-  return await poster<PostRepaymentPatternResponse, RepaymentPatternPayload>(
-    POST_REPAYMENT_PATTERN,
-    payload
-  );
-};
-
-export const handleGetTenures = async (): Promise<GetTenuresResponse> => {
-  return await fetcher<GetTenuresResponse>(GET_TENURES);
-};
 
 export const handleResendEmailOtp = async (
-  payload: ResendEmailOtpPayload
+  payload: ResendEmailOtpPayload,
 ): Promise<ResendEmailOtpResponse> => {
   return await poster<ResendEmailOtpResponse, ResendEmailOtpPayload>(
     RESEND_EMAIL_OTP,
-    payload
+    payload,
   );
 };
 
@@ -558,50 +535,39 @@ export const handleListBanks = async (): Promise<ListBanksResponse> => {
 // };
 
 export const handleVerifyBankAccount = async (
-  payload: VerifyBankAccountPayload
+  payload: VerifyBankAccountPayload,
 ): Promise<VerifyBankAccountResponse> => {
   return await poster<VerifyBankAccountResponse, VerifyBankAccountPayload>(
     VERIFY_BANK_ACCOUNT,
-    payload
+    payload,
   );
 };
 
-// export const handleChangePassword = async (
-//   payload: ChangePasswordPayload
-// ): Promise<ApiResponse> => {
-//   return await poster<ApiResponse, ChangePasswordPayload>(
-//     CHANGE_PASSWORD,
-//     payload
-//   );
-// };
+
 
 export const handleCreatePin = async (
-  payload: PinPayload
+  payload: PinPayload,
 ): Promise<ApiResponse> => {
   return await poster<ApiResponse, PinPayload>(CREATE_PIN, payload);
 };
 
-// export const handleUpdatePin = async (
-//   payload: UpdatePinPayload
-// ): Promise<ApiResponse> => {
-//   return await poster<ApiResponse, UpdatePinPayload>(UPDATE_PIN, payload);
-// };
+
 
 export const handleRequestPinToken = async (): Promise<ApiResponse> => {
   return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
 };
 
 export const handleResetPassword = async (
-  payload: ResetPasswordPayload
+  payload: ResetPasswordPayload,
 ): Promise<ResetPasswordResponse> => {
   return await poster<ResetPasswordResponse, ResetPasswordPayload>(
     RESET_PASSWORD,
-    payload
+    payload,
   );
 };
 
 export const handleSendOtpForForgetPassword = async (
-  payload: SendOtpForForgetPasswordPayload
+  payload: SendOtpForForgetPasswordPayload,
 ): Promise<SendOtpForForgetPasswordResponse> => {
   return await poster<
     SendOtpForForgetPasswordResponse,
@@ -609,40 +575,13 @@ export const handleSendOtpForForgetPassword = async (
   >(SEND_OTP_FOR_FORGET_PASSWORD, payload);
 };
 
-// export const handleGetTransactionHistory = async (
-//   page?: number
-// ): Promise<TransactionHistoryResponse> => {
-//   return await fetcher<TransactionHistoryResponse>(
-//     `${TRANSACTION_HISTORY}?page=${page || 1}`
-//   );
-// };
 
-export const handleGetAccount = async (): Promise<AccountResponse> => {
-  return await fetcher<AccountResponse>(GET_ACCOUNT);
-};
 
-export const handleGetAccountById = async (
-  id: string
-): Promise<AccountByIdResponse> => {
-  return await fetcher<AccountByIdResponse>(GET_ACCOUNT_BY_ID(id));
-};
 
-export const handleGetAccountDetailsById = async (
-  id: string
-): Promise<AccountDetailsByIdResponse> => {
-  return await fetcher<AccountDetailsByIdResponse>(
-    GET_ACCOUNT_DETAILS_BY_ID(id)
-  );
-};
-
-export const handleGetLoanStatDetails =
-  async (): Promise<LoanStatDetailsResponse> => {
-    return await fetcher<LoanStatDetailsResponse>(LOAN_STAT_DETAILS);
-  };
 
 export const handleApiError = (
   error: unknown,
-  setError: (msg: string) => void
+  setError: (msg: string) => void,
 ): void => {
   if (error instanceof AxiosError) {
     setError(error.response?.data.errors?.[0]?.message || "An error occurred");
@@ -651,35 +590,6 @@ export const handleApiError = (
   }
 };
 
-export const handleOutsideTransfer = async (
-  payload: OutsideTransferPayload
-): Promise<OutsideTransferResponse> => {
-  return await poster<OutsideTransferResponse, OutsideTransferPayload>(
-    OUTSIDE_TRANSFER,
-    payload
-  );
-};
-
-export const handleLocalTransfer = async (
-  payload: TransferPayload
-): Promise<ApiResponse> => {
-  return await poster<ApiResponse, TransferPayload>(LOCAL_TRANSFER, payload);
-};
-
-export const handleVerifyVeraBankAccount = async (
-  accountNumber: string
-): Promise<ApiResponse> => {
-  return await fetcher<ApiResponse>(VERIFY_VERA_BANK_ACCOUNT(accountNumber));
-};
-
-export const handlePayLoan = async (
-  id: string,
-  amount: number
-): Promise<ApiResponse> => {
-  return await poster<ApiResponse, { amount: number }>(PAY_LOAN(id), {
-    amount,
-  });
-};
 
 // inventory api call
 
@@ -688,56 +598,54 @@ export const handleGetProducts = async (): Promise<ProductsResponse> => {
   return await fetcher<ProductsResponse>(GET_PRODUCTS);
 };
 
-// Create store
 export const handleCreateStore = async (
-  payload: CreateStoreFormData
+  payload: CreateStoreFormData,
 ): Promise<CreateStoreResponse> => {
   return await poster<CreateStoreResponse, CreateStoreFormData>(
     CREATE_STORE,
-    payload
+    payload,
   );
 };
 
-// Create stock
 export const handleCreateStock = async (
-  payload: any
+  payload: any,
 ): Promise<CreateStockResponse> => {
   return await poster<CreateStockResponse, any>(CREATE_STOCK, payload);
 };
 
 export const handleAddShopAttendant = async (
-  payload: AddShopAttendantPayload
+  payload: AddShopAttendantPayload,
 ): Promise<AddShopAttendantResponse> => {
   return await poster<AddShopAttendantResponse, AddShopAttendantPayload>(
     ADD_SHOP_ATTENDANT,
-    payload
+    payload,
   );
 };
 
 export const handleCreateInvoice = async (
-  payload: CreatePurchaseInvoicePayload
+  payload: CreatePurchaseInvoicePayload,
 ): Promise<CreateInvoiceResponse> => {
   return await poster<CreateInvoiceResponse, CreatePurchaseInvoicePayload>(
     CREATE_INVOICE,
-    payload
+    payload,
   );
 };
 
 export const handleCreateCustomer = async (
-  payload: CreateCustomerPayload
+  payload: CreateCustomerPayload,
 ): Promise<CreateCustomerResponse> => {
   return await poster<CreateCustomerResponse, CreateCustomerPayload>(
     CREATE_CUSTOMER,
-    payload
+    payload,
   );
 };
 
 export const handleAddToCart = async (
-  payload: CreateCartPayload
+  payload: CreateCartPayload,
 ): Promise<CreateCartResponse> => {
   return await poster<CreateCartResponse, CreateCartPayload>(
     CREATE_CART,
-    payload
+    payload,
   );
 };
 
@@ -747,16 +655,16 @@ export const handleCheckoutCart = async (): Promise<CheckoutResponse> => {
 
 export const handlePayInvoice = async (
   invoiceId: string,
-  payload: PayInvoicePayload
+  payload: PayInvoicePayload,
 ): Promise<PayInvoiceResponse> => {
   return await putter<PayInvoiceResponse, PayInvoicePayload>(
     PAY_CART(invoiceId),
-    payload
+    payload,
   );
 };
 
 export const handleAssignAttendantPermissions = async (
-  payload: AssignAttendantPermissionsPayload
+  payload: AssignAttendantPermissionsPayload,
 ): Promise<AssignAttendantPermissionsResponse> => {
   return await poster<
     AssignAttendantPermissionsResponse,
@@ -765,16 +673,29 @@ export const handleAssignAttendantPermissions = async (
 };
 
 export const handleCreateExpense = async (
-  payload: CreateExpensePayload
+  payload: CreateExpensePayload,
 ): Promise<CreateExpenseResponse> => {
   return await poster<CreateExpenseResponse, CreateExpensePayload>(
     CREATE_EXPENSE,
-    payload
+    payload,
   );
 };
 
+export const handleGetExpenses = async (): Promise<any> => {
+  return await fetcher<any>(GET_EXPENSES);
+};
+
+export const handleDeleteExpense = async (expenseId: string): Promise<any> => {
+  // Manually add endpoint as query parameter since interceptor might not handle DELETE
+  return await axiosInstance.delete("", {
+    params: {
+      endpoint: DELETE_EXPENSE(expenseId),
+    },
+  });
+};
+
 export const handleUpdateAttendantPermissions = async (
-  payload: AssignAttendantPermissionsPayload
+  payload: AssignAttendantPermissionsPayload,
 ): Promise<AssignAttendantPermissionsResponse> => {
   const url = UPDATE_ATTENDANT_PERMISSIONS(payload.attendant_id.toString());
   return await putter<AssignAttendantPermissionsResponse>(url, payload);
@@ -782,7 +703,54 @@ export const handleUpdateAttendantPermissions = async (
 
 // Subscription Payment
 export const handlePaySubscription = async (
-  payload: SubscriptionPaymentPayload
+  payload: SubscriptionPaymentPayload,
 ): Promise<SubscriptionPaymentResponse> => {
   return await poster<SubscriptionPaymentResponse>(PAY_SUB, payload);
 };
+
+export const handleGetSuppliers = async (): Promise<Supplier> => {
+  return await fetcher<any>(GET_SUPPLIERS);
+};
+
+export const handleGetPurchasedInvoices = async (): Promise<PurchasedInvoicesResponse> => {
+  return await fetcher<PurchasedInvoicesResponse>(GET_PURCHASED_INVOICES);
+};
+export const handleCreatePurchaseWithFile = async (
+  payload: CreatePurchasePayload
+): Promise<CreatePurchaseResponse> => {
+  return await poster<CreatePurchaseResponse>(
+    CREATE_PURCHASE,
+    payload
+  );
+};
+
+export const handleGetUserStocks = async (
+  page: number = 1,
+  limit: number = 10,
+): Promise<UserStocksResponse> => {
+  return await fetcher<UserStocksResponse>(`${USER_STOCKS}?page=${page}&limit=${limit}`);
+};
+
+
+export const handleGetPurchasedInvoiceById = async (
+  invoiceId: string
+): Promise<InvoiceDetailsResponse> => {
+  const url = GET_PURCHASED_INVOICE_BY_ID(invoiceId);
+  return await fetcher<InvoiceDetailsResponse>(url);
+};
+
+export const handleGetItemTrackingStatus = async (
+  itemId: string
+) => {
+  const url = GET_ITEM_TRACKING_STATUS(itemId);
+  return await fetcher<TrackingStatusResponse>(url);
+};
+
+export const handleUpdateStoreSettings = async (
+  storeId: string,
+  payload: StoreSettingsPayload,
+): Promise<StoreSettingsResponse> => {
+  const url = UPDATE_STORE_SETTINGS(storeId);
+  return await putter<StoreSettingsResponse, StoreSettingsPayload>(url, payload);
+};
+

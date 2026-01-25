@@ -58,7 +58,7 @@ const items = [
         title: "Transaction History",
         url: "/dashboards/account/transactionHistory",
       },
-      { title: "Payment & Subscription", url: "/dashboards/subscription" },
+      { title: "Payment & Subscription", url: "/dashboards/payment-subscription" },
     ],
   },
   {

@@ -218,8 +218,7 @@ const Sell = () => {
         setIsLoadingStock(true);
         try {
           const token =
-            localStorage.getItem("accessToken") ||
-            localStorage.getItem("authToken");
+            localStorage.getItem("accessToken") 
           if (!token) return;
 
           const result = await getStoreStock(token, selectedStore.id);

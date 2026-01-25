@@ -23,7 +23,7 @@ export default function Suppliers() {
 
   const fetchSuppliers = async () => {
     const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("authToken");
+      localStorage.getItem("accessToken");
 
     if (!token) {
       setError("No authentication token found. Please log in.");
@@ -49,7 +49,6 @@ export default function Suppliers() {
     fetchSuppliers();
   }, []);
 
-  // Use useMemo to filter suppliers based on search term
   const filteredSuppliers = useMemo(() => {
     if (!searchTerm.trim()) {
       return suppliers;
@@ -184,7 +183,7 @@ export default function Suppliers() {
               </p>
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+            <div className="bg-white  rounded-xl shadow-sm border border-gray-200 font-dm-sans text-[#2F2F2F] overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[600px] ">
                   <thead className="border-b border-[#E6E6E6]">
