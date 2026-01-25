@@ -28,23 +28,23 @@ const PlansSelection: React.FC<PlansSelectionProps> = ({
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="font-clash text-[20px] md:text-[25px] lg:text-[32px] font-semibold text-[#2F2F2F] dark:text-white">
-          Upgrade Plan
-        </h1>
-        <p className="font-medium font-dm-sans text-[#9E9A9A] text-[13px] md:text-[16px]">
-          Upgrade your plan today to enjoy more features and opportunities on
-          Vendcliq{" "}
-        </p>
-      </div>
+      <div className="flex md:items-center justify-between gap-2 md:gap-0 mb-4 md:mb-7 flex-col md:flex-row">
+        <div className="">
+          <h1 className="font-clash text-[20px] md:text-[25px] lg:text-[32px] font-semibold text-[#2F2F2F] dark:text-white">
+            Upgrade Plan
+          </h1>
+          <p className="font-medium font-dm-sans text-[#9E9A9A] text-[13px] md:text-[16px]">
+            Upgrade your plan today to enjoy more features and opportunities on
+            Vendcliq{" "}
+          </p>
+        </div>
 
-      <div className="flex items-center mb-8">
-        <div className="inline-flex items-center font-dm-sans bg-[#ECECF080] rounded-lg p-1">
+        <div className="flex items-center font-dm-sans bg-[#ECECF080] rounded-lg p-1">
           <Button
             onClick={() => setIsAnnual(false)}
-            className={`px-3 py-2 lg:px-6 lg:py-2 bg-transparent rounded-md font-semibold transition-all text-nowrap ${
+            className={`px-3 w-full lg:px-6  bg-transparent rounded-md font-semibold transition-all text-nowrap ${
               !isAnnual
-                ? "bg-[#0A6DC0] hover:bg-[#09599a] text-white hover:bg-white hover:text-[#2F2F2F]"
+                ? "bg-[#0A6DC0] hover:bg-[#09599a] text-white  hover:text-[#2F2F2F]"
                 : "text-gray-700 hover:bg-white hover:text-[#2F2F2F]"
             }`}
           >
@@ -52,9 +52,9 @@ const PlansSelection: React.FC<PlansSelectionProps> = ({
           </Button>
           <Button
             onClick={() => setIsAnnual(true)}
-            className={`px-3 py-2 lg:px-6 lg:py-2 bg-transparent rounded-md font-semibold transition-all text-nowrap ${
+            className={`px-3 w-full lg:px-6  bg-transparent rounded-md font-semibold transition-all text-nowrap ${
               isAnnual
-                ? "bg-[#0A6DC0] hover:bg-[#09599a] text-white hover:bg-white hover:text-[#2F2F2F]"
+                ? "bg-[#0A6DC0] hover:bg-[#09599a] text-white  hover:text-[#2F2F2F]"
                 : "text-gray-700 hover:bg-white hover:text-[#2F2F2F]"
             }`}
           >

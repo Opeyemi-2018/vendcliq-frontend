@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { handleGetTransactions } from "@/lib/utils/api/apiHelper";
 import { TransactionHistoryResponse } from "@/types/transactions";
+import { useRouter } from "next/navigation";
 
 const Loans = [
   {
@@ -79,8 +80,7 @@ const Table = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showAll, setShowAll] = useState(false);
-
+  const router = useRouter();
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
@@ -110,10 +110,6 @@ const Table = () => {
       fetchTransactions();
     }
   }, [activeTab, currentPage]);
-
-  const displayedTransactions = showAll
-    ? transactions
-    : transactions.slice(0, 4);
 
   return (
     <div>
@@ -190,7 +186,7 @@ const Table = () => {
 
             {!loading &&
               !error &&
-              displayedTransactions.map((transaction) => {
+              transactions.slice(0, 4).map((transaction) => {
                 const date = new Date(transaction.createdAt);
                 const formattedDate = date.toLocaleDateString("en-GB", {
                   day: "numeric",
@@ -270,14 +266,14 @@ const Table = () => {
                 );
               })}
 
-            {!loading && !error && transactions.length > 4 && (
-              <button
-                onClick={() => setShowAll(!showAll)}
-                className="text-[#39498C] font-medium font-dm-sans text-[14px] pt-4"
-              >
-                {showAll ? "Show Less" : "Show More"}
-              </button>
-            )}
+            <button
+              onClick={() =>
+                router.push("/dashboards/account/transactionHistory")
+              }
+              className="text-[#39498C] font-medium font-dm-sans text-[14px] pt-4"
+            >
+              Show More
+            </button>
           </div>
           <div className="xl:w-[45%] border border-[#E4E4E4] px-4 lg:px-7 py-5  bg-white rounded-2xl">
             <div className="flex items-center gap-2">

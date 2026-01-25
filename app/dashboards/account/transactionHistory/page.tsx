@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -18,8 +19,6 @@ import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 
 const TransactionSkeleton = () => (
@@ -166,7 +165,7 @@ const Table = () => {
     const maxVisible = 5;
 
     let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let end = Math.min(totalPages, start + maxVisible - 1);
+    const end = Math.min(totalPages, start + maxVisible - 1);
 
     if (end - start + 1 < maxVisible) {
       start = Math.max(1, end - maxVisible + 1);
@@ -243,7 +242,7 @@ const Table = () => {
             <table className="w-full min-w-[600px] ">
               <thead className="border-b border-[#E6E6E6] ">
                 <tr className="">
-                  <th className="text-left pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <th className="text-left py-3 pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                     Description
                   </th>
                   <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
@@ -503,7 +502,7 @@ const Table = () => {
 
                 <div className="">
                   <p className="text-[#4B4E52] text-[13px] font-regular">
-                    Receiver's Name
+                    Receiver&apos;s Name
                   </p>
                   <p className="text-[13px] font-medium ">
                     {getTransactionValue(
@@ -542,7 +541,7 @@ const Table = () => {
 
                 <div className="">
                   <p className="text-[#4B4E52] text-[13px] font-regular">
-                    Sender's Account
+                    Sender&apos;s Account
                   </p>
                   <p className="text-[13px] font-medium ">
                     {getTransactionValue(
