@@ -16,7 +16,6 @@ interface Attendant {
   email: string;
   phone: string;
   accountStatus: "ACTIVE" | "INACTIVE" | string;
-  // add more fields if needed later
 }
 
 const MyStore = () => {

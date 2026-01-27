@@ -142,7 +142,7 @@ const MarketPlace = () => {
         <Button
           onClick={() => handleItemClick(item.id, !!item.isOffer)}
           variant="outline"
-          className="w-full text-[13px] text-[#2F2F2F]"
+          className="w-full text-[13px] text-[#2F2F2F] "
         >
           Order Now
         </Button>

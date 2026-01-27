@@ -26,7 +26,7 @@ export default function OnboardingLayout({
 
       <div
         className={`
-          flex items-center justify-center px-3 min-h-screen
+          flex items-center justify-center px-3 
           ${!isCongratPage ? "flex-1 max-w-[40rem] mx-auto" : "w-full"}
         `}
       >

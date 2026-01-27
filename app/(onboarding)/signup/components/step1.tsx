@@ -58,7 +58,7 @@ export default function Step1({ onNext, data }: Props) {
     <div>
       <ProgressHeader currentStep={1} />
 
-      <h1 className="font-clash  text-[22px] font-semibold mb-2 text-[#2F2F2F]">
+      <h1 className="font-clash  text-[22px] font-semibold  text-[#2F2F2F]">
         Create Account
       </h1>
       <p className="text-[#9E9A9A] mb-4 text-[16px] leading-relaxed">
@@ -167,7 +167,7 @@ export default function Step1({ onNext, data }: Props) {
         </form>
       </Form>
 
-      <p className="text-center mt-8 text-sm text-[#9E9A9A]">
+      <p className="text-center mt-4 md:mt-8 text-sm text-[#9E9A9A]">
         Already have an account?{" "}
         <Link
           href="/signin"

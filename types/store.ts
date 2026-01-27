@@ -101,3 +101,36 @@ export interface StoreSettingsResponse {
   error: string | null;
   data: StoreSettings;
 }
+
+
+
+// In lib/utils/api/apiHelper.ts
+
+// Add interface for update store payload
+export interface UpdateStorePayload {
+  address: {
+    name: string;
+    lat: number;
+    lng: number;
+  };
+  phone: string;
+}
+
+export interface UpdateStoreResponse {
+  statusCode: number;
+  error: string | null;
+  data: {
+    id: string;
+    name: string;
+    address: {
+      name: string;
+      lat: number;
+      lng: number;
+    };
+    phone: string;
+    attributes: any | null;
+    meta: any | null;
+    createdAt: string;
+    updatedAt: string;
+  };
+}

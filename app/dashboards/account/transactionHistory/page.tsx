@@ -4,7 +4,12 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
-import { ChevronLeft, ChevronRight, MoveRight } from "lucide-react";
+import {
+  
+  MoveLeft,
+  MoveRight,
+  MoveRightIcon,
+} from "lucide-react";
 import Image from "next/image";
 import {
   Select,
@@ -16,10 +21,7 @@ import {
 import { handleGetTransactions } from "@/lib/utils/api/apiHelper";
 import { TransactionHistoryResponse } from "@/types/transactions";
 import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const TransactionSkeleton = () => (
   <tr className="animate-pulse">
@@ -118,6 +120,10 @@ const Table = () => {
 
     fetchAllTransactions();
   }, []);
+
+  const retryFetch = () => {
+    window.location.reload();
+  };
 
   // Filter & search logic
   const filteredTransactions = allTransactions.filter((tx) => {
@@ -270,11 +276,18 @@ const Table = () => {
                   </>
                 ) : error ? (
                   <tr>
-                    <td
-                      colSpan={5}
-                      className="text-center py-12 text-red-600 font-medium"
-                    >
-                      {error}
+                    <td colSpan={5} className="text-center py-16 px-4">
+                      <div className="flex flex-col items-center justify-center gap-4">
+                        <div className="text-red-600 font-medium text-lg">
+                          {error}
+                        </div>
+                        <Button
+                          onClick={retryFetch}
+                          className="bg-[#0A6DC0] hover:bg-[#085a9e]"
+                        >
+                          Retry
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ) : paginatedTransactions.length === 0 ? (
@@ -334,7 +347,13 @@ const Table = () => {
                         key={transaction.id}
                         className="hover:bg-gray-50  cursor-pointer transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
                       >
-                        <td className="py-0 pl-4">
+                        <td
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openReceipt(transaction);
+                          }}
+                          className="py-0 pl-4"
+                        >
                           <div className="flex items-center gap-3">
                             <Image
                               src={isCredit ? "/in.svg" : "/out.svg"}
@@ -377,14 +396,7 @@ const Table = () => {
                           </span>
                         </td>
                         <td className="py-4">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openReceipt(transaction);
-                            }}
-                          >
+                          <Button variant="ghost" size="icon">
                             <MoveRight size={20} />
                           </Button>
                         </td>
@@ -399,29 +411,25 @@ const Table = () => {
 
         {!loading && !error && filteredTransactions.length > 0 && (
           <div className="flex flex-row justify-between items-center mt-6 gap-4">
-            <Button
-              variant="outline"
-              size="sm"
+            <button
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
               className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24"
             >
-              <ChevronLeft size={16} /> Previous
-            </Button>
+              <MoveLeft /> Previous
+            </button>
 
             <div className="hidden lg:flex items-center gap-2 flex-wrap justify-center">
               {renderPagination()}
             </div>
             <div className="flex items-center gap-10">
-              <Button
-                variant="outline"
-                size="sm"
+              <button
                 disabled={currentPage >= totalPages}
                 onClick={() => handlePageChange(currentPage + 1)}
                 className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24"
               >
-                Next <ChevronRight size={16} />
-              </Button>
+                Next <MoveRightIcon />
+              </button>
 
               <div className="hidden lg:block text-sm text-gray-600">
                 Showing {startIndex + 1} -{" "}
@@ -514,7 +522,7 @@ const Table = () => {
 
                 <div className="">
                   <p className="text-[#4B4E52] text-[13px] font-regular">
-                    Receiver's Account No
+                    Receiver&apos;s Account No
                   </p>
                   <p className="text-[13px] font-medium ">
                     {getTransactionValue(
@@ -526,7 +534,7 @@ const Table = () => {
 
                 <div className="">
                   <p className="text-[#4B4E52] text-[13px] font-regular">
-                    Receiver's Bank
+                    Receiver&apos;s Bank
                   </p>
                   <p className="text-[13px] font-medium ">
                     {getTransactionValue(

@@ -100,14 +100,34 @@ api.interceptors.response.use(
  * Clears authentication tokens and redirects to logout
  * This is called when authentication errors occur
  */
-const clearAuthTokens = () => {
-  // Redirect to logout endpoint which will clear the cookie and redirect to login
+/**
+ * Clears authentication tokens and redirects to signin
+ * This is called when user logs out or authentication errors occur
+ */
+export const clearAuthTokens = () => {
   if (typeof window !== "undefined") {
-    window.location.href = "/api/auth/logout";
+    // Clear ALL authentication tokens from storage
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    localStorage.removeItem("wallet");
+    localStorage.removeItem("verificationStatus");
+    
+    // Also clear sessionStorage
+    sessionStorage.clear();
+    
+    // Clear any cookies
+    document.cookie.split(";").forEach((cookie) => {
+      const eqPos = cookie.indexOf("=");
+      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+    });
+    
+    // Force redirect to signin
+    window.location.href = "/signin";
   }
 };
 
-export { clearAuthTokens };
 export default api;
 
 /**

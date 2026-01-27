@@ -1,7 +1,7 @@
 import { usePathname } from "next/navigation";
 import {
   BriefcaseBusiness,
-  ScrollText,
+  
   BookOpen,
   Home,
   RectangleEllipsis,
@@ -44,6 +44,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const items = [
   {
@@ -58,7 +59,10 @@ const items = [
         title: "Transaction History",
         url: "/dashboards/account/transactionHistory",
       },
-      { title: "Payment & Subscription", url: "/dashboards/payment-subscription" },
+      {
+        title: "Payment & Subscription",
+        url: "/dashboards/payment-subscription",
+      },
     ],
   },
   {
@@ -79,7 +83,6 @@ const items = [
     icon: Percent,
   },
 
-  { title: "Invoicing", url: "#", icon: ScrollText },
 
   {
     title: "More",
@@ -100,6 +103,7 @@ export function AppSidebar() {
   const isCollapsed = state === "collapsed";
   const [openItems, setOpenItems] = useState<string[]>([]);
   const pathname = usePathname();
+  const router = useRouter();
 
   const isActive = (url: string) => {
     if (!url || url === "#") return false;
@@ -273,7 +277,10 @@ export function AppSidebar() {
                         <p className="text-[13px] font-dm-sans font-medium text-white leading-none ">
                           View subscription, manage your plan and upgrade.
                         </p>
-                        <Button className="bg-white text-[#0A2540] hover:bg-[#0A2540] hover:text-white">
+                        <Button
+                          onClick={() => router.push("/dashboards/plans")}
+                          className="bg-white text-[#0A2540] hover:bg-[#0A2540] hover:text-white"
+                        >
                           Upgrade Plan
                         </Button>
                       </div>

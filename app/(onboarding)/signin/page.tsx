@@ -46,11 +46,8 @@ const SignIN = () => {
       if (response.status === "success") {
         const token = response.data?.tokens?.accessToken?.token;
 
-        // Store ONLY accessToken in localStorage (for axios)
         if (token) {
           localStorage.setItem("accessToken", token);
-          // DO NOT store authToken in localStorage
-          // The authToken cookie is already set by the API route
         }
 
         const userData = response.data?.user;
@@ -117,7 +114,7 @@ const SignIN = () => {
     }
   };
   return (
-    <div className="w-full lg:max-w-[40rem] mx-auto  px-3 lg:px-10 xl:px-24">
+    <div className="w-full mt-20 lg:max-w-[40rem] mx-auto  px-3 lg:px-10 xl:px-24">
       <h1 className="font-clash  text-[22px] font-semibold mb-2 text-[#2F2F2F]">
         Welcome Back
       </h1>

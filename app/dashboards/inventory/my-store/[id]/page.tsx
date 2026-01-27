@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/dashboards/inventory/my-store/[id]/page.tsx
 "use client";
 
-import { MoveLeft, Trash2, Loader2, Search, MoveRight } from "lucide-react";
+import { MoveLeft, Trash2, Loader2, Search, MoveRight, } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getStoreById, getStoreStock } from "@/actions/stores";
@@ -15,20 +16,24 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/Input";
 import StockForm from "../chunks/StockForm";
 import { Switch } from "@/components/ui/switch";
 import { ClipLoader } from "react-spinners";
-import { handleUpdateStoreSettings } from "@/lib/utils/api/apiHelper";
-import { StoreSettingsPayload } from "@/types/store";
+import {
+  handleUpdateStoreSettings,
+  handleUpdateStore,
+} from "@/lib/utils/api/apiHelper";
 import { toast } from "sonner";
+import PlacesAutocompleteInput from "@/hooks/googleMap";
 
 interface Store {
   id: string;
   name: string;
-  address: { name: string };
+  address: { name: string; lat: number; lng: number };
   phone: string;
   stock_value: number;
   stock_count: number;
@@ -56,14 +61,20 @@ const StoreDetailPage = () => {
   const params = useParams();
   const storeId = params.id as string;
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
-  const [storeSettings, setStoreSettings] = useState<StoreSettingsPayload>({
+  const [isUpdatingStore, setIsUpdatingStore] = useState(false);
+  const [storeSettings, setStoreSettings] = useState({
     is_default: false,
     show_on_marketplace: false,
     is_archived: false,
   });
 
   const [store, setStore] = useState<Store | null>(null);
+  const [editForm, setEditForm] = useState({
+    address: { name: "", lat: 0, lng: 0 },
+    phone: "",
+  });
   const [stocks, setStocks] = useState<StockItem[]>([]);
   const [selectedStocks, setSelectedStocks] = useState<Set<string>>(new Set());
   const [isLoadingStore, setIsLoadingStore] = useState(true);
@@ -78,41 +89,19 @@ const StoreDetailPage = () => {
         show_on_marketplace: store.show_on_marketplace || false,
         is_archived: store.is_archived || false,
       });
+      setEditForm({
+        address: {
+          name: store.address.name,
+          lat: store.address.lat,
+          lng: store.address.lng,
+        },
+        phone: store.phone,
+      });
     }
   }, [store]);
 
-  // Add this handler function
-  const handleSaveSettings = async () => {
-    try {
-      setIsUpdatingSettings(true);
-      const response = await handleUpdateStoreSettings(storeId, storeSettings);
-
-      if (response.statusCode === 200) {
-        toast.success("Store settings updated successfully");
-        // Update local store state with new settings
-        setStore((prev) =>
-          prev
-            ? {
-                ...prev,
-                ...response.data,
-              }
-            : null,
-        );
-        setIsSettingsOpen(false);
-      } else {
-        toast.error(response.error || "Failed to update settings");
-      }
-    } catch (error: any) {
-      console.error("Update settings error:", error);
-      toast.error(error?.message || "Failed to update settings");
-    } finally {
-      setIsUpdatingSettings(false);
-    }
-  };
-
   useEffect(() => {
-    const token =
-      localStorage.getItem("accessToken") ;
+    const token = localStorage.getItem("accessToken");
     if (!token) return;
 
     const fetchData = async () => {
@@ -141,6 +130,75 @@ const StoreDetailPage = () => {
       fetchData();
     }
   }, [storeId]);
+
+  const handleUpdateStoreDetails = async () => {
+    try {
+      setIsUpdatingStore(true);
+
+      if (!editForm.address.name.trim()) {
+        toast.error("Please enter a valid address");
+        return;
+      }
+
+      if (!editForm.phone.trim()) {
+        toast.error("Please enter a phone number");
+        return;
+      }
+
+      const response = await handleUpdateStore(storeId, editForm);
+
+      if (response.statusCode === 200) {
+        toast.success("Store updated successfully");
+
+        setStore((prev) =>
+          prev
+            ? {
+                ...prev,
+                address: response.data.address,
+                phone: response.data.phone,
+                updatedAt: response.data.updatedAt,
+              }
+            : null,
+        );
+
+        setIsEditOpen(false);
+      } else {
+        toast.error(response.error || "Failed to update store");
+      }
+    } catch (error: any) {
+      console.error("Update store error:", error);
+      toast.error(error?.message || "Failed to update store");
+    } finally {
+      setIsUpdatingStore(false);
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      setIsUpdatingSettings(true);
+      const response = await handleUpdateStoreSettings(storeId, storeSettings);
+
+      if (response.statusCode === 200) {
+        toast.success("Store settings updated successfully");
+        setStore((prev) =>
+          prev
+            ? {
+                ...prev,
+                ...response.data,
+              }
+            : null,
+        );
+        setIsSettingsOpen(false);
+      } else {
+        toast.error(response.error || "Failed to update settings");
+      }
+    } catch (error: any) {
+      console.error("Update settings error:", error);
+      toast.error(error?.message || "Failed to update settings");
+    } finally {
+      setIsUpdatingSettings(false);
+    }
+  };
 
   const handleSelectStock = (stockId: string) => {
     setSelectedStocks((prev) => {
@@ -331,7 +389,10 @@ const StoreDetailPage = () => {
         </div>
 
         <div className="flex items-center justify-between mt-8 gap-4">
-          <Button className="bg-[#0A6DC0] hover:bg-[#09599a] w-full py-5 md:py-6">
+          <Button
+            onClick={() => setIsEditOpen(true)}
+            className="bg-[#0A6DC0] hover:bg-[#09599a] w-full py-5 md:py-6"
+          >
             Edit Store
           </Button>
           <Button
@@ -463,24 +524,95 @@ const StoreDetailPage = () => {
         )}
       </Card>
 
-      {/* Add Stock Modal */}
-      <Dialog open={isAddStockOpen} onOpenChange={setIsAddStockOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] bg-white dark:bg-gray-900 max-h-[90vh] overflow-y-auto">
+      {/* Edit Store Modal */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-[500px] bg-white font-dm-sans">
           <DialogHeader>
-            <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] dark:text-white">
-              Add Stock to {store.name}
-            </DialogTitle>
+            <div className="flex justify-between items-center">
+              <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] dark:text-white">
+                Edit Store
+              </DialogTitle>
+              
+            </div>
+            <p className="text-[#9E9A9A]">Update your store information</p>
           </DialogHeader>
-          <StockForm
-            storeId={store.id}
-            onSuccess={() => {
-              setIsAddStockOpen(false);
-            }}
-          />
+
+          <div className="space-y-6 py-4">
+            {/* Address Field */}
+            <div className="space-y-2">
+              <Label
+                htmlFor="address"
+                className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
+              >
+                Store Address 
+              </Label>
+              <PlacesAutocompleteInput
+                placeholder="Enter store address"
+                value={editForm.address.name}
+                onChange={(addressData) => {
+                  if (typeof addressData === "string") {
+                    setEditForm((prev) => ({
+                      ...prev,
+                      address: {
+                        name: addressData,
+                        lat: prev.address.lat || 0,
+                        lng: prev.address.lng || 0,
+                      },
+                    }));
+                  } else {
+                    setEditForm((prev) => ({
+                      ...prev,
+                      address: addressData,
+                    }));
+                  }
+                }}
+                className="bg-[#F3F4F6] h-12"
+              />
+            </div>
+
+            {/* Phone Field */}
+            <div className="space-y-2">
+              <Label
+                htmlFor="phone"
+                className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
+              >
+                Phone Number 
+              </Label>
+              <Input
+                id="phone"
+                placeholder="Enter phone number"
+                value={editForm.phone}
+                onChange={(e) =>
+                  setEditForm((prev) => ({
+                    ...prev,
+                    phone: e.target.value,
+                  }))
+                }
+                className="bg-[#F3F4F6] h-12"
+              />
+            </div>
+          </div>
+
+          <div className="pt-4">
+            <Button
+              className="w-full py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#09599a]"
+              onClick={handleUpdateStoreDetails}
+              disabled={
+                isUpdatingStore ||
+                !editForm.address.name.trim() ||
+                !editForm.phone.trim()
+              }
+            >
+              {isUpdatingStore ? (
+                <ClipLoader size={20} color="#ffffff" />
+              ) : (
+                "Update Store"
+              )}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* settings dialog  */}
       {/* Store Settings Modal */}
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
         <DialogContent className="sm:max-w-[425px] bg-white font-dm-sans">
@@ -558,6 +690,23 @@ const StoreDetailPage = () => {
               )}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Stock Modal */}
+      <Dialog open={isAddStockOpen} onOpenChange={setIsAddStockOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] bg-white dark:bg-gray-900 max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] dark:text-white">
+              Add Stock to {store.name}
+            </DialogTitle>
+          </DialogHeader>
+          <StockForm
+            storeId={store.id}
+            onSuccess={() => {
+              setIsAddStockOpen(false);
+            }}
+          />
         </DialogContent>
       </Dialog>
     </div>

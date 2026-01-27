@@ -29,6 +29,7 @@ import {
   handleSendOtpForForgetPassword,
   handleResetPassword,
 } from "@/lib/utils/api/apiHelper";
+import Link from "next/link";
 
 export default function ForgotPassword() {
   const [step, setStep] = useState<1 | 2>(1);
@@ -122,7 +123,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="w-full lg:max-w-[40rem] mx-auto py-8 px-3 lg:px-10 xl:px-24">
+    <div className="w-full lg:max-w-[40rem] mx-auto md:py-8 px-3 lg:px-10 xl:px-24">
       <button
         onClick={() => (step === 1 ? router.back() : setStep(1))}
         className="flex items-center gap-2 text-[#2F2F2F] py-10 hover:opacity-70 mb-6"
@@ -139,7 +140,7 @@ export default function ForgotPassword() {
           </h1>
           <p className="text-[#9E9A9A] mb-8 text-[16px] leading-relaxed">
             Enter your email address and we&apos;ll send you a code to reset your
-            password. vv
+            password. 
           </p>
 
           <Form {...step1Form}>
@@ -394,6 +395,15 @@ export default function ForgotPassword() {
           </Form>
         </div>
       )}
+       <p className="text-center mt-4 md:mt-8 text-sm text-[#9E9A9A]">
+        Already have an account?{" "}
+        <Link
+          href="/signin"
+          className="text-[#0A6DC0] font-medium hover:underline"
+        >
+          Sign in
+        </Link>
+      </p>
     </div>
   );
 }

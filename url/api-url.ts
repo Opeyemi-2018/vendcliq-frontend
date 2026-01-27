@@ -89,6 +89,8 @@ const GET_PURCHASED_INVOICE_BY_ID = (invoiceId: string) =>
   `inventory/invoices/${invoiceId}`;
 const GET_ITEM_TRACKING_STATUS = (itemId: string) => `/bids/track/${itemId}`;
 const UPDATE_STORE_SETTINGS = (storeId: string) => `inventory/stores/${storeId}/settings`;
+ const UPDATE_STORE = (storeId: string) => `inventory/stores/${storeId}`;
+
 
 export {
   // v2 endpoint
@@ -137,6 +139,9 @@ export {
   GET_PURCHASED_INVOICE_BY_ID,
   GET_ITEM_TRACKING_STATUS,
   UPDATE_STORE_SETTINGS,
+  UPDATE_STORE,
+
+
   // v1 endpoint
   GET_PROFILE,
   DASHBOARD,

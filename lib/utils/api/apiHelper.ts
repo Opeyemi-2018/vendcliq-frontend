@@ -127,10 +127,11 @@ import {
   GET_PURCHASED_INVOICE_BY_ID,
   GET_ITEM_TRACKING_STATUS,
   UPDATE_STORE_SETTINGS,
+  UPDATE_STORE,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
-import { CreateStoreFormData, CreateStoreResponse, StoreSettingsPayload, StoreSettingsResponse } from "@/types/store";
+import { CreateStoreFormData, CreateStoreResponse, StoreSettingsPayload, StoreSettingsResponse, UpdateStorePayload, UpdateStoreResponse } from "@/types/store";
 import { CreateStockResponse, ProductsResponse } from "@/types/stock";
 import { TransactionHistoryResponse } from "@/types/transactions";
 import {
@@ -752,5 +753,13 @@ export const handleUpdateStoreSettings = async (
 ): Promise<StoreSettingsResponse> => {
   const url = UPDATE_STORE_SETTINGS(storeId);
   return await putter<StoreSettingsResponse, StoreSettingsPayload>(url, payload);
+};
+
+export const handleUpdateStore = async (
+  storeId: string,
+  payload: UpdateStorePayload,
+): Promise<UpdateStoreResponse> => {
+  const url = UPDATE_STORE(storeId);
+  return await putter<UpdateStoreResponse, UpdateStorePayload>(url, payload);
 };
 
