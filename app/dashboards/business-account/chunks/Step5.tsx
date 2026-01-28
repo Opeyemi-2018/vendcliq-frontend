@@ -289,7 +289,7 @@ export default function Step5({ onPrev, cacData }: Props) {
               className="w-64 h-64 mx-auto"
             />
             <AlertDialogTitle className="text-[20px] lg:text-[25px] font-semibold mb-10 font-clash text-center">
-              Business Account Created Successfully
+              🎉Business Account Created Successfully🎉
             </AlertDialogTitle>
           </AlertDialogHeader>
           <AlertDialogFooter>

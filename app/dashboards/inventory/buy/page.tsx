@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { getSuppliers, getSupplierStock } from "@/actions/suppliers";
 import { getStores } from "@/actions/stores";
@@ -143,7 +144,7 @@ const Buy = () => {
 
   useEffect(() => {
     if (searchTerm === "") {
-      setFilteredSupplier(suppliers); // Show all when search is empty
+      setFilteredSupplier(suppliers);
       return;
     }
 
@@ -231,8 +232,8 @@ const Buy = () => {
           } else {
             toast.error(result.error || "Failed to load supplier's stock");
           }
-        } catch (err) {
-          toast.error("Network error while loading supplier stock");
+        } catch (err: any) {
+          toast.error(err);
         } finally {
           setIsLoadingSupplierStock(false);
         }
@@ -311,8 +312,8 @@ const Buy = () => {
       } else {
         toast.error(response.error || "Failed to create purchase invoice");
       }
-    } catch (err) {
-      toast.error("Failed to create purchase invoice");
+    } catch (err: any) {
+      toast.error(err);
     } finally {
       setIsSubmittingInvoice(false);
     }
@@ -322,12 +323,23 @@ const Buy = () => {
   if (stage === "select-supplier") {
     return (
       <div>
-        <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
-          Buy
-        </h1>
-        <p className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans">
-          Buy stock from suppliers
-        </p>
+        <div className="flex justify-between items-center mb-2 md:mb-0">
+          <div>
+            <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
+              Buy
+            </h1>
+            <p className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans">
+              Buy stock from suppliers
+            </p>
+          </div>
+
+          <button
+            onClick={() => router.push("/dashboards/my-purchase")}
+            className="text-[#0A6DC0] font-semibols border-b border-[#0A6DC0] inline md:hidden "
+          >
+            My Purchases
+          </button>
+        </div>
 
         {/* MOBILE TABS - Only visible on mobile */}
         <div className="lg:hidden flex gap-2  bg-[#ECECF080] p-1 rounded-lg">

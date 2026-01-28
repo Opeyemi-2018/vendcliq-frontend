@@ -141,14 +141,12 @@ const Expenses = () => {
       setDeletingId(expenseId);
       const result = await handleDeleteExpense(expenseId);
 
-      // Check the response structure from delete
       if (
         result?.data?.statusCode === 200 ||
         result?.data?.statusCode === 204
       ) {
         toast.success(result?.data?.msg || "Expense deleted successfully");
 
-        // Refresh the list
         const refreshResult = await handleGetExpenses();
         if (refreshResult && refreshResult.data) {
           setExpense(refreshResult.data);
