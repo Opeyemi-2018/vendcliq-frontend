@@ -1,6 +1,6 @@
 "use client";
 
-import { MoveLeft, Loader2, Package } from "lucide-react";
+import { MoveLeft, Package } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getStockDetail } from "@/actions/stores";
@@ -9,52 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { UpdateStockDialog } from "./chunks/UpdateDialog";
-
-interface StockDetail {
-  id: string;
-  sku: string;
-  cost_price: string;
-  selling_price: string;
-  selling_price_pieces: string;
-  empties_price: string;
-  exp_date: string;
-  quantity: string;
-  empties_qty: string;
-  total_qty: string;
-  stock_alert_no: number;
-  stock_value: string;
-  status: string;
-  product: {
-    id: string;
-    name: string;
-    items_per_pack: number;
-    image?: string;
-  };
-  store: {
-    id: string;
-    name: string;
-    address: {
-      lat: number;
-      lng: number;
-      name: string;
-    };
-  };
-  attributes: {
-    type: string;
-    batch: string;
-    supplier: string;
-  };
-  created_at: string;
-  updated_at: string;
-  stats: {
-    qty_sold: number;
-    total_sales: number;
-    qty_added: number;
-    date_range: {
-      userId: number;
-    };
-  };
-}
+import { StoreStockDetail } from "@/types/store"; // ← adjust path if it's in actions/stores
 
 const StockDetailPage = () => {
   const router = useRouter();
@@ -62,14 +17,13 @@ const StockDetailPage = () => {
   const storeId = params.id as string;
   const stockId = params.stockId as string;
 
-  const [stock, setStock] = useState<StockDetail | null>(null);
+  const [stock, setStock] = useState<StoreStockDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchStockDetail = async () => {
     const token =
-      localStorage.getItem("accessToken") ||
-      localStorage.getItem("authToken");
+      localStorage.getItem("accessToken") || localStorage.getItem("authToken");
 
     if (!token) {
       setError("No authentication token found. Please log in.");
@@ -82,7 +36,7 @@ const StockDetailPage = () => {
 
     const result = await getStockDetail(stockId, storeId, token);
 
-    if (result.success && result.data) {
+    if (result.success) {
       setStock(result.data);
     } else {
       setError(result.message || "Failed to load stock details");
@@ -126,46 +80,51 @@ const StockDetailPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       <button
         onClick={() => router.back()}
         className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors"
       >
         <MoveLeft className="w-5 h-5" />
       </button>
-      <div className="flex lg:items-center flex-col lg:flex-row justify-between">
+
+      <div className="flex lg:items-center flex-col lg:flex-row justify-between gap-4">
         <div>
-          <div className="flex gap-2 items-center font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
-            <h1 className=" ">{stock.product.name}</h1>
-            {" - "}
-            <p className="">{parseFloat(stock.quantity).toFixed(0)}</p>
+          <div className="flex gap-3 items-center font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
+            <h1>{stock.product.name}</h1>
+            <span className="text-[#0A6DC0] text-2xl">•</span>
+            <p>{parseFloat(stock.quantity).toFixed(0)} units</p>
           </div>
-          <p className="font-medium font-dm-sans text-[#9E9A9A] ">
-            This is all you need to know about this product{" "}
+          <p className="font-medium font-dm-sans text-[#9E9A9A] mt-1">
+            This is all you need to know about this product
           </p>
         </div>
-        <Button className="py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#09599a] w-[40%] lg:w-auto">
+
+        <Button className="py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#09599a] w-full lg:w-auto">
           View Metrics
         </Button>
       </div>
 
-      <div className="flex items-center gap-3 text-white">
-        <div className="w-full bg-[url('/blue.svg')]  bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6">
-          <p className="text-[16px] font-dm-sans ">Qty Sold</p>
-          <p className="text-[16px] md:text-[20px] font-clash font-semibold ">
-            {stock.stats.qty_sold}
+      {/* Quick Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="w-full bg-[url('/blue.svg')] bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6 text-white">
+          <p className="text-[16px] font-dm-sans">Qty Sold</p>
+          <p className="text-[20px] md:text-[24px] font-clash font-semibold">
+            {stock.stats.qty_sold.toLocaleString()}
           </p>
         </div>
-        <div className="w-full bg-[url('/balance-bg.svg')]  bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6">
-          <p className="text-[16px] font-dm-sans ">Total Sales</p>
-          <p className="text-[16px] md:text-[20px] font-clash font-semibold ">
+        <div className="w-full bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6 text-white">
+          <p className="text-[16px] font-dm-sans">Total Sales</p>
+          <p className="text-[20px] md:text-[24px] font-clash font-semibold">
             ₦{stock.stats.total_sales.toLocaleString()}
           </p>
         </div>
       </div>
+
       <Card className="md:p-6">
-        <div className="bg-[#FAFAFA] rounded-lg border border-gray-200 overflow-hidden relative">
-          <div className=" h-56 w-full flex items-center justify-center ">
+        {/* Product Image */}
+        <div className="bg-[#FAFAFA] rounded-lg border border-gray-200 overflow-hidden">
+          <div className="h-56 md:h-64 w-full flex items-center justify-center p-4">
             {stock.product.image ? (
               <Image
                 src={
@@ -174,69 +133,98 @@ const StockDetailPage = () => {
                     : stock.product.image
                 }
                 alt={stock.product.name}
-                width={160}
-                height={160}
-                className="rounded-lg object-contain"
+                width={240}
+                height={240}
+                className="rounded-lg object-contain max-h-full"
+                priority
               />
             ) : (
-              <Package className="w-16 h-16 text-gray-400" />
+              <Package className="w-24 h-24 text-gray-400" />
             )}
           </div>
         </div>
 
-        <div className="text-[#2F2F2F] mt-4 text-[12px] md:text-[16px] grid grid-cols-2 gap-y-3 md:gap-y-5">
-          <div className="">
-            <h2 className=" font-bold font-dm-sans">Product Name</h2>
-            <p className="font-regular lowercase">{stock.product.name}</p>
+        {/* Details Grid */}
+        <div className="mt-6 text-[#2F2F2F] text-[13px] sm:text-[15px] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5">
+          <div>
+            <h2 className="font-bold font-dm-sans">Product Name</h2>
+            <p className="mt-1">{stock.product.name}</p>
           </div>
-          <div className="">
-            <h2 className=" font-bold font-dm-sans">SKU</h2>
-            <p className="font-regular lowercase">{stock.sku}</p>
+
+          <div>
+            <h2 className="font-bold font-dm-sans">SKU</h2>
+            <p className="mt-1">{stock.sku}</p>
           </div>
-          <div className="">
-            <h2 className=" font-bold font-dm-sans">Total Qty</h2>
-            <p className="font-regular lowercase">{stock.total_qty}</p>
+
+          <div>
+            <h2 className="font-bold font-dm-sans">Total Qty</h2>
+            <p className="mt-1">{parseFloat(stock.total_qty).toFixed(0)}</p>
           </div>
-          <div className="">
-            <h2 className=" font-bold font-dm-sans">Content Qty</h2>
-            <p className="font-regular lowercase">{stock.quantity}</p>
+
+          <div>
+            <h2 className="font-bold font-dm-sans">Content Qty</h2>
+            <p className="mt-1">{parseFloat(stock.quantity).toFixed(0)}</p>
           </div>
-          <div className="">
-            <h2 className=" font-bold font-dm-sans">Empties Qty</h2>
-            <p className="font-regular lowercase">{stock.empties_qty}</p>
+
+          <div>
+            <h2 className="font-bold font-dm-sans">Empties Qty</h2>
+            <p className="mt-1">{parseFloat(stock.empties_qty).toFixed(0)}</p>
           </div>
-          <div className="">
-            <h2 className=" font-bold font-dm-sans">Stock Value</h2>
-            <p className="font-regular lowercase">₦{parseFloat(stock.stock_value).toLocaleString()}</p>
-          </div>
-          <div className="">
-            <h2 className=" font-bold font-dm-sans">Cost Price</h2>
-            <p className="font-regular lowercase">₦{parseFloat(stock.cost_price).toLocaleString()}</p>
-          </div>
-          <div className="">
-            <h2 className=" font-bold font-dm-sans">Selling Price</h2>
-            <p className="font-regular lowercase">₦{parseFloat(stock.selling_price).toLocaleString()}</p>
-          </div>
-          <div className="">
-            <h2 className=" font-bold font-dm-sans">Price per piece</h2>
-            <p className="font-regular lowercase">
-              ₦{parseFloat(stock.selling_price_pieces).toLocaleString()}
+
+          <div>
+            <h2 className="font-bold font-dm-sans">Stock Value</h2>
+            <p className="mt-1">
+              ₦{parseFloat(stock.stock_value).toLocaleString()}
             </p>
           </div>
-          <div className="">
-            <h2 className=" font-bold font-dm-sans">Empties Price</h2>
-            <p className="font-regular lowercase">₦{parseFloat(stock.empties_price).toLocaleString()}</p>
+
+          <div>
+            <h2 className="font-bold font-dm-sans">Cost Price</h2>
+            <p className="mt-1">
+              ₦{parseFloat(stock.cost_price).toLocaleString()}
+            </p>
           </div>
-          <div className="">
-            <h2 className=" font-bold font-dm-sans">BB Date</h2>
-            <p className="font-regular lowercase">{stock.exp_date}</p>
+
+          <div>
+            <h2 className="font-bold font-dm-sans">Selling Price</h2>
+            <p className="mt-1">
+              ₦{parseFloat(stock.selling_price).toLocaleString()}
+            </p>
           </div>
-          <div className="">
-            <h2 className=" font-bold font-dm-sans">Low Stock alert number</h2>
-            <p className="font-regular lowercase">{stock.stock_alert_no}</p>
+
+          <div>
+            <h2 className="font-bold font-dm-sans">Price per piece</h2>
+            <p className="mt-1">
+              {stock.selling_price_pieces
+                ? `₦${parseFloat(stock.selling_price_pieces).toLocaleString()}`
+                : "—"}
+            </p>
+          </div>
+
+          <div>
+            <h2 className="font-bold font-dm-sans">Empties Price</h2>
+            <p className="mt-1">
+              {stock.empties_price && parseFloat(stock.empties_price) > 0
+                ? `₦${parseFloat(stock.empties_price).toLocaleString()}`
+                : "—"}
+            </p>
+          </div>
+
+          <div>
+            <h2 className="font-bold font-dm-sans">Best Before Date</h2>
+            <p className="mt-1">{stock.exp_date || "Not set"}</p>
+          </div>
+
+          <div>
+            <h2 className="font-bold font-dm-sans">Low Stock Alert</h2>
+            <p className="mt-1">
+              {stock.stock_alert_no != null ? stock.stock_alert_no : "Not set"}
+            </p>
           </div>
         </div>
-        <div className="flex  flex-row justify-between gap-4 mt-6">
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 mt-8">
           <Button className="w-full py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#09599a]">
             Create Promo
           </Button>
@@ -246,10 +234,10 @@ const StockDetailPage = () => {
             stockData={{
               cost_price: stock.cost_price,
               selling_price: stock.selling_price,
-              selling_price_pieces: stock.selling_price_pieces,
+              selling_price_pieces: stock.selling_price_pieces ?? "",
               empties_price: stock.empties_price,
-              exp_date: stock.exp_date,
-              stock_alert_no: stock.stock_alert_no,
+              exp_date: stock.exp_date ?? "",
+              stock_alert_no: stock.stock_alert_no ?? 0,
               sku: stock.sku,
             }}
             onSuccess={handleUpdateSuccess}

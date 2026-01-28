@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // components/DataFlow.tsx
 "use client";
@@ -302,7 +303,7 @@ export default function DataFlow() {
   return (
     <Form {...form}>
       <form>
-        <Card className="md:p-6 ">
+        <div className=" md:p-6 lg:border border-[#E4E4E4] rounded-lg bg-white">
           <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash mb-2">
             Data
           </h2>
@@ -654,7 +655,7 @@ export default function DataFlow() {
               </Button>
             </div>
           )}
-        </Card>
+        </div>
       </form>
 
       {/* Success Modal */}

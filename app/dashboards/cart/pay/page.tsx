@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Check, Copy, Eye, EyeOff } from "lucide-react";
+import {  Check, Copy, Eye, EyeOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/Input";
@@ -206,7 +207,7 @@ const PayPage = () => {
         </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row items-start gap-8 mt-8">
+      <div className="flex flex-col lg:flex-row  gap-8 mt-8">
         <div className="block lg:hidden flex gap-2  bg-[#ECECF080] p-1 rounded-lg">
           <button
             onClick={() => setPaymentMethod("WALLET")}
@@ -543,7 +544,7 @@ const PayPage = () => {
 
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-3">
             <AlertDialogCancel onClick={handleTransferNotSent}>
-              I haven't sent it yet
+              I haven&apos;t sent it yet
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleTransferSent}

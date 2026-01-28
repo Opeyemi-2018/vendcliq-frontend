@@ -2,12 +2,11 @@
 // app/dashboards/inventory/my-store/[id]/page.tsx
 "use client";
 
-import { MoveLeft, Trash2, Loader2, Search, MoveRight, } from "lucide-react";
+import { MoveLeft, Trash2, Loader2, Search, MoveRight } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getStoreById, getStoreStock } from "@/actions/stores";
 import { ThreeDots } from "react-loader-spinner";
-import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,7 +15,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/Input";
@@ -297,8 +295,8 @@ const StoreDetailPage = () => {
       </div>
 
       {/* Store Info Card */}
-      <Card className="mt-6 p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+      <div className="mt-6 md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-6 mt-6">
           <div className="space-y-2">
             <Label
               htmlFor="store-name"
@@ -370,7 +368,7 @@ const StoreDetailPage = () => {
         </div>
 
         <div className="space-y-2 font-dm-sans mt-8">
-          <div className="text-[#2F2F2F] dark:text-gray-200 flex justify-between items-center">
+          <div className="text-[#2F2F2F]  flex justify-between items-center">
             <p className="font-bold text-[13px] md:text-[16px]">
               Payment Options
             </p>
@@ -403,10 +401,10 @@ const StoreDetailPage = () => {
             Store Settings
           </Button>
         </div>
-      </Card>
+      </div>
 
       {/* Stock Items Table */}
-      <Card className="mt-8 p-6">
+      <div className="mt-8 md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
         <div className="flex justify-between items-center my-3">
           <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
             Products in Store ({stocks.length})
@@ -446,11 +444,11 @@ const StoreDetailPage = () => {
             </p>
           </div>
         ) : (
-          <Card className="overflow-x-auto">
-            <table className="w-full min-w-[600px]">
+          <div className="overflow-x-auto lg:border border-[#E4E4E4] rounded-[20px] bg-white">
+            <table className="w-full">
               <thead className="border-b border-[#E6E6E6]">
-                <tr className="border-b dark:border-gray-700">
-                  <th className="text-left py-3 pl-4 font-medium text-[#2F2F2F] dark:text-gray-300">
+                <tr className="border-b">
+                  <th className="text-left py-3 md:pl-4 font-medium text-[#2F2F2F] dark:text-gray-300">
                     <Checkbox
                       checked={
                         selectedStocks.size === stocks.length &&
@@ -463,17 +461,20 @@ const StoreDetailPage = () => {
                   <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
                     SKU
                   </th>
-                  <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                  <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
                     Quantity
                   </th>
-                  <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                  <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
                     Selling Price
                   </th>
-                  <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                  <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
                     Cost Price
                   </th>
-                  <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                  {/* <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
                     Action
+                  </th> */}
+                  <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                    More
                   </th>
                 </tr>
               </thead>
@@ -483,7 +484,7 @@ const StoreDetailPage = () => {
                     key={item.id}
                     className="hover:bg-gray-50 cursor-pointer transition-colors font-medium font-dm-sans text-[16px] text-[#2F2F2F]"
                   >
-                    <td className="py-4 pl-4">
+                    <td className="py-4 md:pl-4">
                       <Checkbox
                         checked={selectedStocks.has(item.id)}
                         onCheckedChange={() => handleSelectStock(item.id)}
@@ -491,19 +492,20 @@ const StoreDetailPage = () => {
                       />
                     </td>
                     <td className="py-4">
-                      <p className="font-medium text-[#2F2F2F] dark:text-gray-200">
-                        {item.sku}
-                      </p>
+                      <p className="font-medium text-[#2F2F2F]">{item.sku}</p>
                     </td>
-                    <td className="py-4 font-medium text-[#2F2F2F] dark:text-gray-200">
+                    <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
                       {parseFloat(item.quantity).toFixed(0)}
                     </td>
-                    <td className="py-4 font-medium text-[#2F2F2F] dark:text-gray-200">
+                    <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
                       ₦{parseFloat(item.selling_price).toLocaleString()}
                     </td>
-                    <td className="py-4 font-medium text-[#2F2F2F] dark:text-gray-200">
+                    <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
                       ₦{parseFloat(item.cost_price).toLocaleString()}
                     </td>
+                    {/* <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
+                      <Trash2 color="#FF3B30" />{" "}
+                    </td> */}
                     <td className="py-4">
                       <button
                         onClick={() =>
@@ -513,16 +515,16 @@ const StoreDetailPage = () => {
                         }
                         className="text-[#0A6DC0] hover:text-[#09599a] underline font-medium"
                       >
-                        <MoveRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        <MoveRight className="w-5 h-5 text-gray-500" />
                       </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </Card>
+          </div>
         )}
-      </Card>
+      </div>
 
       {/* Edit Store Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -532,7 +534,6 @@ const StoreDetailPage = () => {
               <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] dark:text-white">
                 Edit Store
               </DialogTitle>
-              
             </div>
             <p className="text-[#9E9A9A]">Update your store information</p>
           </DialogHeader>
@@ -544,7 +545,7 @@ const StoreDetailPage = () => {
                 htmlFor="address"
                 className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
               >
-                Store Address 
+                Store Address
               </Label>
               <PlacesAutocompleteInput
                 placeholder="Enter store address"
@@ -576,7 +577,7 @@ const StoreDetailPage = () => {
                 htmlFor="phone"
                 className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
               >
-                Phone Number 
+                Phone Number
               </Label>
               <Input
                 id="phone"
@@ -693,7 +694,6 @@ const StoreDetailPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Add Stock Modal */}
       <Dialog open={isAddStockOpen} onOpenChange={setIsAddStockOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] bg-white dark:bg-gray-900 max-h-[90vh] overflow-y-auto">
           <DialogHeader>

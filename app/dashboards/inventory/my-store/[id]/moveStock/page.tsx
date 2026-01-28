@@ -199,17 +199,17 @@ const MoveStockPage = () => {
           <MoveLeft className="w-5 h-5" />
         </button>
 
-        <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F] dark:text-white">
+        <h1 className="font-clash text-[18px] md:text-[25px] font-semibold text-[#2F2F2F] dark:text-white">
           Move Selected to
         </h1>
-        <p className="text-[16px] font-dm-sans text-[#9E9A9A] dark:text-gray-400">
+        <p className="text-[14px] dm:text-[16px] font-dm-sans text-[#9E9A9A] ">
           Edit quantities and prices, then select destination
         </p>
       </div>
 
       {/* Selected Products */}
       <div className="space-y-4 mb-8">
-        <div className="flex justify-between items-center md:mt-4">
+        <div className="flex justify-between items-center mt-4">
           <h3 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
             Products to Move ({selectedStocks.length})
           </h3>
@@ -220,7 +220,7 @@ const MoveStockPage = () => {
         </div>
 
         {selectedStocks.map((stock) => (
-          <Card key={stock.id} className="p-4">
+          <div key={stock.id} className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
             <div className="flex items-center gap-2">
               <div className="w-[42px] h-[44px] border border-[#E3E3E3] bg-[#FAFAFA] rounded-xl overflow-hidden flex-shrink-0">
                 <Image
@@ -280,7 +280,7 @@ const MoveStockPage = () => {
                 ).toLocaleString()}
               </p>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
@@ -295,7 +295,7 @@ const MoveStockPage = () => {
             <Loader2 className="h-8 w-8 animate-spin text-[#0A6DC0]" />
           </div>
         ) : stores.length === 0 ? (
-          <Card className="p-8">
+          <Card className="md:p-8">
             <p className="text-center text-[#9E9A9A]">
               No other stores available
             </p>
@@ -303,11 +303,11 @@ const MoveStockPage = () => {
         ) : (
           <div className="space-y-3">
             {stores.map((store) => (
-              <Card
+              <div
                 key={store.id}
                 className={`p-4 cursor-pointer transition-all ${
                   selectedDestinationStore === store.id
-                    ? "border-2 border-[#0A6DC0] bg-[#0A6DC012]"
+                    ? "rounded-md bg-[#0A6DC012]"
                     : "bg-[#FFFFFF] border-[#D8D8D866] hover:bg-gray-50"
                 }`}
                 onClick={() => setSelectedDestinationStore(store.id)}
@@ -334,7 +334,7 @@ const MoveStockPage = () => {
                     </div>
                   </div>
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
         )}

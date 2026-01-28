@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useRef, useState } from "react";
@@ -6,7 +7,6 @@ import { Copy, Eye, EyeOff, Check, MoveLeft } from "lucide-react";
 import { toast } from "sonner";
 import { DisplayPlan } from "@/types/plans";
 import { Separator } from "@/components/ui/separator";
-import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import { Label } from "@/components/ui/label";
 import { useUser } from "@/context/userContext";
@@ -19,8 +19,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { handlePaySubscription } from "@/lib/utils/api/apiHelper";
-import { SubscriptionPaymentPayload } from "@/types/plans"; // or "@/types/subscription"
-import { useRouter } from "next/navigation"; // ← use next/navigation (not next/router)
+import { SubscriptionPaymentPayload } from "@/types/plans"; 
+import { useRouter } from "next/navigation"; 
 
 interface PaymentInfoProps {
   plan: DisplayPlan;
@@ -160,7 +160,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
 
       <div className="flex flex-col lg:flex-row gap-8 ">
         {/* Desktop payment selector */}
-        <Card className="lg:p-6 lg:w-[35%] bg-white hidden lg:block">
+        <div className="lg:p-6 lg:w-[35%] md:p-6 lg:border border-[#E4E4E4] rounded-lg bg-white hidden lg:block">
           <h1 className="font-semibold font-clash mb-4">Mode of Payment</h1>
           <Separator className="mb-6 hidden md:block" />
           <div className="space-y-6 mt-6">
@@ -240,7 +240,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
               </div>
             </Label>
           </div>
-        </Card>
+        </div>
 
         {/* Mobile payment selector */}
         <div className="lg:hidden flex gap-2 bg-[#ECECF080] p-1 rounded-lg">
@@ -267,7 +267,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
         </div>
 
         {/* Summary & Pay Button */}
-        <Card className="md:p-6 lg:w-[65%] bg-white">
+        <div className="md:p-6 lg:w-[65%]  lg:border border-[#E4E4E4] rounded-lg bg-white">
           <h1 className="font-semibold font-clash mb-2">Summary</h1>
           <Separator className="mb-4" />
           <p className="font-dm-sans text-[#9E9A9A] mb-6">
@@ -327,7 +327,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
           >
             {paying ? "Processing..." : "Proceed with Payment"}
           </Button>
-        </Card>
+        </div>
       </div>
 
       {/* PIN Modal for Wallet */}
@@ -510,7 +510,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
 
           <DialogFooter className="flex-col sm:flex-row gap-3 mt-6">
             <Button variant="outline" onClick={handleTransferNotYet}>
-              I haven't sent it yet
+              I haven&apos;t sent it yet
             </Button>
             <Button
               onClick={handleTransferConfirmed}

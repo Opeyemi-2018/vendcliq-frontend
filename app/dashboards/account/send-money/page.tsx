@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
@@ -29,7 +28,7 @@ const SendMoney = () => {
         {/* Mobile Tabs + Desktop Sidebar */}
         <div className="flex flex-col lg:flex-row gap-2 lg:gap-4">
           {/* Selector Panel */}
-          <Card className="py-6 px-0 md:px-6 w-full lg:w-[35%] bg-white ">
+          <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg w-full lg:w-[35%] bg-white ">
             <h2 className="text-[16px] text-[#2F2F2F] font-clash font-semibold mb-2">
               Transfer Destination
             </h2>
@@ -51,7 +50,7 @@ const SendMoney = () => {
                       : "text-[#9E9A9A] font-medium"
                   }`}
                 >
-                  <Image src="/v-b.svg" width={24} height={24} alt="Vendcliq" />
+                  <Image src="/v-b.svg" width={16} height={16} alt="Vendcliq" />
                   <span className="text-[14px]">Vendcliq Transfer</span>
                 </button>
 
@@ -63,7 +62,7 @@ const SendMoney = () => {
                       : "text-[#9E9A9A] font-medium"
                   }`}
                 >
-                  <Landmark size={24} color="#9E9A9A" />
+                  <Landmark size={20} color="#9E9A9A" />
                   <span className="text-[14px]">Other Bank</span>
                 </button>
               </div>
@@ -158,7 +157,7 @@ const SendMoney = () => {
                 </Label>
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* Form Panel */}
           <div className="w-full lg:w-[70%]">

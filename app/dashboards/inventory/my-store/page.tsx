@@ -1,6 +1,5 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import { MoveRight, Loader2, UserPen } from "lucide-react";
 import { ThreeDots } from "react-loader-spinner";
 import { useRouter } from "next/navigation";
@@ -87,9 +86,9 @@ const MyStore = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="">
       {/* Header & Actions */}
-      <div className="flex md:items-center md:gap-0 gap-3 justify-between flex-col md:flex-row">
+      <div className="flex md:items-center md:gap-0 gap-3 justify-between flex-col md:flex-row mb-3">
         <div>
           <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F] ">
             My Stores
@@ -115,11 +114,11 @@ const MyStore = () => {
       </div>
 
       {/* Stores Table */}
-      <Card className="md:p-5">
+      <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white mb-3 md:mb-5">
         <h1 className="font-dm-sans text-[#2F2F2F] dark:text-white font-bold">
           My Stores ({stores.length})
         </h1>
-        <Card className="mt-3 py-5 relative">
+        <div className="py-3 relative">
           {storesLoading || stores.length === 0 ? (
             <div className="py-20 px-4">
               {storesLoading ? (
@@ -152,23 +151,23 @@ const MyStore = () => {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px] ">
+            <div className="overflow-x-auto lg:border border-[#E4E4E4] md:rounded-[20px] bg-white">
+              <table className="w-full">
                 <thead className="border-b border-[#E6E6E6]">
                   <tr>
-                    <th className="text-left pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                    <th className="text-left py-3 md:pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                       Store Name
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                    <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                       Store Address
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                    <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                       Product Count
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                    <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                       Inventory Value
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                    <th className="text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                       Actions
                     </th>
                   </tr>
@@ -177,21 +176,25 @@ const MyStore = () => {
                   {stores.map((store) => (
                     <tr
                       key={store.id}
-                      className="hover:bg-gray-50  cursor-pointer transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
+                      className="hover:bg-gray-50 cursor-pointer transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
                       onClick={() =>
                         router.push(
-                          `/dashboards/inventory/my-store/${store.id}`
+                          `/dashboards/inventory/my-store/${store.id}`,
                         )
                       }
                     >
-                      <td className="py-4 pl-4 font-medium">{store.name}</td>
-                      <td className="py-4">{store.address.name}</td>
-                      <td className="py-4">{store.stock_count}</td>
-                      <td className="py-4">
+                      <td className="py-4 md:pl-4 font-medium">{store.name}</td>
+                      <td className="hidden md:table-cell py-4">
+                        {store.address.name}
+                      </td>
+                      <td className="hidden md:table-cell py-4">
+                        {store.stock_count}
+                      </td>
+                      <td className="hidden md:table-cell py-4">
                         ₦{store.stock_value.toLocaleString()}
                       </td>
                       <td className="py-4">
-                        <MoveRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        <MoveRight className="w-5 h-5 text-gray-500" />
                       </td>
                     </tr>
                   ))}
@@ -199,15 +202,15 @@ const MyStore = () => {
               </table>
             </div>
           )}
-        </Card>
-      </Card>
+        </div>
+      </div>
 
-      {/* Attendants Table - same style */}
-      <Card className="md:p-5">
+      {/* Attendants Table */}
+      <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
         <h1 className="font-dm-sans text-[#2F2F2F] dark:text-white font-bold">
           My Attendants ({attendants.length})
         </h1>
-        <Card className="mt-3 py-5 relative">
+        <div className="py-3 relative">
           {attendantsLoading ? (
             <div className="py-20 px-4 flex flex-col items-center justify-center">
               <Loader2 className="h-10 w-10 animate-spin text-[#0A6DC0]" />
@@ -224,8 +227,7 @@ const MyStore = () => {
                 onClick={() => {
                   setAttendantsLoading(true);
                   setAttendantsError(null);
-                  // Re-trigger fetch by changing dependency or calling again
-                  window.location.reload(); // simple retry - improve later
+                  window.location.reload();
                 }}
                 className="bg-[#0A6DC0] hover:bg-[#085a9e]"
               >
@@ -234,8 +236,7 @@ const MyStore = () => {
             </div>
           ) : attendants.length === 0 ? (
             <div className="py-20 px-4 flex flex-col items-center justify-center space-y-4">
-            <UserPen size={40} />
-              {/* change icon if needed */}
+              <UserPen size={40} />
               <p className="font-bold font-dm-sans text-[16px] text-[#2F2F2F] dark:text-white">
                 No attendants found
               </p>
@@ -244,23 +245,23 @@ const MyStore = () => {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px]">
+            <div className="overflow-x-auto lg:border border-[#E4E4E4] md:rounded-[20px] bg-white">
+              <table className="w-full">
                 <thead className="border-b border-[#E6E6E6]">
                   <tr>
-                    <th className="text-left pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                    <th className="text-left py-3 md:pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                       Full Name
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                    <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                       Email
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                    <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                       Phone Number
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                    <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                       Status
                     </th>
-                    <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                    <th className="text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                       Actions
                     </th>
                   </tr>
@@ -270,18 +271,20 @@ const MyStore = () => {
                     <tr
                       key={attendant.id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
-                      // Optional: make row clickable if you have detail page
-                      // onClick={() => router.push(`/dashboards/attendants/${attendant.id}`)}
                     >
-                      <td className="py-4 pl-4 font-medium">
+                      <td className="py-4 md:pl-4 font-medium">
                         {attendant.fullname}
                       </td>
-                      <td className="py-4">{attendant.email}</td>
-                      <td className="py-4">{attendant.phone}</td>
-                      <td className="py-4">
+                      <td className="hidden md:table-cell py-4">
+                        {attendant.email}
+                      </td>
+                      <td className="hidden md:table-cell py-4">
+                        {attendant.phone}
+                      </td>
+                      <td className="hidden md:table-cell py-4">
                         <span
                           className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            attendant.accountStatus
+                            attendant.accountStatus,
                           )}`}
                         >
                           {attendant.accountStatus}
@@ -296,8 +299,8 @@ const MyStore = () => {
               </table>
             </div>
           )}
-        </Card>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

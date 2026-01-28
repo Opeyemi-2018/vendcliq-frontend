@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/Input";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { DisplayPlan } from "@/types/plans";
-import { Card } from "@/components/ui/card";
 
 interface PlanConfirmationProps {
   plan: DisplayPlan;
@@ -48,7 +47,7 @@ const PlanConfirmation: React.FC<PlanConfirmationProps> = ({
       </div>
 
       <div className="flex justify-between md:gap-4 flex-col lg:flex-row">
-        <Card className="space-y-6 md:p-6 lg:w-[65%]">
+        <div className="space-y-6 md:p-6 lg:w-[65%] lg:border border-[#E4E4E4] rounded-lg bg-white">
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="block text-[#2F2F2F] font-dm-sans text-[16px]">
@@ -145,7 +144,7 @@ const PlanConfirmation: React.FC<PlanConfirmationProps> = ({
               Subscribe Now
             </Button>
           </div>
-        </Card>
+        </div>
 
         {/* Plan Preview (desktop only) */}
         <div

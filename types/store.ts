@@ -134,3 +134,43 @@ export interface UpdateStoreResponse {
     updatedAt: string;
   };
 }
+
+export interface StoreStockDetail {
+  id: string;
+  sku: string;
+  cost_price: string;
+  selling_price: string;
+  selling_price_pieces: string | null;
+  empties_price: string;
+  exp_date: string | null;
+  quantity: string;
+  empties_qty: string;
+  total_qty: string;
+  stock_alert_no: number | null;
+  stock_value: string;
+  status: string;
+  product: {
+    id: string;
+    name: string;
+    items_per_pack: number;
+    image: string | null;
+  };
+  store: {
+    id: string;
+    name: string;
+    address: {
+      lat: number;
+      lng: number;
+      name: string;
+    };
+  };
+  attributes: any | null;
+  created_at: string;
+  updated_at: string;
+  stats: {
+    qty_sold: number;
+    total_sales: number;
+    qty_added: number;
+    date_range: Record<string, any>;
+  };
+}

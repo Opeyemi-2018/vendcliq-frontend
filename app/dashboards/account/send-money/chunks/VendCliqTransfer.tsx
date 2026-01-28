@@ -239,7 +239,7 @@ export default function VendCliqTransfer() {
   return (
     <div className="">
       <Form {...form}>
-        <Card className="p-0 md:p-6 ">
+        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg bg-white ">
           <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash mb-2">
             Vendcliq Transfer
           </h2>
@@ -622,7 +622,7 @@ export default function VendCliqTransfer() {
               </div>
             )}
           </form>
-        </Card>
+        </div>
       </Form>
 
       <AlertDialog open={showSuccess} onOpenChange={setShowSuccess}>

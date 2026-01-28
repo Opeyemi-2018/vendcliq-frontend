@@ -4,12 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
-import {
-  
-  MoveLeft,
-  MoveRight,
-  MoveRightIcon,
-} from "lucide-react";
+import { MoveLeft, MoveRight, MoveRightIcon } from "lucide-react";
 import Image from "next/image";
 import {
   Select,
@@ -28,13 +23,13 @@ const TransactionSkeleton = () => (
     <td className="p-4">
       <div className="h-4 bg-gray-200 rounded w-20"></div>
     </td>
-    <td className="p-4">
+    <td className="p-4 hidden md:table-cell">
       <div className="h-4 bg-gray-200 rounded w-32"></div>
     </td>
-    <td className="p-4">
+    <td className="p-4 hidden md:table-cell">
       <div className="h-4 bg-gray-200 rounded w-24"></div>
     </td>
-    <td className="p-4">
+    <td className="p-4 hidden md:table-cell">
       <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
     </td>
     <td className="p-4">
@@ -243,24 +238,24 @@ const Table = () => {
         <h1 className="text-[#2F2F2F] font-dm-sans text-[16px] font-bold">
           Transaction History
         </h1>
-        <Card className="mt-3  relative">
+        <div className=" mt-3 lg:border border-[#E4E4E4] rounded-lg bg-white">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[600px] ">
-              <thead className="border-b border-[#E6E6E6] ">
-                <tr className="">
-                  <th className="text-left py-3 pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+            <table className="w-full">
+              <thead className="border-b border-[#E6E6E6]">
+                <tr>
+                  <th className="text-left md:py-3 pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     Description
                   </th>
-                  <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     Amount
                   </th>
-                  <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     Date
                   </th>
-                  <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     Type
                   </th>
-                  <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <th className="text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     More
                   </th>
                 </tr>
@@ -345,14 +340,14 @@ const Table = () => {
                     return (
                       <tr
                         key={transaction.id}
-                        className="hover:bg-gray-50  cursor-pointer transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
+                        className="hover:bg-gray-50 cursor-pointer transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
                       >
                         <td
                           onClick={(e) => {
                             e.stopPropagation();
                             openReceipt(transaction);
                           }}
-                          className="py-0 pl-4"
+                          className="md:py-4 pl-4"
                         >
                           <div className="flex items-center gap-3">
                             <Image
@@ -360,19 +355,19 @@ const Table = () => {
                               width={32}
                               height={32}
                               alt="icon"
-                              className="w-8 h-8"
+                              className="w-8 h-8 hidden md:inline"
                             />
                             <div>
                               <p className="font-medium text-[#2F2F2F]">
                                 {counterparty}
                               </p>
-                              <p className="text-sm text-[#6F6F6F] mt-1">
+                              <p className="text-sm text-[#6F6F6F] mt-1 hidden md:inline">
                                 Ref: {transaction.transactionReference}
                               </p>
                             </div>
                           </div>
                         </td>
-                        <td className="font-dm-sans font-medium">
+                        <td className="hidden md:table-cell py-4 font-dm-sans font-medium">
                           <span
                             className={
                               isCredit ? "text-[#31A078]" : "text-[#EA4334]"
@@ -381,10 +376,10 @@ const Table = () => {
                             {formattedAmount}
                           </span>
                         </td>
-                        <td className=" text-[#2F2F2F]">
+                        <td className="hidden md:table-cell py-4 text-[#2F2F2F]">
                           {formattedDate} {formattedTime}
                         </td>
-                        <td className="">
+                        <td className="hidden md:table-cell py-4">
                           <span
                             className={`inline-flex px-4 py-1 rounded-full text-[12px] font-dm-sans font-bold ${
                               isCredit
@@ -407,7 +402,7 @@ const Table = () => {
               </tbody>
             </table>
           </div>
-        </Card>
+        </div>
 
         {!loading && !error && filteredTransactions.length > 0 && (
           <div className="flex flex-row justify-between items-center mt-6 gap-4">

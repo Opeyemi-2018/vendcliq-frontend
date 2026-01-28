@@ -96,7 +96,7 @@ const Table = () => {
           err?.message?.includes("No transactions")
         ) {
           setTransactions([]);
-          setError(null); // Don't show error for "no data"
+          setError(null);
         } else {
           setError("Failed to load transactions. Please try again.");
           console.error("Error fetching transactions:", err);
@@ -266,14 +266,16 @@ const Table = () => {
                 );
               })}
 
-            <button
-              onClick={() =>
-                router.push("/dashboards/account/transactionHistory")
-              }
-              className="text-[#39498C] font-medium font-dm-sans text-[14px] pt-4"
-            >
-              Show More
-            </button>
+            {transactions.length > 0 && (
+              <button
+                onClick={() =>
+                  router.push("/dashboards/account/transactionHistory")
+                }
+                className="text-[#39498C] font-medium font-dm-sans text-[14px] pt-4"
+              >
+                Show More
+              </button>
+            )}
           </div>
           <div className="xl:w-[45%] border border-[#E4E4E4] px-4 lg:px-7 py-5  bg-white rounded-2xl">
             <div className="flex items-center gap-2">
