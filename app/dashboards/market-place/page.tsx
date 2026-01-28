@@ -188,7 +188,7 @@ const MarketPlace = () => {
         </div>
       ) : (
         <>
-          <Card className="  md:p-6">
+          <div className="  md:p-6 lg:border border-[#E4E4E4] rounded-lg ">
             {/* Offer Products Section */}
             {displayItems.some((item) => item.isOffer) && (
               <div className="mb-8">
@@ -225,7 +225,7 @@ const MarketPlace = () => {
                 </div>
               </div>
             )}
-          </Card>
+          </div>
         </>
       )}
     </div>

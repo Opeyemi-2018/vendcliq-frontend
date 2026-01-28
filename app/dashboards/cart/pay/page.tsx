@@ -4,8 +4,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {  Check, Copy, Eye, EyeOff } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Check, Copy, Eye, EyeOff } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
@@ -236,7 +235,7 @@ const PayPage = () => {
             Bank Transfer
           </button>
         </div>
-        <Card className=" lg:p-6 lg:w-[35%] bg-white hidden lg:block">
+        <div className=" md:p-6 lg:border border-[#E4E4E4] rounded-lg h-full lg:w-[35%] bg-white hidden lg:block">
           {/* Desktop Cards - YOUR ORIGINAL CODE, UNTOUCHED */}
           <div className="hidden lg:block space-y-4">
             <div
@@ -261,10 +260,10 @@ const PayPage = () => {
               <h3 className="font-medium font-dm-sans">Bank Transfer</h3>
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* Right: Summary & Form */}
-        <Card className=" md:p-6 lg:w-[65%] bg-white">
+        <div className=" md:p-6 lg:border border-[#E4E4E4] rounded-lg  lg:w-[65%] bg-white">
           <h1 className="font-semibold font-clash mb-2">Summary</h1>
           <Separator className="mb-4" />
           <p className="font-dm-sans text-[#9E9A9A] mb-6">
@@ -389,7 +388,7 @@ const PayPage = () => {
                 ? `Pay ₦${checkoutData.total.toLocaleString()} with Wallet`
                 : "Get Transfer Details"}
           </Button>
-        </Card>
+        </div>
       </div>
 
       {/* Wallet Success Dialog */}

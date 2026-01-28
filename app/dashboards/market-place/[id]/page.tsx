@@ -296,9 +296,9 @@ const StockDetailPage = () => {
       {loading || !currentItem ? (
         <MainProductSkeleton />
       ) : (
-        <Card className="flex flex-col gap-3  md:p-5 rounded-lg">
+        <div className="flex flex-col gap-3  md:p-6 lg:border bg-white border-[#E4E4E4] rounded-lg ">
           {/* Product Image */}
-          <div className="bg-[#FAFAFA] rounded-lg border border-gray-200 overflow-hidden relative">
+          <div className="bg-[#FAFAFA] rounded-lg border border-[#E3E3E3] overflow-hidden relative">
             {isOffer && (
               <div className="absolute top-2 z-20 left-2 text-[#E33629] bg-[#FFE7E5] text-[8px] font-bold font-dm-sans px-2 py-1 rounded">
                 20% OFF
@@ -337,16 +337,16 @@ const StockDetailPage = () => {
                     {isOffer && offer
                       ? (offer.price ?? 0).toFixed(2)
                       : stock
-                      ? parseFloat(stock.selling_price || "0").toFixed(2)
-                      : "0.00"}
+                        ? parseFloat(stock.selling_price || "0").toFixed(2)
+                        : "0.00"}
                   </p>
 
                   <p className="text-[13px] font-dm-sans text-[#8E8E93]">
                     {isOffer && offer
                       ? `${offer.qty ?? 0} available`
                       : stock
-                      ? `${stock.total_qty || "0"} available`
-                      : "0 available"}
+                        ? `${stock.total_qty || "0"} available`
+                        : "0 available"}
                   </p>
                 </div>
 
@@ -423,7 +423,7 @@ const StockDetailPage = () => {
               )}
             </Button>
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Related Stocks - Only show for regular stocks */}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { CustomerForm, customerSchema } from "@/types/customer";
@@ -14,7 +15,6 @@ import { ClipLoader } from "react-spinners";
 import { ThreeDots } from "react-loader-spinner";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -49,7 +49,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import PlacesAutocompleteInput from "@/hooks/googleMap";
-import { Card } from "@/components/ui/card";
 
 interface CustomerType {
   id: string;
@@ -91,8 +90,7 @@ const Customer = () => {
       setIsLoadingCustomers(true);
       try {
         const token =
-          localStorage.getItem("accessToken") ||
-          localStorage.getItem("authToken");
+          localStorage.getItem("accessToken") 
         if (!token) return;
         const result = await getCustomers(token);
         if (result.success && result.data) {
@@ -100,8 +98,8 @@ const Customer = () => {
         } else {
           toast.error("Failed to load customers");
         }
-      } catch (err) {
-        toast.error("Network error");
+      } catch (err: any) {
+        toast.error(err);
       } finally {
         setIsLoadingCustomers(false);
       }
@@ -386,27 +384,27 @@ const Customer = () => {
         />
       </div>
 
-      <Card className="mt-3 py-5 relative">
+      <div className="mt-3 lg:border bg-white border-[#E4E4E4] rounded-lg py-5 relative">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[600px]">
+          <table className="w-full">
             <thead className="border-b border-[#E6E6E6]">
               <tr>
-                <th className="text-left pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                <th className="text-left pl-4 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   Name
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   Phone
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   Email
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   Type
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   Address
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                <th className="text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   Actions
                 </th>
               </tr>
@@ -453,10 +451,18 @@ const Customer = () => {
                     className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
                   >
                     <td className="py-4 pl-4 font-medium">{customer.name}</td>
-                    <td className="py-4">{customer.phone}</td>
-                    <td className="py-4">{customer.email}</td>
-                    <td className="py-4">{customer.type}</td>
-                    <td className="py-4">{customer.address?.address}</td>
+                    <td className="hidden md:table-cell py-4">
+                      {customer.phone}
+                    </td>
+                    <td className="hidden md:table-cell py-4">
+                      {customer.email}
+                    </td>
+                    <td className="hidden md:table-cell py-4">
+                      {customer.type}
+                    </td>
+                    <td className="hidden md:table-cell py-4">
+                      {customer.address?.address}
+                    </td>
                     <td className="py-4">
                       <Dialog
                         open={deleteDialogOpen === customer.id}
@@ -523,7 +529,7 @@ const Customer = () => {
             </tbody>
           </table>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

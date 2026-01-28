@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useUser } from "@/context/userContext";
-import { CheckCircle2, Clock } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ const BusinessVerification = () => {
             {progress.percentage}% to complete
           </span>
           <span className="text-sm text-[#2F2F2F] font-dm-sans text-[16px]">
-            You've completed <strong>{progress.completed}</strong> of{" "}
+            You&apos;ve completed <strong>{progress.completed}</strong> of{" "}
             <strong>{progress.total}</strong> verification steps
           </span>
         </div>
@@ -107,13 +107,13 @@ const BusinessVerification = () => {
             )}
             {verificationStatus.documents.votersCard.submitted && (
               <div className="flex items-center justify-between">
-                <span className="text-blue-800">Voter's Card</span>
+                <span className="text-blue-800">Voter&apos;s Card</span>
                 <CheckCircle2 className="w-4 h-4 text-green-600" />
               </div>
             )}
             {verificationStatus.documents.driversLicense.submitted && (
               <div className="flex items-center justify-between">
-                <span className="text-blue-800">Driver's License</span>
+                <span className="text-blue-800">Driver&apos;s License</span>
                 <CheckCircle2 className="w-4 h-4 text-green-600" />
               </div>
             )}

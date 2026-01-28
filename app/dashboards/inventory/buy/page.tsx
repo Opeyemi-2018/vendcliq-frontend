@@ -361,7 +361,7 @@ const Buy = () => {
 
         <div className="md:mt-8 flex flex-col lg:flex-row gap-4">
           {/* Left Card - Only visible on desktop (lg+) */}
-          <Card className="hidden lg:flex flex-col justify-between py-6 md:px-4 w-full lg:w-[35%] bg-white h-[550px] ">
+          <div className="hidden lg:flex flex-col justify-between py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg  w-full lg:w-[35%] bg-white h-[550px] ">
             <div className=" ">
               <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
                 Select where to buy from
@@ -433,10 +433,10 @@ const Buy = () => {
               </div>
               <ChevronRight color="#fafafa" />
             </div>
-          </Card>
+          </div>
 
           {/* Right Card - Supplier List / Placeholder */}
-          <Card className="py-6 md:px-4 w-full lg:w-[70%] bg-white">
+          <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg  w-full lg:w-[70%] bg-white">
             <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
               {supplierOptionSelected === "suppliers"
                 ? "Suppliers"
@@ -553,7 +553,7 @@ const Buy = () => {
                 )}
               </>
             )}
-          </Card>
+          </div>
         </div>
       </div>
     );
@@ -578,7 +578,7 @@ const Buy = () => {
           All info you need to know about this store
         </p>
 
-        <Card className="md:p-4 lg:p-8 bg-white">
+        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg  bg-white">
           <div className="grid md:grid-cols-2 md:gap-y-5 gap-y-2 font-dm-sans text-[#2F2F2F]">
             <div className="font-regular lowercase">
               <p className="font-bold">Supplier Name</p>
@@ -620,7 +620,7 @@ const Buy = () => {
           >
             Proceed
           </Button>
-        </Card>
+        </div>
       </div>
     );
   }
@@ -635,7 +635,7 @@ const Buy = () => {
           }}
           className="mr-2 h-4 w-4 mb-3"
         />
-        <Card className="md:p-4 lg:p-8 bg-white">
+        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg  bg-white">
           <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
             Select the store you want to restock
           </h1>
@@ -709,7 +709,7 @@ const Buy = () => {
               ))
             )}
           </div>
-        </Card>
+        </div>
       </div>
     );
   }
@@ -732,7 +732,7 @@ const Buy = () => {
           Kindly fill the details below to create invoice
         </p>
 
-        <Card className="py-6 md:px-4 md:mt-8 bg-white">
+        <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg  md:mt-8 bg-white">
           <div className="mb-2 flex items-center justify-between font-dm-sans font-medium">
             <p className="text-[16px] text-[#000000]">Supplier</p>
             <button
@@ -749,13 +749,13 @@ const Buy = () => {
           <div className="py-3 mb-4 px-5 flex items-center gap-2 font-dm-sans border border-[#0A6DC0] bg-[#0A6DC012] rounded-lg">
             <Truck className="w-8 h-8" />
             <div>
-              <p className="text-[#2F2F2F] font-medium capitalize">
+              <p className="text-[13px] md:text-[16px] text-[#2F2F2F] font-medium capitalize">
                 {selectedSupplier.name}
               </p>
-              <p className="text-[13px] text-[#2F2F2F]">
+              <p className="hidden md:inline text-[13px] text-[#2F2F2F]">
                 {selectedSupplier.phone} • {selectedSupplier.email}
               </p>
-              <p className="text-[13px] text-[#2F2F2F]">
+              <p className="hidden md:inline text-[13px] text-[#2F2F2F]">
                 {selectedSupplier.address}
               </p>
             </div>
@@ -768,11 +768,11 @@ const Buy = () => {
             <Image src="/store.svg" alt="store" width={30} height={30} />
             <div>
               <p className="text-[#2F2F2F] font-medium">{selectedStore.name}</p>
-              <div className="flex items-center gap-2 text-[13px]">
+              <div className="flex items-center gap-2 text-[13px] hidden md:inline">
                 <p className="text-[#2F2F2F] font-medium">Inventory value: ₦</p>
-                <p className="text-[#9E9A9A]">{selectedStore.stock_value}</p>
+                <p className="text-[#9E9A9A] ">{selectedStore.stock_value}</p>
               </div>
-              <div className="flex items-center gap-2 text-[13px]">
+              <div className="flex items-center gap-2 text-[13px] hidden md:inline">
                 <p className="text-[#2F2F2F] font-medium">Product Count:</p>
                 <p className="text-[#9E9A9A]">{selectedStore.stock_count}</p>
               </div>
@@ -781,7 +781,7 @@ const Buy = () => {
 
           <Form {...invoiceForm}>
             <form className="space-y-6 mb-2">
-              <div className="grid md:grid-cols-2 gap-5">
+              <div className="grid md:grid-cols-2 gap-3 md:gap-5">
                 <FormField
                   control={invoiceForm.control}
                   name="stock_id"
@@ -968,31 +968,31 @@ const Buy = () => {
               </Button>
             </form>
           </Form>
-        </Card>
+        </div>
 
-        <Card className="mt-5 md:px-4 pb-6">
+        <Card className="md:mt-5 md:px-4 pb-6">
           {invoiceItems.length > 0 && (
-            <div className="mt-8">
+            <div className="md:mt-8">
               <h3 className="font-semibold mb-4">
                 Invoice Items ({invoiceItems.length})
               </h3>
-              <div className="overflow-x-auto mt-6 border-[#E4E4E4] border-2 bg-white rounded-2xl">
+              <div className="overflow-x-auto mt-6 border-[#E4E4E4] border-2 bg-white rounded-lg">
                 <table className="w-full my-6">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left px-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                      <th className="text-left px-4 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                         SKU
                       </th>
-                      <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                      <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                         Qty
                       </th>
-                      <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                      <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                         Mode
                       </th>
-                      <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                      <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                         Discount
                       </th>
-                      <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                      <th className="text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                         Actions
                       </th>
                     </tr>
@@ -1006,9 +1006,15 @@ const Buy = () => {
                         <td className="lowercase text-left p-4 py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                           {item.product_name}
                         </td>
-                        <td className="py-4">{item.quantity}</td>
-                        <td className="py-4 lowercase">{item.mode}</td>
-                        <td className="py-4">₦{item.discounted_amount}</td>
+                        <td className="hidden md:table-cell py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                          {item.quantity}
+                        </td>
+                        <td className="hidden md:table-cell py-4 lowercase font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                          {item.mode}
+                        </td>
+                        <td className="hidden md:table-cell py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                          ₦{item.discounted_amount}
+                        </td>
                         <td className="py-4">
                           <button
                             onClick={() => {

@@ -1,9 +1,8 @@
 "use client";
 import { getSuppliers } from "@/actions/suppliers";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
 import { Supplier } from "@/types/supplier";
-import { MoveRight, Search, ArrowLeft } from "lucide-react";
+import { MoveRight, Search } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useMemo } from "react";
 import { ThreeDots } from "react-loader-spinner";
@@ -17,13 +16,12 @@ export default function Suppliers() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
-    null
+    null,
   );
   const [viewMode, setViewMode] = useState<"details" | "products">("details");
 
   const fetchSuppliers = async () => {
-    const token =
-      localStorage.getItem("accessToken");
+    const token = localStorage.getItem("accessToken");
 
     if (!token) {
       setError("No authentication token found. Please log in.");
@@ -56,7 +54,7 @@ export default function Suppliers() {
 
     const term = searchTerm.toLowerCase().trim();
     return suppliers.filter((supplier) =>
-      supplier.name?.toLowerCase().includes(term)
+      supplier.name?.toLowerCase().includes(term),
     );
   }, [suppliers, searchTerm]);
 
@@ -68,7 +66,7 @@ export default function Suppliers() {
 
     const term = searchTerm.toLowerCase().trim();
     const hasMatch = suppliers.some((supplier) =>
-      supplier.name?.toLowerCase().includes(term)
+      supplier.name?.toLowerCase().includes(term),
     );
 
     if (!hasMatch) {
@@ -151,7 +149,7 @@ export default function Suppliers() {
           />
         </div>
 
-        <Card className="md:p-6">
+        <div className="md:p-6 lg:border bg-white border-[#E4E4E4] rounded-lg ">
           <h1 className="font-dm-sans text-[#2F2F2F] dark:text-white font-bold mb-4">
             Supplier List {!loading && `(${filteredSuppliers.length})`}
           </h1>
@@ -183,24 +181,24 @@ export default function Suppliers() {
               </p>
             </div>
           ) : (
-            <div className="bg-white  rounded-xl shadow-sm border border-gray-200 font-dm-sans text-[#2F2F2F] overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 font-dm-sans text-[#2F2F2F] overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[600px] ">
+                <table className="w-full">
                   <thead className="border-b border-[#E6E6E6]">
                     <tr>
                       <th className="text-left py-3 pl-4 font-medium font-dm-sans">
                         Name
                       </th>
-                      <th className="text-left py-3 font-medium font-dm-sans">
+                      <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
                         Address
                       </th>
-                      <th className="text-left py-3 font-medium font-dm-sans">
+                      <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
                         Email
                       </th>
-                      <th className="text-left py-3 font-medium font-dm-sans">
+                      <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
                         Phone
                       </th>
-                      <th className="text-left py-3 font-medium font-dm-sans">
+                      <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
                         Type
                       </th>
                       <th className="text-left py-3 font-medium font-dm-sans">
@@ -208,7 +206,7 @@ export default function Suppliers() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 ">
+                  <tbody className="divide-y divide-gray-200">
                     {filteredSuppliers.map((supplier) => (
                       <tr
                         key={supplier.id}
@@ -218,15 +216,19 @@ export default function Suppliers() {
                         <td className="py-4 pl-2 md:pl-4 font-medium whitespace-nowrap">
                           {supplier.name?.substring(0, 10) ?? "—"}...
                         </td>
-                        <td className="py-4">
+                        <td className="hidden md:table-cell py-4">
                           {(supplier.address ?? "").substring(0, 10)}...
                           {supplier.state && `, ${supplier.state}`}
                         </td>
-                        <td className="py-4">
+                        <td className="hidden md:table-cell py-4">
                           {supplier.email?.substring(0, 12) ?? "—"}...
                         </td>
-                        <td className="py-4"> {supplier.phone || "—"}</td>
-                        <td className="py-4"> {supplier.type || "—"}</td>
+                        <td className="hidden md:table-cell py-4">
+                          {supplier.phone || "—"}
+                        </td>
+                        <td className="hidden md:table-cell py-4">
+                          {supplier.type || "—"}
+                        </td>
                         <td className="py-4">
                           <MoveRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                         </td>
@@ -237,7 +239,7 @@ export default function Suppliers() {
               </div>
             </div>
           )}
-        </Card>
+        </div>
       </div>
     </div>
   );

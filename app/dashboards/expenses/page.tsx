@@ -127,7 +127,7 @@ const Expenses = () => {
           toast.error(result.error || "Failed to load expenses");
         }
       } catch (err: any) {
-        toast.error("Network error");
+        toast.error(err);
       } finally {
         setExpenseLoading(false);
       }
@@ -428,7 +428,7 @@ const Expenses = () => {
             Highest Expenses Category
           </p>
           <h2 className="font-semibold  text-[16px] md:text-[20px] font-clash">
-            {highestCategory}
+            {highestCategory || 'None'} 
           </h2>
         </div>
         <div className="bg-[url('/balance-bg.svg')] text-white bg-cover bg-no-repeat bg-center min-w-[260px] w-[280px] flex-shrink-0 h-[117px] rounded-2xl p-6">
@@ -441,29 +441,29 @@ const Expenses = () => {
         </div>
       </div>
 
-      <Card className="md:p-5">
+      <div className="md:p-6 lg:border bg-white border-[#E4E4E4] rounded-lg">
         <h1 className="font-dm-sans text-[#2F2F2F] dark:text-white font-bold">
           Expense List View ({expenses.length})
         </h1>
 
         <Card className="mt-3 py-5 relative">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[600px]">
+            <table className="w-full">
               <thead className="border-b border-[#E6E6E6]">
                 <tr>
-                  <th className="text-left pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <th className="text-left pl-4 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     Amount
                   </th>
-                  <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     Category
                   </th>
-                  <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     Data
                   </th>
-                  <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     Description
                   </th>
-                  <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <th className="text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     Actions
                   </th>
                 </tr>
@@ -471,7 +471,7 @@ const Expenses = () => {
               <tbody className="divide-y">
                 {expenseLoading ? (
                   <tr>
-                    <td colSpan={6} className="py-20 px-4">
+                    <td colSpan={5} className="py-20 px-4">
                       <div className="flex flex-col items-center justify-center">
                         <ThreeDots
                           height="80"
@@ -480,21 +480,21 @@ const Expenses = () => {
                           visible={true}
                         />
                         <p className="mt-4 text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
-                          Loading customers...
+                          Loading expenses...
                         </p>
                       </div>
                     </td>
                   </tr>
                 ) : expenses.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-20 px-4">
+                    <td colSpan={5} className="py-20 px-4">
                       <div className="flex flex-col items-center justify-center space-y-4">
                         <UserPen size={40} className="text-gray-400" />
                         <p className="font-bold font-dm-sans text-[16px] text-[#2F2F2F] dark:text-white">
-                          "No expense found"
+                          No expense found
                         </p>
                         <p className="text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
-                          "Your customers will appear here
+                          Your expenses will appear here
                         </p>
                       </div>
                     </td>
@@ -506,11 +506,17 @@ const Expenses = () => {
                       className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
                     >
                       <td className="py-4 pl-4 font-medium">
-                        #{expense.amount}
+                        ₦{expense.amount}
                       </td>
-                      <td className="py-4">{expense.category}</td>
-                      <td className="py-4">{expense.date}</td>
-                      <td className="py-4">{expense.description}</td>
+                      <td className="hidden md:table-cell py-4">
+                        {expense.category}
+                      </td>
+                      <td className="hidden md:table-cell py-4">
+                        {expense.date}
+                      </td>
+                      <td className="hidden md:table-cell py-4">
+                        {expense.description}
+                      </td>
 
                       <td className="py-4">
                         <Dialog
@@ -532,7 +538,7 @@ const Expenses = () => {
                             <DialogHeader>
                               <DialogTitle>Delete Expense</DialogTitle>
                               <DialogDescription>
-                                Are you sure you want to delete this expense ?
+                                Are you sure you want to delete this expense?
                                 This action cannot be undone.
                               </DialogDescription>
                             </DialogHeader>
@@ -575,7 +581,7 @@ const Expenses = () => {
             </table>
           </div>
         </Card>
-      </Card>
+      </div>
     </div>
   );
 };
