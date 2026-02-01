@@ -76,3 +76,61 @@ export interface OtherBankTransferResponse {
   msg: string;
   data?: any;
 }
+
+
+// types/beneficiary.ts
+export interface CreateBeneficiaryPayload {
+  walletId: number;
+  name: string;
+  accountNumber: string;
+  bankCode: string;
+  bankName: string;
+}
+
+export interface BeneficiaryData {
+  walletId: number;
+  userId: number;
+  name: string;
+  accountNumber: string;
+  bankCode: string;
+  bankName: string;
+  email: string;
+  phoneNumber: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  id: number;
+}
+
+export interface CreateBeneficiaryResponse {
+  status: string;
+  msg: string;
+  data: BeneficiaryData;
+}
+
+
+export interface Beneficiary {
+  id: number;
+  userId: number;
+  walletId: number;
+  name: string;
+  accountNumber: string;
+  bankCode: string;
+  bankName: string;
+  email: string | null;
+  phoneNumber: string | null;
+  isActive: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GetBeneficiariesResponse {
+  status: string;
+  msg: string;
+  data: {
+    beneficiaries: Beneficiary[];
+    totalCount: number;
+    walletId: number;
+    filters: Record<string, unknown>;
+  };
+}

@@ -22,7 +22,7 @@ import { handleCreateWallet } from "@/lib/utils/api/apiHelper";
 import { useStores } from "@/hooks/useStores";
 
 const Home = () => {
-  const { user, isUserPending, wallet } = useUser();
+  const { user, isUserPending, wallet, isLoadingWallet } = useUser();
   const [showBalance, setShowBallance] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [creatingWallet, setCreatingWallet] = useState(false);
@@ -170,6 +170,11 @@ const Home = () => {
               </div>
               {showBalance ? (
                 <h1 className="text-[28px] font-clash font-bold">* * * *</h1>
+              ) : isLoadingWallet ? (
+                <div className="flex items-center gap-2">
+                  <ClipLoader size={20} color="#0A6DC0" />
+                  <span className="text-sm text-[#9E9A9A]">Updating...</span>
+                </div>
               ) : (
                 <h1 className="font-clash text-[#2F2F2F] text-[20px] lg:text-[25px] font-semibold">
                   ₦ {wallet?.balance || "0.00"}

@@ -1,13 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // contexts/UserContext.tsx
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
 export interface UserData {
   firstname: string;
@@ -19,6 +14,7 @@ export interface UserData {
     number: string;
     verified: string | null;
   };
+  pin?: boolean;
 }
 
 export interface WalletData {
@@ -72,6 +68,9 @@ interface UserContextType {
   user: UserData | null;
   wallet: WalletData | null;
   verificationStatus: VerificationStatus | null;
+  hasPin: boolean;
+  isLoadingWallet: boolean;
+  walletError: string | null;
   setUser: (user: UserData | null) => void;
   setWallet: (wallet: WalletData | null) => void;
   setVerificationStatus: (status: VerificationStatus | null) => void;
@@ -79,8 +78,10 @@ interface UserContextType {
   setAllUserData: (
     user: UserData | null,
     wallet: WalletData | null,
-    verification: VerificationStatus | null
+    verification: VerificationStatus | null,
   ) => void;
+  fetchWallet: () => Promise<void>;
+  refreshWallet: () => Promise<void>;
   isUserPending: boolean;
   getUserFullName: () => string;
   getWalletBalance: () => string;
@@ -95,50 +96,72 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUserState] = useState<UserData | null>(null);
-  const [wallet, setWalletState] = useState<WalletData | null>(null);
+  const [user, setUserState] = useState<UserData | null>(() => {
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        try {
+          return JSON.parse(storedUser);
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+        }
+      }
+    }
+    return null;
+  });
+
+  const [wallet, setWalletState] = useState<WalletData | null>(() => {
+    if (typeof window !== "undefined") {
+      const storedWallet = localStorage.getItem("wallet");
+      if (storedWallet) {
+        try {
+          return JSON.parse(storedWallet);
+        } catch (error) {
+          console.error("Error parsing wallet data:", error);
+        }
+      }
+    }
+    return null;
+  });
+
   const [verificationStatus, setVerificationStatusState] =
-    useState<VerificationStatus | null>(null);
-
-  useEffect(() => {
-    // Load user data from localStorage on mount
-    const storedUser = localStorage.getItem("user");
-    const storedWallet = localStorage.getItem("wallet");
-    const storedVerification = localStorage.getItem("verificationStatus");
-
-    if (storedUser) {
-      try {
-        setUserState(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Error parsing user data:", error);
+    useState<VerificationStatus | null>(() => {
+      if (typeof window !== "undefined") {
+        const storedVerification = localStorage.getItem("verificationStatus");
+        if (storedVerification) {
+          try {
+            return JSON.parse(storedVerification);
+          } catch (error) {
+            console.error("Error parsing verification data:", error);
+          }
+        }
       }
-    }
+      return null;
+    });
 
-    if (storedWallet) {
-      try {
-        setWalletState(JSON.parse(storedWallet));
-      } catch (error) {
-        console.error("Error parsing wallet data:", error);
-      }
+  const [hasPin, setHasPin] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("hasPin");
+      return stored ? stored === "true" : false;
     }
+    return false;
+  });
 
-    if (storedVerification) {
-      try {
-        setVerificationStatusState(JSON.parse(storedVerification));
-      } catch (error) {
-        console.error("Error parsing verification data:", error);
-      }
-    }
-  }, []);
+  const [isLoadingWallet, setIsLoadingWallet] = useState(false);
+  const [walletError, setWalletError] = useState<string | null>(null);
 
   const setUser = (userData: UserData | null) => {
     setUserState(userData);
     if (userData) {
       localStorage.setItem("user", JSON.stringify(userData));
       localStorage.setItem("userStatus", userData.status);
+      localStorage.setItem("hasPin", String(!!userData.pin));
+      setHasPin(!!userData.pin);
     } else {
       localStorage.removeItem("user");
       localStorage.removeItem("userStatus");
+      localStorage.removeItem("hasPin");
+      setHasPin(false);
     }
   };
 
@@ -162,7 +185,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const setUserAndWallet = (
     userData: UserData | null,
-    walletData: WalletData | null
+    walletData: WalletData | null,
   ) => {
     setUser(userData);
     setWallet(walletData);
@@ -171,12 +194,64 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const setAllUserData = (
     userData: UserData | null,
     walletData: WalletData | null,
-    verification: VerificationStatus | null
+    verification: VerificationStatus | null,
   ) => {
     setUser(userData);
     setWallet(walletData);
     setVerificationStatus(verification);
   };
+
+  // Fetch wallet from API endpoint
+  const fetchWallet = async () => {
+    setIsLoadingWallet(true);
+    setWalletError(null);
+
+    try {
+      const token = 
+        localStorage.getItem("accessToken") || 
+        localStorage.getItem("authToken");
+      
+      if (!token) {
+        setWalletError("No authentication token found");
+        setIsLoadingWallet(false);
+        return;
+      }
+
+      const response = await fetch("https://api.vendcliq.com/api/v1/wallet", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.status === "success" && data.data) {
+        const formattedWalletData: WalletData = {
+          walletId: data.data.walletId,
+          balance: data.data.balance,
+          currency: data.data.currency,
+          accountName: data.data.accountName,
+          accountNumbers: data.data.accountNumbers || {},
+          createdAt: data.data.lastUpdated || new Date().toISOString(),
+          updatedAt: data.data.lastUpdated || new Date().toISOString(),
+        };
+
+        setWallet(formattedWalletData);
+      } else {
+        setWalletError(data.msg || "Failed to fetch wallet");
+      }
+    } catch (error: any) {
+      console.error("Wallet fetch error:", error);
+      setWalletError(error.message || "Failed to fetch wallet");
+    } finally {
+      setIsLoadingWallet(false);
+    }
+  };
+
+  // Alias for better semantics
+  const refreshWallet = fetchWallet;
 
   const isUserPending = user?.status === "PENDING";
 
@@ -196,12 +271,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
 
     let completed = 0;
-    const total = 2; // Only BVN and Documents
+    const total = 2;
 
-    // Check BVN
     if (verificationStatus.bvn.isVerified) completed++;
-
-    // Check if any document is submitted
     if (verificationStatus.documents.hasAnyDocument) completed++;
 
     const percentage = Math.round((completed / total) * 100);
@@ -213,10 +285,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUserState(null);
     setWalletState(null);
     setVerificationStatusState(null);
+    setHasPin(false);
+    setIsLoadingWallet(false);
+    setWalletError(null);
     localStorage.removeItem("user");
     localStorage.removeItem("wallet");
     localStorage.removeItem("userStatus");
     localStorage.removeItem("verificationStatus");
+    localStorage.removeItem("hasPin");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("authToken");
   };
@@ -227,11 +303,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
         user,
         wallet,
         verificationStatus,
+        hasPin,
+        isLoadingWallet,
+        walletError,
         setUser,
         setWallet,
         setVerificationStatus,
         setUserAndWallet,
         setAllUserData,
+        fetchWallet,
+        refreshWallet,
         isUserPending,
         getUserFullName,
         getWalletBalance,
@@ -252,15 +333,13 @@ export function useUser() {
   return context;
 }
 
-// Helper function to extract verification status from API response
 export function extractVerificationStatus(
-  businessData: any
+  businessData: any,
 ): VerificationStatus {
   const documents = businessData?.documents || {};
   const bvn = businessData?.bvn;
   const address = businessData?.address;
 
-  // Check if any document exists (check for both image URL and ID number)
   const hasAnyDocument =
     !!(documents.ninImage || documents.ninId) ||
     !!(documents.votersCardImage || documents.votersCardId) ||

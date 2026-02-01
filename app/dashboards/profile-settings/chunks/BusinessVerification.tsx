@@ -84,7 +84,7 @@ const BusinessVerification = () => {
               <div className="flex items-center  rounded-full px-2 py-1 gap-2 bg-[#FFF8E9]">
                 <span className="w-2 h-2 bg-[#BE8C12] rounded-full"></span>
                 <span className="text-[12px] text-[#BE8C12] font-dm-sans font-bold ">
-                  Completed
+                  pending
                 </span>
               </div>
             )}

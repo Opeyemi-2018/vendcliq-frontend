@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 type PaymentType = "TRANSFER" | "CASH" | "POS";
 
@@ -39,6 +40,31 @@ interface TransferDetails {
   paymentReference?: string;
   expiresAt?: string;
   expectedAmount?: number;
+}
+
+interface InvoicePreviewItem {
+  id: string;
+  stock_id: string;
+  product_id: number;
+  quantity: number;
+  cost: number;
+  discounted_amount: number;
+  sub_total: number;
+  mode: "PACKS" | "PIECES";
+  attributes?: {
+    latitude?: number;
+    longitude?: number;
+    address?: string;
+  };
+}
+
+interface InvoicePreview {
+  invoiceId: string;
+  code: string;
+  total: number;
+  status: string;
+  storeAddress: string;
+  items: InvoicePreviewItem[];
 }
 
 function PayInvoiceContent() {
@@ -67,7 +93,25 @@ function PayInvoiceContent() {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Don't show toast immediately - return early if no invoiceId
+  const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (invoiceId) {
+      const saved = localStorage.getItem(`invoice-preview-${invoiceId}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved) as InvoicePreview;
+          setInvoicePreview(parsed);
+        } catch (err) {
+          console.error("Failed to parse invoice preview:", err);
+          toast.error("Failed to load invoice details");
+        }
+      }
+    }
+  }, [invoiceId]);
+
   if (!invoiceId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -82,9 +126,27 @@ function PayInvoiceContent() {
     );
   }
 
-  const handlePayment = async () => {
-    if (!invoiceId) return;
+  if (!invoicePreview) {
+    return (
+      <div className="min-h-screen flex items-center justify-center flex-col gap-4">
+        <ClipLoader color="#0A6DC0" size={40} />
+        <p className="text-gray-600">Loading invoice details...</p>
+      </div>
+    );
+  }
 
+  // Calculations from real response data
+  const totalQuantity = invoicePreview.items.reduce(
+    (sum, item) => sum + item.quantity,
+    0,
+  );
+  const totalDiscount = invoicePreview.items.reduce(
+    (sum, item) => sum + item.discounted_amount,
+    0,
+  );
+  const grandTotal = invoicePreview.total;
+
+  const handlePayment = async () => {
     setLoading(true);
 
     const payload: any = {
@@ -119,7 +181,7 @@ function PayInvoiceContent() {
             setShowTransferModal(true);
           } else {
             toast.info(
-              "Transfer initialized! Check payment history for bank details."
+              "Transfer initialized! Check payment history for bank details.",
             );
             setShowSuccessModal(true);
           }
@@ -166,54 +228,49 @@ function PayInvoiceContent() {
           Mode of Payment
         </h1>
         <p className="font-dm-sans text-[#9E9A9A] font-medium">
-          How would you like to pay for this invoice?
+          How would you like to pay for invoice {invoicePreview.code}?
         </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8 mt-8">
+      <div className="flex flex-col lg:flex-row gap-4 md:gap-8 mt-4 md:mt-8">
         <Card className="md:p-6 lg:w-[35%] bg-white">
           <h1 className="font-semibold font-clash mb-4">Mode of Payment</h1>
           <Separator className="mb-6 hidden md:block" />
 
-          {/* Mobile Tabs - Exact same style as PayUtility */}
-          <div className="md:hidden flex gap-2  bg-[#ECECF080] p-1 rounded-lg">
+          <div className="lg:hidden flex gap-2 bg-[#ECECF080] p-1 rounded-lg">
             <button
               onClick={() => setPaymentType("TRANSFER")}
-              className={`
-        flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all
-        ${
-          paymentType === "TRANSFER"
-            ? "bg-[#0A6DC0] text-white"
-            : "text-[#9E9A9A]"
-        }
-      `}
+              className={`flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all ${
+                paymentType === "TRANSFER"
+                  ? "bg-[#0A6DC0] text-white"
+                  : "text-[#9E9A9A]"
+              }`}
             >
               Transfer
             </button>
-
             <button
               onClick={() => setPaymentType("CASH")}
-              className={`
-        flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all
-        ${paymentType === "CASH" ? "bg-[#0A6DC0] text-white" : "text-[#9E9A9A]"}
-      `}
+              className={`flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all ${
+                paymentType === "CASH"
+                  ? "bg-[#0A6DC0] text-white"
+                  : "text-[#9E9A9A]"
+              }`}
             >
               Cash
             </button>
-
             <button
               onClick={() => setPaymentType("POS")}
-              className={`
-        flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all
-        ${paymentType === "POS" ? "bg-[#0A6DC0] text-white" : "text-[#9E9A9A]"}
-      `}
+              className={`flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all ${
+                paymentType === "POS"
+                  ? "bg-[#0A6DC0] text-white"
+                  : "text-[#9E9A9A]"
+              }`}
             >
               POS
             </button>
           </div>
 
-          {/* Desktop Cards - YOUR ORIGINAL CODE, UNCHANGED */}
-          <div className="hidden md:block space-y-4">
+          <div className="hidden lg:block space-y-4">
             <div
               onClick={() => setPaymentType("TRANSFER")}
               className={`p-4 rounded-lg border cursor-pointer transition mb-4 ${
@@ -251,12 +308,96 @@ function PayInvoiceContent() {
 
         <Card className="p-3 md:p-6 lg:w-[65%] bg-white">
           <h1 className="font-semibold font-clash mb-2">Invoice Summary</h1>
-          <Separator className="mb-4" />
-          <p className="font-dm-sans text-[#9E9A9A] mb-6">
-            Invoice ID: {invoiceId}
+          <Separator className="" />
+          <p className="text-[#9E9A9A] font-medium font-dm-sans">
+            Here is all about the products you want to sell
           </p>
 
-          <div className="mb-6">
+          <div className="space-y-4 my-3 flex justify-between items-center">
+            <div className="text-[#2F2F2F] md:font-semibold md:text-[25px] font-clash">
+              <p className="">{invoicePreview.code}</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Label className="text-sm md:text-[16px] font-medium text-[#9E9A9A]">
+                Status
+              </Label>
+              <p className="text-sm text-yellow-500 bg-[#f0eee9] px-2 rounded-full capitalize">
+                {invoicePreview.status.toLowerCase()}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <Label className=" font-bold font-dm-sans text-[#2F2F2F]">
+              Store Address
+            </Label>
+            <p className="font-regular font-dm-sans">
+              {invoicePreview.storeAddress}
+            </p>
+          </div>
+
+          {invoicePreview.items.length > 0 ? (
+            <div className="space-y-4 mb-6">
+              {invoicePreview.items.map((item, idx) => (
+                <div
+                  key={item.id || idx}
+                  className="flex gap-3 border-b pb-3 last:border-b-0 last:pb-0"
+                >
+                
+
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">
+                      Product {item.product_id}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {item.quantity} × {item.mode.toLowerCase()}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Cost: ₦{item.cost.toLocaleString()}
+                      {item.discounted_amount > 0 && (
+                        <span className="ml-2 text-green-600">
+                          -₦{item.discounted_amount.toLocaleString()}
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-sm font-medium">
+                      Subtotal: ₦{item.sub_total.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 mb-6">
+              No items in this invoice
+            </p>
+          )}
+
+          <div className="space-y-3 text-sm border-t pt-4">
+            <div className="flex justify-between font-medium">
+              <span>Total Quantity:</span>
+              <span>{totalQuantity}</span>
+            </div>
+
+            <div className="flex justify-between text-green-600 font-medium">
+              <span>Total Discount:</span>
+              <span>
+                {totalDiscount > 0
+                  ? `-₦${totalDiscount.toLocaleString()}`
+                  : "₦0"}
+              </span>
+            </div>
+
+            <div className="flex justify-between font-bold text-base border-t pt-3 mt-2">
+              <span>Total Amount:</span>
+              <span className="text-[#0A6DC0]">
+                ₦{grandTotal.toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          <div className="mb-6 mt-6">
             <Label htmlFor="narration">Narration (optional)</Label>
             <Input
               id="narration"
@@ -264,7 +405,7 @@ function PayInvoiceContent() {
               onChange={(e) =>
                 setFormData({ ...formData, narration: e.target.value })
               }
-              placeholder="e.g. Payment for invoice #INV-123"
+              placeholder="e.g. Payment for invoice"
               className="mt-2 py-6"
             />
           </div>
@@ -298,8 +439,8 @@ function PayInvoiceContent() {
                 paymentType === "TRANSFER"
                   ? "Transfer"
                   : paymentType === "CASH"
-                  ? "Cash"
-                  : "POS"
+                    ? "Cash"
+                    : "POS"
               }`
             )}
           </Button>
@@ -323,18 +464,17 @@ function PayInvoiceContent() {
               <div className="bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg p-2 flex justify-between items-start">
                 <div>
                   <p className="text-gray-600 text-sm">Account Number</p>
-                  <p className=" font-medium">
+                  <p className="font-medium">
                     {transferDetails.accountNumber || "N/A"}
                   </p>
                 </div>
-
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() =>
                     copyToClipboard(
                       transferDetails.accountNumber || "",
-                      "accountNumber"
+                      "accountNumber",
                     )
                   }
                   className="text-[#0A6DC0] hover:text-blue-700 hover:bg-blue-50"
@@ -360,7 +500,7 @@ function PayInvoiceContent() {
                   onClick={() =>
                     copyToClipboard(
                       transferDetails.accountName || "",
-                      "accountName"
+                      "accountName",
                     )
                   }
                   className="text-[#0A6DC0] hover:text-blue-700 hover:bg-blue-50"
@@ -372,20 +512,23 @@ function PayInvoiceContent() {
                   )}
                 </Button>
               </div>
+
               <div className="bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg p-2">
                 <p className="text-gray-600 text-sm">Bank</p>
                 <p className="font-medium">
                   {transferDetails.bankName || "N/A"}
                 </p>
               </div>
+
               {transferDetails.expectedAmount && (
-                <div className="bg-[#F7FAFF] border border-[#0A6DC0] rounded-lg p-2  text-center">
+                <div className="bg-[#F7FAFF] border border-[#0A6DC0] rounded-lg p-2 text-center">
                   <p className="text-gray-600 text-sm">Amount</p>
-                  <p className=" font-bold text-[#0A6DC0]">
+                  <p className="font-bold text-[#0A6DC0]">
                     ₦{transferDetails.expectedAmount.toLocaleString()}
                   </p>
                 </div>
               )}
+
               {transferDetails.expiresAt && (
                 <div className="bg-[#FFF4E6] border-[#FFB020] border rounded-lg p-2 text-[#FFB020] text-sm pt-2">
                   Expires:{" "}
@@ -403,14 +546,13 @@ function PayInvoiceContent() {
                       {transferDetails.paymentReference}
                     </p>
                   </div>
-
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() =>
                       copyToClipboard(
                         transferDetails.paymentReference || "",
-                        "paymentReference"
+                        "paymentReference",
                       )
                     }
                     className="text-[#0A6DC0] hover:text-blue-700 hover:bg-blue-50"
@@ -440,7 +582,6 @@ function PayInvoiceContent() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Success Modal */}
       <AlertDialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
         <AlertDialogContent>
           <AlertDialogHeader>

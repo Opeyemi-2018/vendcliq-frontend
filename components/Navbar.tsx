@@ -25,10 +25,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { Separator } from "@/components/ui/separator";
 import { clearAuthTokens } from "@/lib/utils/api";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const Navbar = () => {
   const { user, isUserPending } = useUser();
-  // !
+  const router = useRouter();
 
   return (
     <nav className="p-4 flex items-center justify-between sticky top-0 border-b-2 border-[#0000001A] z-10 bg-white ">
@@ -67,9 +68,11 @@ const Navbar = () => {
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent sideOffset={10} align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push("/dashboards/profile-settings")}
+            >
               <User className="h-[1.2rem] w-[1.2rem] mr-2" /> Profile
             </DropdownMenuItem>
             {/* <DropdownMenuItem>

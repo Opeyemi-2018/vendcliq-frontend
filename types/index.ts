@@ -278,11 +278,7 @@ export interface ChangePasswordPayload {
   confirmPassword: string;
 }
 
-export interface PinPayload {
-  otp?: string;
-  pin: string;
-  confirmPin: string;
-}
+
 
 export interface UpdatePinPayload {
   currentPin: string;

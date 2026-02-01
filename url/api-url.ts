@@ -22,8 +22,13 @@ const BUY_AIRTIME = "/client/v2/payments/airtime";
 const BUY_DATA = "/client/v2/payments/data";
 const CREATE_WALLET = "/client/v2/wallets/virtual-accounts/create";
 const ADD_SHOP_ATTENDANT = "/client/v2/attendants";
+const CREATE_PIN = "/client/v2/auth/pin";
+const REQUEST_PIN_TOKEN = "/client/v2/auth/request-pin-token";
 const UPDATE_TRANSFER_PIN = "/client/v2/auth/pin-update";
 const CHANGE_PASSWORD = "/client/v2/change-password";
+ const CREATE_BENEFICIARY = "/client/v2/wallet/beneficiaries";
+  const GET_BENEFICIARIES = "/client/v2/wallet/beneficiaries";
+
 
 // v1 endpoint
 const BUSINESS_INFORMATION_SETUP_STEP_ONE =
@@ -41,9 +46,8 @@ const VERIFY_BANK_ACCOUNT =
   "/client/v1/bank-accounts/banks/verify-bank-account";
 const RESEND_EMAIL_OTP = "/client/v1/auth/resend-otp";
 // const CHANGE_PASSWORD = "/client/v1/auth/change-password";
-const CREATE_PIN = "/client/v1/auth/pin";
 // const UPDATE_PIN = "/client/v1/auth/pin-update";
-const REQUEST_PIN_TOKEN = "/client/v1/auth/request-pin-token";
+// const REQUEST_PIN_TOKEN = "/client/v1/auth/request-pin-token";
 const GET_TENURES = "/client/v1/loans/list/tenures";
 const REPAYMENT_PATTERN = (tenure: string) =>
   `/client/v1/loans/list/repayment-pattern?tenure=${tenure}`;
@@ -83,14 +87,14 @@ const PAY_SUB = "inventory/subscriptions";
 const GET_PURCHASED_INVOICES = "inventory/invoices/purchases";
 const CREATE_PURCHASE = "inventory/invoices/purchases";
 const USER_STOCKS = "inventory/stocks/user/stocks";
-
 const GET_SUPPLIERS = "inventory/suppliers";
 const GET_PURCHASED_INVOICE_BY_ID = (invoiceId: string) =>
   `inventory/invoices/${invoiceId}`;
 const GET_ITEM_TRACKING_STATUS = (itemId: string) => `/bids/track/${itemId}`;
-const UPDATE_STORE_SETTINGS = (storeId: string) => `inventory/stores/${storeId}/settings`;
- const UPDATE_STORE = (storeId: string) => `inventory/stores/${storeId}`;
-
+const UPDATE_STORE_SETTINGS = (storeId: string) =>
+  `inventory/stores/${storeId}/settings`;
+const UPDATE_STORE = (storeId: string) => `inventory/stores/${storeId}`;
+const GET_SUBSCRIPTION_ME = "inventory/subscriptions/me";
 
 export {
   // v2 endpoint
@@ -140,7 +144,11 @@ export {
   GET_ITEM_TRACKING_STATUS,
   UPDATE_STORE_SETTINGS,
   UPDATE_STORE,
-
+  CREATE_PIN,
+  REQUEST_PIN_TOKEN,
+  GET_SUBSCRIPTION_ME,
+  CREATE_BENEFICIARY,
+  GET_BENEFICIARIES,
 
   // v1 endpoint
   GET_PROFILE,
@@ -152,9 +160,9 @@ export {
   LIST_BANKS,
   VERIFY_BANK_ACCOUNT,
   RESEND_EMAIL_OTP,
-  CREATE_PIN,
+  // CREATE_PIN,
   // UPDATE_PIN,
-  REQUEST_PIN_TOKEN,
+  // REQUEST_PIN_TOKEN,
   GET_TENURES,
   REPAYMENT_PATTERN,
   POST_REPAYMENT_PATTERN,

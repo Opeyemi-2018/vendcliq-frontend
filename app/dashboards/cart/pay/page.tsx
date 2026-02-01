@@ -4,7 +4,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Check, Copy, Eye, EyeOff } from "lucide-react";
+import { Check, Copy, Eye, EyeOff, X } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
@@ -53,6 +53,9 @@ const PayPage = () => {
   const [transactionPin, setTransactionPin] = useState("");
   const [narration, setNarration] = useState("");
   const [showBalance, setShowBalance] = useState(true);
+
+  // PIN Alert state
+  const [showPinAlert, setShowPinAlert] = useState(false);
 
   // Dialog states
   const [showWalletSuccess, setShowWalletSuccess] = useState(false);
@@ -114,6 +117,23 @@ const PayPage = () => {
     }
   };
 
+  const handleProceedClick = () => {
+    if (paymentMethod === "WALLET") {
+      setShowPinAlert(true);
+      // Focus first PIN input after a short delay
+      setTimeout(() => {
+        pinRefs.current[0]?.focus();
+      }, 100);
+    } else {
+      handlePay();
+    }
+  };
+
+  const handleClosePinAlert = () => {
+    setShowPinAlert(false);
+    setTransactionPin("");
+  };
+
   const handlePay = async () => {
     if (!checkoutData) return;
 
@@ -138,6 +158,7 @@ const PayPage = () => {
 
       if (response.statusCode === 200 && response.data) {
         if (paymentMethod === "WALLET") {
+          setShowPinAlert(false);
           setShowWalletSuccess(true);
           localStorage.removeItem("checkoutData");
         } else if (paymentMethod === "TRANSFER") {
@@ -167,7 +188,7 @@ const PayPage = () => {
 
   const handleTransferSent = () => {
     setShowTransferDialog(false);
-    toast.success("Thank you! We’ll confirm your payment shortly.");
+    toast.success("Thank you! We'll confirm your payment shortly.");
     localStorage.removeItem("checkoutData");
     router.push("/dashboards/market-place");
   };
@@ -189,14 +210,6 @@ const PayPage = () => {
 
   return (
     <div className="">
-      {/* <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
-      >
-        <ArrowLeft size={20} />
-        <span>Back to Cart</span>
-      </button> */}
-
       <div>
         <h1 className="font-semibold font-clash text-[20px] md:text-[25px]">
           Mode of Payment
@@ -206,7 +219,7 @@ const PayPage = () => {
         </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row  gap-8 mt-8">
+      <div className="flex flex-col lg:flex-row gap-2 md:gap-8 mt-3 md:mt-8">
         <div className="block lg:hidden flex gap-2  bg-[#ECECF080] p-1 rounded-lg">
           <button
             onClick={() => setPaymentMethod("WALLET")}
@@ -236,7 +249,7 @@ const PayPage = () => {
           </button>
         </div>
         <div className=" md:p-6 lg:border border-[#E4E4E4] rounded-lg h-full lg:w-[35%] bg-white hidden lg:block">
-          {/* Desktop Cards - YOUR ORIGINAL CODE, UNTOUCHED */}
+          {/* Desktop Cards */}
           <div className="hidden lg:block space-y-4">
             <div
               onClick={() => setPaymentMethod("WALLET")}
@@ -265,16 +278,16 @@ const PayPage = () => {
         {/* Right: Summary & Form */}
         <div className=" md:p-6 lg:border border-[#E4E4E4] rounded-lg  lg:w-[65%] bg-white">
           <h1 className="font-semibold font-clash mb-2">Summary</h1>
-          <Separator className="mb-4" />
-          <p className="font-dm-sans text-[#9E9A9A] mb-6">
+          <Separator className="md:mb-4" />
+          <p className="font-dm-sans text-[#9E9A9A] mb-2 md:mb-6">
             Here is your order summary
           </p>
 
           {/* Wallet Balance */}
           {paymentMethod === "WALLET" && (
-            <div className="mb-8">
+            <div className="mb-3 md:mb-8">
               <p className="text-[#2F2F2F] font-dm-sans mb-3">Wallet Balance</p>
-              <div className="bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat h-[120px] rounded-2xl p-6 flex items-center">
+              <div className="bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat h-[90px] md:h-[120px] rounded-2xl p-6 flex items-center">
                 <div className="text-white">
                   <div className="flex items-center gap-4 mb-2">
                     <h3 className="font-medium">Wallet Balance</h3>
@@ -293,7 +306,7 @@ const PayPage = () => {
           )}
 
           {/* Order Summary */}
-          <div className="space-y-4 mb-2">
+          <div className="space-y-2 md:space-y-4 mb-2">
             <div className="flex justify-between">
               <span>Items</span>
               <span className="">{checkoutData.itemsCount}</span>
@@ -325,67 +338,16 @@ const PayPage = () => {
             />
           </div>
 
-          {/* Custom PIN Input for Wallet */}
-          {paymentMethod === "WALLET" && (
-            <div className="mb-8">
-              <Label>Transaction PIN</Label>
-              <div className="flex gap-4 mb-4 mt-4">
-                {[0, 1, 2, 3].map((index) => (
-                  <div key={index} className="relative">
-                    <div
-                      className={`w-16 h-16 border-2 rounded-xl flex items-center justify-center text-[16px] font-medium transition-all relative ${
-                        transactionPin?.[index]
-                          ? "border-[#0A6DC0] bg-[#0A6DC01A]"
-                          : "border-[#D8D8D866] bg-[#F9F9F9]"
-                      } ${
-                        transactionPin?.length === index
-                          ? "!border-[#0A6DC0] !bg-white"
-                          : ""
-                      }`}
-                    >
-                      {transactionPin?.[index] || ""}
-                      {transactionPin?.length === index &&
-                        !transactionPin?.[index] && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-[2px] h-4 bg-[#0A6DC0] animate-blink" />
-                          </div>
-                        )}
-                    </div>
-
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={transactionPin?.[index] || ""}
-                      onChange={(e) => handlePinChange(index, e.target.value)}
-                      onKeyDown={(e) => handlePinKeyDown(e, index)}
-                      onFocus={(e) => e.target.select()}
-                      ref={(el) => {
-                        pinRefs.current[index] = el;
-                      }}
-                      id={`pin-${index}`}
-                      className="absolute inset-0 opacity-0 cursor-default"
-                      autoFocus={index === 0 && paymentMethod === "WALLET"}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Pay Button */}
+          {/* Proceed Button */}
           <Button
-            onClick={handlePay}
-            disabled={
-              paying ||
-              (paymentMethod === "WALLET" && transactionPin.length !== 4)
-            }
+            onClick={handleProceedClick}
+            disabled={paying}
             className="w-full py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#085a9e] disabled:opacity-70"
           >
             {paying
               ? "Processing..."
               : paymentMethod === "WALLET"
-                ? `Pay ₦${checkoutData.total.toLocaleString()} with Wallet`
+                ? "Proceed to Payment"
                 : "Get Transfer Details"}
           </Button>
         </div>
@@ -415,6 +377,86 @@ const PayPage = () => {
               Continue Shopping
             </AlertDialogAction>
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* PIN Entry Modal */}
+      <AlertDialog open={showPinAlert} onOpenChange={setShowPinAlert}>
+        <AlertDialogContent className="sm:max-w-[480px] bg-white">
+          <button
+            onClick={handleClosePinAlert}
+            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:pointer-events-none"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </button>
+
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] text-center">
+              Enter Transaction PIN
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[14px] text-[#9E9A9A] text-center">
+              Please enter your 4-digit transaction PIN to complete the payment
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="py-6">
+            <div className="flex gap-4 justify-center mb-6">
+              {[0, 1, 2, 3].map((index) => (
+                <div key={index} className="relative">
+                  <div
+                    className={`w-16 h-16 border-2 rounded-xl flex items-center justify-center text-[16px] font-medium transition-all relative ${
+                      transactionPin?.[index]
+                        ? "border-[#0A6DC0] bg-[#0A6DC01A]"
+                        : "border-[#D8D8D866] bg-[#F9F9F9]"
+                    } ${
+                      transactionPin?.length === index
+                        ? "!border-[#0A6DC0] !bg-white"
+                        : ""
+                    }`}
+                  >
+                    {transactionPin?.[index] || ""}
+                    {transactionPin?.length === index &&
+                      !transactionPin?.[index] && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-[2px] h-4 bg-[#0A6DC0] animate-blink" />
+                        </div>
+                      )}
+                  </div>
+
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={transactionPin?.[index] || ""}
+                    onChange={(e) => handlePinChange(index, e.target.value)}
+                    onKeyDown={(e) => handlePinKeyDown(e, index)}
+                    onFocus={(e) => e.target.select()}
+                    ref={(el) => {
+                      pinRefs.current[index] = el;
+                    }}
+                    id={`pin-${index}`}
+                    className="absolute inset-0 opacity-0 cursor-default"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <Button
+              onClick={handlePay}
+              disabled={paying || transactionPin.length !== 4}
+              className="w-full py-3 bg-[#0A6DC0] hover:bg-[#085a9e] disabled:opacity-70"
+            >
+              {paying ? (
+                <span className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Processing...
+                </span>
+              ) : (
+                `Confirm Payment - ₦${checkoutData.total.toLocaleString()}`
+              )}
+            </Button>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
 

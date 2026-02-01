@@ -7,28 +7,32 @@ import Image from "next/image";
 import VendCliqTransfer from "./chunks/VendCliqTransfer";
 import OtherTransfer from "./chunks/OtherTransfer";
 import { Landmark } from "lucide-react";
+import CreatePinPrompt from "@/components/SetPinModal";
 
 const SendMoney = () => {
   const [selectTransfer, setSelectTransfer] = useState<"vendcliq" | "other">(
-    "vendcliq"
+    "vendcliq",
   );
 
   return (
     <div className="min-h-screen">
-      <div>
-        <h1 className="text-[#2F2F2F] font-semibold font-clash text-[20px] lg:text-[25px]">
-          Send Money
-        </h1>
-        <p className="text-[#9E9A9A] font-dm-sans text-[16px] font-medium">
-          send money to other accounts
-        </p>
+      <div className="flex justify-between ">
+        <div>
+          <h1 className="text-[#2F2F2F] font-semibold font-clash text-[20px] lg:text-[25px]">
+            Send Money
+          </h1>
+          <p className="text-[#9E9A9A] font-dm-sans text-[16px] font-medium">
+            send money to other accounts
+          </p>
+        </div>
+       <CreatePinPrompt />
       </div>
 
       <div className="md:mt-5">
         {/* Mobile Tabs + Desktop Sidebar */}
         <div className="flex flex-col lg:flex-row gap-2 lg:gap-4">
           {/* Selector Panel */}
-          <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg w-full lg:w-[35%] bg-white ">
+          <div className="py-6 md:p-6 h-full lg:border border-[#E4E4E4] rounded-lg w-full lg:w-[35%] bg-white ">
             <h2 className="text-[16px] text-[#2F2F2F] font-clash font-semibold mb-2">
               Transfer Destination
             </h2>

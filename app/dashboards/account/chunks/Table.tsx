@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { handleGetTransactions } from "@/lib/utils/api/apiHelper";
 import { TransactionHistoryResponse } from "@/types/transactions";
 import { useRouter } from "next/navigation";
@@ -81,6 +81,7 @@ const Table = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
+
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
@@ -110,6 +111,53 @@ const Table = () => {
       fetchTransactions();
     }
   }, [activeTab, currentPage]);
+
+  // Calculate transaction statistics for last 7 days
+  const transactionStats = useMemo(() => {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Filter transactions from last 7 days
+    const last7DaysTransactions = transactions.filter((transaction) => {
+      const transactionDate = new Date(transaction.createdAt);
+      return transactionDate >= sevenDaysAgo && transactionDate <= now;
+    });
+
+    let totalTransactionValue = 0;
+    let collectionsValue = 0;
+    let transferValue = 0;
+
+    last7DaysTransactions.forEach((transaction) => {
+      const amount = Math.abs(parseFloat(transaction.amount));
+
+      // Add to total transaction value
+      totalTransactionValue += amount;
+
+      // Collections (CREDIT transactions - money coming in)
+      if (transaction.transactionType === "CREDIT") {
+        collectionsValue += amount;
+      }
+
+      // Transfers (TRANSFER transactions - money going out)
+      if (transaction.transactionType === "TRANSFER") {
+        transferValue += amount;
+      }
+    });
+
+    return {
+      totalTransactionValue,
+      collectionsValue,
+      transferValue,
+    };
+  }, [transactions]);
+
+  // Format currency helper
+  const formatCurrency = (amount: number) => {
+    return `NGN ${amount.toLocaleString("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
 
   return (
     <div>
@@ -292,7 +340,7 @@ const Table = () => {
                   </p>
                 </div>
                 <p className="text-[14px] lg:text-[16px] font-clash text-[#292826] lg:font-semibold">
-                  NGN 300,000.00
+                  {formatCurrency(transactionStats.totalTransactionValue)}
                 </p>
               </div>
               <div className="mt-4 border border-[#E4E4E4] px-4 lg:px-7 py-5  bg-white rounded-2xl">
@@ -303,7 +351,7 @@ const Table = () => {
                   </p>
                 </div>
                 <p className="text-[14px] lg:text-[16px] font-clash text-[#292826] lg:font-semibold">
-                  NGN 300,000.00
+                  {formatCurrency(transactionStats.collectionsValue)}
                 </p>
               </div>
               <div className="mt-4 border border-[#E4E4E4] px-4 lg:px-7 py-5  bg-white rounded-2xl">
@@ -314,7 +362,7 @@ const Table = () => {
                   </p>
                 </div>
                 <p className="text-[14px] lg:text-[16px] font-clash text-[#292826] lg:font-semibold">
-                  NGN 300,000.00
+                  {formatCurrency(transactionStats.transferValue)}
                 </p>
               </div>
             </div>
@@ -333,25 +381,25 @@ const Table = () => {
           <table className="w-full my-6">
             <thead className="">
               <tr>
-                <th className="text-left px-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                <th className="text-left px-4 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   ID
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   Amount
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   Maturity Amount
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   Date
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   Due Date
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   Status
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                <th className="text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                   More
                 </th>
               </tr>
@@ -365,19 +413,19 @@ const Table = () => {
                   <td className="text-left p-4 py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                     {loan.id}
                   </td>
-                  <td className="text-left py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <td className="hidden md:table-cell text-left py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                     {loan.amount}
                   </td>
-                  <td className="text-left py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <td className="hidden md:table-cell text-left py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                     {loan.MaturityAmount}
                   </td>
-                  <td className="text-left py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <td className="hidden md:table-cell text-left py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                     {loan.date}
                   </td>
-                  <td className="text-left py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <td className="hidden md:table-cell text-left py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
                     {loan.dueDate}
                   </td>
-                  <td className="text-left  ">
+                  <td className="hidden md:table-cell text-left  ">
                     <Button className="bg-[#E7F4EB] hover:bg-[#E7F4EB] md:font-bold py-0 text-[#003909] text-[12px] rounded-full">
                       <span className="bg-[#00C53A] h-2 w-2 rounded-full"></span>{" "}
                       {loan.status}

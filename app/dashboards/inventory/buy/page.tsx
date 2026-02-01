@@ -10,16 +10,11 @@ import { Input } from "@/components/ui/Input";
 import { Separator } from "@/components/ui/separator";
 import { Supplier } from "@/types/supplier";
 import {
-  ChevronLeft,
   ChevronRight,
   Search,
   ShoppingCart,
   Truck,
-  Building,
   Phone,
-  Mail,
-  UserRound,
-  Wallet,
   MapPin,
   MoveLeft,
   Trash2,
@@ -186,8 +181,8 @@ const Buy = () => {
         } else {
           setStoreError(result.error || "Failed to load stores");
         }
-      } catch (err) {
-        setStoreError("Network error");
+      } catch (err: any) {
+        setStoreError(err);
       } finally {
         setIsLoadingStores(false);
       }
@@ -780,11 +775,11 @@ const Buy = () => {
             <Image src="/store.svg" alt="store" width={30} height={30} />
             <div>
               <p className="text-[#2F2F2F] font-medium">{selectedStore.name}</p>
-              <div className="flex items-center gap-2 text-[13px] hidden md:inline">
-                <p className="text-[#2F2F2F] font-medium">Inventory value: ₦</p>
-                <p className="text-[#9E9A9A] ">{selectedStore.stock_value}</p>
+              <div className="flex items-center gap-2 text-[13px] hidden md:flex">
+                <p className="text-[#2F2F2F] font-medium">Inventory value: </p>
+                <p className="text-[#9E9A9A] ">₦{selectedStore.stock_value}</p>
               </div>
-              <div className="flex items-center gap-2 text-[13px] hidden md:inline">
+              <div className="flex items-center gap-2 text-[13px] hidden md:flex">
                 <p className="text-[#2F2F2F] font-medium">Product Count:</p>
                 <p className="text-[#9E9A9A]">{selectedStore.stock_count}</p>
               </div>

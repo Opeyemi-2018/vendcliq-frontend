@@ -20,7 +20,7 @@ import {
   ResendEmailOtpResponse,
   ChangePasswordPayload,
   ApiResponse,
-  PinPayload,
+ 
   UpdatePinPayload,
   GetTenuresResponse,
   RepaymentPatternResponse,
@@ -80,7 +80,7 @@ import {
   CREATE_CART,
   PIN_VALIDATE,
   CREATE_LOAN,
-  CREATE_PIN,
+  // CREATE_PIN,
   UPDATE_TRANSFER_PIN,
   DASHBOARD,
   GET_ACCOUNT,
@@ -128,6 +128,10 @@ import {
   GET_ITEM_TRACKING_STATUS,
   UPDATE_STORE_SETTINGS,
   UPDATE_STORE,
+  CREATE_PIN,
+  GET_SUBSCRIPTION_ME,
+  CREATE_BENEFICIARY,
+  GET_BENEFICIARIES,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -135,6 +139,9 @@ import { CreateStoreFormData, CreateStoreResponse, StoreSettingsPayload, StoreSe
 import { CreateStockResponse, ProductsResponse } from "@/types/stock";
 import { TransactionHistoryResponse } from "@/types/transactions";
 import {
+  CreateBeneficiaryPayload,
+  CreateBeneficiaryResponse,
+  GetBeneficiariesResponse,
   OtherBankTransferPayload,
   OtherBankTransferResponse,
   PinValidatePayload,
@@ -170,7 +177,7 @@ import {
   BuyDataPayload,
   BuyDataResponse,
 } from "@/types/utilityBills";
-import { UpdatePinResponse } from "@/types/transferPin";
+import { PinPayload, UpdatePinResponse } from "@/types/transferPin";
 import { ChangePasswordResponse } from "@/types/passwordChange";
 import {
   CreateExpensePayload,
@@ -178,6 +185,7 @@ import {
   Expense,
 } from "@/types/expenses";
 import {
+  GetSubscriptionResponse,
   SubscriptionPaymentPayload,
   SubscriptionPaymentResponse,
 } from "@/types/plans";
@@ -478,6 +486,19 @@ export const handleOtherBankTransfer = async (
   );
 };
 
+export const handleCreateBeneficiary = async (
+  payload: CreateBeneficiaryPayload,
+): Promise<CreateBeneficiaryResponse> => {
+  return await poster<CreateBeneficiaryResponse, CreateBeneficiaryPayload>(
+    CREATE_BENEFICIARY,
+    payload,
+  );
+};
+
+export const handleGetBeneficiaries = async (): Promise<GetBeneficiariesResponse> => {
+  return await fetcher<GetBeneficiariesResponse>(GET_BENEFICIARIES);
+};
+
 export const handleBuyAirtime = async (
   payload: BuyAirtimePayload,
 ): Promise<BuyAirtimeResponse> => {
@@ -506,6 +527,12 @@ export const handleUpdateTransactionPin = async (
   );
 };
 
+export const handleCreatePin = async (
+  payload: PinPayload,
+): Promise<ApiResponse> => {
+  return await poster<ApiResponse, PinPayload>(CREATE_PIN, payload);
+};
+
 export const handleChangePassword = async (
   payload: ChangePasswordPayload,
 ): Promise<ChangePasswordResponse> => {
@@ -516,7 +543,9 @@ export const handleChangePassword = async (
 };
 
 
-
+export const handleRequestPinToken = async (): Promise<ApiResponse> => {
+  return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
+};
 
 export const handleResendEmailOtp = async (
   payload: ResendEmailOtpPayload,
@@ -531,9 +560,7 @@ export const handleListBanks = async (): Promise<ListBanksResponse> => {
   return await fetcher<ListBanksResponse>(LIST_BANKS);
 };
 
-// export const handleDashboard = async (): Promise<DashboardResponse> => {
-//   return await fetcher<DashboardResponse>(DASHBOARD);
-// };
+
 
 export const handleVerifyBankAccount = async (
   payload: VerifyBankAccountPayload,
@@ -546,17 +573,9 @@ export const handleVerifyBankAccount = async (
 
 
 
-export const handleCreatePin = async (
-  payload: PinPayload,
-): Promise<ApiResponse> => {
-  return await poster<ApiResponse, PinPayload>(CREATE_PIN, payload);
-};
-
-
-
-export const handleRequestPinToken = async (): Promise<ApiResponse> => {
-  return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
-};
+// export const handleRequestPinToken = async (): Promise<ApiResponse> => {
+//   return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
+// };
 
 export const handleResetPassword = async (
   payload: ResetPasswordPayload,
@@ -594,7 +613,6 @@ export const handleApiError = (
 
 // inventory api call
 
-// get product list
 export const handleGetProducts = async (): Promise<ProductsResponse> => {
   return await fetcher<ProductsResponse>(GET_PRODUCTS);
 };
@@ -687,7 +705,6 @@ export const handleGetExpenses = async (): Promise<any> => {
 };
 
 export const handleDeleteExpense = async (expenseId: string): Promise<any> => {
-  // Manually add endpoint as query parameter since interceptor might not handle DELETE
   return await axiosInstance.delete("", {
     params: {
       endpoint: DELETE_EXPENSE(expenseId),
@@ -702,7 +719,6 @@ export const handleUpdateAttendantPermissions = async (
   return await putter<AssignAttendantPermissionsResponse>(url, payload);
 };
 
-// Subscription Payment
 export const handlePaySubscription = async (
   payload: SubscriptionPaymentPayload,
 ): Promise<SubscriptionPaymentResponse> => {
@@ -761,5 +777,9 @@ export const handleUpdateStore = async (
 ): Promise<UpdateStoreResponse> => {
   const url = UPDATE_STORE(storeId);
   return await putter<UpdateStoreResponse, UpdateStorePayload>(url, payload);
+};
+
+export const handleGetMySubscription = async (): Promise<GetSubscriptionResponse> => {
+  return await fetcher<GetSubscriptionResponse>(GET_SUBSCRIPTION_ME);
 };
 

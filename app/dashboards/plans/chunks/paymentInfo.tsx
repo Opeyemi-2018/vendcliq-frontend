@@ -74,7 +74,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
     setPaying(true);
 
     const payload: SubscriptionPaymentPayload = {
-      planId: Number(plan.id), // ← fix type error: convert to number
+      planId: Number(plan.id), 
       billingType: isAnnual ? "yearly" : "monthly",
       multiplier: months,
       paymentType: paymentMethod,
@@ -94,7 +94,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
           setShowPinModal(false);
           setTransactionPin("");
           toast.success("Payment completed! Your plan is now active.");
-          router.push("/dashboards/subscription"); // redirect after success
+          router.push("/dashboards/payment-subscription"); 
         } else {
           const payData = response.data.paymentPayload;
 
@@ -102,7 +102,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
             accountNumber: payData.accountNumber || "N/A",
             accountName: payData.accountName || "N/A",
             bankName: payData.bankName || "N/A",
-            amount: totalAmount, // use calculated amount
+            amount: totalAmount, 
             reference: payData.paymentReference || "N/A",
             expiresAt: payData.expiresAt,
           });

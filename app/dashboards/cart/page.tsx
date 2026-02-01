@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -8,16 +9,14 @@ import { toast } from "react-hot-toast";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { ClipLoader } from "react-spinners";
 import { Button } from "@/components/ui/button";
@@ -44,29 +43,19 @@ const Cart = () => {
   const [checkingOut, setCheckingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [updatingQuantityId, setUpdatingQuantityId] = useState<string | null>(
-    null
-  );
-  const [updatingDeliveryId, setUpdatingDeliveryId] = useState<string | null>(
-    null
-  );
+  const [updatingQuantityId, setUpdatingQuantityId] = useState<string | null>(null);
+  const [updatingDeliveryId, setUpdatingDeliveryId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [openDeleteDialog, setOpenDeleteDialog] = useState<string | null>(null);
 
   const router = useRouter();
 
   const calculateSubtotal = useCallback(() => {
-    return cartItems.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
   }, [cartItems]);
 
   const fetchCart = useCallback(async () => {
     try {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
+      const token = localStorage.getItem("accessToken") || localStorage.getItem("authToken");
       if (!token) {
         setLoading(false);
         return;
@@ -95,15 +84,11 @@ const Cart = () => {
     if (newQuantity < 1) return;
 
     try {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
+      const token = localStorage.getItem("accessToken") || localStorage.getItem("authToken");
       if (!token) return toast.error("Please log in");
 
       setUpdatingQuantityId(itemId);
-      const result = await updateCartItem(token, itemId, {
-        quantity: newQuantity,
-      });
+      const result = await updateCartItem(token, itemId, { quantity: newQuantity });
 
       if (result.success) {
         setCartItems((prev) =>
@@ -123,15 +108,11 @@ const Cart = () => {
 
   const handleToggleDelivery = async (itemId: string, current: boolean) => {
     try {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
+      const token = localStorage.getItem("accessToken") || localStorage.getItem("authToken");
       if (!token) return toast.error("Please log in");
 
       setUpdatingDeliveryId(itemId);
-      const result = await updateCartItem(token, itemId, {
-        delivery: !current,
-      });
+      const result = await updateCartItem(token, itemId, { delivery: !current });
 
       if (result.success) {
         setCartItems((prev) =>
@@ -151,9 +132,7 @@ const Cart = () => {
 
   const handleDelete = async (itemId: string) => {
     try {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
+      const token = localStorage.getItem("accessToken") || localStorage.getItem("authToken");
       if (!token) return toast.error("Please log in");
 
       setDeletingId(itemId);
@@ -161,7 +140,6 @@ const Cart = () => {
 
       if (result.success) {
         setCartItems((prev) => prev.filter((item) => item.id !== itemId));
-        setOpenDeleteDialog(null);
         toast.success("Item removed from cart");
       } else {
         toast.error(result.error || "Failed to remove item");
@@ -202,10 +180,8 @@ const Cart = () => {
           itemsCount: items.length,
         };
 
-        // Save to localStorage for the Pay page
         localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
 
-        // Navigate to Pay page
         router.push("/dashboards/cart/pay");
       } else {
         setError("Checkout failed. Please try again.");
@@ -250,7 +226,7 @@ const Cart = () => {
             {cartItems.map((item) => (
               <Card
                 key={item.id}
-                className="bg-white  p-2 border border-[#E6E6E6] rounded-lg md:p-4 flex flex-col md:flex-row justify-between gap-4"
+                className="bg-white p-2 border border-[#E6E6E6] rounded-lg md:p-4 flex flex-col md:flex-row justify-between gap-4"
               >
                 <div className="flex gap-4">
                   <div className="w-20 h-20 border border-[#E3E3E3] bg-[#FAFAFA] rounded-xl overflow-hidden flex-shrink-0">
@@ -283,9 +259,7 @@ const Cart = () => {
                   <div className="flex items-center gap-6 border border-[#D8D8D866] p-1 rounded-full w-fit">
                     <button
                       disabled={updatingQuantityId === item.id}
-                      onClick={() =>
-                        handleUpdateQuantity(item.id, item.quantity + 1)
-                      }
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                       className="p-1 rounded-full hover:bg-[#0A6DC0] hover:text-white transition"
                     >
                       <Plus size={18} />
@@ -298,12 +272,8 @@ const Cart = () => {
                       )}
                     </span>
                     <button
-                      disabled={
-                        updatingQuantityId === item.id || item.quantity <= 1
-                      }
-                      onClick={() =>
-                        handleUpdateQuantity(item.id, item.quantity - 1)
-                      }
+                      disabled={updatingQuantityId === item.id || item.quantity <= 1}
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                       className="p-1 rounded-full hover:bg-[#0A6DC0] hover:text-white transition disabled:opacity-50"
                     >
                       <Minus size={18} />
@@ -320,52 +290,47 @@ const Cart = () => {
                       ) : (
                         <Switch
                           checked={item.delivery}
-                          onCheckedChange={() =>
-                            handleToggleDelivery(item.id, item.delivery)
-                          }
+                          onCheckedChange={() => handleToggleDelivery(item.id, item.delivery)}
                           className="data-[state=checked]:bg-[#0A6DC0]"
                         />
                       )}
                     </div>
 
-                    <AlertDialog
-                      open={openDeleteDialog === item.id}
-                      onOpenChange={(open) =>
-                        !open && setOpenDeleteDialog(null)
-                      }
-                    >
-                      <AlertDialogTrigger asChild>
+                    {/* Delete with Dialog */}
+                    <Dialog>
+                      <DialogTrigger asChild>
                         <button
-                          onClick={() => setOpenDeleteDialog(item.id)}
+                          disabled={deletingId === item.id}
                           className="p-2 text-red-500 hover:bg-red-50 rounded-full"
                         >
                           <Trash2 size={20} />
                         </button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Remove item?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently remove this item from your
-                            cart.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Remove Item?</DialogTitle>
+                          <DialogDescription>
+                            Are you sure you want to remove this item from your cart?
+                          </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => {}}>
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="destructive"
                             onClick={() => handleDelete(item.id)}
                             disabled={deletingId === item.id}
-                            className="bg-red-600 hover:bg-red-700"
                           >
                             {deletingId === item.id ? (
                               <ClipLoader size={20} color="white" />
                             ) : (
                               "Remove"
                             )}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               </Card>
@@ -387,12 +352,16 @@ const Cart = () => {
           <Button
             onClick={handleCheckout}
             disabled={checkingOut || cartItems.length === 0}
-            className="w-full py-5 md:py-6  bg-[#0A6DC0] hover:bg-[#085a9e] disabled:opacity-70"
+            className="w-full py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#085a9e] disabled:opacity-70"
           >
-            {checkingOut ? <>
-               checking out ...
+            {checkingOut ? (
+              <>
+                Checking out...
                 <ClipLoader size={24} color="white" />
-              </>: "Check Out"}
+              </>
+            ) : (
+              "Check Out"
+            )}
           </Button>
         </>
       )}

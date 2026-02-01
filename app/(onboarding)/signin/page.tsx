@@ -25,7 +25,7 @@ const SignIN = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { setAllUserData, clearUserData } = useUser(); // Changed from setUserAndWallet to setAllUserData
+  const { setAllUserData, clearUserData } = useUser();
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -62,6 +62,7 @@ const SignIN = () => {
             status: userData.account.status,
             userId: userData.userId,
             phone: userData.phone,
+            pin: userData.pin ?? false,                    // ← Added
           };
 
           const formattedWalletData = walletData
@@ -113,6 +114,7 @@ const SignIN = () => {
       setIsLoading(false);
     }
   };
+
   return (
     <div className="w-full mt-20 lg:max-w-[40rem] mx-auto  px-3 lg:px-10 xl:px-24">
       <h1 className="font-clash  text-[22px] font-semibold mb-2 text-[#2F2F2F]">

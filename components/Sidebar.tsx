@@ -1,7 +1,6 @@
 import { usePathname } from "next/navigation";
 import {
   BriefcaseBusiness,
-  
   BookOpen,
   Home,
   RectangleEllipsis,
@@ -83,7 +82,6 @@ const items = [
     icon: Percent,
   },
 
-
   {
     title: "More",
     url: "#",
@@ -116,10 +114,9 @@ export function AppSidebar() {
   };
 
   const toggleItem = (title: string) => {
-    setOpenItems((prev) =>
-      prev.includes(title)
-        ? prev.filter((item) => item !== title)
-        : [...prev, title],
+    setOpenItems(
+      (prev) =>
+        prev.includes(title) ? prev.filter((item) => item !== title) : [title], // Only keep the newly opened item
     );
   };
 
@@ -199,7 +196,7 @@ export function AppSidebar() {
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
-                          <SidebarMenuSub>
+                          <SidebarMenuSub className="border-l-0 ml-0 pl-0">
                             {item.children.map((child) => {
                               const childActive = isActive(child.url);
                               return (
@@ -207,13 +204,13 @@ export function AppSidebar() {
                                   <SidebarMenuSubButton
                                     asChild
                                     isActive={childActive}
-                                    className="menuButton  text-white hover:bg-white/10"
+                                    className="menuButton text-white hover:bg-white/10 ml-8"
                                   >
                                     <Link
                                       href={child.url}
                                       onClick={handleLinkClick}
                                     >
-                                      <span className="text-white  font-dm-sans text-[14px]">
+                                      <span className="text-white font-dm-sans text-[14px]">
                                         {child.title}
                                       </span>
                                     </Link>

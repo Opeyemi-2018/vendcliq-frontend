@@ -1,14 +1,16 @@
 "use client";
+
 import { getSuppliers } from "@/actions/suppliers";
 import { Input } from "@/components/ui/Input";
 import { Supplier } from "@/types/supplier";
-import { MoveRight, Search } from "lucide-react";
+import { MoveLeft, MoveRight, MoveRightIcon, Search } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState, useMemo } from "react";
 import { ThreeDots } from "react-loader-spinner";
 import { toast } from "sonner";
 import { SupplierFullDetails } from "./detail/SupplierInfo";
 import { SupplierProducts } from "./detail/SupplierProduct";
+import { Button } from "@/components/ui/button";
 
 export default function Suppliers() {
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +21,12 @@ export default function Suppliers() {
     null,
   );
   const [viewMode, setViewMode] = useState<"details" | "products">("details");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const fetchSuppliers = async () => {
     const token = localStorage.getItem("accessToken");
@@ -116,7 +124,55 @@ export default function Suppliers() {
     );
   }
 
-  // Otherwise, show the supplier list
+  // Pagination logic
+  const totalItems = filteredSuppliers.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedSuppliers = filteredSuppliers.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const renderPagination = () => {
+    const pages = [];
+    const maxVisible = 5;
+
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    const end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(
+        <Button
+          key={i}
+          variant={currentPage === i ? "default" : "outline"}
+          size="sm"
+          className={`h-8 w-8 ${
+            currentPage === i
+              ? "bg-[#0A6DC0] text-white hover:bg-[#0A6DC0]"
+              : ""
+          }`}
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </Button>,
+      );
+    }
+
+    return pages;
+  };
+
+  // Show the supplier list
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -124,7 +180,7 @@ export default function Suppliers() {
         <h1 className="font-clash text-[20px] md:text-[25px] lg:text-[32px] font-semibold text-[#2F2F2F] dark:text-white">
           Supplier List
         </h1>
-        <p className=" font-medium font-dm-sans text-[#9E9A9A] text-[13px] md:text-[16px]">
+        <p className="font-medium font-dm-sans text-[#9E9A9A] text-[13px] md:text-[16px]">
           See all the available stock and prices from suppliers to plan
           purchases or compare deals.
         </p>
@@ -181,63 +237,99 @@ export default function Suppliers() {
               </p>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 font-dm-sans text-[#2F2F2F] overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="border-b border-[#E6E6E6]">
-                    <tr>
-                      <th className="text-left py-3 pl-4 font-medium font-dm-sans">
-                        Name
-                      </th>
-                      <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
-                        Address
-                      </th>
-                      <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
-                        Email
-                      </th>
-                      <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
-                        Phone
-                      </th>
-                      <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
-                        Type
-                      </th>
-                      <th className="text-left py-3 font-medium font-dm-sans">
-                        More
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {filteredSuppliers.map((supplier) => (
-                      <tr
-                        key={supplier.id}
-                        onClick={() => handleSupplierClick(supplier)}
-                        className="hover:bg-gray-50 cursor-pointer transition-colors font-dm-sans"
-                      >
-                        <td className="py-4 pl-2 md:pl-4 font-medium whitespace-nowrap">
-                          {supplier.name?.substring(0, 10) ?? "—"}...
-                        </td>
-                        <td className="hidden md:table-cell py-4">
-                          {(supplier.address ?? "").substring(0, 10)}...
-                          {supplier.state && `, ${supplier.state}`}
-                        </td>
-                        <td className="hidden md:table-cell py-4">
-                          {supplier.email?.substring(0, 12) ?? "—"}...
-                        </td>
-                        <td className="hidden md:table-cell py-4">
-                          {supplier.phone || "—"}
-                        </td>
-                        <td className="hidden md:table-cell py-4">
-                          {supplier.type || "—"}
-                        </td>
-                        <td className="py-4">
-                          <MoveRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                        </td>
+            <>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 font-dm-sans text-[#2F2F2F] overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="border-b border-[#E6E6E6]">
+                      <tr>
+                        <th className="text-left py-3 pl-4 font-medium font-dm-sans">
+                          Name
+                        </th>
+                        <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
+                          Address
+                        </th>
+                        <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
+                          Email
+                        </th>
+                        <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
+                          Phone
+                        </th>
+                        <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
+                          Type
+                        </th>
+                        <th className="text-left py-3 font-medium font-dm-sans">
+                          More
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {paginatedSuppliers.map((supplier) => (
+                        <tr
+                          key={supplier.id}
+                          onClick={() => handleSupplierClick(supplier)}
+                          className="hover:bg-gray-50 cursor-pointer transition-colors font-dm-sans"
+                        >
+                          <td className="py-4 pl-2 md:pl-4 font-medium whitespace-nowrap">
+                            {supplier.name?.substring(0, 10) ?? "—"}...
+                          </td>
+                          <td className="hidden md:table-cell py-4">
+                            {(supplier.address ?? "").substring(0, 10)}...
+                            {supplier.state && `, ${supplier.state}`}
+                          </td>
+                          <td className="hidden md:table-cell py-4">
+                            {supplier.email?.substring(0, 12) ?? "—"}...
+                          </td>
+                          <td className="hidden md:table-cell py-4">
+                            {supplier.phone || "—"}
+                          </td>
+                          <td className="hidden md:table-cell py-4">
+                            {supplier.type || "—"}
+                          </td>
+                          <td className="py-4">
+                            <MoveRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+
+              {/* Pagination - same style as transactions, now 5 per page */}
+              <div className="flex flex-row justify-between items-center mt-6 gap-4">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24"
+                >
+                  <MoveLeft /> Previous
+                </button>
+
+                <div className="hidden lg:flex items-center gap-2 flex-wrap justify-center">
+                  {renderPagination()}
+                </div>
+
+                <div className="flex items-center gap-10">
+                  <button
+                    disabled={currentPage >= totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24"
+                  >
+                    Next <MoveRightIcon />
+                  </button>
+
+                  <div className="hidden lg:block text-sm text-gray-600">
+                    Showing {startIndex + 1} -{" "}
+                    {Math.min(
+                      startIndex + itemsPerPage,
+                      filteredSuppliers.length,
+                    )}{" "}
+                    of {filteredSuppliers.length}
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>

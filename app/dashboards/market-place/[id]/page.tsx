@@ -23,6 +23,14 @@ import { toast } from "sonner";
 import { handleAddToCart as addToCartApi } from "@/lib/utils/api/apiHelper";
 import { CreateCartPayload } from "@/types/cart";
 import { ClipLoader } from "react-spinners";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Stock {
   id: string;
@@ -133,6 +141,7 @@ const StockDetailPage = () => {
   const [error, setError] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => {
     if (stockId) {
@@ -235,6 +244,7 @@ const StockDetailPage = () => {
 
       if (rawResponse && rawResponse.error === null && rawResponse.data) {
         toast.success("Added to cart successfully!");
+        setShowDialog(true);
         setQuantity(1);
       } else {
         toast.error(rawResponse?.error || "Failed to add to cart");
@@ -368,18 +378,6 @@ const StockDetailPage = () => {
                 </div>
               </div>
 
-              {!isOffer && stock?.store && (
-                <div className="text-[#8E8E93] flex items-center gap-2 text-[13px] font-regular font-dm-sans pt-2">
-                  <MapPin size={20} /> {stock.store.address.name}
-                </div>
-              )}
-
-              {isOffer && offer?.store && (
-                <div className="text-[#8E8E93] flex items-center gap-2 text-[13px] font-regular font-dm-sans pt-2">
-                  <MapPin size={20} /> {offer.store.address.name}
-                </div>
-              )}
-
               {isOffer && offer && (
                 <>
                   <p className="text-[13px] font-dm-sans text-[#0A6DC0] font-semibold pt-1">
@@ -404,6 +402,42 @@ const StockDetailPage = () => {
                   Expires: {new Date(stock.exp_date).toLocaleDateString()}
                 </p>
               )}
+
+              <div className="bg-[#FAFAFA] p-5 rounded-md ">
+                {isOffer && offer?.store && (
+                  <div className="flex gap-1 items-center">
+                    <div className="w-10 h-10 rounded-full bg-[#FCE5D7] text-[#CD1919] text-[23px] flex items-center justify-center font-medium uppercase">
+                      {offer.store.name?.trim().slice(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="text-[#2F2F2F] flex items-center gap-2  font-medium font-dm-sans ">
+                        {offer.store.name}
+                      </div>
+                      <div className="text-[#2F2F2F] flex items-center gap-2 text-[13px] font-regular font-dm-sans ">
+                        {offer.store.address.name}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!isOffer && stock?.store && (
+                  <>
+                    <div className="flex gap-1 items-center">
+                      <div className="w-10 h-10 rounded-full bg-[#FCE5D7] text-[#CD1919] text-[23px] flex items-center justify-center font-medium uppercase">
+                        {stock.store.name?.trim().slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="text-[#2F2F2F] flex items-center gap-2  font-medium font-dm-sans ">
+                          {stock.store.name}
+                        </div>
+                        <div className="text-[#2F2F2F] flex items-center gap-2 text-[13px] font-regular font-dm-sans ">
+                          {stock.store.address.name}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Add to Cart Button */}
@@ -520,6 +554,33 @@ const StockDetailPage = () => {
           </div>
         </div>
       )}
+
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-[20px] text-center font-clash md:text-[25px] font-semibold text-[#0E0E0F]">
+              Item added to cart. What&apos;s next?
+            </DialogTitle>
+            <DialogDescription className="text-center font-dm-sans text-[#464343]">
+              We have successfully added the item to your cart. select your next
+              action
+            </DialogDescription>
+          </DialogHeader>
+          <Button
+            onClick={() => router.push("/dashboards/market-place")}
+            className="bg-[#0A6DC0] hover:bg-[#09599a]"
+          >
+            Continue Shopping
+          </Button>
+          <Button
+            onClick={() => router.push("/dashboards/cart")}
+            variant={"outline"}
+            className="shadow"
+          >
+            Proceed to Checkout
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

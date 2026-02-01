@@ -42,7 +42,7 @@ const CustomerSupport = () => {
           width={30}
           height={30}
           alt="call center"
-          className="w-[480px] h-[299px]"
+          className="w-[480px] h-[299px] -mt-10 -md:mt-0"
         />
         <h1 className="font-semibold -mt-10 font-clash text-[16px] md:text-[20px]">
           We are here to support you!

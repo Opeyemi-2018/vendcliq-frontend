@@ -19,6 +19,7 @@ import {
   EyeOff,
   Landmark,
   MoveRight,
+  MoveLeft,
 } from "lucide-react";
 
 import {
@@ -85,7 +86,8 @@ export default function VendCliqTransfer() {
   const router = useRouter();
   const [showAccount, setShowAccount] = useState(false);
   const [isTransferring, setIsTransferring] = useState(false);
-  const { wallet } = useUser();
+  const { wallet, refreshWallet } = useUser();
+  const fee = 3; 
 
   const form = useForm<TransferFormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -178,7 +180,7 @@ export default function VendCliqTransfer() {
       return;
     }
 
-    setIsTransferring(true); // ← Start loading
+    setIsTransferring(true);
 
     try {
       // 1. Validate PIN → get pinToken
@@ -203,10 +205,11 @@ export default function VendCliqTransfer() {
         return;
       }
 
-      // 4. Build payload
+      // 4. Build payload - ONLY SEND THE AMOUNT USER ENTERED (no fee added)
+      // The server will automatically add ₦3 fee
       const payload = {
         transactionKey,
-        amount: Number(amount),
+        amount: Number(amount), // ← Just the amount user entered (e.g., 100)
         beneficiaryAccountNumber: accountNumberInput,
         beneficiaryAccountName: accountInfo.accountName,
         beneficiaryProvider: accountInfo.provider,
@@ -221,6 +224,7 @@ export default function VendCliqTransfer() {
       const transferRes = await handleVendCliqTransfer(payload);
 
       if (transferRes.status === "success") {
+        await refreshWallet();
         setShowSuccess(true);
       } else {
         toast.error(transferRes.msg || "Transfer failed");
@@ -280,7 +284,7 @@ export default function VendCliqTransfer() {
                           localStorage.getItem("authToken");
                         if (!token) {
                           setLookupError(
-                            "Session expired. Please log in again."
+                            "Session expired. Please log in again.",
                           );
                           setIsLookingUp(false);
                           return;
@@ -304,7 +308,7 @@ export default function VendCliqTransfer() {
 
                   {/* Loading */}
                   {isLookingUp && (
-                    <div className="text-[#0A6DC0]">
+                    <div className="text-[#0A6DC0] flex items-center gap-2">
                       Verifying Account Number...
                       <ClipLoader size={20} color="#0A6DC0" />
                     </div>
@@ -340,7 +344,10 @@ export default function VendCliqTransfer() {
             {/* Step 2 */}
             {step === 2 && (
               <>
-                <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium mt-3">
+                <button onClick={() => setStep(1)} className="mt-4">
+                  <MoveLeft />
+                </button>
+                <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
                   Enter Amount to transfer and click on the proceed button to
                   confirm transfer
                 </p>
@@ -370,7 +377,7 @@ export default function VendCliqTransfer() {
                           </h1>
                         ) : (
                           <h1 className="font-clash text-white text-[20px]  font-semibold">
-                            # {wallet?.balance}
+                            ₦ {wallet?.balance}
                           </h1>
                         )}
                       </div>
@@ -432,7 +439,6 @@ export default function VendCliqTransfer() {
                             }}
                           />
                         </FormControl>
-                        {/* Add FormMessage to show validation errors */}
                         <FormMessage />
                       </FormItem>
                     )}
@@ -446,61 +452,79 @@ export default function VendCliqTransfer() {
                 >
                   Proceed to Confirm
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setStep(1)}
-                  className="mt-8"
-                >
-                  <ChevronLeft className="w-4  mr-2" /> Back
-                </Button>
               </>
             )}
 
             {/* Step 3 */}
             {step === 3 && (
               <>
-                <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium mt-5">
+                <button onClick={() => setStep(2)} className="mt-4">
+                  <MoveLeft />
+                </button>
+                <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium ">
                   Confirm the information below is correct and click the proceed
                   button to enter transaction pin
                 </p>
-                <div className="space-y-4 text-left mt-5">
+                <div className="gap-y-2 md:gap-y-4 text-left mt-5 grid grid-cols-2 gap-x-5 md:gap-x-0">
                   <div>
-                    <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
+                    <h2 className="font-dm-sans text-[13px] md:text-[16px] font-bold text-[#2F2F2F]">
                       Beneficiary Account Name
-                    </h2>{" "}
-                    {accountInfo?.accountName || "Shotayo Samson Olumide"}
+                    </h2>
+                    <p className="text-[13px] md:text-[16px]">
+                      {accountInfo?.accountName || "Shotayo Samson Olumide"}
+                    </p>
                   </div>
                   <div>
-                    <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
+                    <h2 className="font-dm-sans text-[13px] md:text-[16px] font-bold text-[#2F2F2F]">
                       Beneficiary Account No
-                    </h2>{" "}
-                    {accountNumberInput}
+                    </h2>
+                    <p className="text-[13px] md:text-[16px]">
+                      {accountNumberInput}
+                    </p>
                   </div>
                   <div>
-                    <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
+                    <h2 className="font-dm-sans text-[13px] md:text-[16px] font-bold text-[#2F2F2F]">
                       Beneficiary Bank
-                    </h2>{" "}
-                    {accountInfo?.provider} BANK
+                    </h2>
+                    <p className="text-[13px] md:text-[16px]">
+                      {accountInfo?.provider} BANK
+                    </p>
                   </div>
                   <div>
-                    <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
+                    <h2 className="font-dm-sans text-[13px] md:text-[16px] font-bold text-[#2F2F2F]">
                       Transfer amount
-                    </h2>{" "}
-                    ₦{watch("amount")?.toLocaleString()}
+                    </h2>
+                    <p className="text-[13px] md:text-[16px]">
+                      ₦{Number(watch("amount") || 0).toLocaleString()}
+                    </p>
                   </div>
-
                   <div>
-                    <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
+                    <h2 className="font-dm-sans text-[13px] md:text-[16px] font-bold text-[#2F2F2F]">
+                      Fee amount
+                    </h2>
+                    <p className="text-[13px] md:text-[16px]">₦{fee}</p>
+                  </div>
+                  <div>
+                    <h2 className="font-dm-sans text-[13px] md:text-[16px] font-bold text-[#2F2F2F]">
+                      Total amount
+                    </h2>
+                    <p className="text-[13px] md:text-[16px]">
+                      ₦{(Number(watch("amount") || 0) + fee).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <h2 className="font-dm-sans text-[13px] md:text-[16px] font-bold text-[#2F2F2F]">
                       Narration:
-                    </h2>{" "}
-                    {watch("narration") || "None"}
+                    </h2>
+                    <p className="text-[13px] md:text-[16px]">
+                      {watch("narration") || "None"}
+                    </p>
                   </div>
                   <div>
-                    <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
+                    <h2 className="font-dm-sans text-[13px] md:text-[16px] font-bold text-[#2F2F2F]">
                       Destination
                     </h2>
-                    <p className="text-[#2F2F2F] font-medium">
+                    <p className="text-[13px] md:text-[16px]">
                       Vendcliq Account
                     </p>
                   </div>
@@ -512,20 +536,15 @@ export default function VendCliqTransfer() {
                 >
                   Proceed
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setStep(2)}
-                  className="mt-8"
-                >
-                  <ChevronLeft className="w-4  mr-2" /> Back
-                </Button>
               </>
             )}
 
             {/* Step 4 - PIN Entry */}
             {step === 4 && (
-              <div className="mt-8">
+              <div className="md:mt-8">
+                <button onClick={() => setStep(3)} className="mt-4">
+                  <MoveLeft />
+                </button>
                 <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
                   Enter your transaction PIN to confirm transaction{" "}
                 </p>
@@ -596,28 +615,17 @@ export default function VendCliqTransfer() {
                 <Button
                   type="button"
                   onClick={handleFinalSubmit}
-                  className="w-full bg-[#0A6DC0] hover:bg-[#09599a] py-5 md:py-6 text-lg font-medium"
-                  disabled={pin?.length !== 4 || isTransferring} // ← Disabled when PIN incomplete OR transferring
+                  className="w-full bg-[#0A6DC0] hover:bg-[#09599a] py-5 md:py-6 "
+                  disabled={isTransferring}
                 >
                   {isTransferring ? (
                     <>
                       <ClipLoader size={20} color="white" className="mr-2" />
                       Sending Money...
                     </>
-                  ) : pin?.length === 4 ? (
-                    "Send Money"
                   ) : (
-                    `Enter PIN (${pin?.length || 0}/4)`
+                    "Send Money"
                   )}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setStep(3)}
-                  className="mt-8"
-                >
-                  <ChevronLeft className="w-4  mr-2" /> Back
                 </Button>
               </div>
             )}
@@ -640,13 +648,17 @@ export default function VendCliqTransfer() {
 
               <AlertDialogDescription className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans text-center">
                 <p>You have successfully sent</p>
-                <div className="text-[22px]  font-bold text-[#0A6DC0]">
-                  <p>₦{watch("amount")?.toLocaleString()}</p>
-                  <p className="text-[#9E9A9A]">to</p>
-                  <p className="text-[14px] md:text-[16px] text-[#2F2F2F]">
-                    {accountInfo?.accountName}
-                  </p>
-                </div>
+                <p className="text-[22px] md:text-[28px] font-bold text-[#0A6DC0]">
+                  ₦{(Number(watch("amount") || 0) + fee).toLocaleString()}
+                </p>
+                <p className="text-sm text-[#9E9A9A] mt-2">
+                  (Amount: ₦{Number(watch("amount") || 0).toLocaleString()} +
+                  Fee: ₦{fee})
+                </p>
+                <p>to</p>
+                <p className="text-[14px] md:text-[16px] text-[#2F2F2F] font-bold">
+                  {accountInfo?.accountName}
+                </p>
               </AlertDialogDescription>
             </div>
           </AlertDialogHeader>

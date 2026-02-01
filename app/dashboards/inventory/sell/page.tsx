@@ -16,7 +16,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CustomerForm, customerSchema } from "@/types/customer";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
-import { ArrowLeft, Mail, Search, Trash2, UserRound, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  Mail,
+  Trash2,
+  UserRound,
+  X,
+} from "lucide-react";
 import { getStores } from "@/actions/stores";
 import { getCustomers } from "@/actions/getcustomers";
 import { getStoreStock } from "@/actions/getUserStocks";
@@ -32,12 +39,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import PlacesAutocompleteInput from "@/hooks/googleMap";
 import { useEffect, useState } from "react";
 import { Separator } from "@/components/ui/separator";
@@ -56,6 +69,11 @@ interface StoreType {
   name: string;
   stock_value: string;
   stock_count: string;
+  address?: {
+    lat: number;
+    lng: number;
+    name: string;
+  };
 }
 
 interface CustomerType {
@@ -70,6 +88,7 @@ interface CustomerType {
 interface StockItem {
   id: string;
   sku: string;
+  quantity: string;
   product: {
     name: string;
     image: string;
@@ -100,7 +119,7 @@ const Sell = () => {
   const [customers, setCustomers] = useState<CustomerType[]>([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerType | null>(
-    null
+    null,
   );
   const [isWalkIn, setIsWalkIn] = useState(false);
   const [customerOptionSelected, setCustomerOptionSelected] = useState<
@@ -118,11 +137,7 @@ const Sell = () => {
       email: "",
       phone: "",
       type: undefined,
-      address: {
-        address: "",
-        latitude: 0,
-        longitude: 0,
-      },
+      address: { address: "", latitude: 0, longitude: 0 },
     },
   });
 
@@ -135,18 +150,16 @@ const Sell = () => {
       discounted_amount: "",
       empties_type: "",
       empties_quantity: "",
+      store_address: "",
     },
   });
 
-  // Fetch stores
   useEffect(() => {
     const fetchStores = async () => {
       setIsLoadingStores(true);
       setError(null);
       try {
-        const token =
-          localStorage.getItem("accessToken") ||
-          localStorage.getItem("authToken");
+        const token = localStorage.getItem("accessToken");
         if (!token) {
           setError("Please log in");
           return;
@@ -158,6 +171,7 @@ const Sell = () => {
             name: store.name,
             stock_count: store.stock_count,
             stock_value: store.stock_value?.toLocaleString() || "0",
+            address: store.address,
           }));
           setStores(storeNames);
           setFilteredStores(storeNames);
@@ -173,28 +187,24 @@ const Sell = () => {
     fetchStores();
   }, []);
 
-  // Filter stores
   useEffect(() => {
     if (searchTerm === "") {
       setFilteredStores(stores);
     } else {
       setFilteredStores(
         stores.filter((s) =>
-          s.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
+          s.name.toLowerCase().includes(searchTerm.toLowerCase()),
+        ),
       );
     }
   }, [searchTerm, stores]);
 
-  // Fetch customers
   useEffect(() => {
     if (stage === "select-customer" && selectedStore) {
       const fetchCustomers = async () => {
         setIsLoadingCustomers(true);
         try {
-          const token =
-            localStorage.getItem("accessToken") ||
-            localStorage.getItem("authToken");
+          const token = localStorage.getItem("accessToken");
           if (!token) return;
           const result = await getCustomers(token);
           if (result.success && result.data) {
@@ -217,10 +227,8 @@ const Sell = () => {
       const fetchStock = async () => {
         setIsLoadingStock(true);
         try {
-          const token =
-            localStorage.getItem("accessToken") 
+          const token = localStorage.getItem("accessToken");
           if (!token) return;
-
           const result = await getStoreStock(token, selectedStore.id);
           if (result.success && result.data) {
             setStoreStock(result.data);
@@ -233,19 +241,24 @@ const Sell = () => {
           setIsLoadingStock(false);
         }
       };
-
       fetchStock();
     }
   }, [stage, selectedStore]);
 
+  useEffect(() => {
+    if (stage === "invoice" && selectedStore?.address) {
+      const addr = selectedStore.address;
+      const display = addr.name || `Lat: ${addr.lat}, Lng: ${addr.lng}`;
+      invoiceForm.setValue("store_address", display);
+    }
+  }, [selectedStore, stage, invoiceForm]);
+
   const addItemToInvoice = () => {
     const values = invoiceForm.getValues();
-
     if (!values.stock_id || !values.quantity) {
       toast.error("Please select a product and enter quantity");
       return;
     }
-
     const stockItem = storeStock.find((s) => s.id === values.stock_id);
     if (!stockItem) return;
 
@@ -274,6 +287,7 @@ const Sell = () => {
       discounted_amount: "",
       empties_type: "",
       empties_quantity: "",
+      store_address: invoiceForm.getValues("store_address"),
     });
   };
 
@@ -285,6 +299,8 @@ const Sell = () => {
 
     setIsSubmittingInvoice(true);
 
+    const storeAddress = selectedStore?.address || null;
+
     const payload = {
       customer_id: isWalkIn ? null : selectedCustomer?.id || null,
       store_id: selectedStore!.id,
@@ -295,9 +311,11 @@ const Sell = () => {
         mode: item.mode,
         discounted_amount: item.discounted_amount,
         empties: item.empties,
-        attributes: isWalkIn
-          ? {}
-          : { address: selectedCustomer?.address || "" },
+        attributes: {
+          latitude: storeAddress?.lat || 0,
+          longitude: storeAddress?.lng || 0,
+          address: storeAddress?.name || "",
+        },
       })),
     };
 
@@ -307,16 +325,42 @@ const Sell = () => {
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Invoice created successfully!");
 
-        const invoiceId = response.data?.id;
+        const invoiceData = response.data;
 
-        if (invoiceId) {
-          // Redirect to payment page with invoice ID
-          router.push(`/dashboards/inventory/sell/pay?invoiceId=${invoiceId}`);
+        if (invoiceData?.id) {
+          // Save the real invoice response data to localStorage
+          const previewData = {
+            invoiceId: invoiceData.id,
+            code: invoiceData.code,
+            total: invoiceData.total,
+            status: invoiceData.status,
+            storeAddress:
+              invoiceData.items[0]?.attributes?.address || "No address",
+            items: invoiceData.items.map((item: any) => ({
+              id: item.id,
+              stock_id: item.stock_id,
+              product_id: item.product_id,
+              quantity: item.quantity,
+              cost: item.cost,
+              discounted_amount: item.discounted_amount,
+              sub_total: item.sub_total,
+              mode: item.mode,
+              attributes: item.attributes,
+            })),
+          };
+
+          localStorage.setItem(
+            `invoice-preview-${invoiceData.id}`,
+            JSON.stringify(previewData),
+          );
+
+          router.push(
+            `/dashboards/inventory/sell/pay?invoiceId=${invoiceData.id}`,
+          );
         } else {
-          toast.warning("Invoice created but payment page could not be loaded");
+          toast.warning("Invoice created but no ID returned");
         }
 
-        // Reset form and state
         setInvoiceItems([]);
         setSelectedStore(null);
         setSelectedCustomer(null);
@@ -388,7 +432,6 @@ const Sell = () => {
     }
   };
 
-  // Stage 1: Select Store + Customer Options
   if (stage === "select-store") {
     return (
       <div>
@@ -400,7 +443,6 @@ const Sell = () => {
         </p>
 
         <div className="md:mt-8 flex flex-col lg:flex-row gap-4">
-          {/* Left Card - Store Selection */}
           <div className="py-3 md:py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg w-full lg:w-[35%] bg-white">
             <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
               Select the store you want to sell from
@@ -438,7 +480,6 @@ const Sell = () => {
                 </p>
               ) : (
                 <>
-                  {/* Desktop: Original List View */}
                   <div className="hidden lg:block space-y-2 max-h-[400px] overflow-y-auto">
                     {filteredStores.map((store) => (
                       <div
@@ -461,70 +502,36 @@ const Sell = () => {
                             {store.name}
                           </p>
                         </div>
-                        <div></div>
                       </div>
                     ))}
                   </div>
 
-                  {/* Mobile: Shadcn Select Dropdown */}
                   <div className="lg:hidden">
-                    <Select
+                    <select
                       value={selectedStore?.id?.toString() || ""}
-                      onValueChange={(value) => {
+                      onChange={(e) => {
                         const store = filteredStores.find(
-                          (s) => s.id.toString() === value
+                          (s) => s.id === e.target.value,
                         );
                         if (store) setSelectedStore(store);
                       }}
+                      className="w-full h-12 border rounded px-3"
                       disabled={isLoadingStores || !!error}
                     >
-                      <SelectTrigger className="w-full bg-transparent border-2 border-[#E7EBED] h-12">
-                        <SelectValue placeholder="Select a store">
-                          {selectedStore && (
-                            <div className="flex items-center gap-3">
-                              <Image
-                                src="/store.svg"
-                                width={20}
-                                height={20}
-                                alt="store"
-                              />
-                              <span className="font-medium text-[16px] font-dm-sans text-[#2F2F2F]">
-                                {selectedStore.name}
-                              </span>
-                            </div>
-                          )}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filteredStores.map((store) => (
-                          <SelectItem
-                            key={store.id}
-                            value={store.id.toString()}
-                            className="py-3"
-                          >
-                            <div className="flex items-center gap-3">
-                              <Image
-                                src="/store.svg"
-                                width={20}
-                                height={20}
-                                alt="store"
-                              />
-                              <span className="font-medium text-[16px] font-dm-sans text-[#2F2F2F]">
-                                {store.name}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      <option value="">Select a store</option>
+                      {filteredStores.map((store) => (
+                        <option key={store.id} value={store.id}>
+                          {store.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </>
               )}
             </div>
           </div>
 
-          {/* Right Card - Customer Options (unchanged) */}
-          <div className="md:py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg  w-full lg:w-[70%] bg-white">
+          <div className="md:py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg w-full lg:w-[65%] bg-white">
             <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
               {selectedStore ? selectedStore.name : "Select a store"}
             </h1>
@@ -578,21 +585,23 @@ const Sell = () => {
     );
   }
 
-  // Stage 2: Select Customer
   if (stage === "select-customer") {
     return (
       <div>
-        <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2">
-          <ArrowLeft size={20} onClick={() => setStage("select-store")} />
+        <button
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2"
+          onClick={() => setStage("select-store")}
+        >
+          <ArrowLeft size={20} />
         </button>
         <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
           Customer
         </h1>
         <p className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans">
-          Sell the customer that you want to sell to
+          Sell to the customer you want to sell to
         </p>
 
-        <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg   mt-8 bg-white">
+        <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg mt-8 bg-white">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-[18px] font-semibold text-[#2F2F2F] font-clash">
               Select Customer
@@ -696,25 +705,15 @@ const Sell = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Customer Type</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
+                        <select
+                          {...field}
+                          className="w-full h-12 border rounded px-3 bg-[#D8D8D866]"
                         >
-                          <FormControl>
-                            <SelectTrigger className="bg-[#D8D8D866] h-12">
-                              <SelectValue placeholder="Select customer type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Distributor">
-                              Distributor
-                            </SelectItem>
-                            <SelectItem value="Wholesaler">
-                              Wholesaler
-                            </SelectItem>
-                            <SelectItem value="Retailer">Retailer</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          <option value="">Select type</option>
+                          <option value="Distributor">Distributor</option>
+                          <option value="Wholesaler">Wholesaler</option>
+                          <option value="Retailer">Retailer</option>
+                        </select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -724,9 +723,7 @@ const Sell = () => {
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-[#2F2F2F] font-dm-sans font-medium text-[16px]">
-                          Address
-                        </FormLabel>
+                        <FormLabel>Address</FormLabel>
                         <FormControl>
                           <PlacesAutocompleteInput
                             placeholder="Enter full business address"
@@ -756,10 +753,7 @@ const Sell = () => {
                   <AlertDialogFooter className="mt-6">
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <Button
-                      type="button"
-                      onClick={() =>
-                        customerForm.handleSubmit(onCreateCustomer)()
-                      }
+                      type="submit"
                       disabled={customerForm.formState.isSubmitting}
                       className="bg-[#0A6DC0] hover:bg-[#09599a]"
                     >
@@ -827,12 +821,14 @@ const Sell = () => {
     );
   }
 
-  // Stage 3: Invoice Form
   if (stage === "invoice") {
     return (
       <div>
-        <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2">
-          <ArrowLeft size={20} onClick={() => setStage("select-customer")} />
+        <button
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2"
+          onClick={() => setStage("select-customer")}
+        >
+          <ArrowLeft size={20} />
         </button>
         <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
           Create Invoice
@@ -841,9 +837,9 @@ const Sell = () => {
           Kindly fill the details below to create invoice
         </p>
 
-        <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg    md:mt-8 bg-white">
+        <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg md:mt-8 bg-white">
           <div className="mb-2 flex items-center justify-between font-dm-sans font-medium">
-            <p className="text-[16px]   text-[#000000] ">Store</p>
+            <p className="text-[16px] text-[#000000] ">Store</p>
             <button
               onClick={() => {
                 setStage("select-store");
@@ -861,90 +857,161 @@ const Sell = () => {
               <p className="text-[#2F2F2F] font-medium">
                 {selectedStore?.name}
               </p>
-
               <div className="flex items-center gap-2 text-[13px]">
-                <p className="text-[text-[#2F2F2F] font-medium]">
+                <p className="text-[#2F2F2F] font-medium">
                   Inventory value: ₦{" "}
                 </p>
                 <p className="text-[#9E9A9A]">{selectedStore?.stock_value}</p>
               </div>
               <div className="flex items-center gap-2 text-[13px]">
-                <p className="text-[text-[#2F2F2F] font-medium]">
-                  Product Count:
-                </p>
+                <p className="text-[#2F2F2F] font-medium">Product Count:</p>
                 <p className="text-[#9E9A9A]">{selectedStore?.stock_count}</p>
               </div>
             </div>
           </div>
 
           <Form {...invoiceForm}>
-            <form className="space-y-6  mb-2">
+            <form className="space-y-6 mb-2">
               <div className="grid md:grid-cols-2 gap-5">
-                {/* SKU Selection from Store Stock */}
                 <FormField
                   control={invoiceForm.control}
                   name="stock_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>SKU</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={isLoadingStock}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="bg-[#F3F4F6] h-12">
-                            <SelectValue
-                              placeholder={
-                                isLoadingStock
-                                  ? "Loading stock..."
-                                  : "Choose SKU"
-                              }
-                            />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {isLoadingStock ? (
-                            <SelectItem value="loading" disabled>
-                              Loading stock...
-                            </SelectItem>
-                          ) : storeStock.length === 0 ? (
-                            <SelectItem value="empty" disabled>
-                              No stock available
-                            </SelectItem>
-                          ) : (
-                            storeStock.map((stock) => (
-                              <SelectItem key={stock.id} value={stock.id}>
-                                <div className="flex gap-2 lowercase text-left">
-                                  <div className="w-10 h-10 flex-shrink-0 rounded overflow-hidden bg-gray-100">
-                                    {stock.product.image && (
-                                      <Image
-                                        src={stock.product.image}
-                                        alt={stock.sku}
-                                        width={40}
-                                        height={40}
-                                        className="w-full h-full object-cover object-center"
-                                      />
+                      <FormLabel>SKU / Product</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className="w-full justify-between h-12 bg-[#F3F4F6] border-none"
+                            disabled={isLoadingStock || storeStock.length === 0}
+                          >
+                            {field.value ? (
+                              (() => {
+                                const selected = storeStock.find(
+                                  (s) => s.id === field.value,
+                                );
+                                return selected ? (
+                                  <div className="flex items-center gap-3 truncate">
+                                    {selected.product.image && (
+                                      <div className="w-8 h-8 rounded bg-gray-100 flex-shrink-0 overflow-hidden">
+                                        <Image
+                                          src={selected.product.image}
+                                          alt={selected.sku}
+                                          width={32}
+                                          height={32}
+                                          className="w-full h-full object-contain"
+                                        />
+                                      </div>
                                     )}
+                                    <div className="flex flex-col truncate">
+                                      <span className="font-medium">
+                                        {selected.sku}
+                                      </span>
+                                      <span className="text-xs text-gray-500 truncate">
+                                        {selected.product.name}
+                                      </span>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <p className="font-medium">{stock.sku}</p>
-                                    <p className="text-sm text-gray-500">
-                                      {stock.product.name}
-                                    </p>
-                                  </div>
-                                </div>
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
+                                ) : (
+                                  "Select product..."
+                                );
+                              })()
+                            ) : isLoadingStock ? (
+                              <span className="text-gray-400">
+                                Loading stock...
+                              </span>
+                            ) : storeStock.length === 0 ? (
+                              <span className="text-gray-400">
+                                No stock available
+                              </span>
+                            ) : (
+                              "Select product / SKU..."
+                            )}
+                            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+
+                        <PopoverContent
+                          className="w-full p-0 max-h-[320px]"
+                          align="start"
+                        >
+                          <Command>
+                            <CommandInput
+                              placeholder="Search by SKU or product name..."
+                              className="h-9"
+                            />
+                            <CommandList>
+                              <CommandEmpty>
+                                {isLoadingStock
+                                  ? "Loading..."
+                                  : "No product found."}
+                              </CommandEmpty>
+                              <CommandGroup>
+                                {storeStock.map((stock) => (
+                                  <CommandItem
+                                    key={stock.id}
+                                    value={`${stock.sku} ${stock.product.name}`.toLowerCase()}
+                                    onSelect={() => {
+                                      field.onChange(stock.id);
+                                      document.dispatchEvent(
+                                        new KeyboardEvent("keydown", {
+                                          key: "Escape",
+                                        }),
+                                      );
+                                    }}
+                                    className="cursor-pointer py-3 px-4 hover:bg-gray-50"
+                                  >
+                                    <div className="flex items-center justify-between w-full gap-4">
+                                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        {stock.product.image ? (
+                                          <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                                            <Image
+                                              src={stock.product.image}
+                                              alt={stock.sku}
+                                              width={40}
+                                              height={40}
+                                              className="w-full h-full object-contain"
+                                            />
+                                          </div>
+                                        ) : (
+                                          <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 text-xs">
+                                            No img
+                                          </div>
+                                        )}
+
+                                        <div className="flex flex-col min-w-0">
+                                          <span className="font-medium text-sm">
+                                            {stock.sku}
+                                          </span>
+                                          <span className="text-xs text-gray-500 truncate">
+                                            {stock.product.name}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      <div className="text-right whitespace-nowrap">
+                                        <span className="text-sm font-medium text-[#0A6DC0]">
+                                          {stock.quantity}
+                                        </span>
+                                        <span className="text-xs text-gray-400 ml-1">
+                                          left
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Mode */}
                 <FormField
                   control={invoiceForm.control}
                   name="mode"
@@ -975,7 +1042,6 @@ const Sell = () => {
                   )}
                 />
 
-                {/* Quantity */}
                 <FormField
                   control={invoiceForm.control}
                   name="quantity"
@@ -995,7 +1061,6 @@ const Sell = () => {
                   )}
                 />
 
-                {/* Empties Type */}
                 <FormField
                   control={invoiceForm.control}
                   name="empties_type"
@@ -1006,7 +1071,7 @@ const Sell = () => {
                         onValueChange={field.onChange}
                         value={field.value}
                       >
-                        <div className="flex gap-6">
+                        <div className="flex flex-wrap gap-6 items-center">
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="CREDIT" id="credit" />
                             <label htmlFor="credit" className="cursor-pointer">
@@ -1019,24 +1084,22 @@ const Sell = () => {
                               Sell
                             </label>
                           </div>
-                          {/* Delivery checkbox inside empties row */}
+
                           <FormField
                             control={invoiceForm.control}
                             name="delivery"
                             render={({ field }) => (
-                              <FormItem className="flex items-center space-x-3">
-                                <FormControl>
-                                  <input
-                                    type="checkbox"
-                                    checked={field.value}
-                                    onChange={field.onChange}
-                                    className="w-5 h-5 accent-[#0A6DC0]"
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal cursor-pointer">
+                              <div className="flex items-center space-x-3">
+                                <input
+                                  type="checkbox"
+                                  checked={field.value}
+                                  onChange={field.onChange}
+                                  className="w-5 h-5 accent-[#0A6DC0]"
+                                />
+                                <label className="font-normal cursor-pointer">
                                   Delivery required
-                                </FormLabel>
-                              </FormItem>
+                                </label>
+                              </div>
                             )}
                           />
                         </div>
@@ -1046,7 +1109,6 @@ const Sell = () => {
                   )}
                 />
 
-                {/* Discounted Amount */}
                 <FormField
                   control={invoiceForm.control}
                   name="discounted_amount"
@@ -1066,7 +1128,6 @@ const Sell = () => {
                   )}
                 />
 
-                {/* Empties Quantity */}
                 <FormField
                   control={invoiceForm.control}
                   name="empties_quantity"
@@ -1079,6 +1140,24 @@ const Sell = () => {
                           placeholder="e.g. 3"
                           {...field}
                           className="bg-white h-12"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={invoiceForm.control}
+                  name="store_address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Store Address</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          readOnly
+                          className="bg-gray-100 cursor-not-allowed h-12"
                         />
                       </FormControl>
                       <FormMessage />
@@ -1098,7 +1177,7 @@ const Sell = () => {
           </Form>
         </div>
 
-        <Card className="mt-5  md:px-6  pb-6 ">
+        <Card className="mt-5 md:px-6 pb-6">
           {invoiceItems.length > 0 && (
             <div className="mt-8">
               <h3 className="font-semibold mb-4">
@@ -1134,14 +1213,14 @@ const Sell = () => {
                         <td className="lowercase text-left p-4 py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                           {item.product_name}
                         </td>
-                        <td className="py-4 ">{item.quantity}</td>
-                        <td className="py-4 lowercase ">{item.mode}</td>
-                        <td className="py-4 ">₦{item.discounted_amount}</td>
-                        <td className="py-4 ">
+                        <td className="py-4">{item.quantity}</td>
+                        <td className="py-4 lowercase">{item.mode}</td>
+                        <td className="py-4">₦{item.discounted_amount}</td>
+                        <td className="py-4">
                           <button
                             onClick={() => {
                               setInvoiceItems((prev) =>
-                                prev.filter((_, index) => index !== i)
+                                prev.filter((_, index) => index !== i),
                               );
                               toast.success("Item removed from invoice");
                             }}

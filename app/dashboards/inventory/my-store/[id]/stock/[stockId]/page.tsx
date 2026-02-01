@@ -80,7 +80,7 @@ const StockDetailPage = () => {
   }
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="">
       <button
         onClick={() => router.back()}
         className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors"
@@ -88,12 +88,12 @@ const StockDetailPage = () => {
         <MoveLeft className="w-5 h-5" />
       </button>
 
-      <div className="flex lg:items-center flex-col lg:flex-row justify-between gap-4">
+      <div className="flex lg:items-center mb-3 md:mb-8 flex-col lg:flex-row justify-between gap-4">
         <div>
-          <div className="flex gap-3 items-center font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
+          <div className="flex gap-3  items-center font-clash text-[16px] md:text-[25px] font-semibold text-[#2F2F2F]">
             <h1>{stock.product.name}</h1>
-            <span className="text-[#0A6DC0] text-2xl">•</span>
-            <p>{parseFloat(stock.quantity).toFixed(0)} units</p>
+            <span className="text-[#0A6DC0] ">•</span>
+            <p>{parseFloat(stock.quantity).toFixed(0)} Qty in stock</p>
           </div>
           <p className="font-medium font-dm-sans text-[#9E9A9A] mt-1">
             This is all you need to know about this product
@@ -106,17 +106,46 @@ const StockDetailPage = () => {
       </div>
 
       {/* Quick Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="w-full bg-[url('/blue.svg')] bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6 text-white">
+      <div className="mb-4 flex gap-4 items-center overflow-x-auto lg:overflow-visible">
+        <div
+          className="
+      min-w-[260px] flex-shrink-0
+      lg:min-w-0 lg:flex-1
+      bg-[url('/blue.svg')] bg-cover bg-no-repeat bg-center
+      h-[100px] rounded-2xl p-6 text-white
+    "
+        >
           <p className="text-[16px] font-dm-sans">Qty Sold</p>
           <p className="text-[20px] md:text-[24px] font-clash font-semibold">
             {stock.stats.qty_sold.toLocaleString()}
           </p>
         </div>
-        <div className="w-full bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6 text-white">
+
+        <div
+          className="
+      min-w-[260px] flex-shrink-0
+      lg:min-w-0 lg:flex-1
+      bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat bg-center
+      h-[100px] rounded-2xl p-6 text-white
+    "
+        >
           <p className="text-[16px] font-dm-sans">Total Sales</p>
           <p className="text-[20px] md:text-[24px] font-clash font-semibold">
             ₦{stock.stats.total_sales.toLocaleString()}
+          </p>
+        </div>
+
+        <div
+          className="
+      min-w-[260px] flex-shrink-0
+      lg:min-w-0 lg:flex-1
+      bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat bg-center
+      h-[100px] rounded-2xl p-6 text-white
+    "
+        >
+          <p className="text-[16px] font-dm-sans">Qty Added</p>
+          <p className="text-[20px] md:text-[24px] font-clash font-semibold">
+            {stock.stats.qty_added.toLocaleString()}
           </p>
         </div>
       </div>

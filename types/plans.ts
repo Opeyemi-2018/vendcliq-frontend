@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 
 export interface PlanEntity {
@@ -108,4 +109,53 @@ export interface SubscriptionPaymentTransferResponse {
     };
     paymentPayload?: TransferPaymentDetails;
   };
+}
+
+
+
+// types/subscription.ts
+
+export interface Plan {
+  id: number;
+  name: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+  webOnly: boolean;
+  storeLimit: number;
+  productLimitPerStore: number;
+  shopAttendantLimit: number;
+  aiStockRecommendationLimit: number;
+  hasPOSDevice: boolean;
+  autoStockUpdate: boolean;
+  invoiceAllowed: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubscriptionData {
+  id: number;
+  uuid: string;
+  user_id: number;
+  billing_type: "monthly" | "yearly";
+  status: "ACTIVE" | "INACTIVE" | "GRACE" | "EXPIRED" | string;
+  next_billing_date: string | null;
+  grace_start_date: string | null;
+  last_payment_date: string | null;
+  outstanding_balance: number;
+  amount: string;
+  payment_reference: string | null;
+  attributes: {
+    multiplier: number;
+    paymentType: string;
+  };
+  meta: any | null;
+  created_at: string;
+  updated_at: string;
+  plan: Plan;
+}
+
+export interface GetSubscriptionResponse {
+  statusCode: number;
+  error: any | null;
+  data: SubscriptionData;
 }

@@ -335,13 +335,13 @@ export default function AirtimeFlow() {
               {/* Amount */}
               <div>
                 <Label>Airtime Amount (₦)</Label>
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mt-4">
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mt-1 md:mt-4">
                   {amounts.map((amt) => (
                     <button
                       key={amt}
                       type="button"
                       onClick={() => setValue("amount", amt)}
-                      className={`py-3 rounded-lg border font-regular text-[13px] font-dm-sans transition-all hover:bg-white hover:shadow-md ${
+                      className={`py-1 md:py-3 rounded-lg border font-regular text-[13px] font-dm-sans transition-all hover:bg-white hover:shadow-md ${
                         watch("amount") === amt
                           ? "border-[#0A6DC0] text-[#0A6DC0] bg-[#0A6DC01A] hover:shadow-none hover:bg-[#0A6DC01A]"
                           : "bg-gray-50"
