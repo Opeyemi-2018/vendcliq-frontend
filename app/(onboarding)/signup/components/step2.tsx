@@ -26,7 +26,6 @@ import { SIGN_UP } from "@/url/api-url";
 import ProgressHeader from "./ProgressHeader";
 import { ClipLoader } from "react-spinners";
 import { useUser } from "@/context/userContext";
-import Link from "next/link";
 
 interface Props {
   onNext: (data: Partial<SignupFormData>) => void;
@@ -272,15 +271,7 @@ export default function Step2({ onNext, onPrev, data }: Props) {
           </Button>
         </form>
       </Form>
-       <p className="text-center mt-4 md:mt-8 text-sm text-[#9E9A9A]">
-        Already have an account?{" "}
-        <Link
-          href="/signin"
-          className="text-[#0A6DC0] font-medium hover:underline"
-        >
-          Sign in
-        </Link>
-        </p>
+      
     </div>
   );
 }

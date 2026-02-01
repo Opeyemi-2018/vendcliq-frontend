@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { type SignupFormData } from "@/types/auth";
 import { toast } from "sonner";
 import ProgressHeader from "./ProgressHeader";
-import Link from "next/link";
 
 interface Props {
   onNext: (data: Partial<SignupFormData>) => void;
@@ -130,15 +129,7 @@ export default function Step6({ onNext, data }: Props) {
         Proceed
       </Button>
 
-      <p className="text-center mt-4 md:mt-8 text-sm text-[#9E9A9A]">
-        Already have an account?{" "}
-        <Link
-          href="/signin"
-          className="text-[#0A6DC0] font-medium hover:underline"
-        >
-          Sign in
-        </Link>
-        </p>
+      
     </div>
   );
 }

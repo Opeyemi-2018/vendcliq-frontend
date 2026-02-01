@@ -19,7 +19,6 @@ import {
   handleResendEmailVerificationToken,
 } from "@/lib/utils/api/apiHelper";
 import ProgressHeader from "./ProgressHeader";
-import Link from "next/link";
 
 interface Props {
   onNext: (data: Partial<SignupFormData>) => void;
@@ -206,15 +205,7 @@ export default function Step3({ onNext, data }: Props) {
           </Button>
         </form>
       </Form>
-        <p className="text-center mt-4 md:mt-8 text-sm text-[#9E9A9A]">
-        Already have an account?{" "}
-        <Link
-          href="/signin"
-          className="text-[#0A6DC0] font-medium hover:underline"
-        >
-          Sign in
-        </Link>
-        </p>
+       
     </div>
   );
 }
