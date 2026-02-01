@@ -80,6 +80,10 @@ const PAY_CART = (invoiceId: string) => `inventory/invoices/${invoiceId}/pay`;
 const ASSIGN_ATTENDANT_PERMISSIONS = "inventory/attendant-permissions";
 const UPDATE_ATTENDANT_PERMISSIONS = (attendantId: string) =>
   `inventory/attendant-permissions/attendant/${attendantId}`;
+// the get attendant is not inventory endpoint 
+const GET_ATTENDANTS = "/client/v2/attendants";
+const GET_ATTENDANT_PERMISSIONS = (attendantId: string | number) =>
+  `inventory/attendant-permissions/attendant/${attendantId}`;
 const CREATE_EXPENSE = "inventory/expenses";
 const GET_EXPENSES = "inventory/expenses";
 const DELETE_EXPENSE = (expenseId: string) => `inventory/expenses/${expenseId}`;
@@ -131,7 +135,9 @@ export {
   UPDATE_TRANSFER_PIN,
   CHANGE_PASSWORD,
   ASSIGN_ATTENDANT_PERMISSIONS,
+  GET_ATTENDANTS,
   UPDATE_ATTENDANT_PERMISSIONS,
+  GET_ATTENDANT_PERMISSIONS,
   CREATE_EXPENSE,
   GET_EXPENSES,
   DELETE_EXPENSE,

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { MoveLeft, MoveRight, MoveRightIcon } from "lucide-react";
@@ -14,9 +14,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { handleGetTransactions } from "@/lib/utils/api/apiHelper";
-import { TransactionHistoryResponse } from "@/types/transactions";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import html2canvas from "html2canvas";
+import { toast } from "sonner";
 
 const TransactionSkeleton = () => (
   <tr className="animate-pulse">
@@ -39,9 +40,7 @@ const TransactionSkeleton = () => (
 );
 
 const Table = () => {
-  const [allTransactions, setAllTransactions] = useState<
-    TransactionHistoryResponse["data"]["data"]
-  >([]);
+  const [allTransactions, setAllTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,6 +48,7 @@ const Table = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(
     null,
   );
+  const receiptRef = useRef<HTMLDivElement>(null);
 
   const openReceipt = (tx: any) => {
     setSelectedTransaction(tx);
@@ -83,7 +83,7 @@ const Table = () => {
         setError(null);
 
         let page = 1;
-        let fetched: TransactionHistoryResponse["data"]["data"] = [];
+        let fetched: any[] = [];
         let hasMore = true;
 
         while (hasMore) {
@@ -118,6 +118,114 @@ const Table = () => {
 
   const retryFetch = () => {
     window.location.reload();
+  };
+
+  // Download Receipt Function
+  const handleDownloadReceipt = async () => {
+    if (!receiptRef.current) return;
+
+    try {
+      const buttonsContainer = receiptRef.current.querySelector(
+        ".receipt-buttons",
+      ) as HTMLElement;
+      if (buttonsContainer) {
+        buttonsContainer.style.display = "none";
+      }
+
+      const canvas = await html2canvas(receiptRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        logging: false,
+        useCORS: true,
+      });
+
+      if (buttonsContainer) {
+        buttonsContainer.style.display = "flex";
+      }
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `receipt-${selectedTransaction?.transactionReference || Date.now()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          toast.success("Receipt downloaded successfully!");
+        }
+      });
+    } catch (error) {
+      console.error("Error downloading receipt:", error);
+      toast.error("Failed to download receipt. Please try again.");
+    }
+  };
+
+  // Share Receipt Function
+  const handleShareReceipt = async () => {
+    if (!receiptRef.current) return;
+
+    try {
+      const buttonsContainer = receiptRef.current.querySelector(
+        ".receipt-buttons",
+      ) as HTMLElement;
+      if (buttonsContainer) {
+        buttonsContainer.style.display = "none";
+      }
+
+      const canvas = await html2canvas(receiptRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        logging: false,
+        useCORS: true,
+      });
+
+      if (buttonsContainer) {
+        buttonsContainer.style.display = "flex";
+      }
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+
+        const file = new File(
+          [blob],
+          `receipt-${selectedTransaction?.transactionReference || Date.now()}.png`,
+          { type: "image/png" },
+        );
+
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: "Transaction Receipt",
+              text: `Receipt for transaction ${selectedTransaction?.transactionReference}`,
+            });
+            toast.success("Receipt shared successfully!");
+          } catch (err: any) {
+            if (err.name !== "AbortError") {
+              console.error("Error sharing:", err);
+              toast.error("Failed to share receipt");
+            }
+          }
+        } else {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `receipt-${selectedTransaction?.transactionReference || Date.now()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          toast.info(
+            "Sharing not supported on this device. Receipt downloaded instead.",
+          );
+        }
+      });
+    } catch (error) {
+      console.error("Error sharing receipt:", error);
+      toast.error("Failed to share receipt. Please try again.");
+    }
   };
 
   // Filter & search logic
@@ -441,160 +549,171 @@ const Table = () => {
 
       {/* Receipt Modal with Real Transaction Data */}
       <Dialog open={!!selectedTransaction} onOpenChange={closeReceipt}>
-        <DialogContent className="max-w-md py-4 bg-white text-[#474747] font-dm-sans md:rounded-lg overflow-hidden max-h-[100vh]">
-          <div className=" text-center">
-            <div className="flex justify-center ">
-              <Image
-                src={"/v-b.svg"}
-                alt="logo"
-                width={20}
-                height={30}
-                className="w-10 "
-              />
+        <DialogContent className="max-w-md md:max-w-lg py-4 md:py-6 bg-white text-[#474747] font-dm-sans md:rounded-lg overflow-hidden max-h-[100vh] md:max-h-[90vh]">
+          <div ref={receiptRef}>
+            <div className=" text-center">
+              <div className="flex justify-center ">
+                <Image
+                  src={"/v-b.svg"}
+                  alt="logo"
+                  width={20}
+                  height={30}
+                  className="w-10 "
+                />
+              </div>
+              <h2 className="text-[16px] font-medium text-[#2F2F2F] ">
+                Payment Success!
+              </h2>
+              <p className="t font-medium text-[13px]">
+                Your payment was successful
+              </p>
             </div>
-            <h2 className="text-[16px] font-medium text-[#2F2F2F] ">
-              Payment Success!
-            </h2>
-            <p className="t font-medium text-[13px]">
-              Your payment was successful
-            </p>
+
+            {selectedTransaction && (
+              <div className="bg-[#F7F9FA] rounded-lg p-3 md:p-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between ">
+                    <span className="text-[#4B4E52] text-[13px] font-regular">
+                      Amount
+                    </span>
+                    <span className="font-medium text-[#2F2F2F]">
+                      ₦
+                      {Math.abs(
+                        parseFloat(selectedTransaction.amount),
+                      ).toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-[#4B4E52] text-[13px] font-regular">
+                      Payment Status
+                    </span>
+                    <span className="inline-flex px-3 py-1 rounded-full text-[10px] font-medium bg-[#23A26D1F] text-[#23A26D]">
+                      {getTransactionValue(
+                        selectedTransaction.status,
+                        "Successful",
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 md:space-y-3">
+                  <div className="">
+                    <p className="text-[#4B4E52] text-[13px] font-regular">
+                      Payment Description
+                    </p>
+                    <p className="text-[13px] font-medium ">
+                      {getTransactionValue(
+                        selectedTransaction.description ||
+                          selectedTransaction.transactionReference ||
+                          selectedTransaction.reference,
+                        "N/A",
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="">
+                    <p className="text-[#4B4E52] text-[13px] font-regular">
+                      Receiver&apos;s Name
+                    </p>
+                    <p className="text-[13px] font-medium ">
+                      {getTransactionValue(
+                        selectedTransaction.beneficiaryAccount?.name,
+                        selectedTransaction.senderAccount?.Name || "N/A",
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="">
+                    <p className="text-[#4B4E52] text-[13px] font-regular">
+                      Receiver&apos;s Account No
+                    </p>
+                    <p className="text-[13px] font-medium ">
+                      {getTransactionValue(
+                        selectedTransaction.beneficiaryAccount?.accountNumber,
+                        selectedTransaction.senderAccount?.accountNumber ||
+                          "N/A",
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="">
+                    <p className="text-[#4B4E52] text-[13px] font-regular">
+                      Receiver&apos;s Bank
+                    </p>
+                    <p className="text-[13px] font-medium ">
+                      {getTransactionValue(
+                        selectedTransaction.beneficiaryAccount?.provider ||
+                          selectedTransaction.beneficiaryAccount?.bankName,
+                        selectedTransaction.senderAccount?.provider ||
+                          selectedTransaction.senderAccount?.bankName ||
+                          "N/A",
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="">
+                    <p className="text-[#4B4E52] text-[13px] font-regular">
+                      Sender&apos;s Account
+                    </p>
+                    <p className="text-[13px] font-medium ">
+                      {getTransactionValue(
+                        selectedTransaction.senderAccount?.accountNumber,
+                        selectedTransaction.beneficiaryAccount?.accountNumber ||
+                          "N/A",
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="">
+                    <p className="text-[#4B4E52] text-[13px] font-regular">
+                      Transaction Type
+                    </p>
+                    <p className="text-[13px] font-medium ">
+                      {getTransactionValue(
+                        selectedTransaction.transactionType,
+                        "N/A",
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="">
+                    <p className="text-[#4B4E52] text-[13px] font-regular">
+                      Session ID
+                    </p>
+                    <p className="text-[13px] font-medium ">
+                      {getTransactionValue(
+                        selectedTransaction.sessionId ||
+                          selectedTransaction.id ||
+                          selectedTransaction.transactionReference,
+                        "N/A",
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="">
+                    <p className="text-[13px] font-medium ">Date</p>
+                    <p className="text-[13px] font-medium ">
+                      {formatReceiptDate(selectedTransaction.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {selectedTransaction && (
-            <div className="bg-[#F7F9FA] rounded-lg p-3">
-              <div className="space-y-2">
-                <div className="flex justify-between ">
-                  <span className="text-[#4B4E52] text-[13px] font-regular">
-                    Amount
-                  </span>
-                  <span className="font-medium text-[#2F2F2F]">
-                    ₦
-                    {Math.abs(
-                      parseFloat(selectedTransaction.amount),
-                    ).toLocaleString()}
-                  </span>
-                </div>
-
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-[#4B4E52] text-[13px] font-regular">
-                    Payment Status
-                  </span>
-                  <span className="inline-flex px-3 py-1 rounded-full text-[10px] font-medium bg-[#23A26D1F] text-[#23A26D]">
-                    {getTransactionValue(
-                      selectedTransaction.status,
-                      "Successful",
-                    )}
-                  </span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="">
-                  <p className="text-[#4B4E52] text-[13px] font-regular">
-                    Payment Description
-                  </p>
-                  <p className="text-[13px] font-medium ">
-                    {getTransactionValue(
-                      selectedTransaction.description ||
-                        selectedTransaction.transactionReference ||
-                        selectedTransaction.reference,
-                      "N/A",
-                    )}
-                  </p>
-                </div>
-
-                <div className="">
-                  <p className="text-[#4B4E52] text-[13px] font-regular">
-                    Receiver&apos;s Name
-                  </p>
-                  <p className="text-[13px] font-medium ">
-                    {getTransactionValue(
-                      selectedTransaction.beneficiaryAccount?.name,
-                      selectedTransaction.senderAccount?.Name || "N/A",
-                    )}
-                  </p>
-                </div>
-
-                <div className="">
-                  <p className="text-[#4B4E52] text-[13px] font-regular">
-                    Receiver&apos;s Account No
-                  </p>
-                  <p className="text-[13px] font-medium ">
-                    {getTransactionValue(
-                      selectedTransaction.beneficiaryAccount?.accountNumber,
-                      selectedTransaction.senderAccount?.accountNumber || "N/A",
-                    )}
-                  </p>
-                </div>
-
-                <div className="">
-                  <p className="text-[#4B4E52] text-[13px] font-regular">
-                    Receiver&apos;s Bank
-                  </p>
-                  <p className="text-[13px] font-medium ">
-                    {getTransactionValue(
-                      selectedTransaction.beneficiaryAccount?.provider ||
-                        selectedTransaction.beneficiaryAccount?.bankName,
-                      selectedTransaction.senderAccount?.provider ||
-                        selectedTransaction.senderAccount?.bankName ||
-                        "N/A",
-                    )}
-                  </p>
-                </div>
-
-                <div className="">
-                  <p className="text-[#4B4E52] text-[13px] font-regular">
-                    Sender&apos;s Account
-                  </p>
-                  <p className="text-[13px] font-medium ">
-                    {getTransactionValue(
-                      selectedTransaction.senderAccount?.accountNumber,
-                      selectedTransaction.beneficiaryAccount?.accountNumber ||
-                        "N/A",
-                    )}
-                  </p>
-                </div>
-
-                <div className="">
-                  <p className="text-[#4B4E52] text-[13px] font-regular">
-                    Transaction Type
-                  </p>
-                  <p className="text-[13px] font-medium ">
-                    {getTransactionValue(
-                      selectedTransaction.transactionType,
-                      "N/A",
-                    )}
-                  </p>
-                </div>
-
-                <div className="">
-                  <p className="text-[#4B4E52] text-[13px] font-regular">
-                    Session ID
-                  </p>
-                  <p className="text-[13px] font-medium ">
-                    {getTransactionValue(
-                      selectedTransaction.sessionId ||
-                        selectedTransaction.id ||
-                        selectedTransaction.transactionReference,
-                      "N/A",
-                    )}
-                  </p>
-                </div>
-
-                <div className="">
-                  <p className="text-[13px] font-medium ">Date</p>
-                  <p className="text-[13px] font-medium ">
-                    {formatReceiptDate(selectedTransaction.createdAt)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          <div className="flex  gap-4">
-            <Button className="flex-1  bg-[#0A6DC0] hover:bg-[#085a9e] text-white">
+          <div className="flex gap-4 receipt-buttons">
+            <Button
+              onClick={handleShareReceipt}
+              className="flex-1  bg-[#0A6DC0] hover:bg-[#085a9e] text-white"
+            >
               Share Receipt
             </Button>
-            <Button variant="outline" className="flex-1">
+            <Button
+              onClick={handleDownloadReceipt}
+              variant="outline"
+              className="flex-1"
+            >
               Download Receipt
             </Button>
           </div>

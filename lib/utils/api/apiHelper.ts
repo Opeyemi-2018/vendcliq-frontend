@@ -132,6 +132,8 @@ import {
   GET_SUBSCRIPTION_ME,
   CREATE_BENEFICIARY,
   GET_BENEFICIARIES,
+  GET_ATTENDANT_PERMISSIONS,
+  GET_ATTENDANTS,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -682,14 +684,7 @@ export const handlePayInvoice = async (
   );
 };
 
-export const handleAssignAttendantPermissions = async (
-  payload: AssignAttendantPermissionsPayload,
-): Promise<AssignAttendantPermissionsResponse> => {
-  return await poster<
-    AssignAttendantPermissionsResponse,
-    AssignAttendantPermissionsPayload
-  >(ASSIGN_ATTENDANT_PERMISSIONS, payload);
-};
+
 
 export const handleCreateExpense = async (
   payload: CreateExpensePayload,
@@ -711,12 +706,31 @@ export const handleDeleteExpense = async (expenseId: string): Promise<any> => {
     },
   });
 };
+export const handleAssignAttendantPermissions = async (
+  payload: AssignAttendantPermissionsPayload,
+): Promise<AssignAttendantPermissionsResponse> => {
+  return await poster<
+    AssignAttendantPermissionsResponse,
+    AssignAttendantPermissionsPayload
+  >(ASSIGN_ATTENDANT_PERMISSIONS, payload);
+};
 
 export const handleUpdateAttendantPermissions = async (
   payload: AssignAttendantPermissionsPayload,
 ): Promise<AssignAttendantPermissionsResponse> => {
   const url = UPDATE_ATTENDANT_PERMISSIONS(payload.attendant_id.toString());
   return await putter<AssignAttendantPermissionsResponse>(url, payload);
+};
+
+export const handleGetAttendants = async (): Promise<any> => {
+  return await fetcher<any>(GET_ATTENDANTS);
+};
+
+export const handleGetAttendantPermissions = async (
+  attendantId: string | number,
+): Promise<any> => {
+  const url = GET_ATTENDANT_PERMISSIONS(attendantId);
+  return await fetcher<any>(url);
 };
 
 export const handlePaySubscription = async (
