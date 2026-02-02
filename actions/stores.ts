@@ -274,6 +274,62 @@ export async function updateStock(
   }
 }
 
+export async function updateStockWithMovement(
+  stockId: string,
+  data: {
+    action: "Added" | "Removed";
+    quantity: number;
+    empties_qty: number;
+    remark: string;
+  },
+  token: string
+) {
+  try {
+    const response = await fetch(
+      `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/stocks/${stockId}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(data),
+        cache: "no-store",
+      }
+    );
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        message: errData.message || `Failed to update stock movement (HTTP ${response.status})`,
+      };
+    }
+
+    const json = await response.json();
+
+    if (json.statusCode !== 200) {
+      return {
+        success: false,
+        message: json.message || "Failed to record stock movement",
+      };
+    }
+
+    return {
+      success: true,
+      data: json.data,
+      message: json.message || "Stock movement recorded successfully",
+    };
+  } catch (error) {
+    console.error("Update stock movement error:", error);
+    return {
+      success: false,
+      message: "Network or server error while recording stock movement",
+    };
+  }
+}
+
 
 export async function getStockDetail(
   stockId: string,

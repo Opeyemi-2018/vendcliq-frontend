@@ -30,7 +30,6 @@ const MyStore = () => {
   const [attendantsLoading, setAttendantsLoading] = useState(true);
   const [attendantsError, setAttendantsError] = useState<string | null>(null);
 
-  // Fetch attendants when token is available
   useEffect(() => {
     const fetchAttendants = async () => {
       const token =
@@ -59,7 +58,6 @@ const MyStore = () => {
     fetchAttendants();
   }, []);
 
-  // Status color helper
   const getStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
       case "ACTIVE":
@@ -71,23 +69,9 @@ const MyStore = () => {
     }
   };
 
-  if (storesError) {
-    return (
-      <div className="p-5 flex items-center justify-center flex-col gap-3">
-        <p className="text-red-600 text-center">{storesError}</p>
-        <Button
-          onClick={refetchStores}
-          className="mt-4 bg-[#0A6DC0] hover:bg-[#085a9e]"
-        >
-          Retry Stores
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="">
-      {/* Header & Actions */}
+      {/* Header & Actions – always visible */}
       <div className="flex md:items-center md:gap-0 gap-3 justify-between flex-col md:flex-row mb-3">
         <div>
           <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F] ">
@@ -113,42 +97,46 @@ const MyStore = () => {
         </div>
       </div>
 
-      {/* Stores Table */}
+      {/* Stores Section – shows error/loading/empty/table */}
       <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white mb-3 md:mb-5">
         <h1 className="font-dm-sans text-[#2F2F2F] dark:text-white font-bold">
-          My Stores ({stores.length})
+          My Stores ({stores?.length ?? 0})
         </h1>
-        <div className="py-3 relative">
-          {storesLoading || stores.length === 0 ? (
-            <div className="py-20 px-4">
-              {storesLoading ? (
-                <div className="flex flex-col items-center justify-center">
-                  <ThreeDots
-                    height="80"
-                    width="80"
-                    color="#0A6DC0"
-                    visible={true}
-                  />
-                  <p className="mt-4 text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
-                    Loading stores...
-                  </p>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center space-y-4">
-                  <Image
-                    src="/store.svg"
-                    alt="No store"
-                    height={90}
-                    width={90}
-                  />
-                  <p className="font-bold font-dm-sans text-[16px] text-[#2F2F2F] dark:text-white">
-                    No store found
-                  </p>
-                  <p className="text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
-                    Your store will appear here
-                  </p>
-                </div>
-              )}
+
+        <div className="py-3 relative min-h-[300px]">
+          {storesError ? (
+            <div className="py-20 px-4 flex flex-col items-center justify-center gap-4">
+              <p className="text-red-600 dark:text-red-400 text-center">
+                {storesError}
+              </p>
+              <Button
+                onClick={refetchStores}
+                className="bg-[#0A6DC0] hover:bg-[#085a9e]"
+              >
+                Retry Stores
+              </Button>
+            </div>
+          ) : storesLoading ? (
+            <div className="py-20 px-4 flex flex-col items-center justify-center">
+              <ThreeDots
+                height="80"
+                width="80"
+                color="#0A6DC0"
+                visible={true}
+              />
+              <p className="mt-4 text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
+                Loading stores...
+              </p>
+            </div>
+          ) : stores.length === 0 ? (
+            <div className="py-20 px-4 flex flex-col items-center justify-center space-y-4">
+              <Image src="/store.svg" alt="No store" height={90} width={90} />
+              <p className="font-bold font-dm-sans text-[16px] text-[#2F2F2F] dark:text-white">
+                No store found
+              </p>
+              <p className="text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
+                Your store will appear here
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto lg:border border-[#E4E4E4] md:rounded-[20px] bg-white">
@@ -178,20 +166,18 @@ const MyStore = () => {
                       key={store.id}
                       className="hover:bg-gray-50 cursor-pointer transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
                       onClick={() =>
-                        router.push(
-                          `/dashboards/inventory/my-store/${store.id}`,
-                        )
+                        router.push(`/dashboards/inventory/my-store/${store.id}`)
                       }
                     >
                       <td className="py-4 md:pl-4 font-medium">{store.name}</td>
                       <td className="hidden md:table-cell py-4">
-                        {store.address.name}
+                        {store.address?.name || "—"}
                       </td>
                       <td className="hidden md:table-cell py-4">
-                        {store.stock_count}
+                        {store.stock_count ?? 0}
                       </td>
                       <td className="hidden md:table-cell py-4">
-                        ₦{store.stock_value.toLocaleString()}
+                        ₦{(store.stock_value ?? 0).toLocaleString()}
                       </td>
                       <td className="py-4">
                         <MoveRight className="w-5 h-5 text-gray-500" />
@@ -205,12 +191,13 @@ const MyStore = () => {
         </div>
       </div>
 
-      {/* Attendants Table */}
+      {/* Attendants Section – now always visible */}
       <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
         <h1 className="font-dm-sans text-[#2F2F2F] dark:text-white font-bold">
           My Attendants ({attendants.length})
         </h1>
-        <div className="py-3 relative">
+
+        <div className="py-3 relative min-h-[300px]">
           {attendantsLoading ? (
             <div className="py-20 px-4 flex flex-col items-center justify-center">
               <Loader2 className="h-10 w-10 animate-spin text-[#0A6DC0]" />
@@ -227,7 +214,8 @@ const MyStore = () => {
                 onClick={() => {
                   setAttendantsLoading(true);
                   setAttendantsError(null);
-                  window.location.reload();
+                  // You can call fetchAttendants() here if you extract it
+                  window.location.reload(); // temporary – better to refetch
                 }}
                 className="bg-[#0A6DC0] hover:bg-[#085a9e]"
               >
@@ -284,7 +272,7 @@ const MyStore = () => {
                       <td className="hidden md:table-cell py-4">
                         <span
                           className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            attendant.accountStatus,
+                            attendant.accountStatus
                           )}`}
                         >
                           {attendant.accountStatus}

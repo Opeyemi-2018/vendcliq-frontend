@@ -134,6 +134,7 @@ import {
   GET_BENEFICIARIES,
   GET_ATTENDANT_PERMISSIONS,
   GET_ATTENDANTS,
+  GET_BUSINESS_REPORT_COMPARISON,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -194,6 +195,7 @@ import {
 import { GetSuppliersResponse, Supplier } from "@/types/supplier";
 import { CreatePurchasePayload, CreatePurchaseResponse, InvoiceDetailsResponse, PurchasedInvoicesResponse, TrackingStatusResponse } from "@/types/purchase";
 import { UserStocksResponse } from "@/types/allMyStocks";
+import { BusinessReportResponse } from "@/types/businessReport";
 
 interface UserProfile {
   data: {
@@ -795,5 +797,20 @@ export const handleUpdateStore = async (
 
 export const handleGetMySubscription = async (): Promise<GetSubscriptionResponse> => {
   return await fetcher<GetSubscriptionResponse>(GET_SUBSCRIPTION_ME);
+};
+
+export const handleGetBusinessReportComparison = async (
+  startDate?: string,   // YYYY-MM-DD
+  endDate?: string      // YYYY-MM-DD
+): Promise<BusinessReportResponse> => {
+  const params: Record<string, string> = {};
+  
+  if (startDate) params.startDate = startDate;
+  if (endDate)   params.endDate   = endDate;
+
+  return await fetcher<BusinessReportResponse>(
+    GET_BUSINESS_REPORT_COMPARISON,
+    params
+  );
 };
 

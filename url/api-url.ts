@@ -99,6 +99,7 @@ const UPDATE_STORE_SETTINGS = (storeId: string) =>
   `inventory/stores/${storeId}/settings`;
 const UPDATE_STORE = (storeId: string) => `inventory/stores/${storeId}`;
 const GET_SUBSCRIPTION_ME = "inventory/subscriptions/me";
+ const GET_BUSINESS_REPORT_COMPARISON = "inventory/dashboard/business-report-comparison";
 
 export {
   // v2 endpoint
@@ -155,6 +156,7 @@ export {
   GET_SUBSCRIPTION_ME,
   CREATE_BENEFICIARY,
   GET_BENEFICIARIES,
+  GET_BUSINESS_REPORT_COMPARISON,
 
   // v1 endpoint
   GET_PROFILE,

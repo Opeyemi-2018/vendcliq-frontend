@@ -9,7 +9,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { UpdateStockDialog } from "./chunks/UpdateDialog";
-import { StoreStockDetail } from "@/types/store"; // ← adjust path if it's in actions/stores
+import { StoreStockDetail } from "@/types/store";
+import { UpdateStockMovementDialog } from "./chunks/UpdateWithMove";
 
 const StockDetailPage = () => {
   const router = useRouter();
@@ -269,6 +270,12 @@ const StockDetailPage = () => {
               stock_alert_no: stock.stock_alert_no ?? 0,
               sku: stock.sku,
             }}
+            onSuccess={handleUpdateSuccess}
+          />
+
+          {/* New button */}
+          <UpdateStockMovementDialog
+            stockId={stock.id}
             onSuccess={handleUpdateSuccess}
           />
         </div>
