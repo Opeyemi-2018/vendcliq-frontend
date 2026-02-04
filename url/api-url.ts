@@ -100,7 +100,9 @@ const UPDATE_STORE = (storeId: string) => `inventory/stores/${storeId}`;
 const GET_SUBSCRIPTION_ME = "inventory/subscriptions/me";
 const GET_BUSINESS_REPORT_COMPARISON =
   "inventory/dashboard/business-report-comparison";
-   const STOCK_HISTORY = "inventory/stock-movements";
+const STOCK_HISTORY = "inventory/stock-movements";
+const GET_SALES = "inventory/invoices/sales";
+const GET_PURCHASE_REQUEST = "inventory/invoices/purchase/sales";
 
 export {
   // v2 endpoint
@@ -159,6 +161,8 @@ export {
   GET_BENEFICIARIES,
   GET_BUSINESS_REPORT_COMPARISON,
   STOCK_HISTORY,
+  GET_PURCHASE_REQUEST,
+  GET_SALES,
 
   // v1 endpoint
   GET_PROFILE,

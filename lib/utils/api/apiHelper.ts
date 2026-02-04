@@ -136,6 +136,8 @@ import {
   GET_ATTENDANTS,
   GET_BUSINESS_REPORT_COMPARISON,
   STOCK_HISTORY,
+  GET_SALES,
+  GET_PURCHASE_REQUEST,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -822,4 +824,20 @@ export const handleGetStockMovements = async (
 ): Promise<StockMovementsResponse> => {
   const params = { stockId, page, limit };
   return await fetcher<StockMovementsResponse>(STOCK_HISTORY, params);
+};
+
+export const getSales = async (
+  page: number = 1,
+  limit: number = 10
+): Promise<{ data: any[]; pagination: any }> => {   
+  const params = { page: page.toString(), limit: limit.toString() };
+  return await fetcher<any>(`${GET_SALES}?${new URLSearchParams(params)}`);
+};
+
+export const getPurchace = async (
+  page: number = 1,
+  limit: number = 10
+): Promise<{ data: any[]; pagination: any }> => {
+  const params = { page: page.toString(), limit: limit.toString() };
+  return await fetcher<any>(`${GET_PURCHASE_REQUEST}?${new URLSearchParams(params)}`);
 };
