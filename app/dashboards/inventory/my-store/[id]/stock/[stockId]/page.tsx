@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { MoveLeft, Package } from "lucide-react";
@@ -8,9 +9,16 @@ import { ThreeDots } from "react-loader-spinner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { UpdateStockDialog } from "./chunks/UpdateDialog";
 import { StoreStockDetail } from "@/types/store";
-import { UpdateStockMovementDialog } from "./chunks/UpdateWithMove";
+import { UpdateStockModal } from "./chunks/UpdateDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
+import { toast } from "sonner";
 
 const StockDetailPage = () => {
   const router = useRouter();
@@ -53,7 +61,6 @@ const StockDetailPage = () => {
   }, [storeId, stockId]);
 
   const handleUpdateSuccess = () => {
-    // Refresh stock data after update
     fetchStockDetail();
   };
 
@@ -91,9 +98,9 @@ const StockDetailPage = () => {
 
       <div className="flex lg:items-center mb-3 md:mb-8 flex-col lg:flex-row justify-between gap-4">
         <div>
-          <div className="flex gap-3  items-center font-clash text-[16px] md:text-[25px] font-semibold text-[#2F2F2F]">
+          <div className="flex gap-3 items-center font-clash text-[16px] md:text-[25px] font-semibold text-[#2F2F2F]">
             <h1>{stock.product.name}</h1>
-            <span className="text-[#0A6DC0] ">•</span>
+            <span className="text-[#0A6DC0]">•</span>
             <p>{parseFloat(stock.quantity).toFixed(0)} Qty in stock</p>
           </div>
           <p className="font-medium font-dm-sans text-[#9E9A9A] mt-1">
@@ -101,49 +108,56 @@ const StockDetailPage = () => {
           </p>
         </div>
 
-        <Button className="py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#09599a] w-full lg:w-auto">
-          View Metrics
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild className="">
+            <Button
+              variant="outline"
+              className=" flex items-center justify-between gap-2"
+            >
+              Actions
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem
+              onClick={() =>
+                router.push(
+                  `/dashboards/inventory/my-store/${storeId}/stock/${stockId}/history`,
+                )
+              }
+              className="cursor-pointer"
+            >
+              View Stock History
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => toast.info("Share stock link coming soon")}
+              className="cursor-pointer"
+            >
+              Share Stock Link
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Quick Stats Cards */}
       <div className="mb-4 flex gap-4 items-center overflow-x-auto lg:overflow-visible">
-        <div
-          className="
-      min-w-[260px] flex-shrink-0
-      lg:min-w-0 lg:flex-1
-      bg-[url('/blue.svg')] bg-cover bg-no-repeat bg-center
-      h-[100px] rounded-2xl p-6 text-white
-    "
-        >
+        <div className="min-w-[260px] flex-shrink-0 lg:min-w-0 lg:flex-1 bg-[url('/blue.svg')] bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6 text-white">
           <p className="text-[16px] font-dm-sans">Qty Sold</p>
           <p className="text-[20px] md:text-[24px] font-clash font-semibold">
             {stock.stats.qty_sold.toLocaleString()}
           </p>
         </div>
 
-        <div
-          className="
-      min-w-[260px] flex-shrink-0
-      lg:min-w-0 lg:flex-1
-      bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat bg-center
-      h-[100px] rounded-2xl p-6 text-white
-    "
-        >
+        <div className="min-w-[260px] flex-shrink-0 lg:min-w-0 lg:flex-1 bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6 text-white">
           <p className="text-[16px] font-dm-sans">Total Sales</p>
           <p className="text-[20px] md:text-[24px] font-clash font-semibold">
             ₦{stock.stats.total_sales.toLocaleString()}
           </p>
         </div>
 
-        <div
-          className="
-      min-w-[260px] flex-shrink-0
-      lg:min-w-0 lg:flex-1
-      bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat bg-center
-      h-[100px] rounded-2xl p-6 text-white
-    "
-        >
+        <div className="min-w-[260px] flex-shrink-0 lg:min-w-0 lg:flex-1 bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6 text-white">
           <p className="text-[16px] font-dm-sans">Qty Added</p>
           <p className="text-[20px] md:text-[24px] font-clash font-semibold">
             {stock.stats.qty_added.toLocaleString()}
@@ -259,23 +273,20 @@ const StockDetailPage = () => {
             Create Promo
           </Button>
 
-          <UpdateStockDialog
+          {/* Unified Modal */}
+          <UpdateStockModal
             stockId={stock.id}
-            stockData={{
-              cost_price: stock.cost_price,
-              selling_price: stock.selling_price,
-              selling_price_pieces: stock.selling_price_pieces ?? "",
-              empties_price: stock.empties_price,
-              exp_date: stock.exp_date ?? "",
-              stock_alert_no: stock.stock_alert_no ?? 0,
-              sku: stock.sku,
+            productName={stock.product.name}
+            initialData={{
+              cost_price: parseFloat(stock.cost_price) || 0,
+              selling_price: parseFloat(stock.selling_price) || 0,
+              selling_price_pieces:
+                parseFloat(stock.selling_price_pieces || "0") || 0,
+              empties_price: parseFloat(stock.empties_price || "0") || 0,
+              exp_date: stock.exp_date || "",
+              stock_alert_no: stock.stock_alert_no || 0,
+              sku: stock.sku || "",
             }}
-            onSuccess={handleUpdateSuccess}
-          />
-
-          {/* New button */}
-          <UpdateStockMovementDialog
-            stockId={stock.id}
             onSuccess={handleUpdateSuccess}
           />
         </div>

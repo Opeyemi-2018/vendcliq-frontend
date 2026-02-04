@@ -12,12 +12,12 @@ import {
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Card } from "@/components/ui/card";
 import { CombinedStock, OfferStock, RegularStock } from "@/types/marketPlace";
 import { MarketSkeletonCard } from "@/components/SkeletonLoader";
 
 const MarketPlace = () => {
   const router = useRouter();
+
   const [items, setItems] = useState<CombinedStock[]>([]);
   const [displayItems, setDisplayItems] = useState<CombinedStock[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,12 +30,12 @@ const MarketPlace = () => {
   const fetchAllItems = async () => {
     try {
       setLoading(true);
+
       const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
+        localStorage.getItem("accessToken") 
+
       if (!token) {
         toast.error("Please log in");
-        setLoading(false);
         return;
       }
 
@@ -59,42 +59,68 @@ const MarketPlace = () => {
         : [];
 
       const allItems = [...offers, ...stocks];
+
       setItems(allItems);
-      setDisplayItems(allItems); // Initial display = all
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+      setDisplayItems(allItems);
+    } catch {
       toast.error("Failed to load marketplace");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle search
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setDisplayItems(items); // Show all if empty
-      return;
+    const delay = setTimeout(() => {
+      if (searchQuery.trim() === "") {
+        setDisplayItems(items);
+      } else {
+        searchFromBackend(searchQuery);
+      }
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [searchQuery]);
+
+  const searchFromBackend = async (query: string) => {
+    try {
+      setLoading(true);
+
+      const token =
+        localStorage.getItem("accessToken") 
+
+      if (!token) return;
+
+      const result = await getMarketplaceStocks(token, query, 1, 50);
+
+      if (result.success) {
+        if (result.data.length === 0) {
+          toast.info(`No products found for "${query}"`);
+          return; 
+        }
+
+        setDisplayItems(result.data);
+      } else {
+        toast.error("Search failed");
+      }
+    } catch {
+      toast.error("Search error");
+    } finally {
+      setLoading(false);
     }
-
-    const filtered = items.filter((item) =>
-      item.product.name.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-
-    if (filtered.length === 0) {
-      toast.error(`No products found for "${searchQuery}"`);
-      setDisplayItems(items); // Show all products back
-    } else {
-      setDisplayItems(filtered); // Show only matches
-    }
-  }, [searchQuery, items]);
-
-  const handleItemClick = (id: string, isOffer: boolean) => {
-    const path = `/dashboards/market-place/${id}${
-      isOffer ? "?type=offer" : ""
-    }`;
-    router.push(path);
   };
 
+  // ---------------------------
+  // Navigation
+  // ---------------------------
+  const handleItemClick = (id: string, isOffer: boolean) => {
+    router.push(
+      `/dashboards/market-place/${id}${isOffer ? "?type=offer" : ""}`,
+    );
+  };
+
+  // ---------------------------
+  // Product Card (UNCHANGED)
+  // ---------------------------
   const renderProductCard = (item: CombinedStock) => (
     <div
       key={item.id}
@@ -110,6 +136,7 @@ const MarketPlace = () => {
         <div className="absolute top-2 z-20 right-2 text-[#292D32] bg-[#F2F2F7] text-[8px] font-bold font-dm-sans p-1 rounded">
           <Heart size={15} />
         </div>
+
         {item.product.image ? (
           <Image
             src={`https:${item.product.image}`}
@@ -121,6 +148,7 @@ const MarketPlace = () => {
           <Milk />
         )}
       </div>
+
       <div className="px-3 py-2 flex flex-col justify-between h-[140px] bg-[#0A6DC0] text-white font-dm-sans">
         <div>
           <p className="font-bold">
@@ -130,19 +158,22 @@ const MarketPlace = () => {
               : parseFloat(item.selling_price).toFixed(2)}
             /unit
           </p>
+
           <h3 className="font-medium text-[13px]">
             {item.product.name.length > 15
               ? `${item.product.name.slice(0, 20)}...`
               : item.product.name}
           </h3>
-          <p className="font-semibold text-[10px] font-regular mb-2">
+
+          <p className="font-semibold text-[10px] mb-2">
             {item.isOffer ? item.qty : item.total_qty} pieces left
           </p>
         </div>
+
         <Button
           onClick={() => handleItemClick(item.id, !!item.isOffer)}
           variant="outline"
-          className="w-full text-[13px] text-[#2F2F2F] "
+          className="w-full text-[13px] text-[#2F2F2F]"
         >
           Order Now
         </Button>
@@ -150,18 +181,22 @@ const MarketPlace = () => {
     </div>
   );
 
+  // ---------------------------
+  // Render (UNCHANGED)
+  // ---------------------------
   return (
     <div>
-      {/* Header & Search */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="font-semibold font-clash text-[20px] md:text-[20px] text-[#2F2F2F]">
+          <h1 className="font-semibold font-clash text-[20px] text-[#2F2F2F]">
             Market Place
           </h1>
-          <p className="font-medium text-[13px] md:text-[16px] text-[#9E9A9A] font-dm-sans">
+          <p className="font-medium text-[13px] text-[#9E9A9A] font-dm-sans">
             Order any product from the market place
           </p>
         </div>
+
         <Button
           onClick={() => router.push("/dashboards/cart")}
           className="bg-[#0A6DC0] hover:bg-[#09599a]"
@@ -170,6 +205,7 @@ const MarketPlace = () => {
         </Button>
       </div>
 
+      {/* Search */}
       <div className="relative mb-6">
         <Search className="absolute left-3 top-3.5 w-5 h-5 text-[#313131]" />
         <Input
@@ -187,46 +223,42 @@ const MarketPlace = () => {
           ))}
         </div>
       ) : (
-        <>
-          <div className="  md:p-6 lg:border border-[#E4E4E4] rounded-lg ">
-            {/* Offer Products Section */}
-            {displayItems.some((item) => item.isOffer) && (
-              <div className="mb-8">
-                <div className="">
-                  <div className="flex items-center gap-4 mb-3">
-                    <h2 className="text-lg font-semibold  text-[#2F2F2F] font-dm-sans">
-                      Promo Products
-                    </h2>
-                    <h2 className="text-[14px] font-bold bg-[#E33629] px-2 text-white rounded-md font-dm-sans">
-                      HOT DEALS
-                    </h2>
-                  </div>
-                  <div className="grid  grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                    {displayItems
-                      .filter((item) => item.isOffer)
-                      .map(renderProductCard)}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* All Products Section */}
-            {displayItems.some((item) => !item.isOffer) && (
-              <div>
-                <h2 className="text-[16px] font-medium mb-4 text-[#2F2F2F] font-dm-sans">
-                  All Products
+        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg">
+          {/* Promo Products */}
+          {displayItems.some((item) => item.isOffer) && (
+            <div className="mb-8">
+              <div className="flex items-center gap-4 mb-3">
+                <h2 className="text-lg font-semibold text-[#2F2F2F] font-dm-sans">
+                  Promo Products
                 </h2>
-                <div className="">
-                  <div className="grid  grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-                    {displayItems
-                      .filter((item) => !item.isOffer)
-                      .map(renderProductCard)}
-                  </div>
-                </div>
+                <h2 className="text-[14px] font-bold bg-[#E33629] px-2 text-white rounded-md font-dm-sans">
+                  HOT DEALS
+                </h2>
               </div>
-            )}
-          </div>
-        </>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                {displayItems
+                  .filter((item) => item.isOffer)
+                  .map(renderProductCard)}
+              </div>
+            </div>
+          )}
+
+          {/* All Products */}
+          {displayItems.some((item) => !item.isOffer) && (
+            <div>
+              <h2 className="text-[16px] font-medium mb-4 text-[#2F2F2F] font-dm-sans">
+                All Products
+              </h2>
+
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                {displayItems
+                  .filter((item) => !item.isOffer)
+                  .map(renderProductCard)}
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

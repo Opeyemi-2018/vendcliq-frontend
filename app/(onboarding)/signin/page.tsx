@@ -62,7 +62,8 @@ const SignIN = () => {
             status: userData.account.status,
             userId: userData.userId,
             phone: userData.phone,
-            pin: userData.pin ?? false,                    // ← Added
+            pin: userData.pin ?? false,
+            createdAt: userData.createdAt, // ← ADD THIS LINE
           };
 
           const formattedWalletData = walletData

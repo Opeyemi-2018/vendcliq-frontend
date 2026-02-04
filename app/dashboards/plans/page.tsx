@@ -7,7 +7,6 @@ import PlanConfirmation from "./chunks/confirmPlan";
 import PaymentInfo from "./chunks/paymentInfo";
 import { DisplayPlan, PlanEntity } from "@/types/plans";
 import { fetchPricingPlans } from "@/actions/plans";
-import { useRouter } from "next/navigation"; // ← added for navigation
 import { Button } from "@/components/ui/button";
 
 const getPlanDescription = (planName: string): string => {
@@ -87,7 +86,6 @@ const Subscription = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [months, setMonths] = useState(1);
 
-  const router = useRouter(); // ← added for navigation
 
   const enterprisePlan: DisplayPlan = {
     id: 999,
@@ -159,7 +157,7 @@ const Subscription = () => {
   const handlePlanSelect = (plan: DisplayPlan) => {
     // If Enterprise is selected → navigate to contact us
     if (plan.id === "enterprise" || plan.name.toLowerCase() === "enterprise") {
-      router.push("/contact-us"); // ← change to your actual contact page route
+      window.open("https://vendcliq.com/contact", "_blank"); // ← change to your actual contact page route
       return;
     }
 

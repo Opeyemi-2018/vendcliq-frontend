@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from "zod";
 
 export const createStockSchema = z.object({
@@ -75,5 +76,69 @@ export interface CreateStockResponse {
     id: string;
     store_id: string;
     product_id: string;
+  };
+}
+
+// stock history
+export interface StockMovement {
+  id: string;
+  stock_id: number;
+  balance: number;
+  quantity: number;
+  remark: string | null;
+  movement_type: string;
+  invoice_id: number | null;
+  attributes: {
+    address?: string;
+    latitude?: number;
+    longitude?: number;
+    [key: string]: any;
+  } | null;
+  meta: {
+    mode?: string;
+    image?: string;
+    unit_price?: number;
+    product_name?: string;
+    [key: string]: any;
+  } | null;
+  created_at: string;
+  updated_at: string;
+  stock: {
+    id: string;
+    sku: string;
+    cost_price: string;
+    selling_price: string;
+    selling_price_pieces: string;
+    empties_price: string;
+    exp_date: string | null;
+    quantity: string;
+    empties_qty: string;
+    total_qty: string;
+    stock_alert_no: number;
+    stock_value: string;
+    status: string;
+    product: {
+      id: string;
+      name: string;
+      items_per_pack: number;
+      image: string;
+    };
+    store: any | null;
+    attributes: Record<string, string> | null;
+    created_at: string;
+    updated_at: string;
+  };
+}
+
+export interface StockMovementsResponse {
+  statusCode: number;
+  error: null | any;
+  data: StockMovement[];
+  pagination: {
+    totalPages: number;
+    currentPage: number;
+    totalCount: number;
+    limit: number;
+    nextPage: number | null;
   };
 }

@@ -26,9 +26,8 @@ const CREATE_PIN = "/client/v2/auth/pin";
 const REQUEST_PIN_TOKEN = "/client/v2/auth/request-pin-token";
 const UPDATE_TRANSFER_PIN = "/client/v2/auth/pin-update";
 const CHANGE_PASSWORD = "/client/v2/change-password";
- const CREATE_BENEFICIARY = "/client/v2/wallet/beneficiaries";
-  const GET_BENEFICIARIES = "/client/v2/wallet/beneficiaries";
-
+const CREATE_BENEFICIARY = "/client/v2/wallet/beneficiaries";
+const GET_BENEFICIARIES = "/client/v2/wallet/beneficiaries";
 
 // v1 endpoint
 const BUSINESS_INFORMATION_SETUP_STEP_ONE =
@@ -80,7 +79,7 @@ const PAY_CART = (invoiceId: string) => `inventory/invoices/${invoiceId}/pay`;
 const ASSIGN_ATTENDANT_PERMISSIONS = "inventory/attendant-permissions";
 const UPDATE_ATTENDANT_PERMISSIONS = (attendantId: string) =>
   `inventory/attendant-permissions/attendant/${attendantId}`;
-// the get attendant is not inventory endpoint 
+// the get attendant is not inventory endpoint
 const GET_ATTENDANTS = "/client/v2/attendants";
 const GET_ATTENDANT_PERMISSIONS = (attendantId: string | number) =>
   `inventory/attendant-permissions/attendant/${attendantId}`;
@@ -99,7 +98,9 @@ const UPDATE_STORE_SETTINGS = (storeId: string) =>
   `inventory/stores/${storeId}/settings`;
 const UPDATE_STORE = (storeId: string) => `inventory/stores/${storeId}`;
 const GET_SUBSCRIPTION_ME = "inventory/subscriptions/me";
- const GET_BUSINESS_REPORT_COMPARISON = "inventory/dashboard/business-report-comparison";
+const GET_BUSINESS_REPORT_COMPARISON =
+  "inventory/dashboard/business-report-comparison";
+   const STOCK_HISTORY = "inventory/stock-movements";
 
 export {
   // v2 endpoint
@@ -157,6 +158,7 @@ export {
   CREATE_BENEFICIARY,
   GET_BENEFICIARIES,
   GET_BUSINESS_REPORT_COMPARISON,
+  STOCK_HISTORY,
 
   // v1 endpoint
   GET_PROFILE,

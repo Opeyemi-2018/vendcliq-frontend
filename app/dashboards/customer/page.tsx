@@ -4,7 +4,16 @@
 import { CustomerForm, customerSchema } from "@/types/customer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
-import { Mail, Search, X, Plus, Trash2, UserPen } from "lucide-react";
+import {
+  Mail,
+  Search,
+  X,
+  Plus,
+  Trash2,
+  UserPen,
+  MoveLeft,
+  MoveRight,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { deleteCustomer, getCustomers } from "@/actions/getcustomers";
@@ -70,6 +79,10 @@ const Customer = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
   const customerForm = useForm<CustomerForm>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
@@ -89,8 +102,7 @@ const Customer = () => {
     const fetchCustomers = async () => {
       setIsLoadingCustomers(true);
       try {
-        const token =
-          localStorage.getItem("accessToken") 
+        const token = localStorage.getItem("accessToken");
         if (!token) return;
         const result = await getCustomers(token);
         if (result.success && result.data) {
@@ -188,6 +200,58 @@ const Customer = () => {
       .toLowerCase()
       .includes(searchQuery.toLowerCase()),
   );
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  // Pagination logic
+  const totalItems = filteredCustomers.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+
+  const paginatedCustomers = filteredCustomers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const renderPagination = () => {
+    const pages = [];
+    const maxVisible = 5;
+
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    const end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(
+        <Button
+          key={i}
+          variant={currentPage === i ? "default" : "outline"}
+          size="sm"
+          className={`h-8 w-8 ${
+            currentPage === i
+              ? "bg-[#0A6DC0] text-white hover:bg-[#0A6DC0]"
+              : ""
+          }`}
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </Button>,
+      );
+    }
+
+    return pages;
+  };
 
   return (
     <div>
@@ -445,7 +509,7 @@ const Customer = () => {
                   </td>
                 </tr>
               ) : (
-                filteredCustomers.map((customer) => (
+                paginatedCustomers.map((customer) => (
                   <tr
                     key={customer.id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
@@ -529,6 +593,37 @@ const Customer = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination – only show if more than 5 items */}
+        {!isLoadingCustomers && filteredCustomers.length > itemsPerPage && (
+          <div className="flex flex-row justify-between items-center mt-6 px-4 gap-4">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+              className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <MoveLeft /> Previous
+            </button>
+
+            <div className="hidden lg:flex items-center gap-2 flex-wrap justify-center">
+              {renderPagination()}
+            </div>
+
+            <button
+              disabled={currentPage >= totalPages}
+              onClick={() => handlePageChange(currentPage + 1)}
+              className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next <MoveRight />
+            </button>
+
+            <div className="hidden lg:block text-sm text-gray-600">
+              Showing {(currentPage - 1) * itemsPerPage + 1} -{" "}
+              {Math.min(currentPage * itemsPerPage, filteredCustomers.length)}{" "}
+              of {filteredCustomers.length}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -47,10 +47,16 @@ const Navbar = () => {
               Create Business Account{" "}
             </Link>
           )}
-          <div className="hidden lg:flex items-center gap-2">
+          <a
+            href="https://vendcliq.com/contact"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden lg:flex items-center gap-2"
+          >
             <Headphones />
             <h1>Support</h1>
-          </div>
+          </a>
+
           <Separator orientation="vertical" className="h-4 " />
           <h1 className="hidden lg:inline">{user?.firstname}</h1>
         </div>

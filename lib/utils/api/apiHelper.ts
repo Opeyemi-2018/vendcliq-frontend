@@ -135,11 +135,12 @@ import {
   GET_ATTENDANT_PERMISSIONS,
   GET_ATTENDANTS,
   GET_BUSINESS_REPORT_COMPARISON,
+  STOCK_HISTORY,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
 import { CreateStoreFormData, CreateStoreResponse, StoreSettingsPayload, StoreSettingsResponse, UpdateStorePayload, UpdateStoreResponse } from "@/types/store";
-import { CreateStockResponse, ProductsResponse } from "@/types/stock";
+import { CreateStockResponse, ProductsResponse, StockMovementsResponse } from "@/types/stock";
 import { TransactionHistoryResponse } from "@/types/transactions";
 import {
   CreateBeneficiaryPayload,
@@ -814,3 +815,11 @@ export const handleGetBusinessReportComparison = async (
   );
 };
 
+export const handleGetStockMovements = async (
+  stockId: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<StockMovementsResponse> => {
+  const params = { stockId, page, limit };
+  return await fetcher<StockMovementsResponse>(STOCK_HISTORY, params);
+};

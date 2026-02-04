@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/dashboards/inventory/my-store/[id]/page.tsx
 "use client";
 
-import { MoveLeft, Trash2, Loader2, Search, MoveRight } from "lucide-react";
+import { MoveLeft,  Loader2, Search, MoveRight } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getStoreById, getStoreStock } from "@/actions/stores";
@@ -367,7 +366,7 @@ const StoreDetailPage = () => {
           )}
         </div>
 
-        <div className="space-y-2 font-dm-sans mt-8">
+        {/* <div className="space-y-2 font-dm-sans mt-8">
           <div className="text-[#2F2F2F]  flex justify-between items-center">
             <p className="font-bold text-[13px] md:text-[16px]">
               Payment Options
@@ -384,7 +383,7 @@ const StoreDetailPage = () => {
             <p className="text-[13px] md:text-[16px]">Ajo POS</p>
             <Trash2 color="#9E9A9A" size={20} />
           </div>
-        </div>
+        </div> */}
 
         <div className="flex items-center justify-between mt-8 gap-4">
           <Button

@@ -539,9 +539,7 @@ export default function OtherBankTransfer() {
                         <PopoverContent
                           className="w-full p-0"
                           align="start"
-                          onCloseAutoFocus={(e) => {
-                            e.preventDefault();
-                          }}
+                          onCloseAutoFocus={(e) => e.preventDefault()}
                         >
                           <Command>
                             <CommandInput
@@ -601,49 +599,57 @@ export default function OtherBankTransfer() {
                       </div>
                     )}
 
-                    {accountName && (
-                      <>
-                        <p className="text-[16px] font-dm-sans text-[#9E9A9A]">
-                          Account Name
-                        </p>
-                        <p className="font-bold text-[#0A6DC0] text-[16px] -mt-3">
-                          {accountName}
-                        </p>
-                      </>
-                    )}
-
                     {enquiryError && (
                       <p className="text-sm text-red-600">{enquiryError}</p>
                     )}
 
+                    {/* ── New verified account block with "Add to beneficiary" action ── */}
                     {accountName && (
-                      <div className="flex items-center gap-2 pt-4">
-                        <Button
-                          type="button"
-                          onClick={handleStep1}
-                          className="w-full bg-[#0A6DC0] hover:bg-[#09599a] py-6"
-                        >
-                          Proceed
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={handleAddToBeneficiary}
-                          disabled={isSavingBeneficiary}
-                          className="w-full bg-[#0A2540] hover:bg-[#304c6a] py-6"
-                        >
-                          {isSavingBeneficiary ? (
-                            <>
+                      <div className="pt-4">
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-600">
+                                Account Name
+                              </p>
+                              <p className="font-semibold text-[#0A6DC0]">
+                                {accountName}
+                              </p>
+                              <p className="text-sm text-gray-500 mt-1">
+                                {accountNumber} •{" "}
+                                {
+                                  banks.find((b) => b.code === selectedBankCode)
+                                    ?.name
+                                }
+                              </p>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={handleAddToBeneficiary}
+                              disabled={isSavingBeneficiary}
+                              className="flex flex-col items-end text-[#0A6DC0] hover:text-[#09599a] transition-colors group"
+                            >
+                              <MoveRight className="h-8 w-8 group-hover:translate-x-1 transition-transform " />
+                              <span className="text-xs font-medium mt-1 whitespace-nowrap">
+                                {isSavingBeneficiary
+                                  ? "Adding..."
+                                  : "Add to beneficiary"}
+                              </span>
+                            </button>
+                          </div>
+
+                          {isSavingBeneficiary && (
+                            <div className="mt-3 text-center text-sm text-gray-500">
                               <ClipLoader
-                                size={16}
-                                color="white"
+                                size={14}
+                                color="#0A6DC0"
                                 className="mr-2"
                               />
-                              Adding...
-                            </>
-                          ) : (
-                            "Add & Proceed"
+                              Adding beneficiary...
+                            </div>
                           )}
-                        </Button>
+                        </div>
                       </div>
                     )}
                   </div>

@@ -249,9 +249,9 @@ const MyStore = () => {
                     <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                       Status
                     </th>
-                    <th className="text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                    {/* <th className="text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                       Actions
-                    </th>
+                    </th> */}
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -278,9 +278,9 @@ const MyStore = () => {
                           {attendant.accountStatus}
                         </span>
                       </td>
-                      <td className="py-4">
+                      {/* <td className="py-4">
                         <MoveRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>

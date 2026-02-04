@@ -60,6 +60,7 @@ import {
   GET_ATTENDANT_PERMISSIONS,
   GET_ATTENDANTS,
   GET_BUSINESS_REPORT_COMPARISON,
+  STOCK_HISTORY
 
   // v1 endpoint
 
@@ -256,6 +257,7 @@ const INVENTORY_ENDPOINTS = [
   UPDATE_STORE,
   GET_SUBSCRIPTION_ME,
   GET_BUSINESS_REPORT_COMPARISON,
+  STOCK_HISTORY,
 ];
 
 const LOGISTIC_ENDPOINTS = [GET_ITEM_TRACKING_STATUS];
@@ -469,6 +471,8 @@ export async function POST(request: Request) {
 
 // GET Handler
 // GET Handler
+// FIXED GET Handler - Replace your existing GET function with this:
+
 export async function GET(request: Request) {
   try {
     const forwardedFor = request.headers.get("x-forwarded-for");
@@ -492,6 +496,21 @@ export async function GET(request: Request) {
       );
     }
 
+    // ============================================
+    // FIX: Extract all query params except 'endpoint'
+    // ============================================
+    const forwardParams = new URLSearchParams();
+    searchParams.forEach((value, key) => {
+      if (key !== "endpoint") {
+        forwardParams.append(key, value);
+      }
+    });
+
+    // Build the query string
+    const queryString = forwardParams.toString();
+    const fullEndpoint = queryString ? `${endpoint}?${queryString}` : endpoint;
+    // ============================================
+
     const token = getAuthToken(request);
     const apiBaseUrl = getApiBaseUrl(endpoint);
     const isLogisticsEndpoint = apiBaseUrl === LOGISTIC_API_BASE_URL;
@@ -509,9 +528,10 @@ export async function GET(request: Request) {
       ? baseHeaders
       : await addSecurityHeaders(baseHeaders, "GET", endpoint);
 
-    console.log(`Routing GET ${endpoint} to ${apiBaseUrl}${endpoint}`);
+    console.log(`Routing GET ${endpoint} to ${apiBaseUrl}${fullEndpoint}`);
+    console.log(`Query params being forwarded:`, queryString || "none");
 
-    const response = await fetch(`${apiBaseUrl}${endpoint}`, {
+    const response = await fetch(`${apiBaseUrl}${fullEndpoint}`, {
       headers,
     });
 

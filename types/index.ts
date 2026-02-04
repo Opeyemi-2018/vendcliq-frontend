@@ -165,6 +165,7 @@ export interface SignInResponse {
         number: string;
         verified: string | null;
       };
+      createdAt?: string;
       account: {
         status: string;
         accountRole: string;

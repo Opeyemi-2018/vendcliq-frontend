@@ -1,10 +1,21 @@
 // app/actions/marketPlaceStock.ts
 "use server";
 
-export async function getMarketplaceStocks(token: string) {
+export async function getMarketplaceStocks(
+  token: string,
+  search = "",
+  page = 1,
+  limit = 20,
+) {
   try {
+    const query = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+      search,
+    }).toString();
+
     const res = await fetch(
-      `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/stocks`,
+      `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/stocks?${query}`,
       {
         method: "GET",
         headers: {
@@ -12,36 +23,26 @@ export async function getMarketplaceStocks(token: string) {
           Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      return {
-        success: false,
-        error: errorData.msg || "Failed to fetch marketplace stocks",
-      };
+      return { success: false, error: "Failed to fetch marketplace stocks" };
     }
 
     const data = await res.json();
 
-    if (data.statusCode === 200) {
-      return {
-        success: true,
-        data: data.data,
-      };
-    }
-
-    return { success: false, error: "Failed to load marketplace" };
-  } catch (err) {
-    console.error("Marketplace fetch error:", err);
+    return data.statusCode === 200
+      ? { success: true, data: data.data }
+      : { success: false, error: "Failed to load marketplace" };
+  } catch {
     return { success: false, error: "Network error. Try again." };
   }
 }
 
 export async function getMarketplaceStockDetail(
   token: string,
-  stockId: string
+  stockId: string,
 ) {
   try {
     const res = await fetch(
@@ -53,7 +54,7 @@ export async function getMarketplaceStockDetail(
           Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!res.ok) {
@@ -92,7 +93,7 @@ export async function getMarketplaceOffers(token: string) {
           Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!res.ok) {
@@ -130,7 +131,7 @@ export async function getOfferDetail(token: string, offerId: string) {
           Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!res.ok) {
