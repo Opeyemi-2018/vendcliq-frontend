@@ -13,9 +13,8 @@ import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { getPurchace, getSales } from "@/lib/utils/api/apiHelper";
-
-
+import {  getPurchaseRequest, getSales } from "@/lib/utils/api/apiHelper";
+import Image from "next/image";
 
 type InvoiceItem = {
   id: string;
@@ -62,7 +61,7 @@ const Home = () => {
       }
 
       try {
-        const purchaseRes = await getPurchace(1, 10);
+        const purchaseRes = await getPurchaseRequest(1, 10);
         setPurchases(purchaseRes.data || []);
       } catch (err) {
         console.error("Failed to load purchase invoices:", err);
@@ -101,11 +100,15 @@ const Home = () => {
     >
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-xs font-medium">
-            ₦
-          </div>
+          {tx.status.toLowerCase() === "pending" ? (
+            <Image src={"/pending.svg"} height={40} width={40} alt="pending" />
+          ) : (
+            <Image src={"/in.svg"} height={40} width={40} alt="completed" />
+          )}
           <div className="space-y-0.5">
-            <h1 className="text-[15px] font-medium text-[#2F2F2F]">{tx.code}</h1>
+            <h1 className="text-[15px] font-medium text-[#2F2F2F]">
+              {tx.code}
+            </h1>
             <p className="text-[13px] text-[#9E9A9A]">{tx.date}</p>
           </div>
         </div>
@@ -120,10 +123,11 @@ const Home = () => {
           <p
             className={cn(
               "text-[12px] font-bold px-2.5 py-0.5 rounded-full inline-block mt-1",
-              getStatusStyle(tx.status)
+              getStatusStyle(tx.status),
             )}
           >
-            {tx.status.charAt(0).toUpperCase() + tx.status.slice(1).toLowerCase()}
+            {tx.status.charAt(0).toUpperCase() +
+              tx.status.slice(1).toLowerCase()}
           </p>
         </div>
       </div>
@@ -169,7 +173,9 @@ const Home = () => {
             </div>
 
             {showBalance ? (
-              <h1 className="text-[28px] font-clash font-bold text-white">****</h1>
+              <h1 className="text-[28px] font-clash font-bold text-white">
+                ****
+              </h1>
             ) : (
               <h1 className="text-[28px] font-clash font-bold text-white">
                 ₦300,500,750
@@ -185,14 +191,15 @@ const Home = () => {
                 variant="outline"
                 className={cn(
                   "justify-start text-left font-normal h-10 px-3 bg-white/90",
-                  !date && "text-muted-foreground"
+                  !date && "text-muted-foreground",
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {date?.from ? (
                   date.to ? (
                     <>
-                      {format(date.from, "MMM dd")} - {format(date.to, "MMM dd")}
+                      {format(date.from, "MMM dd")} -{" "}
+                      {format(date.to, "MMM dd")}
                     </>
                   ) : (
                     format(date.from, "MMM dd")
@@ -227,12 +234,14 @@ const Home = () => {
             onClick={() => router.push("/dashboards/inventory/sell")}
             className="bg-[#0A6DC0] hover:bg-[#09599a] w-full text-[16px] flex gap-2 px-6 py-5 md:py-6 text-white"
           >
+            <Image src={"/sell.svg"} height={20} width={20} alt="completed" />{" "}
             Sell
           </Button>
           <Button
             onClick={() => router.push("/dashboards/inventory/buy")}
             className="bg-[#0A2540] hover:bg-[#304c6a] w-full text-[16px] flex gap-2 px-6 py-5 md:py-6 text-white"
           >
+            <Image src={"/buy.svg"} height={20} width={20} alt="completed" />{" "}
             Buy
           </Button>
           <Button
@@ -240,6 +249,7 @@ const Home = () => {
             variant="outline"
             className="bg-white w-full text-[16px] flex gap-2 px-6 py-5 md:py-6 text-[#2F2F2F]"
           >
+            <Image src={"/store.svg"} height={20} width={20} alt="completed" />{" "}
             My Store
           </Button>
         </div>
@@ -273,7 +283,7 @@ const Home = () => {
           <div className="flex justify-between items-center mb-4">
             <h2 className="font-bold text-[16px]">Purchase Requests</h2>
             <Link
-              href="/dashboards/inventory/invoices/purchase"
+              href="/dashboards/inventory/purchase-request"
               className="font-bold text-[13px] text-[#0A6DC0] hover:underline"
             >
               see all
@@ -281,11 +291,15 @@ const Home = () => {
           </div>
 
           {purchasesLoading ? (
-            <p className="text-center text-gray-500 py-6">Loading purchases...</p>
+            <p className="text-center text-gray-500 py-6">
+              Loading purchases...
+            </p>
           ) : displayedPurchases.length > 0 ? (
             displayedPurchases.map(renderTransaction)
           ) : (
-            <p className="text-center text-gray-500 py-6">No recent purchases</p>
+            <p className="text-center text-gray-500 py-6">
+              No recent purchases
+            </p>
           )}
         </div>
       </div>

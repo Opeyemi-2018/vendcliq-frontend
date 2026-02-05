@@ -26,10 +26,16 @@ import { Separator } from "@/components/ui/separator";
 import { clearAuthTokens } from "@/lib/utils/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const Navbar = () => {
   const { user, isUserPending } = useUser();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <nav className="p-4 flex items-center justify-between sticky top-0 border-b-2 border-[#0000001A] z-10 bg-white ">
@@ -39,10 +45,10 @@ const Navbar = () => {
           style={{ gap: "30px" }}
           className="flex items-center text-[13px] md:text-[16px] font-medium"
         >
-          {isUserPending && (
+          {mounted && isUserPending && (
             <Link
               href={"/dashboards/business-account"}
-              className="font-inter font-dm-sans  cursor-pointer whitespace-nowrap text-[14px] lg:text-[16px] font-medium text-[#0A6DC0] hover:text-[#09599a] border-b-2 border-[#0A6DC0]"
+              className="font-inter font-dm-sans cursor-pointer whitespace-nowrap text-[14px] lg:text-[16px] font-medium text-[#0A6DC0] hover:text-[#09599a] border-b-2 border-[#0A6DC0]"
             >
               Create Business Account{" "}
             </Link>
@@ -58,7 +64,7 @@ const Navbar = () => {
           </a>
 
           <Separator orientation="vertical" className="h-4 " />
-          <h1 className="hidden lg:inline">{user?.firstname}</h1>
+          <h1 className="hidden lg:inline">{mounted ? user?.firstname : ""}</h1>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger>
@@ -81,14 +87,11 @@ const Navbar = () => {
             >
               <User className="h-[1.2rem] w-[1.2rem] mr-2" /> Profile
             </DropdownMenuItem>
-            {/* <DropdownMenuItem>
-            <Settings className="h-[1.2rem] w-[1.2rem] mr-2" /> Settings
-            </DropdownMenuItem> */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem
                   onSelect={(e) => e.preventDefault()}
-                  className="text-[#FF0000]  bg-[#FF0000]/20  cursor-pointer focus:bg-red-100"
+                  className="text-[#FF0000] bg-[#FF0000]/20 cursor-pointer focus:bg-red-100"
                 >
                   <div
                     className="flex gap-3 items-center "

@@ -138,6 +138,8 @@ import {
   STOCK_HISTORY,
   GET_SALES,
   GET_PURCHASE_REQUEST,
+  GET_PURCHASE_REQUEST_BY_ID,
+  HAND_OVER_ITEM,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -196,9 +198,10 @@ import {
   SubscriptionPaymentResponse,
 } from "@/types/plans";
 import { GetSuppliersResponse, Supplier } from "@/types/supplier";
-import { CreatePurchasePayload, CreatePurchaseResponse, InvoiceDetailsResponse, PurchasedInvoicesResponse, TrackingStatusResponse } from "@/types/purchase";
+import { CreatePurchasePayload, CreatePurchaseResponse,  InvoiceDetailsResponse,  PurchasedInvoicesResponse, TrackingStatusResponse } from "@/types/purchase";
 import { UserStocksResponse } from "@/types/allMyStocks";
 import { BusinessReportResponse } from "@/types/businessReport";
+import { PurchaseRequestDetailResponse, PurchaseRequestListResponse } from "@/types/purchaseRequest";
 
 interface UserProfile {
   data: {
@@ -834,10 +837,27 @@ export const getSales = async (
   return await fetcher<any>(`${GET_SALES}?${new URLSearchParams(params)}`);
 };
 
-export const getPurchace = async (
+export const getPurchaseRequest = async (
   page: number = 1,
   limit: number = 10
-): Promise<{ data: any[]; pagination: any }> => {
+): Promise<PurchaseRequestListResponse> => {
   const params = { page: page.toString(), limit: limit.toString() };
-  return await fetcher<any>(`${GET_PURCHASE_REQUEST}?${new URLSearchParams(params)}`);
+  return await fetcher<PurchaseRequestListResponse>(
+    `${GET_PURCHASE_REQUEST}?${new URLSearchParams(params)}`
+  );
+};
+
+// Single purchase request detail by ID
+export const getPurchaseRequestById = async (
+  id: string
+): Promise<PurchaseRequestDetailResponse> => {
+  return await fetcher<PurchaseRequestDetailResponse>(GET_PURCHASE_REQUEST_BY_ID(id));
+};
+
+export const verifyHandover = async (payload: {
+  item_id: string;
+  otp: string;
+  handover_type: "customer" | "driver";
+}): Promise<any> => {
+  return await poster<any>(HAND_OVER_ITEM, payload);
 };
