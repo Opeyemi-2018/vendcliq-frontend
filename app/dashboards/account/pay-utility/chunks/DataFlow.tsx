@@ -42,8 +42,9 @@ import { ClipLoader } from "react-spinners";
 import { fetchDataPlans } from "@/actions/utility";
 import { useUser } from "@/context/userContext";
 import Image from "next/image";
+import CreatePinPrompt from "@/components/SetPinModal";
 
-// Import helpers for real purchase
+
 import { handleValidatePin, handleBuyData } from "@/lib/utils/api/apiHelper";
 import { generateIdempotencyKey } from "@/lib/utils/generateIdempotencyKey";
 
@@ -304,9 +305,12 @@ export default function DataFlow() {
     <Form {...form}>
       <form>
         <div className=" md:p-6 lg:border border-[#E4E4E4] rounded-lg bg-white">
-          <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash mb-2">
+          <div className="flex justify-between mb-2">
+            <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash ">
             Data
           </h2>
+          <CreatePinPrompt/>
+          </div>
           <Separator
             orientation="horizontal"
             className="h-[1px]"

@@ -7,7 +7,6 @@ import Image from "next/image";
 import VendCliqTransfer from "./chunks/VendCliqTransfer";
 import OtherTransfer from "./chunks/OtherTransfer";
 import { Landmark } from "lucide-react";
-import CreatePinPrompt from "@/components/SetPinModal";
 
 const SendMoney = () => {
   const [selectTransfer, setSelectTransfer] = useState<"vendcliq" | "other">(
@@ -25,7 +24,7 @@ const SendMoney = () => {
             send money to other accounts
           </p>
         </div>
-       <CreatePinPrompt />
+      
       </div>
 
       <div className="md:mt-5">

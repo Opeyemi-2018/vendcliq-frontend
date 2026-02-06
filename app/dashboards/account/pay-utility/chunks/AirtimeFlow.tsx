@@ -40,18 +40,19 @@ import { ChevronLeft, EyeOff, Eye } from "lucide-react";
 import Lottie from "lottie-react";
 import { getNetworkProvider } from "@/actions/utility";
 import { handleValidatePin } from "@/lib/utils/api/apiHelper";
-import { handleBuyAirtime } from "@/lib/utils/api/apiHelper"; // ← Add this import
-import { generateIdempotencyKey } from "@/lib/utils/generateIdempotencyKey"; // ← Add this
+import { handleBuyAirtime } from "@/lib/utils/api/apiHelper"; 
+import { generateIdempotencyKey } from "@/lib/utils/generateIdempotencyKey"; 
 import { useUser } from "@/context/userContext";
 import Image from "next/image";
+import CreatePinPrompt from "@/components/SetPinModal";
 
-// Network logos (place images in /public/logos/)
+
 const networkLogos: Record<string, string> = {
   MTN: "/logos/mtn.jpeg",
   AIRTEL: "/logos/airtel.svg",
   GLO: "/logos/glo.png",
   "9MOBILE": "/logos/9mobile.jpeg",
-  ETISALAT: "/logos/9mobile.png", // alias
+  ETISALAT: "/logos/9mobile.png", 
 };
 
 const amounts = [100, 200, 500, 1000, 2000, 5000];
@@ -61,12 +62,11 @@ export default function AirtimeFlow() {
   const [formData, setFormData] = useState<Partial<AirtimeFormData>>({});
   const [showSuccess, setShowSuccess] = useState(false);
   const [showBallance, setShowBallance] = useState(false);
-  const [isTransferring, setIsTransferring] = useState(false); // New loading state
+  const [isTransferring, setIsTransferring] = useState(false); 
   const router = useRouter();
   const pinInputRef = useRef<HTMLInputElement>(null);
   const { wallet } = useUser();
 
-  // Network detection states
   const [detectedNetwork, setDetectedNetwork] = useState<string | null>(null);
   const [networkLoading, setNetworkLoading] = useState(false);
   const [networkError, setNetworkError] = useState<string | null>(null);
@@ -256,9 +256,13 @@ export default function AirtimeFlow() {
     <Form {...form}>
       <form>
         <div className=" md:p-6 lg:border border-[#E4E4E4] rounded-lg bg-white">
-          <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash mb-2">
+          <div className="flex justify-between mb-2">
+            <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash ">
             Airtime
           </h2>
+          
+                    <CreatePinPrompt />
+          </div>
           <Separator
             orientation="horizontal"
             className="h-[1px]"

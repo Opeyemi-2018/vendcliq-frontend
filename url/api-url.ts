@@ -104,6 +104,7 @@ const STOCK_HISTORY = "inventory/stock-movements";
 const GET_SALES = "inventory/invoices/sales";
 const GET_PURCHASE_REQUEST = "inventory/invoices/purchase/sales";
 const GET_PURCHASE_REQUEST_BY_ID = (id: string) => `inventory/invoices/${id}`;
+const GET_SALE_BY_ID = (id: string) => `inventory/invoices/${id}`;
 const HAND_OVER_ITEM = "inventory/items/verify-handover";
 
 export {
@@ -165,6 +166,7 @@ export {
   STOCK_HISTORY,
   GET_PURCHASE_REQUEST,
   GET_PURCHASE_REQUEST_BY_ID,
+  GET_SALE_BY_ID,
   GET_SALES,
   HAND_OVER_ITEM,
 

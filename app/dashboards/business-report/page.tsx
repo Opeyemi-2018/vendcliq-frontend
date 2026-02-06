@@ -265,7 +265,7 @@ const BusinessReports = () => {
 
   return (
     <div>
-      <div className="flex md:items-center justify-between gap-3 md:gap-0 flex-col md:flex-row mb-6">
+      <div className="flex lg:items-center justify-between gap-3 md:gap-0 flex-col lg:flex-row mb-6">
         <div>
           <h1 className="font-clash text-[20px] md:text-[25px] lg:text-[32px] font-semibold text-[#2F2F2F] dark:text-white">
             Business Reports

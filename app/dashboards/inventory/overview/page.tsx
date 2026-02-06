@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import {  getPurchaseRequest, getSales } from "@/lib/utils/api/apiHelper";
+import { getPurchaseRequest, getSales } from "@/lib/utils/api/apiHelper";
 import Image from "next/image";
 
 type InvoiceItem = {
@@ -50,8 +50,9 @@ const Home = () => {
   const [purchasesLoading, setPurchasesLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchSales = async () => {
       try {
+        setSalesLoading(true);
         const salesRes = await getSales(1, 10);
         setSales(salesRes.data || []);
       } catch (err) {
@@ -59,8 +60,15 @@ const Home = () => {
       } finally {
         setSalesLoading(false);
       }
+    };
 
+    fetchSales();
+  }, []);
+
+  useEffect(() => {
+    const fetchPurchases = async () => {
       try {
+        setPurchasesLoading(true);
         const purchaseRes = await getPurchaseRequest(1, 10);
         setPurchases(purchaseRes.data || []);
       } catch (err) {
@@ -70,7 +78,7 @@ const Home = () => {
       }
     };
 
-    fetchData();
+    fetchPurchases();
   }, []);
 
   const formatDate = (isoString: string): string => {
@@ -262,7 +270,7 @@ const Home = () => {
           <div className="flex justify-between items-center mb-4">
             <h2 className="font-bold text-[16px]">Sales Transactions</h2>
             <Link
-              href="/dashboards/inventory/invoices/sales"
+              href="/dashboards/inventory/sales"
               className="font-bold text-[13px] text-[#0A6DC0] hover:underline"
             >
               see all

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -98,6 +100,8 @@ interface StockItem {
 interface InvoiceItem {
   stock_id: string;
   product_name: string;
+  sku: string; // Added SKU
+  product_image: string; // Added image
   quantity: number;
   mode: "PACKS" | "PIECES";
   discounted_amount: number;
@@ -264,7 +268,9 @@ const Sell = () => {
 
     const newItem: InvoiceItem = {
       stock_id: values.stock_id,
-      product_name: stockItem.sku,
+      product_name: stockItem.product.name,
+      sku: stockItem.sku, // Store SKU
+      product_image: stockItem.product.image, // Store image
       quantity: parseInt(values.quantity, 10),
       mode: values.mode as "PACKS" | "PIECES",
       discounted_amount: parseFloat(values.discounted_amount || "0"),
@@ -328,7 +334,7 @@ const Sell = () => {
         const invoiceData = response.data;
 
         if (invoiceData?.id) {
-          // Save the real invoice response data to localStorage
+          // Enhanced preview data with SKU and images
           const previewData = {
             invoiceId: invoiceData.id,
             code: invoiceData.code,
@@ -336,17 +342,26 @@ const Sell = () => {
             status: invoiceData.status,
             storeAddress:
               invoiceData.items[0]?.attributes?.address || "No address",
-            items: invoiceData.items.map((item: any) => ({
-              id: item.id,
-              stock_id: item.stock_id,
-              product_id: item.product_id,
-              quantity: item.quantity,
-              cost: item.cost,
-              discounted_amount: item.discounted_amount,
-              sub_total: item.sub_total,
-              mode: item.mode,
-              attributes: item.attributes,
-            })),
+            items: invoiceData.items.map((item: any, index: number) => {
+              // Find the corresponding invoice item to get SKU and image
+              const localItem = invoiceItems[index];
+              
+              return {
+                id: item.id,
+                stock_id: item.stock_id,
+                product_id: item.product_id,
+                quantity: item.quantity,
+                cost: item.cost,
+                discounted_amount: item.discounted_amount,
+                sub_total: item.sub_total,
+                mode: item.mode,
+                attributes: item.attributes,
+                // Add SKU and image from local state
+                sku: localItem?.sku || "N/A",
+                product_name: localItem?.product_name || "Unknown Product",
+                product_image: localItem?.product_image || "",
+              };
+            }),
           };
 
           localStorage.setItem(
@@ -905,7 +920,7 @@ const Sell = () => {
                                         />
                                       </div>
                                     )}
-                                    <div className="flex flex-col truncate">
+                                    <div className="flex items-start flex-col truncate">
                                       <span className="font-medium">
                                         {selected.sku}
                                       </span>
@@ -1211,7 +1226,7 @@ const Sell = () => {
                         className="border-[#E4E4E4] border-b hover:bg-gray-50 transition-colors"
                       >
                         <td className="lowercase text-left p-4 py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                          {item.product_name}
+                          {item.sku}
                         </td>
                         <td className="py-4">{item.quantity}</td>
                         <td className="py-4 lowercase">{item.mode}</td>

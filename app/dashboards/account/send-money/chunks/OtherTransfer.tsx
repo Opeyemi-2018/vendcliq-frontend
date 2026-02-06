@@ -74,6 +74,7 @@ import {
 } from "@/lib/utils/api/apiHelper";
 import { generateTransactionKey } from "@/lib/utils/generateTransactionKey";
 import { useUser } from "@/context/userContext";
+import CreatePinPrompt from "@/components/SetPinModal";
 
 export default function OtherBankTransfer() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -132,8 +133,7 @@ export default function OtherBankTransfer() {
           setBeneficiaries(response.data.beneficiaries);
         }
       } catch (error) {
-        console.error("Error loading beneficiaries:", error);
-        toast.error("Failed to load beneficiaries");
+        toast.info("No saved beneficiaries available");
       } finally {
         setIsLoadingBeneficiaries(false);
       }
@@ -408,9 +408,12 @@ export default function OtherBankTransfer() {
     <div className="">
       <Form {...form}>
         <div className="md:p-6 lg:border border-[#E4E4E4] md:rounded-lg bg-white">
-          <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash mb-2">
-            Other Bank Transfer
-          </h2>
+          <div className="flex justify-between mb-2">
+            <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash ">
+              Other Bank Transfer
+            </h2>
+            <CreatePinPrompt />
+          </div>
           <Separator
             orientation="horizontal"
             className="h-[1px]"

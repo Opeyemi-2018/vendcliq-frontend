@@ -53,6 +53,7 @@ import {
 import { generateTransactionKey } from "@/lib/utils/generateTransactionKey";
 import Lottie from "lottie-react";
 import animationData from "@/public/animate.json";
+import CreatePinPrompt from "@/components/SetPinModal";
 
 const beneficiaries = [
   {
@@ -87,7 +88,7 @@ export default function VendCliqTransfer() {
   const [showAccount, setShowAccount] = useState(false);
   const [isTransferring, setIsTransferring] = useState(false);
   const { wallet, refreshWallet } = useUser();
-  const fee = 3; 
+  const fee = 3;
 
   const form = useForm<TransferFormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -244,9 +245,12 @@ export default function VendCliqTransfer() {
     <div className="">
       <Form {...form}>
         <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg bg-white ">
-          <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash mb-2">
-            Vendcliq Transfer
-          </h2>
+          <div className="flex justify-between mb-2">
+            <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash ">
+              Vendcliq Transfer
+            </h2>
+            <CreatePinPrompt />
+          </div>
           <Separator
             orientation="horizontal"
             className="h-[1px]"

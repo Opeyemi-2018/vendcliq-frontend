@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Suspense } from "react";
@@ -56,6 +57,10 @@ interface InvoicePreviewItem {
     longitude?: number;
     address?: string;
   };
+  // Added fields
+  sku: string;
+  product_name: string;
+  product_image: string;
 }
 
 interface InvoicePreview {
@@ -313,7 +318,7 @@ function PayInvoiceContent() {
             Here is all about the products you want to sell
           </p>
 
-          <div className="space-y-4 my-3 flex justify-between items-center">
+          {/* <div className="space-y-4 my-3 flex justify-between items-center">
             <div className="text-[#2F2F2F] md:font-semibold md:text-[25px] font-clash">
               <p className="">{invoicePreview.code}</p>
             </div>
@@ -326,9 +331,9 @@ function PayInvoiceContent() {
                 {invoicePreview.status.toLowerCase()}
               </p>
             </div>
-          </div>
+          </div> */}
 
-          <div>
+          <div className="mt-3">
             <Label className=" font-bold font-dm-sans text-[#2F2F2F]">
               Store Address
             </Label>
@@ -338,35 +343,55 @@ function PayInvoiceContent() {
           </div>
 
           {invoicePreview.items.length > 0 ? (
-            <div className="space-y-4 mb-6">
-              {invoicePreview.items.map((item, idx) => (
-                <div
-                  key={item.id || idx}
-                  className="flex gap-3 border-b pb-3 last:border-b-0 last:pb-0"
-                >
-                
-
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">
-                      Product {item.product_id}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      {item.quantity} × {item.mode.toLowerCase()}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Cost: ₦{item.cost.toLocaleString()}
-                      {item.discounted_amount > 0 && (
-                        <span className="ml-2 text-green-600">
-                          -₦{item.discounted_amount.toLocaleString()}
-                        </span>
+            <div className="space-y-4 mb-6 mt-4">
+              <div>
+                <h1 className="font-dm-sans font-bold text-[13px] mb-2 md:text-[16px]">
+                  Product
+                </h1>
+                {invoicePreview.items.map((item, idx) => (
+                  <div
+                    key={item.id || idx}
+                    className="flex justify-between items-center border-b pb-3 last:border-b-0 last:pb-0"
+                  >
+                    <div className="flex items-center gap-1">
+                      {item.product_image ? (
+                        <div className="w-16 h-16 rounded flex-shrink-0 ">
+                          <Image
+                            src={item.product_image}
+                            alt={item.sku}
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-16 h-16 rounded bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 text-xs border border-gray-200">
+                          No Image
+                        </div>
                       )}
-                    </p>
-                    <p className="text-sm font-medium">
-                      Subtotal: ₦{item.sub_total.toLocaleString()}
+
+                      <div className="flex-1 min-w-0 text-[#2F2F2F]">
+                        <p className="font-medium text-[16px] font-dm-sans">
+                          {item.sku}
+                        </p>
+
+                        <p className="font-medium text-[16px] font-dm-sans">
+                          {item.quantity}{" "}
+                          <span className="uppercase">
+                            {item.mode.toLowerCase()}
+                          </span>{" "}
+                          X ₦{item.cost.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-500"></p>
+                      </div>
+                    </div>
+
+                    <p className="font-medium text-[16px] font-dm-sans">
+                      ₦{item.sub_total.toLocaleString()}
                     </p>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           ) : (
             <p className="text-sm text-gray-500 mb-6">
@@ -374,30 +399,30 @@ function PayInvoiceContent() {
             </p>
           )}
 
-          <div className="space-y-3 text-sm border-t pt-4">
+          <div className="space-y-3 text-sm border-t pt-4 text-[#2F2F2F]">
             <div className="flex justify-between font-medium">
-              <span>Total Quantity:</span>
-              <span>{totalQuantity}</span>
+              <span className="font-dm-sans font-bold">Total Quantity:</span>
+              <span className="font-regular">{totalQuantity}</span>
             </div>
 
-            <div className="flex justify-between text-green-600 font-medium">
-              <span>Total Discount:</span>
-              <span>
+            <div className="flex justify-between ">
+              <span className="font-dm-sans font-bold">Total Discount:</span>
+              <span className="font-dm-sans font-bold">
                 {totalDiscount > 0
                   ? `-₦${totalDiscount.toLocaleString()}`
                   : "₦0"}
               </span>
             </div>
 
-            <div className="flex justify-between font-bold text-base border-t pt-3 mt-2">
-              <span>Total Amount:</span>
-              <span className="text-[#0A6DC0]">
+            <div className="flex justify-between font-bold ">
+              <span className="font-dm-sans font-bold">Total Amount:</span>
+              <span className="font-dm-sans font-bold">
                 ₦{grandTotal.toLocaleString()}
               </span>
             </div>
           </div>
 
-          <div className="mb-6 mt-6">
+          {/* <div className="mb-6 mt-6">
             <Label htmlFor="narration">Narration (optional)</Label>
             <Input
               id="narration"
@@ -408,10 +433,10 @@ function PayInvoiceContent() {
               placeholder="e.g. Payment for invoice"
               className="mt-2 py-6"
             />
-          </div>
+          </div> */}
 
           {paymentType === "POS" && (
-            <div className="mb-8">
+            <div className="mb-2">
               <Label>Terminal ID</Label>
               <Input
                 placeholder="Enter POS terminal ID"
@@ -427,7 +452,7 @@ function PayInvoiceContent() {
           <Button
             onClick={handlePayment}
             disabled={loading}
-            className="w-full py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#085a9e] disabled:opacity-70"
+            className="w-full mt-2 py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#085a9e] disabled:opacity-70"
           >
             {loading ? (
               <>
@@ -570,7 +595,7 @@ function PayInvoiceContent() {
 
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
             <AlertDialogCancel onClick={handleTransferNotSent}>
-              I haven't sent it yet
+              I haven&apos;t sent it yet
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleTransferSent}

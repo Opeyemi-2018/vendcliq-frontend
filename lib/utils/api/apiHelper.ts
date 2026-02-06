@@ -140,6 +140,7 @@ import {
   GET_PURCHASE_REQUEST,
   GET_PURCHASE_REQUEST_BY_ID,
   HAND_OVER_ITEM,
+  GET_SALE_BY_ID,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -202,6 +203,7 @@ import { CreatePurchasePayload, CreatePurchaseResponse,  InvoiceDetailsResponse,
 import { UserStocksResponse } from "@/types/allMyStocks";
 import { BusinessReportResponse } from "@/types/businessReport";
 import { PurchaseRequestDetailResponse, PurchaseRequestListResponse } from "@/types/purchaseRequest";
+import { SaleDetailResponse } from "@/types/sales";
 
 interface UserProfile {
   data: {
@@ -835,6 +837,10 @@ export const getSales = async (
 ): Promise<{ data: any[]; pagination: any }> => {   
   const params = { page: page.toString(), limit: limit.toString() };
   return await fetcher<any>(`${GET_SALES}?${new URLSearchParams(params)}`);
+};
+
+export const getSaleById = async (id: string): Promise<SaleDetailResponse> => {
+  return await fetcher<SaleDetailResponse>(GET_SALE_BY_ID(id));
 };
 
 export const getPurchaseRequest = async (
