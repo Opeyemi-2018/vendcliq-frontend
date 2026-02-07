@@ -11,6 +11,7 @@ interface UseWalletWebSocketOptions {
   autoConnect?: boolean;
   onBalanceUpdate?: (balance: string) => void;
   onTransactionReceived?: (transaction: any) => void;
+  onTransactionsData?: (data: any) => void; // ← ADD THIS
 }
 
 export function useWalletWebSocket(options: UseWalletWebSocketOptions = {}) {
@@ -18,6 +19,7 @@ export function useWalletWebSocket(options: UseWalletWebSocketOptions = {}) {
     autoConnect = true,
     onBalanceUpdate,
     onTransactionReceived,
+    onTransactionsData, // ← ADD THIS
   } = options;
 
   const { setWallet, wallet } = useUser();
@@ -54,6 +56,17 @@ export function useWalletWebSocket(options: UseWalletWebSocketOptions = {}) {
       onTransactionReceived?.(data.transaction);
     },
     [onTransactionReceived],
+  );
+
+  /**
+   * Handle transactions data received from WebSocket
+   */
+  const handleTransactionsData = useCallback(
+    (data: any) => {
+      // Call custom callback with transaction history
+      onTransactionsData?.(data);
+    },
+    [onTransactionsData],
   );
 
   /**
@@ -130,6 +143,7 @@ export function useWalletWebSocket(options: UseWalletWebSocketOptions = {}) {
       onBalanceUpdate: handleBalanceUpdate,
       onTransactionNotification: handleTransactionNotification,
       onWalletData: handleWalletData,
+      onTransactionsData: handleTransactionsData, // ← ADD THIS
       onConnected: handleConnected,
       onError: handleError,
       onDisconnected: handleDisconnected,
@@ -146,6 +160,7 @@ export function useWalletWebSocket(options: UseWalletWebSocketOptions = {}) {
     handleBalanceUpdate,
     handleTransactionNotification,
     handleWalletData,
+    handleTransactionsData, // ← ADD THIS
     handleConnected,
     handleError,
     handleDisconnected,

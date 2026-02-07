@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { EyeOff, Eye, CalendarIcon } from "lucide-react";
+import { EyeOff, Eye, CalendarIcon, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import {
@@ -16,11 +16,17 @@ import { Label } from "@/components/ui/label";
 import { format, subDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { getPurchaseRequest, getSales, getTotalSales } from "@/lib/utils/api/apiHelper";
+import {
+  getPurchaseRequest,
+  getSales,
+  getTotalSales,
+} from "@/lib/utils/api/apiHelper";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { useUser } from "@/context/userContext";
 import { toast } from "sonner";
+import { SupplierSalesMedium, SupplierSalesResponse } from "@/types/sales";
+ // ← import your types (adjust path)
 
 type InvoiceItem = {
   id: string;
@@ -51,9 +57,13 @@ const Home = () => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
 
-  // Total sales state
+  // Sales data
   const [totalSales, setTotalSales] = useState<number>(0);
+  const [mediumBreakdown, setMediumBreakdown] = useState<SupplierSalesMedium>({});
   const [salesLoading, setSalesLoading] = useState(true);
+
+  // Medium modal
+  const [mediumModalOpen, setMediumModalOpen] = useState(false);
 
   // Recent sales & purchases
   const [sales, setSales] = useState<InvoiceItem[]>([]);
@@ -63,7 +73,7 @@ const Home = () => {
 
   useEffect(() => {
     if (user?.createdAt) {
-  const created = new Date(user.createdAt);
+      const created = new Date(user.createdAt);
       const userCreatedDate = format(created, "yyyy-MM-dd");
       const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
 
@@ -74,27 +84,29 @@ const Home = () => {
     }
   }, [user]);
 
-  // Fetch total sales when dates are set
+  // Fetch total + medium breakdown
   useEffect(() => {
-    const fetchTotal = async () => {
+    const fetchSalesData = async () => {
       if (!startDate || !endDate) return;
 
       setSalesLoading(true);
       try {
-        const total = await getTotalSales(startDate, endDate);
-        setTotalSales(total);
+        const salesData: SupplierSalesResponse = await getTotalSales(startDate, endDate);
+
+        setTotalSales(salesData.total_sales ?? 0);
+        setMediumBreakdown(salesData.medium ?? {});
       } catch (err) {
-        console.error("Failed to fetch total sales:", err);
-        toast.error("Could not load total sales");
+        console.error("Failed to fetch sales data:", err);
+        toast.error("Could not load sales data");
       } finally {
         setSalesLoading(false);
       }
     };
 
-    fetchTotal();
+    fetchSalesData();
   }, [startDate, endDate]);
 
-  // Fetch recent sales invoices
+  // Fetch recent sales
   useEffect(() => {
     const fetchSales = async () => {
       try {
@@ -153,7 +165,12 @@ const Home = () => {
           {tx.status.toLowerCase() === "pending" ? (
             <Image src="/pending.svg" height={40} width={40} alt="pending" />
           ) : (
-            <Image src="/invoice-in.svg" height={40} width={40} alt="completed" />
+            <Image
+              src="/invoice-in.svg"
+              height={40}
+              width={40}
+              alt="completed"
+            />
           )}
           <div className="space-y-0.5">
             <h1 className="text-[13px] md:text-[15px] font-medium text-[#2F2F2F]">
@@ -173,10 +190,11 @@ const Home = () => {
           <p
             className={cn(
               "text-[12px] font-bold px-2.5 py-0.5 rounded-full inline-block mt-1",
-              getStatusStyle(tx.status)
+              getStatusStyle(tx.status),
             )}
           >
-            {tx.status.charAt(0).toUpperCase() + tx.status.slice(1).toLowerCase()}
+            {tx.status.charAt(0).toUpperCase() +
+              tx.status.slice(1).toLowerCase()}
           </p>
         </div>
       </div>
@@ -220,96 +238,171 @@ const Home = () => {
         Inventory
       </h1>
 
-      {/* Total Sales Banner + Date Filter Modal */}
-      <div className="bg-[url('/blue.svg')] bg-no-repeat bg-cover bg-center p-6 overflow-hidden h-[218px] mt-3 flex flex-col md:flex-row justify-between rounded-2xl">
-        <div className="max-w-[50rem] justify-between h-full flex flex-col">
-          <div className="space-y-2 pt-4">
-            <div className="flex items-center gap-3">
-              <p className="text-white">Total Sales</p>
-              <button
-                className="text-white"
-                type="button"
-                onClick={() => setShowBalance(!showBalance)}
-              >
-                {showBalance ? <EyeOff size={21} /> : <Eye size={23} />}
-              </button>
-            </div>
-
-            {salesLoading ? (
-              <div className="flex items-center gap-2">
-                <Loader2 className="h-6 w-6 animate-spin text-white" />
-                <h1 className="font-clash  text-white">Loading...</h1>
+      {/* Total Sales Banner */}
+      <div className="bg-[url('/blue.svg')] bg-no-repeat bg-cover bg-center flex flex-col justify-between p-6 overflow-hidden h-[218px] mt-3 rounded-2xl">
+        <div className="flex flex-row justify-between">
+          <div className="justify-between h-full flex flex-col">
+            <div className="space-y-2 pt-4">
+              <div className="flex items-center gap-3">
+                <p className="text-[14px] md:text-[16px] text-white">Total Sales</p>
+                <button
+                  className="text-white"
+                  type="button"
+                  onClick={() => setShowBalance(!showBalance)}
+                >
+                  {showBalance ? <EyeOff size={21} /> : <Eye size={23} />}
+                </button>
               </div>
-            ) : showBalance ? (
-              <h1 className="text-[28px] font-clash font-bold text-white">****</h1>
-            ) : (
-              <h1 className="text-[28px] font-clash font-bold text-white">
-                ₦{totalSales.toLocaleString("en-NG")}
-              </h1>
-            )}
+
+              {salesLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-6 w-6 animate-spin text-white" />
+                  <h1 className="font-clash text-white">Loading...</h1>
+                </div>
+              ) : showBalance ? (
+                <h1 className="text-[28px] font-clash font-bold text-white">
+                  ****
+                </h1>
+              ) : (
+                <h1 className="text-[18px] md:text-[28px] font-clash font-bold text-white">
+                  ₦{totalSales.toLocaleString("en-NG")}
+                </h1>
+              )}
+            </div>
+          </div>
+
+          <div className="pt-6">
+            <Dialog open={dateModalOpen} onOpenChange={setDateModalOpen}>
+              <Button
+                variant="outline"
+                className={cn(
+                  "justify-start text-left font-normal h-10 px-2 md:px-3 text-[13px] md:text-[16px] bg-white/90 w-full sm:w-auto",
+                  !startDate && "text-muted-foreground"
+                )}
+                onClick={() => setDateModalOpen(true)}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {displayDateRange()}
+              </Button>
+
+              <DialogContent className="max-w-[90vw] mx-auto sm:max-w-[425px] rounded-lg">
+                <DialogHeader>
+                  <DialogTitle className="text-[#0E0E0F] text-[16px] md:text-[18px] font-bold font-dm-sans">
+                    Filter by Date Range
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="grid gap-4 py-4">
+                  <div>
+                    <Label htmlFor="start" className="text-right">
+                      From
+                    </Label>
+                    <Input
+                      id="start"
+                      type="date"
+                      value={tempStartDate}
+                      onChange={(e) => setTempStartDate(e.target.value)}
+                      className="bg-[#FAFAFA]"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="end" className="text-right">
+                      To
+                    </Label>
+                    <Input
+                      id="end"
+                      type="date"
+                      value={tempEndDate}
+                      onChange={(e) => setTempEndDate(e.target.value)}
+                      className="bg-[#FAFAFA]"
+                    />
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button
+                    onClick={handleApplyDateFilter}
+                    className="bg-[#0A6DC0] hover:bg-[#085a9e] w-full"
+                  >
+                    Apply
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
-        <div className="pt-6">
-          <Dialog open={dateModalOpen} onOpenChange={setDateModalOpen}>
-            <Button
-              variant="outline"
-              className={cn(
-                "justify-start text-left font-normal h-10 px-3 bg-white/90 w-full sm:w-auto",
-                !startDate && "text-muted-foreground"
-              )}
-              onClick={() => setDateModalOpen(true)}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {displayDateRange()}
-            </Button>
-
-            <DialogContent className="max-w-[90vw] mx-auto sm:max-w-[425px] rounded-lg">
-              <DialogHeader>
-                <DialogTitle className="text-[#0E0E0F] text-[16px] md:text-[18px] font-bold font-dm-sans">
-                  Filter by Date Range
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="grid gap-4 py-4">
-                <div>
-                  <Label htmlFor="start" className="text-right">
-                    From
-                  </Label>
-                  <Input
-                    id="start"
-                    type="date"
-                    value={tempStartDate}
-                    onChange={(e) => setTempStartDate(e.target.value)}
-                    className="bg-[#FAFAFA]"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="end" className="text-right">
-                    To
-                  </Label>
-                  <Input
-                    id="end"
-                    type="date"
-                    value={tempEndDate}
-                    onChange={(e) => setTempEndDate(e.target.value)}
-                    className="bg-[#FAFAFA]"
-                  />
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  onClick={handleApplyDateFilter}
-                  className="bg-[#0A6DC0] hover:bg-[#085a9e] w-full"
-                >
-                  Apply
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+        <div className="flex flex-col sm:flex-row items-center gap-3 text-white text-[14px] md:text-[16px]">
+          <button
+            className="flex gap-2 items-center hover:underline"
+            onClick={() => { /* TODO: Store breakdown modal */ }}
+          >
+            Breakdown by Store <ChevronRight />
+          </button>
+          <button
+            className="flex gap-2 items-center hover:underline"
+            onClick={() => setMediumModalOpen(true)}
+          >
+            Breakdown by Medium <ChevronRight />
+          </button>
         </div>
       </div>
+
+      {/* Medium Breakdown Modal */}
+      <Dialog open={mediumModalOpen} onOpenChange={setMediumModalOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[500px] font-dm-sans text-[#2F2F2F] rounded-xl bg-white">
+          <DialogHeader>
+            <DialogTitle className="md:text-[21px] font-bold  ">
+              Sales Breakdown by Medium
+            </DialogTitle>
+            <p className="text-sm text-gray-500">
+              {displayDateRange()}
+            </p>
+          </DialogHeader>
+
+          <div className="py-6">
+            {salesLoading ? (
+              <div className="flex justify-center items-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin text-[#0A6DC0]" />
+              </div>
+            ) : Object.keys(mediumBreakdown).length > 0 ? (
+              <div className="grid gap-4">
+                {Object.entries(mediumBreakdown).map(([medium, amount]) => (
+                  <div
+                    key={medium}
+                    className="flex justify-between  text-[#2F2F2F] items-center p-4  rounded-lg border border-[#D8D8D866] "
+                  >
+                    <span className="text-[18px] font-medium capitalize ">
+                      {medium.toLowerCase()}
+                    </span>
+                    <span className="text-[14px] font-regular ">
+                      ₦{(amount ?? 0).toLocaleString("en-NG")}
+                    </span>
+                  </div>
+                ))}
+
+                {/* <div className="mt-6 pt-4 border-t text-right text-lg font-bold text-[#2F2F2F]">
+                  Total Sales: ₦{totalSales.toLocaleString("en-NG")}
+                </div> */}
+              </div>
+            ) : (
+              <p className="text-center text-gray-500 py-10">
+                No sales data available for this period
+              </p>
+            )}
+          </div>
+{/* 
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setMediumModalOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Close
+            </Button>
+          </DialogFooter> */}
+        </DialogContent>
+      </Dialog>
 
       {/* Quick Actions */}
       <div className="mt-6">
@@ -334,7 +427,8 @@ const Home = () => {
             variant="outline"
             className="bg-white w-full text-[16px] flex gap-2 px-6 py-5 md:py-6 text-[#2F2F2F]"
           >
-            <Image src="/store.svg" height={20} width={20} alt="store" /> My Store
+            <Image src="/store.svg" height={20} width={20} alt="store" /> My
+            Store
           </Button>
         </div>
       </div>
@@ -375,11 +469,15 @@ const Home = () => {
           </div>
 
           {purchasesLoading ? (
-            <p className="text-center text-gray-500 py-6">Loading purchases...</p>
+            <p className="text-center text-gray-500 py-6">
+              Loading purchases...
+            </p>
           ) : displayedPurchases.length > 0 ? (
             displayedPurchases.map(renderTransaction)
           ) : (
-            <p className="text-center text-gray-500 py-6">No recent purchases</p>
+            <p className="text-center text-gray-500 py-6">
+              No recent purchases
+            </p>
           )}
         </div>
       </div>

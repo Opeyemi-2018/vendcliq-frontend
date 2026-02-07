@@ -93,6 +93,22 @@ export interface SaleDetailResponse {
 
 // types/supplierSales.ts
 
-export interface SupplierSalesTotal {
+export interface SupplierSalesStore {
+  store_id: string;
+  store_name: string;
   total_sales: number;
+  percentage: number;
+}
+
+export interface SupplierSalesMedium {
+  CASH?: number;
+  TRANSFER?: number;
+  POS?: number;
+  [key: string]: number | undefined; // for any other mediums
+}
+
+export interface SupplierSalesResponse {
+  total_sales: number;
+  stores: SupplierSalesStore[];
+  medium: SupplierSalesMedium;
 }

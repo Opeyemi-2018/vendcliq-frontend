@@ -205,7 +205,7 @@ import { CreatePurchasePayload, CreatePurchaseResponse,  InvoiceDetailsResponse,
 import { UserStocksResponse } from "@/types/allMyStocks";
 import { BusinessReportResponse } from "@/types/businessReport";
 import { PurchaseRequestDetailResponse, PurchaseRequestListResponse } from "@/types/purchaseRequest";
-import { SaleDetailResponse } from "@/types/sales";
+import { SaleDetailResponse, SupplierSalesResponse } from "@/types/sales";
 
 interface UserProfile {
   data: {
@@ -884,7 +884,7 @@ export const verifyHandover = async (payload: {
 export const getTotalSales = async (
   startDate: string,
   endDate: string
-): Promise<number> => {
+): Promise<SupplierSalesResponse> => {
   const params = new URLSearchParams({
     startDate,
     endDate,
@@ -894,5 +894,12 @@ export const getTotalSales = async (
 
   const response = await fetcher<any>(url);
 
-  return response.data?.total_sales ?? 0;
+  // Return the full data object (or fallback)
+  return (
+    response.data ?? {
+      total_sales: 0,
+      stores: [],
+      medium: {},
+    }
+  ) as SupplierSalesResponse;
 };

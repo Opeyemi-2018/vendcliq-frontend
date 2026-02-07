@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { MoveLeft,  Loader2, Search, MoveRight } from "lucide-react";
+import {
+  MoveLeft,
+  Loader2,
+  Search,
+  MoveRight,
+  CarTaxiFront,
+  ShoppingCart,
+} from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getStoreById, getStoreStock } from "@/actions/stores";
@@ -434,13 +441,18 @@ const StoreDetailPage = () => {
           </div>
         ) : stocks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Image src="/box.svg" alt="No stock" width={80} height={80} />
             <p className="mt-4 font-bold text-[16px] text-[#2F2F2F] dark:text-white">
               No stock items found
             </p>
             <p className="text-[#9E9A9A] dark:text-gray-400 mt-2">
               Add stock to see items here
             </p>
+            <Button
+              onClick={() => setIsAddStockOpen(true)}
+              className="bg-[#0A6DC0] hover:bg-[#09599a] mt-2"
+            >
+              + Add Stock
+            </Button>
           </div>
         ) : (
           <div className="overflow-x-auto lg:border border-[#E4E4E4] rounded-[20px] bg-white">

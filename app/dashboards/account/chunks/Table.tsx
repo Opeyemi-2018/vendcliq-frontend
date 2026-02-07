@@ -17,6 +17,7 @@ import { useState, useEffect, useMemo } from "react";
 import { handleGetTransactions } from "@/lib/utils/api/apiHelper";
 import { TransactionHistoryResponse } from "@/types/transactions";
 import { useRouter } from "next/navigation";
+import { useWalletWebSocket } from "@/hooks/useWalletWebSocket";
 
 const Loans = [
   {
@@ -81,6 +82,22 @@ const Table = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
+
+  // WebSocket for real-time transaction updates
+  useWalletWebSocket({
+    autoConnect: true,
+    onTransactionReceived: (newTransaction) => {
+      // Add new transaction to the top of the list
+      setTransactions((prev) => {
+        // Check if transaction already exists (avoid duplicates)
+        const exists = prev.some((tx) => tx.id === newTransaction.id);
+        if (exists) return prev;
+        
+        // Add new transaction to the top
+        return [newTransaction, ...prev];
+      });
+    },
+  });
 
   useEffect(() => {
     const fetchTransactions = async () => {

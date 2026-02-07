@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
+import { useWalletWebSocket } from "@/hooks/useWalletWebSocket";
 
 const TransactionSkeleton = () => (
   <tr className="animate-pulse">
@@ -75,6 +76,22 @@ const Table = () => {
     "ALL",
   );
   const [searchQuery, setSearchQuery] = useState("");
+
+  // WebSocket for real-time transaction updates
+  useWalletWebSocket({
+    autoConnect: true,
+    onTransactionReceived: (newTransaction) => {
+      // Add new transaction to the list
+      setAllTransactions((prev) => {
+        // Check if transaction already exists (avoid duplicates)
+        const exists = prev.some((tx) => tx.id === newTransaction.id);
+        if (exists) return prev;
+        
+        // Add new transaction to the top of the list
+        return [newTransaction, ...prev];
+      });
+    },
+  });
 
   useEffect(() => {
     const fetchAllTransactions = async () => {
