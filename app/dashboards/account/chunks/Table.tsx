@@ -130,15 +130,12 @@ const Table = () => {
     last7DaysTransactions.forEach((transaction) => {
       const amount = Math.abs(parseFloat(transaction.amount));
 
-      // Add to total transaction value
       totalTransactionValue += amount;
 
-      // Collections (CREDIT transactions - money coming in)
       if (transaction.transactionType === "CREDIT") {
         collectionsValue += amount;
       }
 
-      // Transfers (TRANSFER transactions - money going out)
       if (transaction.transactionType === "TRANSFER") {
         transferValue += amount;
       }
@@ -173,7 +170,7 @@ const Table = () => {
           >
             Payment Transactions
           </button>
-          <button
+          {/* <button
             onClick={() => setActiveTab(tabs[1])}
             className={`text-[13px] lg:text-[16px] ${
               activeTab === "Loan Transactions"
@@ -181,8 +178,8 @@ const Table = () => {
                 : "text-[#2F2F2F] font-medium"
             }`}
           >
-            Loan Transactions{" "}
-          </button>
+            Loan Transactions (coming soon)
+          </button> */}
         </div>
 
         {activeTab === "Loan Transactions" && (
@@ -319,13 +316,13 @@ const Table = () => {
                 onClick={() =>
                   router.push("/dashboards/account/transactionHistory")
                 }
-                className="text-[#39498C] font-medium font-dm-sans text-[14px] pt-4"
+                className="text-[#39498C] font-medium font-dm-sans text-[14px] md:pt-4"
               >
                 Show More
               </button>
             )}
           </div>
-          <div className="xl:w-[45%] border border-[#E4E4E4] px-4 lg:px-7 py-5  bg-white rounded-2xl">
+          <div className="xl:w-[45%] md:border border-[#E4E4E4] md:px-4 lg:px-7 py-5  bg-white rounded-2xl">
             <div className="flex items-center gap-2">
               {" "}
               <Calendar /> Last 7 days. <ChevronDown />{" "}
@@ -366,12 +363,12 @@ const Table = () => {
                 </p>
               </div>
             </div>
-            <Link
+            {/* <Link
               href={"#"}
               className="text-[#39498C] font-medium font-dm-sans text-[14px] pt-4"
             >
               See More
-            </Link>
+            </Link> */}
           </div>
         </div>
       )}

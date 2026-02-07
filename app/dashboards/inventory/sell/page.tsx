@@ -345,7 +345,7 @@ const Sell = () => {
             items: invoiceData.items.map((item: any, index: number) => {
               // Find the corresponding invoice item to get SKU and image
               const localItem = invoiceItems[index];
-              
+
               return {
                 id: item.id,
                 stock_id: item.stock_id,

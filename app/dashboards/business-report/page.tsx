@@ -219,7 +219,7 @@ const BusinessReports = () => {
   };
 
   const renderPagination = () => {
-    if (totalItems <= itemsPerPage) return null; // Hide pagination if ≤ 5 items
+    if (totalItems <= itemsPerPage) return null; 
 
     const pages = [];
     const maxVisible = 5;

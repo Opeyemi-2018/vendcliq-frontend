@@ -29,6 +29,7 @@ export default function HandoverVerificationPage() {
   );
   const [submitting, setSubmitting] = useState(false);
   const [itemData, setItemData] = useState<any>(null);
+  const [loadingOtp, setLoadingOtp] = useState(true); // New state for OTP loading
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -41,6 +42,7 @@ export default function HandoverVerificationPage() {
     }
 
     const fetchItem = async () => {
+      setLoadingOtp(true); // Start loading
       try {
         const res = await getPurchaseRequestById(requestId as string);
         if (res.statusCode === 200 && res.data) {
@@ -61,6 +63,8 @@ export default function HandoverVerificationPage() {
               err?.response?.data?.message ||
               "An error occurred";
         toast.error(errorMessage);
+      } finally {
+        setLoadingOtp(false); // Stop loading
       }
     };
 
@@ -289,17 +293,26 @@ export default function HandoverVerificationPage() {
             Here is the details on how to hand-over to {handoverType}
           </p>
 
-          {/* OTP Boxes */}
-          <div className="flex  gap-3 md:gap-4 my-6">
+          {/* OTP Boxes with Loading State */}
+          <div className="flex gap-3 md:gap-4 my-6">
             {otp.map((digit, index) => (
-              <Input
-                key={index}
-                type="text"
-                maxLength={1}
-                value={digit}
-                readOnly
-                className="text-center text-[#333333] text-[20px] font-medium h-14 w-14 md:h-16 md:w-16 border-2 border-[#9E9A9A] bg-[#D8D8D866] rounded-xl cursor-not-allowed"
-              />
+              <div key={index} className="relative h-14 w-14 md:h-16 md:w-16">
+                {loadingOtp ? (
+                  // Loading spinner in each box
+                  <div className="h-full w-full border-2 border-[#9E9A9A] bg-[#D8D8D866] rounded-xl flex items-center justify-center">
+                    <ClipLoader size={20} color="#0A6DC0" />
+                  </div>
+                ) : (
+                  // OTP digit input
+                  <Input
+                    type="text"
+                    maxLength={1}
+                    value={digit}
+                    readOnly
+                    className="text-center text-[#333333] text-[20px] font-medium h-full w-full border-2 border-[#9E9A9A] bg-[#D8D8D866] rounded-xl cursor-not-allowed"
+                  />
+                )}
+              </div>
             ))}
           </div>
 
@@ -310,7 +323,7 @@ export default function HandoverVerificationPage() {
           {/* Submit Button */}
           <Button
             onClick={handleSubmit}
-            disabled={submitting || otp.join("").length !== 4}
+            disabled={submitting || otp.join("").length !== 4 || loadingOtp}
             className="w-full mt-3 py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#085a9e] disabled:opacity-70"
           >
             {submitting ? (

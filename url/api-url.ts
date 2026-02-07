@@ -72,6 +72,7 @@ const CREATE_STORE = "inventory/stores";
 const CREATE_STOCK = "inventory/stocks";
 const GET_PRODUCTS = "inventory/products?page=1&limit=50&all=false&search=";
 const CREATE_INVOICE = "inventory/invoices";
+ const UPDATE_INVOICE = (id: string) => `inventory/invoices/${id}`; 
 const CREATE_CUSTOMER = "inventory/customers";
 const CREATE_CART = "inventory/carts";
 const CHECKOUT_CART = "inventory/carts/checkout";
@@ -106,6 +107,7 @@ const GET_PURCHASE_REQUEST = "inventory/invoices/purchase/sales";
 const GET_PURCHASE_REQUEST_BY_ID = (id: string) => `inventory/invoices/${id}`;
 const GET_SALE_BY_ID = (id: string) => `inventory/invoices/${id}`;
 const HAND_OVER_ITEM = "inventory/items/verify-handover";
+ const SUPPLIER_SALES = "inventory/dashboard/supplier-sales";
 
 export {
   // v2 endpoint
@@ -169,6 +171,8 @@ export {
   GET_SALE_BY_ID,
   GET_SALES,
   HAND_OVER_ITEM,
+  SUPPLIER_SALES,
+  UPDATE_INVOICE,
 
   // v1 endpoint
   GET_PROFILE,

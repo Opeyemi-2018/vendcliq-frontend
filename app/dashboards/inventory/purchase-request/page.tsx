@@ -183,7 +183,7 @@ const PurchaseRequestListPage = () => {
                 completedCount
               )}
             </h1>
-            <Image src="/in.svg" height={40} width={40} alt="completed" />
+            <Image src="/invoice-in.svg" height={40} width={40} alt="completed" />
           </div>
           <p className="font-regular text-[13px] font-dm-sans">
             Completed Requests

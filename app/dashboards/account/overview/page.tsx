@@ -20,9 +20,13 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { handleCreateWallet } from "@/lib/utils/api/apiHelper";
 import { useStores } from "@/hooks/useStores";
+import { useWalletWebSocket } from "@/hooks/useWalletWebSocket";
+
 
 const Home = () => {
   const { user, isUserPending, wallet, isLoadingWallet } = useUser();
+    useWalletWebSocket({ autoConnect: true, });
+
   const [showBalance, setShowBallance] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [creatingWallet, setCreatingWallet] = useState(false);
@@ -111,7 +115,13 @@ const Home = () => {
             {wallet?.accountNumbers?.WEMA || "N/A"}
           </h1>
           <Separator orientation="vertical" className="h-4" />
-          <h1 className="flex-shrink-0">{wallet?.accountName || "N/A"}</h1>
+          <h1 className="flex-shrink-0">
+            {wallet?.accountName
+              ? wallet.accountName.length > 10
+                ? `${wallet.accountName.slice(0, 10)}....`
+                : wallet.accountName
+              : "N/A"}
+          </h1>
           <Copy
             className="w-5 h-5 text-[#0A6DC0] flex-shrink-0 cursor-pointer"
             onClick={handleCopyAccountNumber}
@@ -210,10 +220,14 @@ const Home = () => {
             </Link>
           </div>
         </div>
-        <div className=" border-[#E4E4E4] border-2 bg-white px-4 lg:px-7 py-5 rounded-2xl flex flex-col justify-between h-[218px] w-full">
+        <div className="relative pointer-events-none opacity-60 border-[#E4E4E4] border-2 bg-white px-4 lg:px-7 py-5 rounded-2xl flex flex-col justify-between h-[218px] w-full">
+          <span className="absolute top-4 right-4 text-[12px] uppercase bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full font-semibold">
+            Coming soon
+          </span>
+
           <div className="flex justify-between items-start">
             <div className="space-y-1 md:space-y-2">
-              <h1 className="font-bold font-dm-sans text-[13px]  md:text-[16px] text-[#2F2F2F]">
+              <h1 className="font-bold font-dm-sans text-[13px] md:text-[16px] text-[#2F2F2F]">
                 Active Loans
               </h1>
               <h1 className="font-clash whitespace-nowrap text-[#2F2F2F] text-[20px] lg:text-[25px] font-semibold">
@@ -222,12 +236,10 @@ const Home = () => {
             </div>
             <Image src={"/document.svg"} width={35} height={35} alt="wallet" />
           </div>
-          <Link
-            href={"#"}
-            className="font-inter font-dm-sans w-fit cursor-pointer text-[16px] font-medium text-[#0A6DC0] hover:text-[#09599a] border-b-2 border-[#0A6DC0]"
-          >
+
+          <span className="font-inter text-[16px] font-medium text-gray-400 border-b-2 border-gray-300 w-fit">
             Take your first loan
-          </Link>
+          </span>
         </div>
       </div>
 

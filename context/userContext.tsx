@@ -5,6 +5,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 export interface UserData {
+  createdAt?: string;          
   firstname: string;
   lastname: string;
   email: string;

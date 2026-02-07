@@ -85,12 +85,7 @@ export default function SinglePurchasedItemPage() {
         <h2 className="text-2xl font-bold text-red-600 mb-4 font-dm-sans">
           Error
         </h2>
-        <p className="text-gray-700 mb-4 max-w-md">
-          {error || "Missing request ID or item ID in the URL"}
-        </p>
-        <p className="text-sm text-gray-500 mb-6">
-          Current: id = {id || "missing"}, itemId = {itemId || "missing"}
-        </p>
+        
         <Button
           onClick={() => router.back()}
           className="px-8 py-3.5 bg-[#0A6DC0] text-white rounded-lg hover:bg-[#09599a]"

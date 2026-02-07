@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { MoveLeft, MoveRight } from "lucide-react";
+import { Edit, MoveLeft, MoveRight } from "lucide-react";
 import { ThreeDots } from "react-loader-spinner";
 import { getSaleById } from "@/lib/utils/api/apiHelper";
 import { SaleInvoice, SaleInvoiceItem } from "@/types/sales";
@@ -97,13 +97,23 @@ export default function SaleInvoiceDetailPage() {
         <MoveLeft className="w-5 h-5" />
       </button>
 
-      <div className="mb-4 md:mb-6">
-        <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
-          {invoice.code}
-        </h1>
-        <p className="font-medium font-dm-sans text-[#9E9A9A]">
-          View all items sold in this invoice
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="mb-4 md:mb-6">
+          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
+            {invoice.code}
+          </h1>
+          <p className="font-medium font-dm-sans text-[#9E9A9A]">
+            View all items sold in this invoice
+          </p>
+        </div>
+
+        <Edit
+          color="#0A6DC0"
+          className="cursor-pointer"
+          onClick={() =>
+            router.push(`/dashboards/inventory/sell?editId=${invoice.id}`)
+          }
+        />
       </div>
 
       {/* Items Table */}
@@ -123,9 +133,15 @@ export default function SaleInvoiceDetailPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left font-medium">Product</th>
-                    <th className="px-6 py-3 text-left font-medium">Quantity</th>
-                    <th className="px-6 py-3 text-left font-medium">Unit Cost</th>
-                    <th className="px-6 py-3 text-left font-medium">Subtotal</th>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Quantity
+                    </th>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Unit Cost
+                    </th>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Subtotal
+                    </th>
                     <th className="px-6 py-3 text-left font-medium">Profit</th>
                     <th className="px-6 py-3 text-left font-medium">More</th>
                   </tr>
@@ -137,7 +153,7 @@ export default function SaleInvoiceDetailPage() {
                       className="hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() =>
                         router.push(
-                          `/dashboards/inventory/sales/${id}/item/${item.id}`
+                          `/dashboards/inventory/sales/${id}/item/${item.id}`,
                         )
                       }
                     >
@@ -181,7 +197,7 @@ export default function SaleInvoiceDetailPage() {
                       <td className="px-6 py-4 whitespace-nowrap font-medium">
                         {formatCurrency(item.sub_total)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium text-green-700">
+                      <td className="px-6 py-4 whitespace-nowrap font-medium ">
                         {formatCurrency(item.profit)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">

@@ -141,6 +141,8 @@ import {
   GET_PURCHASE_REQUEST_BY_ID,
   HAND_OVER_ITEM,
   GET_SALE_BY_ID,
+  SUPPLIER_SALES,
+  UPDATE_INVOICE,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -662,6 +664,17 @@ export const handleCreateInvoice = async (
   );
 };
 
+export const handleUpdateInvoice = async (
+  invoiceId: string,
+  payload: CreatePurchaseInvoicePayload,  
+): Promise<CreateInvoiceResponse> => {     
+  const url = UPDATE_INVOICE(invoiceId);
+  return await putter<CreateInvoiceResponse, CreatePurchaseInvoicePayload>(
+    url,
+    payload,
+  );
+};
+
 export const handleCreateCustomer = async (
   payload: CreateCustomerPayload,
 ): Promise<CreateCustomerResponse> => {
@@ -866,4 +879,20 @@ export const verifyHandover = async (payload: {
   handover_type: "customer" | "driver";
 }): Promise<any> => {
   return await poster<any>(HAND_OVER_ITEM, payload);
+};
+
+export const getTotalSales = async (
+  startDate: string,
+  endDate: string
+): Promise<number> => {
+  const params = new URLSearchParams({
+    startDate,
+    endDate,
+  }).toString();
+
+  const url = `${SUPPLIER_SALES}?${params}`;
+
+  const response = await fetcher<any>(url);
+
+  return response.data?.total_sales ?? 0;
 };

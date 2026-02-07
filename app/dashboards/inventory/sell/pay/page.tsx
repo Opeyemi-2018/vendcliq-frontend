@@ -57,7 +57,6 @@ interface InvoicePreviewItem {
     longitude?: number;
     address?: string;
   };
-  // Added fields
   sku: string;
   product_name: string;
   product_image: string;
@@ -113,9 +112,17 @@ function PayInvoiceContent() {
           console.error("Failed to parse invoice preview:", err);
           toast.error("Failed to load invoice details");
         }
+      } else {
+        toast.error("No invoice preview found");
       }
     }
   }, [invoiceId]);
+
+  const cleanupPreview = () => {
+    if (invoiceId) {
+      localStorage.removeItem(`invoice-preview-${invoiceId}`);
+    }
+  };
 
   if (!invoiceId) {
     return (
@@ -140,7 +147,6 @@ function PayInvoiceContent() {
     );
   }
 
-  // Calculations from real response data
   const totalQuantity = invoicePreview.items.reduce(
     (sum, item) => sum + item.quantity,
     0,
@@ -188,9 +194,11 @@ function PayInvoiceContent() {
             toast.info(
               "Transfer initialized! Check payment history for bank details.",
             );
+            cleanupPreview();
             setShowSuccessModal(true);
           }
         } else {
+          cleanupPreview();
           setShowSuccessModal(true);
         }
       } else {
@@ -204,11 +212,13 @@ function PayInvoiceContent() {
   };
 
   const handleSuccessClose = () => {
+    cleanupPreview();
     setShowSuccessModal(false);
     router.push("/dashboards/inventory/sell");
   };
 
   const handleTransferSent = () => {
+    cleanupPreview();
     setShowTransferModal(false);
     toast.success("Thank you! We'll confirm your payment shortly.");
     router.push("/dashboards/inventory/sell");
@@ -217,6 +227,8 @@ function PayInvoiceContent() {
   const handleTransferNotSent = () => {
     setShowTransferModal(false);
     toast.info("You can come back anytime to complete the payment.");
+    // Optional: keep preview if they didn't confirm payment yet
+    // cleanupPreview(); // uncomment if you want to remove anyway
   };
 
   return (
@@ -318,23 +330,8 @@ function PayInvoiceContent() {
             Here is all about the products you want to sell
           </p>
 
-          {/* <div className="space-y-4 my-3 flex justify-between items-center">
-            <div className="text-[#2F2F2F] md:font-semibold md:text-[25px] font-clash">
-              <p className="">{invoicePreview.code}</p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Label className="text-sm md:text-[16px] font-medium text-[#9E9A9A]">
-                Status
-              </Label>
-              <p className="text-sm text-yellow-500 bg-[#f0eee9] px-2 rounded-full capitalize">
-                {invoicePreview.status.toLowerCase()}
-              </p>
-            </div>
-          </div> */}
-
           <div className="mt-3">
-            <Label className=" font-bold font-dm-sans text-[#2F2F2F]">
+            <Label className="font-bold font-dm-sans text-[#2F2F2F]">
               Store Address
             </Label>
             <p className="font-regular font-dm-sans">
@@ -422,21 +419,8 @@ function PayInvoiceContent() {
             </div>
           </div>
 
-          {/* <div className="mb-6 mt-6">
-            <Label htmlFor="narration">Narration (optional)</Label>
-            <Input
-              id="narration"
-              value={formData.narration}
-              onChange={(e) =>
-                setFormData({ ...formData, narration: e.target.value })
-              }
-              placeholder="e.g. Payment for invoice"
-              className="mt-2 py-6"
-            />
-          </div> */}
-
           {paymentType === "POS" && (
-            <div className="mb-2">
+            <div className="mb-2 mt-6">
               <Label>Terminal ID</Label>
               <Input
                 placeholder="Enter POS terminal ID"
@@ -452,7 +436,7 @@ function PayInvoiceContent() {
           <Button
             onClick={handlePayment}
             disabled={loading}
-            className="w-full mt-2 py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#085a9e] disabled:opacity-70"
+            className="w-full mt-6 py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#085a9e] disabled:opacity-70"
           >
             {loading ? (
               <>

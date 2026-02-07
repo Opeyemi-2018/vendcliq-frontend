@@ -85,3 +85,14 @@ export interface SaleDetailResponse {
   error: string | null;
   data: SaleInvoice;
 }
+
+
+
+
+// resposne for total sales 
+
+// types/supplierSales.ts
+
+export interface SupplierSalesTotal {
+  total_sales: number;
+}
