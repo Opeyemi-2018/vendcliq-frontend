@@ -43,16 +43,15 @@ export default function AuthHero() {
 
   return (
     <div className="relative w-full max-w-2xl mx-auto  ">
-      <div
-        style={{
-          backgroundImage: "url('/stock-woman.svg') ",
-          backgroundRepeat: "no-repeat",
-          backgroundSize: "cover",
-          borderRadius: "20px",
-          backgroundPosition: "center",
-        }}
-        className="relative h-[600px]  md:h-[700px] p-10 "
-      >
+      <Image
+        src="/stock-woman.svg"
+        alt="Stock woman"
+        fill
+        priority
+        sizes="(max-width: 768px) 100vw, 700px"
+        className="object-cover rounded-lg"
+      />
+      <div className="relative h-[600px]  md:h-[700px] p-10 ">
         <Image
           src="/vl.png"
           width={300}
