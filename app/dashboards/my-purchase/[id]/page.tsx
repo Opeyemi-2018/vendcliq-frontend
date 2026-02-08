@@ -182,16 +182,16 @@ const PurchasedInvoiceDetailPage = () => {
                 <th className="text-left p-4 pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[30%]">
                   Product
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[15%]">
+                <th className="hidden md:table-cell text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[15%]">
                   Unit Price
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[10%]">
+                <th className="hidden md:table-cell text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[10%]">
                   Qty
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[15%]">
+                <th className="hidden md:table-cell text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[15%]">
                   Amount
                 </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[15%]">
+                <th className="hidden md:table-cell text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[15%]">
                   Status
                 </th>
                 <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[15%]">
@@ -232,14 +232,14 @@ const PurchasedInvoiceDetailPage = () => {
                       </div>
                     </td>
 
-                    <td className="py-4 truncate">
+                    <td className="hidden md:table-cell py-4 truncate">
                       {formatCurrency(item.stock.price)}
                     </td>
-                    <td className="py-4 truncate">{item.quantity}</td>
-                    <td className="py-4 truncate">
+                    <td className="hidden md:table-cell py-4 truncate">{item.quantity}</td>
+                    <td className="hidden md:table-cell py-4 truncate">
                       {formatCurrency(item.cost)}
                     </td>
-                    <td className="py-4">
+                    <td className="hidden md:table-cell py-4">
                       {" "}
                       <span
                         className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${

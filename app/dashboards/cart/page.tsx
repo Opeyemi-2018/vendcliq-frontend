@@ -4,7 +4,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { getCartData, updateCartItem, deleteCartItem } from "@/actions/cart";
 import { handleCheckoutCart } from "@/lib/utils/api/apiHelper";
-import { Plus, Minus, Trash2, ShoppingCart } from "lucide-react";
+import { Plus, Minus, Trash2, ShoppingCart, ArrowLeft } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
@@ -198,7 +198,8 @@ const Cart = () => {
 
   return (
     <div className="">
-      <h1 className="text-[#2F2F2F] text-[20px] md:text-[25px] font-clash font-semibold mb-6">
+      <ArrowLeft size={20} onClick={() => router.back()} />
+      <h1 className="text-[#2F2F2F] text-[20px] md:text-[25px] font-clash font-semibold my-6">
         My Cart ({cartItems.length} items)
       </h1>
 

@@ -29,6 +29,7 @@ import {
 import { getStores } from "@/actions/stores";
 import { getCustomers } from "@/actions/getcustomers";
 import { getStoreStock } from "@/actions/getUserStocks";
+import { getSaleById } from "@/lib/utils/api/apiHelper";
 import Image from "next/image";
 import {
   AlertDialog,
@@ -58,13 +59,13 @@ import { useEffect, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import {
   handleCreateCustomer,
-  handleCreateInvoice,
+  handleUpdateInvoice,
 } from "@/lib/utils/api/apiHelper";
 import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ThreeDots } from "react-loader-spinner";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -74,6 +75,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { UpdateInvoicePayload } from "@/types/invoice";
 
 interface StoreType {
   id: string;
@@ -119,8 +121,10 @@ interface InvoiceItem {
   empties?: { type: "CREDIT" | "SELL"; quantity: number };
 }
 
-const Sell = () => {
+const EditInvoice = () => {
   const router = useRouter();
+  const params = useParams();
+  const invoiceId = params.id as string;
 
   const [stage, setStage] = useState<
     "select-store" | "select-customer" | "invoice"
@@ -131,6 +135,7 @@ const Sell = () => {
   const [selectedStore, setSelectedStore] = useState<StoreType | null>(null);
   const [isLoadingStores, setIsLoadingStores] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [customers, setCustomers] = useState<CustomerType[]>([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerType | null>(
@@ -140,15 +145,18 @@ const Sell = () => {
   const [customerOptionSelected, setCustomerOptionSelected] = useState<
     "list" | "walk-in" | null
   >(null);
+
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   const [isSubmittingInvoice, setIsSubmittingInvoice] = useState(false);
   const [storeStock, setStoreStock] = useState<StockItem[]>([]);
   const [isLoadingStock, setIsLoadingStock] = useState(false);
+
   const [showEmptiesModal, setShowEmptiesModal] = useState(false);
   const [selectedStockItem, setSelectedStockItem] = useState<StockItem | null>(
     null,
   );
   const [emptiesQuantityInput, setEmptiesQuantityInput] = useState("");
+
   const customerForm = useForm<CustomerForm>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
@@ -175,87 +183,110 @@ const Sell = () => {
   });
 
   useEffect(() => {
-    const fetchStores = async () => {
+    if (!invoiceId) {
+      toast.error("No invoice ID");
+      router.back();
+      return;
+    }
+
+    const loadInvoice = async () => {
       setIsLoadingStores(true);
-      setError(null);
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        setError("Please log in");
+        setIsLoadingStores(false);
+        return;
+      }
+
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          setError("Please log in");
-          return;
+        // 1. Get invoice
+        const invRes = await getSaleById(invoiceId);
+        if (invRes.statusCode !== 200 || !invRes.data) {
+          throw new Error(invRes.error || "Failed to load invoice");
         }
-        const result = await getStores(token);
-        if (result.success && result.data) {
-          const storeNames = result.data.map((store: any) => ({
-            id: store.id,
-            name: store.name,
-            stock_count: store.stock_count,
-            stock_value: store.stock_value?.toLocaleString() || "0",
-            address: store.address,
+        const inv = invRes.data;
+
+        // 2. Get stores and pre-select the invoice's store
+        const storesRes = await getStores(token);
+        if (storesRes.success && storesRes.data) {
+          const storeList = storesRes.data.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            stock_value: s.stock_value?.toLocaleString() || "0",
+            stock_count: s.stock_count,
+            address: s.address,
           }));
-          setStores(storeNames);
-          setFilteredStores(storeNames);
-        } else {
-          setError(result.error || "Failed to load stores");
+          setStores(storeList);
+          setFilteredStores(storeList);
+
+          const matchingStore = storeList.find((s: any) => s.id === inv.store_id);
+          if (matchingStore) {
+            setSelectedStore(matchingStore);
+            setStage("select-customer");
+          }
         }
-      } catch (err) {
-        setError("Network error");
+
+        const custRes = await getCustomers(token);
+        if (custRes.success && custRes.data) {
+          setCustomers(custRes.data);
+          if (inv.customer_id) {
+            const match = custRes.data.find(
+              (c: any) => c.id === inv.customer_id,
+            );
+            if (match) setSelectedCustomer(match);
+          } else {
+            setIsWalkIn(true);
+            setCustomerOptionSelected("walk-in");
+          }
+        }
+
+        const prefilledItems: InvoiceItem[] = inv.items.map((it: any) => {
+          
+          const realStockId = it.stock?.id || String(it.stock_id || "");
+
+          return {
+            stock_id: realStockId,
+            product_name: it.product?.name || "Unknown Product",
+            sku: it.stock?.sku || "", 
+            product_image: it.product?.image || it.stock?.product?.image || "",
+            quantity: Number(it.quantity) || 0,
+            mode: it.mode || "PACKS",
+            discounted_amount: Number(it.discounted_amount) || 0,
+            empties: it.empties ? {
+              type: it.empties.type || "CREDIT",
+              quantity: it.empties.quantity || 0
+            } : undefined,
+          };
+        });
+        setInvoiceItems(prefilledItems);
+
+        // toast.info("Invoice loaded — you can now edit items, customer, etc.");
+      } catch (err: any) {
+        setError(err.message || "Failed to load invoice");
+        toast.error("Could not load invoice for editing");
       } finally {
         setIsLoadingStores(false);
       }
     };
-    fetchStores();
-  }, []);
 
-  useEffect(() => {
-    if (searchTerm === "") {
-      setFilteredStores(stores);
-    } else {
-      setFilteredStores(
-        stores.filter((s) =>
-          s.name.toLowerCase().includes(searchTerm.toLowerCase()),
-        ),
-      );
-    }
-  }, [searchTerm, stores]);
+    loadInvoice();
+  }, [invoiceId, router]);
 
+  // Load stock when store is selected (or pre-selected)
   useEffect(() => {
-    if (stage === "select-customer" && selectedStore) {
-      const fetchCustomers = async () => {
-        setIsLoadingCustomers(true);
-        try {
-          const token = localStorage.getItem("accessToken");
-          if (!token) return;
-          const result = await getCustomers(token);
-          if (result.success && result.data) {
-            setCustomers(result.data);
-          } else {
-            toast.error("Failed to load customers");
-          }
-        } catch (err) {
-          toast.error("Network error");
-        } finally {
-          setIsLoadingCustomers(false);
-        }
-      };
-      fetchCustomers();
-    }
-  }, [stage, selectedStore]);
-
-  useEffect(() => {
-    if (stage === "invoice" && selectedStore) {
+    if (selectedStore && stage === "invoice") {
       const fetchStock = async () => {
         setIsLoadingStock(true);
         try {
           const token = localStorage.getItem("accessToken");
           if (!token) return;
-          const result = await getStoreStock(token, selectedStore.id);
-          if (result.success && result.data) {
-            setStoreStock(result.data);
+          const res = await getStoreStock(token, selectedStore.id);
+          if (res.success && res.data) {
+            setStoreStock(res.data);
           } else {
-            toast.error("Failed to load store stock");
+            toast.error("Failed to load stock");
           }
-        } catch (err) {
+        } catch {
           toast.error("Network error loading stock");
         } finally {
           setIsLoadingStock(false);
@@ -263,45 +294,47 @@ const Sell = () => {
       };
       fetchStock();
     }
-  }, [stage, selectedStore]);
+  }, [selectedStore, stage]);
 
+  // Store address display
   useEffect(() => {
-    if (stage === "invoice" && selectedStore?.address) {
+    if (selectedStore?.address && stage === "invoice") {
       const addr = selectedStore.address;
-      const display = addr.name || `Lat: ${addr.lat}, Lng: ${addr.lng}`;
-      invoiceForm.setValue("store_address", display);
+      invoiceForm.setValue(
+        "store_address",
+        addr.name || `Lat: ${addr.lat}, Lng: ${addr.lng}`,
+      );
     }
   }, [selectedStore, stage, invoiceForm]);
 
+  // Price preview
   useEffect(() => {
     const stockId = invoiceForm.getValues("stock_id");
-    if (stockId) {
-      const stockItem = storeStock.find((s) => s.id === stockId);
-      if (stockItem) {
-        invoiceForm.setValue("price", stockItem.selling_price);
-        setSelectedStockItem(stockItem);
+    if (stockId && stage === "invoice") {
+      const item = storeStock.find((s) => s.id === stockId);
+      if (item) {
+        invoiceForm.setValue("price", item.selling_price);
+        setSelectedStockItem(item);
       }
     }
-  }, [invoiceForm.watch("stock_id"), storeStock]);
+  }, [invoiceForm.watch("stock_id"), storeStock, stage, invoiceForm]);
 
-  const handleOpenEmptiesModal = () => {
-    setShowEmptiesModal(true);
-  };
+  const handleOpenEmptiesModal = () => setShowEmptiesModal(true);
 
   const addItemToInvoice = () => {
     const values = invoiceForm.getValues();
     if (!values.stock_id || !values.quantity) {
-      toast.error("Please select a product and enter quantity");
+      toast.error("Select product and quantity");
       return;
     }
-    const stockItem = storeStock.find((s) => s.id === values.stock_id);
-    if (!stockItem) return;
+    const stock = storeStock.find((s) => s.id === values.stock_id);
+    if (!stock) return;
 
     const newItem: InvoiceItem = {
       stock_id: values.stock_id,
-      product_name: stockItem.product.name,
-      sku: stockItem.sku,
-      product_image: stockItem.product.image,
+      product_name: stock.product.name,
+      sku: stock.sku,
+      product_image: stock.product.image,
       quantity: parseInt(values.quantity, 10),
       mode: values.mode as "PACKS" | "PIECES",
       discounted_amount: parseFloat(values.discounted_amount || "0"),
@@ -314,7 +347,7 @@ const Sell = () => {
     };
 
     setInvoiceItems((prev) => [...prev, newItem]);
-    toast.success("Item added to invoice");
+    toast.success("Item added");
 
     invoiceForm.reset({
       stock_id: "",
@@ -338,74 +371,69 @@ const Sell = () => {
 
     setIsSubmittingInvoice(true);
 
-    const storeAddress = selectedStore?.address || null;
-
-    const payload = {
+    const payload: UpdateInvoicePayload = {
       customer_id: isWalkIn ? null : selectedCustomer?.id || null,
       store_id: selectedStore!.id,
       items: invoiceItems.map((item) => ({
-        stock_id: item.stock_id,
+        stock_id: String(item.stock_id).trim(),
         quantity: item.quantity,
         delivery: false,
         mode: item.mode,
         discounted_amount: item.discounted_amount,
         empties: item.empties,
         attributes: {
-          latitude: storeAddress?.lat || 0,
-          longitude: storeAddress?.lng || 0,
-          address: storeAddress?.name || "",
+          latitude: selectedStore?.address?.lat || 0,
+          longitude: selectedStore?.address?.lng || 0,
+          address: selectedStore?.address?.name || "",
         },
       })),
     };
-
+    
+    console.log("Update payload being sent:", JSON.stringify(payload, null, 2));
+    
     try {
-      const response = await handleCreateInvoice(payload);
+      const response = await handleUpdateInvoice(invoiceId, payload);
 
       if (response.statusCode === 200 || response.statusCode === 201) {
-        toast.success("Invoice created successfully!");
+        toast.success("Invoice updated!");
 
-        const invoiceData = response.data;
-
-        if (invoiceData?.id) {
-          const previewData = {
-            invoiceId: invoiceData.id,
-            code: invoiceData.code,
-            total: invoiceData.total,
-            status: invoiceData.status,
-            storeAddress:
-              invoiceData.items[0]?.attributes?.address || "No address",
-            items: invoiceData.items.map((item: any, index: number) => {
-              const localItem = invoiceItems[index];
-
+        const data = response.data;
+        if (data?.id) {
+          const preview = {
+            invoiceId: data.id,
+            code: data.code,
+            total: data.total,
+            status: data.status,
+            storeAddress: data.items?.[0]?.attributes?.address || "No address",
+            items: data.items.map((it: any, idx: number) => {
+              const local = invoiceItems[idx];
               return {
-                id: item.id,
-                stock_id: item.stock_id,
-                product_id: item.product_id,
-                quantity: item.quantity,
-                cost: item.cost,
-                discounted_amount: item.discounted_amount,
-                sub_total: item.sub_total,
-                mode: item.mode,
-                attributes: item.attributes,
-                sku: localItem?.sku || "N/A",
-                product_name: localItem?.product_name || "Unknown Product",
-                product_image: localItem?.product_image || "",
+                id: it.id,
+                stock_id: it.stock_id,
+                product_id: it.product_id,
+                quantity: it.quantity,
+                cost: it.cost,
+                discounted_amount: it.discounted_amount,
+                sub_total: it.sub_total,
+                mode: it.mode,
+                attributes: it.attributes,
+                sku: local?.sku || "N/A",
+                product_name: local?.product_name || "Unknown",
+                product_image: local?.product_image || "",
               };
             }),
           };
 
           localStorage.setItem(
-            `invoice-preview-${invoiceData.id}`,
-            JSON.stringify(previewData),
+            `invoice-preview-${data.id}`,
+            JSON.stringify(preview),
           );
-
-          router.push(
-            `/dashboards/inventory/sell/pay?invoiceId=${invoiceData.id}`,
-          );
+          router.push(`/dashboards/inventory/sell/pay?invoiceId=${data.id}`);
         } else {
-          toast.warning("Invoice created but no ID returned");
+          router.push(`/dashboards/inventory/sales/${invoiceId}`);
         }
 
+        // Cleanup
         setInvoiceItems([]);
         setSelectedStore(null);
         setSelectedCustomer(null);
@@ -413,10 +441,10 @@ const Sell = () => {
         setCustomerOptionSelected(null);
         invoiceForm.reset();
       } else {
-        toast.error(response.error || "Failed to create invoice");
+        toast.error(response.error || "Update failed");
       }
     } catch (err) {
-      toast.error("Failed to create invoice");
+      toast.error("Error updating invoice");
     } finally {
       setIsSubmittingInvoice(false);
     }
@@ -436,61 +464,57 @@ const Sell = () => {
         },
       };
 
-      const response = await handleCreateCustomer(payload);
+      const res = await handleCreateCustomer(payload);
+      if (res.statusCode === 200 || res.statusCode === 201) {
+        toast.success("Customer created");
 
-      if (response.statusCode === 200 || response.statusCode === 201) {
-        toast.success(response.msg || "Customer created successfully!");
+        const close = document.querySelector("[data-radix-dialog-close]");
+        if (close) (close as HTMLElement).click();
 
-        const closeButton = document.querySelector("[data-radix-dialog-close]");
-        if (closeButton) (closeButton as HTMLElement).click();
-
-        const token =
-          localStorage.getItem("accessToken") ||
-          localStorage.getItem("authToken");
+        const token = localStorage.getItem("accessToken");
         if (token) {
-          const result = await getCustomers(token);
-          if (result.success && result.data) {
-            setCustomers(result.data);
-          }
+          const custRes = await getCustomers(token);
+          if (custRes.success && custRes.data) setCustomers(custRes.data);
         }
 
         customerForm.reset();
       } else {
-        toast.error(response.error || "Failed to create customer");
+        toast.error(res.error || "Failed to create customer");
       }
     } catch (err: any) {
-      toast.error(err?.error || "Failed to create customer");
+      toast.error(err.message || "Customer creation error");
     }
   };
 
   const handleProceedFromStore = () => {
     if (!customerOptionSelected) {
-      toast.error("Please select a customer option");
+      toast.error("Select customer option");
       return;
     }
-
     if (customerOptionSelected === "list") {
       setStage("select-customer");
-    } else if (customerOptionSelected === "walk-in") {
+    } else {
       setIsWalkIn(true);
       setStage("invoice");
     }
   };
 
+  // ── Render ──
+
   if (stage === "select-store") {
     return (
       <div>
         <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
-          Sell
+          Edit Invoice
         </h1>
         <p className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans">
-          Sell your stock to a customer
+          First, select or change the store
         </p>
 
         <div className="md:mt-8 flex flex-col lg:flex-row gap-4">
           <div className="py-3 md:py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg w-full lg:w-[35%] bg-white">
             <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
-              Select the store you want to sell from
+              Select / Change Store
             </h1>
             <Separator
               orientation="horizontal"
@@ -511,7 +535,7 @@ const Sell = () => {
                 </div>
               ) : error ? (
                 <div className="text-center py-4">
-                  <p className="text-red-500">{error}</p>
+                  <p className="text-red-500">check your connection or retry</p>
                   <button
                     className="mt-2 bg-[#0A6DC0] hover:bg-[#085a9e] rounded-lg px-4 py-2 text-white"
                     onClick={() => window.location.reload()}
@@ -532,7 +556,7 @@ const Sell = () => {
                         onClick={() => setSelectedStore(store)}
                         className={`flex justify-between border rounded-lg px-3 py-4 cursor-pointer transition-colors ${
                           selectedStore?.id === store.id
-                            ? "bg-[#0A6DC012] border border-[#0A6DC0]"
+                            ? "bg-[#0A6DC012] border-[#0A6DC0]"
                             : "bg-gray-50 hover:bg-gray-100 border-[#D8D8D866]"
                         }`}
                       >
@@ -581,7 +605,7 @@ const Sell = () => {
               {selectedStore ? selectedStore.name : "Select a store"}
             </h1>
             <p className="text-[#9E9A9A] font-dm-sans">
-              Select or create the customer you want to sell to
+              Select or create the customer
             </p>
             <Separator
               orientation="horizontal"
@@ -643,7 +667,7 @@ const Sell = () => {
           Customer
         </h1>
         <p className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans">
-          Sell to the customer you want to sell to
+          Update or select customer for this invoice
         </p>
 
         <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg mt-8 bg-white">
@@ -866,6 +890,7 @@ const Sell = () => {
     );
   }
 
+  // ── Invoice stage (same as Sell) ──
   if (stage === "invoice") {
     return (
       <div>
@@ -876,21 +901,17 @@ const Sell = () => {
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
-          Create Invoice
+          Edit Invoice
         </h1>
         <p className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans">
-          Kindly fill the details below to create invoice
+          Update the invoice details below
         </p>
 
         <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg md:mt-8 bg-white">
           <div className="mb-2 flex items-center justify-between font-dm-sans font-medium">
-            <p className="text-[16px] text-[#000000] ">Store</p>
+            <p className="text-[16px] text-[#000000]">Store</p>
             <button
-              onClick={() => {
-                setStage("select-store");
-                setCustomerOptionSelected(null);
-                setIsWalkIn(false);
-              }}
+              onClick={() => setStage("select-store")}
               className="text-[#0A6DC0]"
             >
               Change Store
@@ -903,9 +924,7 @@ const Sell = () => {
                 {selectedStore?.name}
               </p>
               <div className="flex items-center gap-2 text-[13px]">
-                <p className="text-[#2F2F2F] font-medium">
-                  Inventory value: ₦{" "}
-                </p>
+                <p className="text-[#2F2F2F] font-medium">Inventory value: ₦</p>
                 <p className="text-[#9E9A9A]">{selectedStore?.stock_value}</p>
               </div>
               <div className="flex items-center gap-2 text-[13px]">
@@ -923,14 +942,13 @@ const Sell = () => {
                   name="stock_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>SKU </FormLabel>
+                      <FormLabel>SKU / Product</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
                             role="combobox"
-                            // bg-[#F9F9F9] h-12 border border-[#D8D8D866]
-                            className="w-full justify-between h-12 bg-[#F9F9F9] border border-[#D8D8D866]"
+                            className="w-full justify-between h-12 bg-[#F3F4F6] border-none"
                             disabled={isLoadingStock || storeStock.length === 0}
                           >
                             {field.value ? (
@@ -990,11 +1008,9 @@ const Sell = () => {
                             />
                             <CommandList>
                               <CommandEmpty>
-                                {isLoadingStock ? (
-                                  <ClipLoader size={24} color="#0A6DC0" />
-                                ) : (
-                                  "No product found."
-                                )}
+                                {isLoadingStock
+                                  ? "Loading..."
+                                  : "No product found."}
                               </CommandEmpty>
                               <CommandGroup>
                                 {storeStock.map((stock) => (
@@ -1028,7 +1044,6 @@ const Sell = () => {
                                             No img
                                           </div>
                                         )}
-
                                         <div className="flex flex-col min-w-0">
                                           <span className="font-medium text-sm">
                                             {stock.sku}
@@ -1037,11 +1052,10 @@ const Sell = () => {
                                             {stock.product.name}
                                           </span>
                                           <span className="text-xs text-gray-500 truncate">
-                                            # {stock.selling_price}
+                                            ₦{stock.selling_price}
                                           </span>
                                         </div>
                                       </div>
-
                                       <div className="text-right whitespace-nowrap">
                                         <span className="text-sm font-medium text-[#0A6DC0]">
                                           {stock.quantity}
@@ -1104,7 +1118,7 @@ const Sell = () => {
                           type="number"
                           placeholder="e.g. 1"
                           {...field}
-                          className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] cursor-pointer"
+                          className="bg-[#F3F4F6] h-12"
                         />
                       </FormControl>
                       <FormMessage />
@@ -1171,7 +1185,7 @@ const Sell = () => {
                           type="number"
                           placeholder="e.g. 20"
                           {...field}
-                          className="bg-[#F9F9F9] h-12 border border-[#D8D8D866]"
+                          className="bg-[#F3F4F6] h-12"
                         />
                       </FormControl>
                       <FormMessage />
@@ -1180,12 +1194,12 @@ const Sell = () => {
                 />
 
                 <div className="space-y-2">
-                  <Label className="">Price</Label>
+                  <Label>Price</Label>
                   <Input
                     type="number"
                     value={invoiceForm.getValues("price")}
                     readOnly
-                          className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] cursor-not-allowed"
+                    className="bg-gray-100 cursor-not-allowed h-12"
                   />
                 </div>
 
@@ -1199,7 +1213,7 @@ const Sell = () => {
                         <Input
                           {...field}
                           readOnly
-                          className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] cursor-pointer"
+                          className="bg-gray-100 cursor-not-allowed h-12"
                         />
                       </FormControl>
                       <FormMessage />
@@ -1215,7 +1229,7 @@ const Sell = () => {
                     value={invoiceForm.getValues("empties_quantity")}
                     onClick={handleOpenEmptiesModal}
                     readOnly
-                    className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] cursor-pointer"
+                    className="bg-white h-12 cursor-pointer"
                   />
                 </div>
               </div>
@@ -1276,7 +1290,7 @@ const Sell = () => {
                               setInvoiceItems((prev) =>
                                 prev.filter((_, index) => index !== i),
                               );
-                              toast.success("Item removed from invoice");
+                              toast.success("Item removed");
                             }}
                             className="text-red-600 hover:text-red-800 transition-colors"
                           >
@@ -1298,15 +1312,16 @@ const Sell = () => {
           >
             {isSubmittingInvoice ? (
               <>
-                Creating Invoice...{" "}
+                Updating Invoice...{" "}
                 <ClipLoader size={20} color="white" className="ml-2" />
               </>
             ) : (
-              "Create Invoice"
+              "Update Invoice"
             )}
           </Button>
         </Card>
 
+        {/* Empties Modal - same as Sell */}
         <Dialog open={showEmptiesModal} onOpenChange={setShowEmptiesModal}>
           <DialogContent className="sm:max-w-[425px] bg-white">
             <DialogHeader>
@@ -1328,7 +1343,6 @@ const Sell = () => {
                   placeholder="Enter quantity"
                   value={emptiesQuantityInput}
                   onChange={(e) => {
-                    // Only allow numbers
                     const value = e.target.value.replace(/[^0-9]/g, "");
                     setEmptiesQuantityInput(value);
                   }}
@@ -1381,4 +1395,4 @@ const Sell = () => {
   return null;
 };
 
-export default Sell;
+export default EditInvoice;

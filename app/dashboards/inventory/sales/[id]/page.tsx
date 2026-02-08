@@ -106,12 +106,11 @@ export default function SaleInvoiceDetailPage() {
             View all items sold in this invoice
           </p>
         </div>
-
         <Edit
           color="#0A6DC0"
           className="cursor-pointer"
           onClick={() =>
-            router.push(`/dashboards/inventory/sell?editId=${invoice.id}`)
+            router.push(`/dashboards/inventory/sales/edit/${invoice.id}`)
           }
         />
       </div>

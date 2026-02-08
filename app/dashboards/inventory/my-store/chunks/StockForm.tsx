@@ -81,12 +81,10 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
     setSelectedProduct(product || null);
 
     if (product) {
-      const skuWords = product.name
-        .split(" ")
-        .slice(0, 3)
-        .join(" ")
-        .toUpperCase();
-      form.setValue("sku", skuWords);
+      // Better SKU: use full name or a meaningful part
+      // Adjust this logic based on what your server actually expects
+      const generatedSku = product.name.toUpperCase().replace(/\s+/g, " ").trim();
+      form.setValue("sku", generatedSku);
     } else {
       form.setValue("sku", "");
     }
@@ -95,39 +93,60 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
   };
 
   const handleSaveEmpties = () => {
-    if (!tempEmptiesQty || !tempEmptiesPrice) {
-      toast.error("Please enter both empties quantity and price");
+    if (!tempEmptiesQty) {
+      toast.error("Please enter empties quantity");
       return;
     }
+    // price is optional now — server might accept 0 or null
     form.setValue("empties_qty", tempEmptiesQty);
-    form.setValue("empties_price", tempEmptiesPrice);
+    form.setValue("empties_price", tempEmptiesPrice || "0");
     setIsEmptiesModalOpen(false);
-    toast.success("Empties added successfully");
+    toast.success("Empties added");
     setTempEmptiesQty("");
     setTempEmptiesPrice("");
+  };
+
+  const safeParseInt = (val: string | undefined): number => {
+    if (!val) return 0;
+    const num = parseInt(val, 10);
+    return isNaN(num) ? 0 : num;
+  };
+
+  const safeParseFloat = (val: string | undefined): number => {
+    if (!val) return 0;
+    const num = parseFloat(val);
+    return isNaN(num) ? 0 : num;
   };
 
   const onSubmit = async (values: CreateStockFormData) => {
     setIsSubmitting(true);
 
-    const payload = {
+    const emptiesQty = safeParseInt(values.empties_qty);
+
+    const payload: any = {
       product_id: values.product_id,
       store_id: storeId,
-      quantity: parseInt(values.quantity, 10),
-      empties_qty: parseInt(values.empties_qty || "0", 10),
-      cost_price: parseFloat(values.cost_price),
-      selling_price: parseFloat(values.selling_price),
-      selling_price_pieces: parseFloat(values.selling_price_pieces || "0"),
-      empties_price: parseFloat(values.empties_price || "0"),
-      exp_date: values.exp_date,
-      sku: values.sku || "",
-      stock_alert_no: parseInt(values.stock_alert_no, 10),
+      quantity: safeParseInt(values.quantity),
+      empties_qty: emptiesQty,
+      cost_price: safeParseFloat(values.cost_price),
+      selling_price: safeParseFloat(values.selling_price),
+      selling_price_pieces: safeParseFloat(values.selling_price_pieces),
+      exp_date: values.exp_date?.trim() || "",
+      sku: (values.sku || selectedProduct?.name || "").trim(),
+      stock_alert_no: safeParseInt(values.stock_alert_no),
       attributes: {
         type: values.type,
-        batch: values.batch || "",
-        supplier: values.supplier || "",
+        batch: (values.batch || "").trim(),
+        supplier: (values.supplier || "").trim(),
       },
     };
+
+    // Only include empties_price when there are empties
+    if (emptiesQty > 0) {
+      payload.empties_price = safeParseFloat(values.empties_price);
+    }
+
+    console.log("Sending stock payload:", JSON.stringify(payload, null, 2));
 
     try {
       const response = await handleCreateStock(payload);
@@ -136,13 +155,14 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
         toast.success("Stock added successfully!");
         form.reset();
         setSelectedProduct(null);
-        onSuccess?.(); 
+        onSuccess?.();
       } else {
-        toast.error(response.error || "Failed to add stock. Please try again.");
+        toast.error(response.error || "Failed to add stock");
+        console.error("Server response:", response);
       }
     } catch (error: any) {
       console.error("Error creating stock:", error);
-      toast.error(error.message || "Failed to add stock. Please try again.");
+      toast.error(error.message || "Network/server error while adding stock");
     } finally {
       setIsSubmitting(false);
     }
@@ -256,7 +276,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
           )}
         />
 
-        {/* Quantity + Empties */}
+        {/* Quantity + Empties trigger */}
         <FormField
           control={form.control}
           name="quantity"
@@ -293,6 +313,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                           value={tempEmptiesQty}
                           onChange={(e) => setTempEmptiesQty(e.target.value)}
                           className="mt-2 h-12"
+                          min="0"
                         />
                       </div>
                       <div>
@@ -305,6 +326,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                           value={tempEmptiesPrice}
                           onChange={(e) => setTempEmptiesPrice(e.target.value)}
                           className="mt-2 h-12"
+                          min="0"
                         />
                       </div>
                     </div>
@@ -329,6 +351,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                   placeholder="Enter quantity"
                   {...field}
                   className="bg-[#F3F4F6] h-12"
+                  min="1"
                 />
               </FormControl>
               <FormMessage />
@@ -336,12 +359,12 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
           )}
         />
 
-        {/* Empties Preview */}
-        {form.watch("empties_qty") && form.watch("empties_qty") !== "0" && form.watch("empties_qty") !== "" && (
+        {/* Show added empties summary */}
+        {form.watch("empties_qty") && Number(form.watch("empties_qty")) > 0 && (
           <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
             <p className="text-[#2F2F2F] font-medium">
               <strong>Empties Added:</strong> {form.watch("empties_qty")} units @ ₦
-              {form.watch("empties_price")} each
+              {form.watch("empties_price") || "0"} each
             </p>
           </div>
         )}
@@ -364,6 +387,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                   placeholder="e.g. 4300"
                   {...field}
                   className="bg-[#F3F4F6] h-12"
+                  min="0"
                 />
               </FormControl>
               <FormMessage />
@@ -388,6 +412,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                   placeholder="e.g. 5000"
                   {...field}
                   className="bg-[#F3F4F6] h-12"
+                  min="0"
                 />
               </FormControl>
               <FormMessage />
@@ -395,7 +420,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
           )}
         />
 
-        {/* Selling Price Pieces (Optional) */}
+        {/* Selling Price per Piece (shown always, but can be optional) */}
         <FormField
           control={form.control}
           name="selling_price_pieces"
@@ -410,6 +435,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                   placeholder="e.g. 200"
                   {...field}
                   className="bg-[#F3F4F6] h-12"
+                  min="0"
                 />
               </FormControl>
               <FormMessage />
@@ -418,7 +444,6 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
         />
 
         <div className="flex flex-col lg:flex-row items-center gap-4">
-          {/* Batch */}
           <FormField
             control={form.control}
             name="batch"
@@ -439,7 +464,6 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
             )}
           />
 
-          {/* Supplier */}
           <FormField
             control={form.control}
             name="supplier"
@@ -462,7 +486,6 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Expiry Date */}
           <FormField
             control={form.control}
             name="exp_date"
@@ -482,7 +505,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
               </FormItem>
             )}
           />
-          {/* Low Stock Alert */}
+
           <FormField
             control={form.control}
             name="stock_alert_no"
@@ -500,6 +523,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                     placeholder="e.g. 5"
                     {...field}
                     className="bg-[#F3F4F6] h-12"
+                    min="0"
                   />
                 </FormControl>
                 <FormMessage />
@@ -508,25 +532,23 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
           />
         </div>
 
-        {/* SKU - Auto-generated */}
         <FormField
           control={form.control}
           name="sku"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-[#2F2F2F] text-[16px] font-medium">
-                SKU (Auto-generated)
+                SKU
               </FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Will be auto-generated when you select a product"
+                  placeholder="Auto-generated or edit if needed"
                   {...field}
                   className="bg-[#F3F4F6] h-12"
-                  readOnly
                 />
               </FormControl>
               <p className="text-sm text-gray-500">
-                SKU is automatically generated from the product name
+                Automatically filled from product name — you can edit if required
               </p>
               <FormMessage />
             </FormItem>

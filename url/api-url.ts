@@ -72,7 +72,7 @@ const CREATE_STORE = "inventory/stores";
 const CREATE_STOCK = "inventory/stocks";
 const GET_PRODUCTS = "inventory/products?page=1&limit=50&all=false&search=";
 const CREATE_INVOICE = "inventory/invoices";
- const UPDATE_INVOICE = (id: string) => `inventory/invoices/${id}`; 
+const EDIT_INVOICE = (invoiceId: string) => `inventory/invoices/${invoiceId}`;
 const CREATE_CUSTOMER = "inventory/customers";
 const CREATE_CART = "inventory/carts";
 const CHECKOUT_CART = "inventory/carts/checkout";
@@ -172,7 +172,7 @@ export {
   GET_SALES,
   HAND_OVER_ITEM,
   SUPPLIER_SALES,
-  UPDATE_INVOICE,
+ EDIT_INVOICE,
 
   // v1 endpoint
   GET_PROFILE,

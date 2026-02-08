@@ -6,8 +6,7 @@ import {
   Loader2,
   Search,
   MoveRight,
-  CarTaxiFront,
-  ShoppingCart,
+ 
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";

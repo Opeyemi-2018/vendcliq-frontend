@@ -214,14 +214,14 @@ function PayInvoiceContent() {
   const handleSuccessClose = () => {
     cleanupPreview();
     setShowSuccessModal(false);
-    router.push("/dashboards/inventory/sell");
+    router.push("/dashboards/inventory/overview");
   };
 
   const handleTransferSent = () => {
     cleanupPreview();
     setShowTransferModal(false);
     toast.success("Thank you! We'll confirm your payment shortly.");
-    router.push("/dashboards/inventory/sell");
+    router.push("/dashboards/inventory/overview");
   };
 
   const handleTransferNotSent = () => {

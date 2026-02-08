@@ -20,7 +20,6 @@ import {
   ResendEmailOtpResponse,
   ChangePasswordPayload,
   ApiResponse,
- 
   UpdatePinPayload,
   GetTenuresResponse,
   RepaymentPatternResponse,
@@ -142,12 +141,23 @@ import {
   HAND_OVER_ITEM,
   GET_SALE_BY_ID,
   SUPPLIER_SALES,
-  UPDATE_INVOICE,
+  EDIT_INVOICE,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
-import { CreateStoreFormData, CreateStoreResponse, StoreSettingsPayload, StoreSettingsResponse, UpdateStorePayload, UpdateStoreResponse } from "@/types/store";
-import { CreateStockResponse, ProductsResponse, StockMovementsResponse } from "@/types/stock";
+import {
+  CreateStoreFormData,
+  CreateStoreResponse,
+  StoreSettingsPayload,
+  StoreSettingsResponse,
+  UpdateStorePayload,
+  UpdateStoreResponse,
+} from "@/types/store";
+import {
+  CreateStockResponse,
+  ProductsResponse,
+  StockMovementsResponse,
+} from "@/types/stock";
 import { TransactionHistoryResponse } from "@/types/transactions";
 import {
   CreateBeneficiaryPayload,
@@ -170,6 +180,7 @@ import {
 import {
   CreatePurchaseInvoicePayload,
   CreateInvoiceResponse,
+  UpdateInvoicePayload,
 } from "@/types/invoice";
 import {
   CreateCustomerPayload,
@@ -201,10 +212,19 @@ import {
   SubscriptionPaymentResponse,
 } from "@/types/plans";
 import { GetSuppliersResponse, Supplier } from "@/types/supplier";
-import { CreatePurchasePayload, CreatePurchaseResponse,  InvoiceDetailsResponse,  PurchasedInvoicesResponse, TrackingStatusResponse } from "@/types/purchase";
+import {
+  CreatePurchasePayload,
+  CreatePurchaseResponse,
+  InvoiceDetailsResponse,
+  PurchasedInvoicesResponse,
+  TrackingStatusResponse,
+} from "@/types/purchase";
 import { UserStocksResponse } from "@/types/allMyStocks";
 import { BusinessReportResponse } from "@/types/businessReport";
-import { PurchaseRequestDetailResponse, PurchaseRequestListResponse } from "@/types/purchaseRequest";
+import {
+  PurchaseRequestDetailResponse,
+  PurchaseRequestListResponse,
+} from "@/types/purchaseRequest";
 import { SaleDetailResponse, SupplierSalesResponse } from "@/types/sales";
 
 interface UserProfile {
@@ -509,9 +529,10 @@ export const handleCreateBeneficiary = async (
   );
 };
 
-export const handleGetBeneficiaries = async (): Promise<GetBeneficiariesResponse> => {
-  return await fetcher<GetBeneficiariesResponse>(GET_BENEFICIARIES);
-};
+export const handleGetBeneficiaries =
+  async (): Promise<GetBeneficiariesResponse> => {
+    return await fetcher<GetBeneficiariesResponse>(GET_BENEFICIARIES);
+  };
 
 export const handleBuyAirtime = async (
   payload: BuyAirtimePayload,
@@ -556,7 +577,6 @@ export const handleChangePassword = async (
   );
 };
 
-
 export const handleRequestPinToken = async (): Promise<ApiResponse> => {
   return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
 };
@@ -574,8 +594,6 @@ export const handleListBanks = async (): Promise<ListBanksResponse> => {
   return await fetcher<ListBanksResponse>(LIST_BANKS);
 };
 
-
-
 export const handleVerifyBankAccount = async (
   payload: VerifyBankAccountPayload,
 ): Promise<VerifyBankAccountResponse> => {
@@ -584,8 +602,6 @@ export const handleVerifyBankAccount = async (
     payload,
   );
 };
-
-
 
 // export const handleRequestPinToken = async (): Promise<ApiResponse> => {
 //   return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
@@ -609,10 +625,6 @@ export const handleSendOtpForForgetPassword = async (
   >(SEND_OTP_FOR_FORGET_PASSWORD, payload);
 };
 
-
-
-
-
 export const handleApiError = (
   error: unknown,
   setError: (msg: string) => void,
@@ -623,7 +635,6 @@ export const handleApiError = (
     setError("An unexpected error occurred");
   }
 };
-
 
 // inventory api call
 
@@ -666,15 +677,13 @@ export const handleCreateInvoice = async (
 
 export const handleUpdateInvoice = async (
   invoiceId: string,
-  payload: CreatePurchaseInvoicePayload,  
-): Promise<CreateInvoiceResponse> => {     
-  const url = UPDATE_INVOICE(invoiceId);
-  return await putter<CreateInvoiceResponse, CreatePurchaseInvoicePayload>(
-    url,
+  payload: UpdateInvoicePayload, 
+): Promise<CreateInvoiceResponse> => {
+  return await putter<CreateInvoiceResponse, UpdateInvoicePayload>(
+    EDIT_INVOICE(invoiceId),
     payload,
   );
 };
-
 export const handleCreateCustomer = async (
   payload: CreateCustomerPayload,
 ): Promise<CreateCustomerResponse> => {
@@ -706,8 +715,6 @@ export const handlePayInvoice = async (
     payload,
   );
 };
-
-
 
 export const handleCreateExpense = async (
   payload: CreateExpensePayload,
@@ -766,36 +773,33 @@ export const handleGetSuppliers = async (): Promise<Supplier> => {
   return await fetcher<any>(GET_SUPPLIERS);
 };
 
-export const handleGetPurchasedInvoices = async (): Promise<PurchasedInvoicesResponse> => {
-  return await fetcher<PurchasedInvoicesResponse>(GET_PURCHASED_INVOICES);
-};
+export const handleGetPurchasedInvoices =
+  async (): Promise<PurchasedInvoicesResponse> => {
+    return await fetcher<PurchasedInvoicesResponse>(GET_PURCHASED_INVOICES);
+  };
 export const handleCreatePurchaseWithFile = async (
-  payload: CreatePurchasePayload
+  payload: CreatePurchasePayload,
 ): Promise<CreatePurchaseResponse> => {
-  return await poster<CreatePurchaseResponse>(
-    CREATE_PURCHASE,
-    payload
-  );
+  return await poster<CreatePurchaseResponse>(CREATE_PURCHASE, payload);
 };
 
 export const handleGetUserStocks = async (
   page: number = 1,
   limit: number = 10,
 ): Promise<UserStocksResponse> => {
-  return await fetcher<UserStocksResponse>(`${USER_STOCKS}?page=${page}&limit=${limit}`);
+  return await fetcher<UserStocksResponse>(
+    `${USER_STOCKS}?page=${page}&limit=${limit}`,
+  );
 };
 
-
 export const handleGetPurchasedInvoiceById = async (
-  invoiceId: string
+  invoiceId: string,
 ): Promise<InvoiceDetailsResponse> => {
   const url = GET_PURCHASED_INVOICE_BY_ID(invoiceId);
   return await fetcher<InvoiceDetailsResponse>(url);
 };
 
-export const handleGetItemTrackingStatus = async (
-  itemId: string
-) => {
+export const handleGetItemTrackingStatus = async (itemId: string) => {
   const url = GET_ITEM_TRACKING_STATUS(itemId);
   return await fetcher<TrackingStatusResponse>(url);
 };
@@ -805,7 +809,10 @@ export const handleUpdateStoreSettings = async (
   payload: StoreSettingsPayload,
 ): Promise<StoreSettingsResponse> => {
   const url = UPDATE_STORE_SETTINGS(storeId);
-  return await putter<StoreSettingsResponse, StoreSettingsPayload>(url, payload);
+  return await putter<StoreSettingsResponse, StoreSettingsPayload>(
+    url,
+    payload,
+  );
 };
 
 export const handleUpdateStore = async (
@@ -816,29 +823,30 @@ export const handleUpdateStore = async (
   return await putter<UpdateStoreResponse, UpdateStorePayload>(url, payload);
 };
 
-export const handleGetMySubscription = async (): Promise<GetSubscriptionResponse> => {
-  return await fetcher<GetSubscriptionResponse>(GET_SUBSCRIPTION_ME);
-};
+export const handleGetMySubscription =
+  async (): Promise<GetSubscriptionResponse> => {
+    return await fetcher<GetSubscriptionResponse>(GET_SUBSCRIPTION_ME);
+  };
 
 export const handleGetBusinessReportComparison = async (
-  startDate?: string,   // YYYY-MM-DD
-  endDate?: string      // YYYY-MM-DD
+  startDate?: string, // YYYY-MM-DD
+  endDate?: string, // YYYY-MM-DD
 ): Promise<BusinessReportResponse> => {
   const params: Record<string, string> = {};
-  
+
   if (startDate) params.startDate = startDate;
-  if (endDate)   params.endDate   = endDate;
+  if (endDate) params.endDate = endDate;
 
   return await fetcher<BusinessReportResponse>(
     GET_BUSINESS_REPORT_COMPARISON,
-    params
+    params,
   );
 };
 
 export const handleGetStockMovements = async (
   stockId: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
 ): Promise<StockMovementsResponse> => {
   const params = { stockId, page, limit };
   return await fetcher<StockMovementsResponse>(STOCK_HISTORY, params);
@@ -846,8 +854,8 @@ export const handleGetStockMovements = async (
 
 export const getSales = async (
   page: number = 1,
-  limit: number = 10
-): Promise<{ data: any[]; pagination: any }> => {   
+  limit: number = 10,
+): Promise<{ data: any[]; pagination: any }> => {
   const params = { page: page.toString(), limit: limit.toString() };
   return await fetcher<any>(`${GET_SALES}?${new URLSearchParams(params)}`);
 };
@@ -858,19 +866,21 @@ export const getSaleById = async (id: string): Promise<SaleDetailResponse> => {
 
 export const getPurchaseRequest = async (
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
 ): Promise<PurchaseRequestListResponse> => {
   const params = { page: page.toString(), limit: limit.toString() };
   return await fetcher<PurchaseRequestListResponse>(
-    `${GET_PURCHASE_REQUEST}?${new URLSearchParams(params)}`
+    `${GET_PURCHASE_REQUEST}?${new URLSearchParams(params)}`,
   );
 };
 
 // Single purchase request detail by ID
 export const getPurchaseRequestById = async (
-  id: string
+  id: string,
 ): Promise<PurchaseRequestDetailResponse> => {
-  return await fetcher<PurchaseRequestDetailResponse>(GET_PURCHASE_REQUEST_BY_ID(id));
+  return await fetcher<PurchaseRequestDetailResponse>(
+    GET_PURCHASE_REQUEST_BY_ID(id),
+  );
 };
 
 export const verifyHandover = async (payload: {
@@ -883,7 +893,7 @@ export const verifyHandover = async (payload: {
 
 export const getTotalSales = async (
   startDate: string,
-  endDate: string
+  endDate: string,
 ): Promise<SupplierSalesResponse> => {
   const params = new URLSearchParams({
     startDate,
@@ -895,11 +905,9 @@ export const getTotalSales = async (
   const response = await fetcher<any>(url);
 
   // Return the full data object (or fallback)
-  return (
-    response.data ?? {
-      total_sales: 0,
-      stores: [],
-      medium: {},
-    }
-  ) as SupplierSalesResponse;
+  return (response.data ?? {
+    total_sales: 0,
+    stores: [],
+    medium: {},
+  }) as SupplierSalesResponse;
 };
