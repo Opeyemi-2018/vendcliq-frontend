@@ -26,7 +26,7 @@ import { Loader2 } from "lucide-react";
 import { useUser } from "@/context/userContext";
 import { toast } from "sonner";
 import { SupplierSalesMedium, SupplierSalesResponse } from "@/types/sales";
- // ← import your types (adjust path)
+// ← import your types (adjust path)
 
 type InvoiceItem = {
   id: string;
@@ -59,7 +59,9 @@ const Home = () => {
 
   // Sales data
   const [totalSales, setTotalSales] = useState<number>(0);
-  const [mediumBreakdown, setMediumBreakdown] = useState<SupplierSalesMedium>({});
+  const [mediumBreakdown, setMediumBreakdown] = useState<SupplierSalesMedium>(
+    {},
+  );
   const [salesLoading, setSalesLoading] = useState(true);
 
   // Medium modal
@@ -91,7 +93,10 @@ const Home = () => {
 
       setSalesLoading(true);
       try {
-        const salesData: SupplierSalesResponse = await getTotalSales(startDate, endDate);
+        const salesData: SupplierSalesResponse = await getTotalSales(
+          startDate,
+          endDate,
+        );
 
         setTotalSales(salesData.total_sales ?? 0);
         setMediumBreakdown(salesData.medium ?? {});
@@ -239,12 +244,14 @@ const Home = () => {
       </h1>
 
       {/* Total Sales Banner */}
-      <div className="bg-[url('/blue.svg')] bg-no-repeat bg-cover bg-center flex flex-col justify-between p-6 overflow-hidden h-[218px] mt-3 rounded-2xl">
-        <div className="flex flex-row justify-between">
+      <div className="bg-[url('/blue.svg')] bg-no-repeat bg-cover bg-center flex flex-col justify-between p-3 md:p-6 overflow-hidden h-[218px] mt-3 rounded-2xl">
+        <div className="flex flex-col md:flex-row md:justify-between">
           <div className="justify-between h-full flex flex-col">
             <div className="space-y-2 pt-4">
               <div className="flex items-center gap-3">
-                <p className="text-[14px] md:text-[16px] text-white">Total Sales</p>
+                <p className="text-[14px] md:text-[16px] text-white">
+                  Total Sales
+                </p>
                 <button
                   className="text-white"
                   type="button"
@@ -254,30 +261,32 @@ const Home = () => {
                 </button>
               </div>
 
-              {salesLoading ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-6 w-6 animate-spin text-white" />
-                  <h1 className="font-clash text-white">Loading...</h1>
-                </div>
-              ) : showBalance ? (
-                <h1 className="text-[28px] font-clash font-bold text-white">
-                  ****
-                </h1>
-              ) : (
-                <h1 className="text-[18px] md:text-[28px] font-clash font-bold text-white">
-                  ₦{totalSales.toLocaleString("en-NG")}
-                </h1>
-              )}
+              <div className="min-h-[40px] md:min-h-[52px] flex items-center">
+                {salesLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-6 w-6 animate-spin text-white" />
+                    <h1 className="font-clash text-white">Loading...</h1>
+                  </div>
+                ) : showBalance ? (
+                  <h1 className="text-[28px] font-clash font-bold text-white">
+                    ****
+                  </h1>
+                ) : (
+                  <h1 className="text-[18px] md:text-[28px] font-clash font-bold text-white">
+                    ₦{totalSales.toLocaleString("en-NG")}
+                  </h1>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="pt-6">
+          <div className="pt-3 md:pt-6">
             <Dialog open={dateModalOpen} onOpenChange={setDateModalOpen}>
               <Button
                 variant="outline"
                 className={cn(
                   "justify-start text-left font-normal h-10 px-2 md:px-3 text-[13px] md:text-[16px] bg-white/90 w-full sm:w-auto",
-                  !startDate && "text-muted-foreground"
+                  !startDate && "text-muted-foreground",
                 )}
                 onClick={() => setDateModalOpen(true)}
               >
@@ -332,18 +341,18 @@ const Home = () => {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 text-white text-[14px] md:text-[16px]">
+        <div className="flex items-center gap-3 md:justify-start justify-between text-white text-[14px] md:text-[16px]">
           <button
-            className="flex gap-2 items-center hover:underline"
-            onClick={() => { /* TODO: Store breakdown modal */ }}
+            onClick={() => router.push("/dashboards/inventory/sales-breakdown")}
+            className="flex text-[13px] md:text-[16px] whitespace-nowrap md:gap-2 items-center hover:underline"
           >
-            Breakdown by Store <ChevronRight />
+            Breakdown by Store <ChevronRight className="size-4 md:size-6" />
           </button>
           <button
-            className="flex gap-2 items-center hover:underline"
+            className="flex text-[13px] md:text-[16px] whitespace-nowrap md:gap-2 items-center hover:underline"
             onClick={() => setMediumModalOpen(true)}
           >
-            Breakdown by Medium <ChevronRight />
+            Breakdown by Medium <ChevronRight className="size-4 md:size-6" />
           </button>
         </div>
       </div>
@@ -355,9 +364,7 @@ const Home = () => {
             <DialogTitle className="md:text-[21px] font-bold  ">
               Sales Breakdown by Medium
             </DialogTitle>
-            <p className="text-sm text-gray-500">
-              {displayDateRange()}
-            </p>
+            <p className="text-sm text-gray-500">{displayDateRange()}</p>
           </DialogHeader>
 
           <div className="py-6">
@@ -391,7 +398,7 @@ const Home = () => {
               </p>
             )}
           </div>
-{/* 
+          {/* 
           <DialogFooter>
             <Button
               variant="outline"
@@ -409,7 +416,7 @@ const Home = () => {
         <h1 className="font-bold text-[16px] font-dm-sans text-[#2F2F2F]">
           Quick Actions
         </h1>
-        <div className="mt-4 flex flex-col sm:flex-row items-center gap-4">
+        <div className="mt-4 flex items-center gap-4">
           <Button
             onClick={() => router.push("/dashboards/inventory/sell")}
             className="bg-[#0A6DC0] hover:bg-[#09599a] w-full text-[16px] flex gap-2 px-6 py-5 md:py-6 text-white"

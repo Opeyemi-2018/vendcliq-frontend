@@ -218,12 +218,12 @@ const PurchasedInvoiceDetailPage = () => {
                   >
                     <td className="py-4  pl-4 font-medium">
                       <div className="flex items-center gap-1">
-                        <div className="w-10 h-10 relative rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                        <div className="w-10 h-10 relative p-1 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
                           <Image
                             src={item.product.image}
                             alt={item.product.name}
                             fill
-                            className="object-cover"
+                            className="object-contain"
                           />
                         </div>
                         <p className="truncate">

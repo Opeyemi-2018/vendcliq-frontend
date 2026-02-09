@@ -46,7 +46,7 @@ const DashboardContent = ({ children }: { children: ReactNode }) => {
         <Navbar />
         <div
           ref={contentRef}
-          className="px-4 lg:px-5 py-7 overflow-auto"
+          className="px-4 lg:px-5 py-7 overflow-auto mt-16"
           data-scroll-container
         >
           {children}

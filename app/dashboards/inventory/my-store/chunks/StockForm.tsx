@@ -29,14 +29,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import "react-phone-input-2/lib/style.css";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  createStockSchema,
-  CreateStockFormData,
-} from "@/types/stock";
-import { Info } from "lucide-react";
+import { createStockSchema, CreateStockFormData } from "@/types/stock";
+import { Check, ChevronDown, Info } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
@@ -56,6 +67,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
   const [tempEmptiesQty, setTempEmptiesQty] = useState("");
   const [tempEmptiesPrice, setTempEmptiesPrice] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [open, setOpen] = useState(false);
 
   const form = useForm<CreateStockFormData>({
     resolver: zodResolver(createStockSchema),
@@ -83,7 +95,10 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
     if (product) {
       // Better SKU: use full name or a meaningful part
       // Adjust this logic based on what your server actually expects
-      const generatedSku = product.name.toUpperCase().replace(/\s+/g, " ").trim();
+      const generatedSku = product.name
+        .toUpperCase()
+        .replace(/\s+/g, " ")
+        .trim();
       form.setValue("sku", generatedSku);
     } else {
       form.setValue("sku", "");
@@ -175,65 +190,157 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
         <FormField
           control={form.control}
           name="product_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[#2F2F2F] font-dm-sans text-[16px] font-medium">
-                Select Product
-              </FormLabel>
-              <Select
-                onValueChange={handleProductChange}
-                defaultValue={field.value}
-                disabled={loadingProducts}
-              >
-                <FormControl>
-                  <SelectTrigger className="bg-[#F3F4F6] h-12">
-                    <SelectValue
-                      placeholder={
-                        loadingProducts ? "Loading products..." : "Select a product"
-                      }
-                    />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent className="max-h-[300px]">
-                  {products.length === 0 ? (
-                    <SelectItem value="no-products" disabled>
-                      {loadingProducts ? "Loading..." : "No products available"}
-                    </SelectItem>
-                  ) : (
-                    products.map((product) => (
-                      <SelectItem key={product.id} value={product.id} className="py-3">
-                        <div className="flex items-center gap-3">
-                          {product.image && (
-                            <div className="relative w-10 h-10 flex-shrink-0">
+          render={({ field }) => {
+            const selectedProduct = products.find((p) => p.id === field.value);
+
+            return (
+              <FormItem className="flex flex-col">
+                <FormLabel className="text-[#2F2F2F] font-dm-sans text-[16px] font-medium">
+                  Select Product
+                </FormLabel>
+
+                <Popover open={open} onOpenChange={setOpen} modal={true}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={open}
+                      className={cn(
+                        "w-full justify-between h-12 bg-[#F3F4F6] border border-input hover:bg-accent hover:text-accent-foreground",
+                        !field.value && "text-muted-foreground",
+                      )}
+                      disabled={loadingProducts || products.length === 0}
+                    >
+                      {selectedProduct ? (
+                        <div className="flex items-center gap-3 truncate max-w-[calc(100%-2rem)]">
+                          {selectedProduct.image && (
+                            <div className="w-8 h-8 rounded bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
                               <Image
-                                src={product.image}
-                                alt={product.name}
-                                fill
-                                className="object-cover rounded"
-                                sizes="40px"
+                                src={selectedProduct.image}
+                                alt={selectedProduct.name}
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-contain"
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = "none";
+                                  (e.target as HTMLImageElement).style.display =
+                                    "none";
                                 }}
                               />
                             </div>
                           )}
-                          <div className="flex flex-col">
-                            <span className="font-medium text-[#2F2F2F]">
-                              {product.name}
+                          <div className="flex flex-col items-start truncate">
+                            <span className="font-medium">
+                              {selectedProduct.name}
                             </span>
-                            <span className="text-sm text-[#6B7280]">
-                              {product.productType} • {product.sizeCl}cl • {product.containerType}
+                            <span className="text-xs text-gray-500 truncate">
+                              {selectedProduct.productType} •{" "}
+                              {selectedProduct.sizeCl}cl •{" "}
+                              {selectedProduct.containerType}
                             </span>
                           </div>
                         </div>
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
+                      ) : loadingProducts ? (
+                        <span className="text-gray-400">
+                          Loading products...
+                        </span>
+                      ) : products.length === 0 ? (
+                        <span className="text-gray-400">
+                          No products available
+                        </span>
+                      ) : (
+                        "Select product..."
+                      )}
+
+                      <ChevronDown
+                        className={cn(
+                          "ml-2 h-4 w-4 shrink-0 opacity-50 transition-transform",
+                          open && "rotate-180",
+                        )}
+                      />
+                    </Button>
+                  </PopoverTrigger>
+
+                  <PopoverContent
+                    className="w-full p-0 max-h-[320px]"
+                    align="start"
+                  >
+                    <Command shouldFilter={true}>
+                      <CommandInput
+                        placeholder="Search by name, type, size..."
+                        className="h-9"
+                      />
+                      <CommandList>
+                        <CommandEmpty>
+                          {loadingProducts ? (
+                            <div className="flex justify-center py-6">
+                              <ClipLoader size={24} color="#0A6DC0" />
+                            </div>
+                          ) : (
+                            "No product found."
+                          )}
+                        </CommandEmpty>
+
+                        <CommandGroup>
+                          {products.map((product) => (
+                            <CommandItem
+                              key={product.id}
+                              value={product.name.toLowerCase()} // helps with filtering
+                              onSelect={() => {
+                                handleProductChange(product.id);
+                                setOpen(false);
+                              }}
+                              className="cursor-pointer py-3 px-4 hover:bg-gray-50"
+                            >
+                              <div className="flex items-center justify-between w-full gap-4">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  {product.image ? (
+                                    <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                                      <Image
+                                        src={product.image}
+                                        alt={product.name}
+                                        width={40}
+                                        height={40}
+                                        className="w-full h-full object-contain"
+                                        onError={(e) => {
+                                          (
+                                            e.target as HTMLImageElement
+                                          ).style.display = "none";
+                                        }}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 text-xs border border-gray-200">
+                                      No img
+                                    </div>
+                                  )}
+
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="font-medium text-sm">
+                                      {product.name}
+                                    </span>
+                                    <span className="text-xs text-gray-500 truncate">
+                                      {product.productType} • {product.sizeCl}cl
+                                      • {product.containerType}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {field.value === product.id && (
+                                  <Check className="h-4 w-4 text-[#0A6DC0]" />
+                                )}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
 
         {/* Product Type */}
@@ -287,7 +394,10 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                   Quantity
                 </FormLabel>
 
-                <Dialog open={isEmptiesModalOpen} onOpenChange={setIsEmptiesModalOpen}>
+                <Dialog
+                  open={isEmptiesModalOpen}
+                  onOpenChange={setIsEmptiesModalOpen}
+                >
                   <DialogTrigger asChild>
                     <button
                       type="button"
@@ -337,7 +447,10 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                       >
                         Cancel
                       </Button>
-                      <Button onClick={handleSaveEmpties} className="bg-[#0A6DC0] hover:bg-[#09599a]">
+                      <Button
+                        onClick={handleSaveEmpties}
+                        className="bg-[#0A6DC0] hover:bg-[#09599a]"
+                      >
                         Save
                       </Button>
                     </DialogFooter>
@@ -361,11 +474,14 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
 
         {/* Show added empties summary */}
         {form.watch("empties_qty") && Number(form.watch("empties_qty")) > 0 && (
-          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-            <p className="text-[#2F2F2F] font-medium">
-              <strong>Empties Added:</strong> {form.watch("empties_qty")} units @ ₦
-              {form.watch("empties_price") || "0"} each
-            </p>
+          <div className="bg-blue-50 border border-blue-200 p-2 rounded-lg">
+            <div className="text-[#2F2F2F] font-medium">
+              <span className="text-[12px]">Empties Added:</span>{" "}
+              <span className="text-[12px] font-bold">
+                {form.watch("empties_qty")} units @ ₦
+                {form.watch("empties_price") || "0"} each
+              </span>
+            </div>
           </div>
         )}
 
@@ -403,7 +519,9 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
             <FormItem>
               <FormLabel className="text-[#2F2F2F] text-[16px] font-medium">
                 Selling Price (
-                {form.watch("type") === "packs" ? "Packs/Crates" : "Pieces/Bottles"}
+                {form.watch("type") === "packs"
+                  ? "Packs/Crates"
+                  : "Pieces/Bottles"}
                 )
               </FormLabel>
               <FormControl>
@@ -495,11 +613,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                   Expiry Date
                 </FormLabel>
                 <FormControl>
-                  <Input
-                    type="date"
-                    {...field}
-                    className="bg-[#F3F4F6] h-12"
-                  />
+                  <Input type="date" {...field} className="bg-[#F3F4F6] h-12" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -542,13 +656,13 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
               </FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Auto-generated or edit if needed"
+                  placeholder="Auto-generated from the selected product"
                   {...field}
-                  className="bg-[#F3F4F6] h-12"
+                  className="bg-[#F3F4F6] h-12 placeholder:text-[12px]"
                 />
               </FormControl>
-              <p className="text-sm text-gray-500">
-                Automatically filled from product name — you can edit if required
+              <p className="text-[12px] text-gray-500">
+                Automatically filled from product name
               </p>
               <FormMessage />
             </FormItem>
@@ -562,7 +676,8 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
         >
           {isSubmitting ? (
             <>
-              Adding Stock... <ClipLoader size={20} color="white" className="ml-2" />
+              Adding Stock...{" "}
+              <ClipLoader size={20} color="white" className="ml-2" />
             </>
           ) : (
             "Add Stock"

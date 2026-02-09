@@ -1,6 +1,6 @@
 import { usePathname } from "next/navigation";
 import {
-  BriefcaseBusiness,
+  
   BookOpen,
   Home,
   RectangleEllipsis,
@@ -93,8 +93,10 @@ const items = [
       { title: "Customer List", url: "/dashboards/customer" },
       { title: "Expenses", url: "/dashboards/expenses" },
       { title: "Profile Settings", url: "/dashboards/profile-settings" },
+      { title: "Referral",  url: "/dashboards/referral" },
     ],
   },
+
 ];
 
 export function AppSidebar() {

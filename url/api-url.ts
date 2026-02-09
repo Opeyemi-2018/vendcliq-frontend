@@ -21,6 +21,7 @@ const PIN_VALIDATE = "/client/v2/wallets/validate-pin";
 const BUY_AIRTIME = "/client/v2/payments/airtime";
 const BUY_DATA = "/client/v2/payments/data";
 const CREATE_WALLET = "/client/v2/wallets/virtual-accounts/create";
+const GET_WALLET = "/client/v2/wallets";
 const ADD_SHOP_ATTENDANT = "/client/v2/attendants";
 const CREATE_PIN = "/client/v2/auth/pin";
 const REQUEST_PIN_TOKEN = "/client/v2/auth/request-pin-token";
@@ -135,6 +136,7 @@ export {
   BUY_AIRTIME,
   BUY_DATA,
   CREATE_WALLET,
+  GET_WALLET,
   ADD_SHOP_ATTENDANT,
   CREATE_INVOICE,
   CREATE_CUSTOMER,

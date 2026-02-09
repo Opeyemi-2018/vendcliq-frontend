@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -63,7 +64,12 @@ const SignIN = () => {
             userId: userData.userId,
             phone: userData.phone,
             pin: userData.pin ?? false,
-            createdAt: userData.createdAt, // ← ADD THIS LINE
+            createdAt: userData.createdAt,
+            referral: (userData as any).referral ? {
+              code: (userData as any).referral.code,
+              referredBy: (userData as any).referral.referredBy,
+              referralCount: (userData as any).referral.referralCount,
+            } : undefined,
           };
 
           const formattedWalletData = walletData

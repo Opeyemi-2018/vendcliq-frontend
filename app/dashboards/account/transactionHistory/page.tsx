@@ -14,24 +14,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { handleGetTransactions } from "@/lib/utils/api/apiHelper";
-import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
 import { useWalletWebSocket } from "@/hooks/useWalletWebSocket";
+import { cn } from "@/lib/utils";
 
 const TransactionSkeleton = () => (
   <tr className="animate-pulse">
     <td className="p-4">
       <div className="h-4 bg-gray-200 rounded w-20"></div>
     </td>
-    <td className="p-4 hidden md:table-cell">
+    <td className="p-4">
       <div className="h-4 bg-gray-200 rounded w-32"></div>
     </td>
-    <td className="p-4 hidden md:table-cell">
+    <td className="p-4">
       <div className="h-4 bg-gray-200 rounded w-24"></div>
     </td>
-    <td className="p-4 hidden md:table-cell">
+    <td className="p-4">
       <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
     </td>
     <td className="p-4">
@@ -47,7 +47,7 @@ const Table = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(
-    null,
+    null
   );
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -73,7 +73,7 @@ const Table = () => {
 
   // Filter & Search states
   const [typeFilter, setTypeFilter] = useState<"ALL" | "CREDIT" | "DEBIT">(
-    "ALL",
+    "ALL"
   );
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -81,13 +81,9 @@ const Table = () => {
   useWalletWebSocket({
     autoConnect: true,
     onTransactionReceived: (newTransaction) => {
-      // Add new transaction to the list
       setAllTransactions((prev) => {
-        // Check if transaction already exists (avoid duplicates)
         const exists = prev.some((tx) => tx.id === newTransaction.id);
         if (exists) return prev;
-        
-        // Add new transaction to the top of the list
         return [newTransaction, ...prev];
       });
     },
@@ -143,7 +139,7 @@ const Table = () => {
 
     try {
       const buttonsContainer = receiptRef.current.querySelector(
-        ".receipt-buttons",
+        ".receipt-buttons"
       ) as HTMLElement;
       if (buttonsContainer) {
         buttonsContainer.style.display = "none";
@@ -185,7 +181,7 @@ const Table = () => {
 
     try {
       const buttonsContainer = receiptRef.current.querySelector(
-        ".receipt-buttons",
+        ".receipt-buttons"
       ) as HTMLElement;
       if (buttonsContainer) {
         buttonsContainer.style.display = "none";
@@ -208,7 +204,7 @@ const Table = () => {
         const file = new File(
           [blob],
           `receipt-${selectedTransaction?.transactionReference || Date.now()}.png`,
-          { type: "image/png" },
+          { type: "image/png" }
         );
 
         if (navigator.share && navigator.canShare({ files: [file] })) {
@@ -235,7 +231,7 @@ const Table = () => {
           document.body.removeChild(link);
           URL.revokeObjectURL(url);
           toast.info(
-            "Sharing not supported on this device. Receipt downloaded instead.",
+            "Sharing not supported on this device. Receipt downloaded instead."
           );
         }
       });
@@ -257,7 +253,7 @@ const Table = () => {
           ?.toLowerCase()
           .includes(searchQuery.toLowerCase()) ||
         tx.senderAccount?.Name?.toLowerCase().includes(
-          searchQuery.toLowerCase(),
+          searchQuery.toLowerCase()
         )
       : true;
 
@@ -277,7 +273,7 @@ const Table = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedTransactions = filteredTransactions.slice(
     startIndex,
-    startIndex + itemsPerPage,
+    startIndex + itemsPerPage
   );
 
   const handlePageChange = (page: number) => {
@@ -311,7 +307,7 @@ const Table = () => {
           onClick={() => handlePageChange(i)}
         >
           {i}
-        </Button>,
+        </Button>
       );
     }
 
@@ -323,23 +319,31 @@ const Table = () => {
     return value || fallback;
   };
 
+  // Helper to truncate long reference numbers
+  const formatReference = (ref: string) => {
+    if (!ref) return "";
+    if (ref.length <= 20) return ref;
+    return `${ref.substring(0, 10)}...${ref.substring(ref.length - 6)}`;
+  };
+
   return (
     <div>
       <div>
         <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
-          Transaction History{" "}
+          Transaction History
         </h1>
         <p className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans">
           A summary of all your transactions. Easily track and reconcile all
-          your financial activities.{" "}
+          your financial activities.
         </p>
       </div>
+
       <div className="mt-4 flex justify-between flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
         <Input
           placeholder="Search by beneficiary..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full  bg-transparent border-2 bg-[#F2F2F7] py-5 md:py-6"
+          className="w-full bg-transparent border-2 bg-[#F2F2F7] py-5 md:py-6"
         />
 
         <Select
@@ -359,33 +363,37 @@ const Table = () => {
         </Select>
       </div>
 
-      <Card className="md:p-5">
-        <h1 className="text-[#2F2F2F] font-dm-sans text-[16px] font-bold">
-          Transaction History
-        </h1>
-        <div className=" mt-3 lg:border border-[#E4E4E4] rounded-lg bg-white">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-[#E6E6E6]">
+      {/* Updated structure to match sales table */}
+      <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white mb-3 md:mb-5">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-[#2F2F2F] font-dm-sans text-[16px] font-bold">
+            Transaction History
+          </h1>
+        </div>
+
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto text-[#2F2F2F]">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="text-left md:py-3 pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                  <th className="px-6 py-3 text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[35%]">
                     Description
                   </th>
-                  <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                  <th className="px-6 py-3 text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[20%]">
                     Amount
                   </th>
-                  <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                  <th className="px-6 py-3 text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[20%]">
                     Date
                   </th>
-                  <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                  <th className="px-6 py-3 text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[15%]">
                     Type
                   </th>
-                  <th className="text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                  <th className="px-6 py-3 text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[10%]">
                     More
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E4E4E4]">
+              <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <>
                     <TransactionSkeleton />
@@ -446,7 +454,7 @@ const Table = () => {
 
                     const isCredit = transaction.transactionType === "CREDIT";
                     const amountValue = Math.abs(
-                      parseFloat(transaction.amount),
+                      parseFloat(transaction.amount)
                     );
                     const formattedAmount = isCredit
                       ? `+₦${amountValue.toLocaleString("en-NG")}`
@@ -465,34 +473,29 @@ const Table = () => {
                     return (
                       <tr
                         key={transaction.id}
-                        className="hover:bg-gray-50 cursor-pointer transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
+                        className="hover:bg-gray-50 cursor-pointer transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]"
+                        onClick={() => openReceipt(transaction)}
                       >
-                        <td
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openReceipt(transaction);
-                          }}
-                          className="md:py-4 pl-4"
-                        >
+                        <td className="px-6 py-4 w-[35%]">
                           <div className="flex items-center gap-3">
                             <Image
                               src={isCredit ? "/in.svg" : "/out.svg"}
                               width={32}
                               height={32}
                               alt="icon"
-                              className="w-8 h-8 hidden md:inline"
+                              className="w-8 h-8 hidden md:inline flex-shrink-0"
                             />
-                            <div>
-                              <p className="font-medium text-[#2F2F2F]">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-[#2F2F2F] truncate">
                                 {counterparty}
                               </p>
                               <p className="text-sm text-[#6F6F6F] mt-1 hidden md:inline">
-                                Ref: {transaction.transactionReference}
+                                Ref: {formatReference(transaction.transactionReference)}
                               </p>
                             </div>
                           </div>
                         </td>
-                        <td className="hidden md:table-cell py-4 font-dm-sans font-medium">
+                        <td className="px-6 py-4 font-dm-sans font-medium whitespace-nowrap w-[20%]">
                           <span
                             className={
                               isCredit ? "text-[#31A078]" : "text-[#EA4334]"
@@ -501,10 +504,10 @@ const Table = () => {
                             {formattedAmount}
                           </span>
                         </td>
-                        <td className="hidden md:table-cell py-4 text-[#2F2F2F]">
+                        <td className="px-6 py-4 text-[#2F2F2F] whitespace-nowrap w-[20%]">
                           {formattedDate} {formattedTime}
                         </td>
-                        <td className="hidden md:table-cell py-4">
+                        <td className="px-6 py-4 whitespace-nowrap w-[15%]">
                           <span
                             className={`inline-flex px-4 py-1 rounded-full text-[12px] font-dm-sans font-bold ${
                               isCredit
@@ -515,7 +518,7 @@ const Table = () => {
                             {isCredit ? "Credit" : "Debit"}
                           </span>
                         </td>
-                        <td className="py-4">
+                        <td className="px-6 py-4 whitespace-nowrap w-[10%]">
                           <Button variant="ghost" size="icon">
                             <MoveRight size={20} />
                           </Button>
@@ -529,12 +532,16 @@ const Table = () => {
           </div>
         </div>
 
+        {/* Pagination */}
         {!loading && !error && filteredTransactions.length > 0 && (
           <div className="flex flex-row justify-between items-center mt-6 gap-4">
             <button
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
-              className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24"
+              className={cn(
+                "flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24",
+                currentPage === 1 && "opacity-50 cursor-not-allowed"
+              )}
             >
               <MoveLeft /> Previous
             </button>
@@ -542,11 +549,15 @@ const Table = () => {
             <div className="hidden lg:flex items-center gap-2 flex-wrap justify-center">
               {renderPagination()}
             </div>
+
             <div className="flex items-center gap-10">
               <button
                 disabled={currentPage >= totalPages}
                 onClick={() => handlePageChange(currentPage + 1)}
-                className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24"
+                className={cn(
+                  "flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24",
+                  currentPage >= totalPages && "opacity-50 cursor-not-allowed"
+                )}
               >
                 Next <MoveRightIcon />
               </button>
@@ -555,162 +566,165 @@ const Table = () => {
                 Showing {startIndex + 1} -{" "}
                 {Math.min(
                   startIndex + itemsPerPage,
-                  filteredTransactions.length,
+                  filteredTransactions.length
                 )}{" "}
                 of {filteredTransactions.length}
               </div>
             </div>
           </div>
         )}
-      </Card>
+      </div>
 
-      {/* Receipt Modal with Real Transaction Data */}
+      {/* Receipt Modal */}
       <Dialog open={!!selectedTransaction} onOpenChange={closeReceipt}>
-        <DialogContent className="max-w-md md:max-w-lg py-4 md:py-6 bg-white text-[#474747] font-dm-sans md:rounded-lg overflow-hidden max-h-[100vh] md:max-h-[90vh]">
+        <DialogContent className="max-w-md md:max-w-lg py-4 md:py-6 bg-white text-[#474747] font-dm-sans md:rounded-lg overflow-hidden max-h-[100vh]">
           <div ref={receiptRef}>
-            <div className=" text-center">
-              <div className="flex justify-center ">
+            {/* Header Section */}
+            <div className="text-center mb-6">
+              <div className="flex justify-center mb-3">
                 <Image
                   src={"/v-b.svg"}
                   alt="logo"
                   width={20}
                   height={30}
-                  className="w-10 "
+                  className="w-10"
                 />
               </div>
-              <h2 className="text-[16px] font-medium text-[#2F2F2F] ">
+              <h2 className="text-[16px] font-medium text-[#2F2F2F]">
                 Payment Success!
               </h2>
-              <p className="t font-medium text-[13px]">
+              <p className="font-medium text-[13px]">
                 Your payment was successful
               </p>
             </div>
 
             {selectedTransaction && (
-              <div className="bg-[#F7F9FA] rounded-lg p-3 md:p-4">
+              <div className="bg-[#F7F9FA] rounded-lg p-3 md:p-4 mt-4">
                 <div className="space-y-2">
-                  <div className="flex justify-between ">
+                  <div className="flex justify-between">
                     <span className="text-[#4B4E52] text-[13px] font-regular">
                       Amount
                     </span>
                     <span className="font-medium text-[#2F2F2F]">
                       ₦
                       {Math.abs(
-                        parseFloat(selectedTransaction.amount),
+                        parseFloat(selectedTransaction.amount)
                       ).toLocaleString()}
                     </span>
                   </div>
 
-                  <div className="flex justify-between py-2 border-b">
+                  <div className="flex justify-between py-2 border-b items-center">
                     <span className="text-[#4B4E52] text-[13px] font-regular">
                       Payment Status
                     </span>
-                    <span className="inline-flex px-3 py-1 rounded-full text-[10px] font-medium bg-[#23A26D1F] text-[#23A26D]">
+                    <span className="inline-flex items-center justify-center px-3 rounded-full text-[10px] font-medium text-[#23A26D] min-h-[24px] leading-[24px]">
                       {getTransactionValue(
                         selectedTransaction.status,
-                        "Successful",
+                        "Successful"
                       )}
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-2 md:space-y-3">
-                  <div className="">
+                <div className="space-y-2 md:space-y-3 mt-3">
+                  <div>
                     <p className="text-[#4B4E52] text-[13px] font-regular">
                       Payment Description
                     </p>
-                    <p className="text-[13px] font-medium ">
+                    <p className="text-[13px] font-medium">
                       {getTransactionValue(
                         selectedTransaction.description ||
                           selectedTransaction.transactionReference ||
                           selectedTransaction.reference,
-                        "N/A",
+                        "N/A"
                       )}
                     </p>
                   </div>
 
-                  <div className="">
+                  <div>
                     <p className="text-[#4B4E52] text-[13px] font-regular">
                       Receiver&apos;s Name
                     </p>
-                    <p className="text-[13px] font-medium ">
+                    <p className="text-[13px] font-medium">
                       {getTransactionValue(
                         selectedTransaction.beneficiaryAccount?.name,
-                        selectedTransaction.senderAccount?.Name || "N/A",
+                        selectedTransaction.senderAccount?.Name || "N/A"
                       )}
                     </p>
                   </div>
 
-                  <div className="">
+                  <div>
                     <p className="text-[#4B4E52] text-[13px] font-regular">
                       Receiver&apos;s Account No
                     </p>
-                    <p className="text-[13px] font-medium ">
+                    <p className="text-[13px] font-medium">
                       {getTransactionValue(
                         selectedTransaction.beneficiaryAccount?.accountNumber,
                         selectedTransaction.senderAccount?.accountNumber ||
-                          "N/A",
+                          "N/A"
                       )}
                     </p>
                   </div>
 
-                  <div className="">
+                  <div>
                     <p className="text-[#4B4E52] text-[13px] font-regular">
                       Receiver&apos;s Bank
                     </p>
-                    <p className="text-[13px] font-medium ">
+                    <p className="text-[13px] font-medium">
                       {getTransactionValue(
                         selectedTransaction.beneficiaryAccount?.provider ||
                           selectedTransaction.beneficiaryAccount?.bankName,
                         selectedTransaction.senderAccount?.provider ||
                           selectedTransaction.senderAccount?.bankName ||
-                          "N/A",
+                          "N/A"
                       )}
                     </p>
                   </div>
 
-                  <div className="">
+                  <div>
                     <p className="text-[#4B4E52] text-[13px] font-regular">
                       Sender&apos;s Account
                     </p>
-                    <p className="text-[13px] font-medium ">
+                    <p className="text-[13px] font-medium">
                       {getTransactionValue(
                         selectedTransaction.senderAccount?.accountNumber,
                         selectedTransaction.beneficiaryAccount?.accountNumber ||
-                          "N/A",
+                          "N/A"
                       )}
                     </p>
                   </div>
 
-                  <div className="">
+                  <div>
                     <p className="text-[#4B4E52] text-[13px] font-regular">
                       Transaction Type
                     </p>
-                    <p className="text-[13px] font-medium ">
+                    <p className="text-[13px] font-medium">
                       {getTransactionValue(
                         selectedTransaction.transactionType,
-                        "N/A",
+                        "N/A"
                       )}
                     </p>
                   </div>
 
-                  <div className="">
+                  <div>
                     <p className="text-[#4B4E52] text-[13px] font-regular">
                       Session ID
                     </p>
-                    <p className="text-[13px] font-medium ">
+                    <p className="text-[13px] font-medium break-all">
                       {getTransactionValue(
                         selectedTransaction.sessionId ||
                           selectedTransaction.id ||
                           selectedTransaction.transactionReference,
-                        "N/A",
+                        "N/A"
                       )}
                     </p>
                   </div>
 
-                  <div className="">
-                    <p className="text-[13px] font-medium ">Date</p>
-                    <p className="text-[13px] font-medium ">
+                  <div>
+                    <p className="text-[#4B4E52] text-[13px] font-regular">
+                      Date
+                    </p>
+                    <p className="text-[13px] font-medium">
                       {formatReceiptDate(selectedTransaction.createdAt)}
                     </p>
                   </div>
@@ -719,10 +733,10 @@ const Table = () => {
             )}
           </div>
 
-          <div className="flex gap-4 receipt-buttons">
+          <div className="flex gap-4 receipt-buttons mt-4">
             <Button
               onClick={handleShareReceipt}
-              className="flex-1  bg-[#0A6DC0] hover:bg-[#085a9e] text-white"
+              className="flex-1 bg-[#0A6DC0] hover:bg-[#085a9e] text-white"
             >
               Share Receipt
             </Button>

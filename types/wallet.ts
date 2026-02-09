@@ -27,3 +27,20 @@ export interface CreateWalletResponse {
     walletId: number;
   };
 }
+
+
+export interface GetWalletResponse {
+  status: string;
+  msg: string;
+  data: {
+    walletId: number;
+    balance: string;
+    currency: string;
+    accountNumbers: {
+      WEMA?: string;
+      [key: string]: string | undefined;
+    };
+    accountName: string;
+    lastUpdated: string;
+  };
+}

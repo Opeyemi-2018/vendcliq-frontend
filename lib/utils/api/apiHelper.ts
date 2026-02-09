@@ -142,6 +142,7 @@ import {
   GET_SALE_BY_ID,
   SUPPLIER_SALES,
   EDIT_INVOICE,
+  GET_WALLET,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -170,7 +171,7 @@ import {
   VendCliqTransferPayload,
   VendCliqTransferResponse,
 } from "@/types/transfer";
-import { CreateWalletResponse } from "@/types/wallet";
+import { CreateWalletResponse, GetWalletResponse } from "@/types/wallet";
 import {
   AddShopAttendantPayload,
   AddShopAttendantResponse,
@@ -577,6 +578,10 @@ export const handleChangePassword = async (
   );
 };
 
+export const handleGetWallet = async (): Promise<GetWalletResponse> => {
+  return await fetcher<GetWalletResponse>(GET_WALLET);
+};
+
 export const handleRequestPinToken = async (): Promise<ApiResponse> => {
   return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
 };
@@ -677,7 +682,7 @@ export const handleCreateInvoice = async (
 
 export const handleUpdateInvoice = async (
   invoiceId: string,
-  payload: UpdateInvoicePayload, 
+  payload: UpdateInvoicePayload,
 ): Promise<CreateInvoiceResponse> => {
   return await putter<CreateInvoiceResponse, UpdateInvoicePayload>(
     EDIT_INVOICE(invoiceId),

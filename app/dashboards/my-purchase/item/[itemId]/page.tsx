@@ -7,11 +7,57 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { handleGetItemTrackingStatus } from "@/lib/utils/api/apiHelper";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Star, Truck } from "lucide-react";
-import { ClipLoader } from "react-spinners";
+import { ArrowLeft, SquareCheck, Star } from "lucide-react";
 import Image from "next/image";
 
+interface TrackingStep {
+  title: string;
+  description: string;
+  time: string;
+  status: "completed" | "pending";
+}
+
+const trackingSteps: TrackingStep[] = [
+  {
+    title: "Order Placed",
+    description: "Your order is confirmed.",
+    time: "12:18pm",
+    status: "completed", // Default status
+  },
+  {
+    title: "Driver Assigned",
+    description: "A driver is on the way.",
+    time: "",
+    status: "pending",
+  },
+  {
+    title: "Picked Up",
+    description: "Your item has been picked up by the driver.",
+    time: "",
+    status: "pending",
+  },
+  {
+    title: "On the Way",
+    description: "Your item is in transit.",
+    time: "",
+    status: "pending",
+  },
+  {
+    title: "Arrived",
+    description: "The driver has arrived at your location.",
+    time: "",
+    status: "pending",
+  },
+  {
+    title: "Delivered",
+    description: "Your item has been delivered.",
+    time: "",
+    status: "pending",
+  },
+];
+
 const ItemDetailPage = () => {
+  const [reportOpen, setReportOpen] = useState(false);
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -115,10 +161,6 @@ const ItemDetailPage = () => {
               </span>
             ))}
           </div>
-
-          {/* <p className="text-2xl font-bold font-mono tracking-widest">
-                        {driverOtp}
-                      </p> */}
         </div>
       )}
 
@@ -171,8 +213,9 @@ const ItemDetailPage = () => {
       </div>
 
       {delivery && (
-        <div>
-          {loadingTracking ? (
+        <div className="px-6 py-8">
+          {/* Comment out tracking fetch for now - will use when server provides tracking data */}
+          {/* {loadingTracking ? (
             <div className="flex justify-center py-8">
               <ClipLoader size={30} color="#0A6DC0" />
             </div>
@@ -183,7 +226,6 @@ const ItemDetailPage = () => {
             </div>
           ) : trackingData ? (
             <div className="space-y-4">
-              {/* ... existing tracking data display ... */}
             </div>
           ) : (
             <div className="text-center py-8">
@@ -195,9 +237,82 @@ const ItemDetailPage = () => {
                 No tracking data found for this item
               </p>
             </div>
-          )}
+          )} */}
+
+          <div className="relative">
+            {/* Vertical line - starts after first circle, ends before last circle */}
+            <div 
+              className="absolute left-5 bg-gray-200" 
+              style={{
+                width: '2px',
+                top: '40px', // Start after first check
+                bottom: '40px', // End before last check
+              }}
+            />
+
+            <div className="space-y-6">
+              {trackingSteps.map((step, index) => (
+                <div key={step.title} className="relative flex gap-4">
+                  {/* Circle + Check / Pending */}
+                  <div className="relative z-10 flex-shrink-0">
+                    {step.status === "completed" ? (
+                      <SquareCheck className="w-10 h-10 text-[#31A078]" />
+                    ) : (
+                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-500">
+                        <span className="text-sm font-medium">{index + 1}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 pt-1.5">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3
+                          className={`${
+                            step.status === "completed"
+                              ? "text-[#31A078] font-bold"
+                              : "text-gray-500 font-medium"
+                          }`}
+                        >
+                          {step.title}
+                        </h3>
+                        <p className={`mt-1 text-sm ${
+                          step.status === "completed"
+                            ? "text-gray-700 font-semibold"
+                            : "text-gray-500"
+                        }`}>
+                          {step.description}
+                        </p>
+                      </div>
+                      {step.time && (
+                        <span className="text-sm text-gray-500 font-medium whitespace-nowrap">
+                          {step.time}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
+
+      {/* Report Button Section */}
+      <div className="px-6 py-6 bg-gray-50 border-t border-gray-100">
+        <Button
+          onClick={() => setReportOpen(!reportOpen)}
+          className="w-full px-6 bg-[#0A6DC0] hover:bg-[#085a9e] py-5 md:py-6 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Report this delivery
+        </Button>
+
+        <p className="mt-3 text-center text-sm text-gray-500">
+          Available for 24 hours after delivery
+        </p>
+      </div>
+
     </div>
   );
 };

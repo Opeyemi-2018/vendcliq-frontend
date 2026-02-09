@@ -16,6 +16,11 @@ export interface UserData {
     verified: string | null;
   };
   pin?: boolean;
+  referral?: {
+    code: string;
+    referredBy: string | null;
+    referralCount: number;
+  };
 }
 
 export interface WalletData {
@@ -91,6 +96,8 @@ interface UserContextType {
     total: number;
     percentage: number;
   };
+  getReferralCode: () => string;
+  getReferralCount: () => number;
   clearUserData: () => void;
 }
 
@@ -282,6 +289,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return { completed, total, percentage };
   };
 
+  const getReferralCode = () => {
+    if (!user?.referral) return "";
+    return user.referral.code;
+  };
+
+  const getReferralCount = () => {
+    if (!user?.referral) return 0;
+    return user.referral.referralCount;
+  };
+
   const clearUserData = () => {
     setUserState(null);
     setWalletState(null);
@@ -318,6 +335,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         getUserFullName,
         getWalletBalance,
         getVerificationProgress,
+        getReferralCode,
+        getReferralCount,
         clearUserData,
       }}
     >

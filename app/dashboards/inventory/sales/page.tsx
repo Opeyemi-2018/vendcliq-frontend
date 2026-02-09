@@ -272,6 +272,7 @@ const SalesListPage = () => {
                   <th className="px-6 py-3 text-left font-medium">More</th>
                 </tr>
               </thead>
+              
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <tr>

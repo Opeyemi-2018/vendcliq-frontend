@@ -73,8 +73,8 @@ import {
   handleGetBeneficiaries,
 } from "@/lib/utils/api/apiHelper";
 import { generateTransactionKey } from "@/lib/utils/generateTransactionKey";
-import { useUser } from "@/context/userContext";
 import CreatePinPrompt from "@/components/SetPinModal";
+import { useWallet } from "@/hooks/useWalletInfo";
 
 export default function OtherBankTransfer() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -101,7 +101,7 @@ export default function OtherBankTransfer() {
   const [finalAccountName, setFinalAccountName] = useState<string>("");
   const [finalBankCode, setFinalBankCode] = useState<string>("");
 
-  const { wallet, refreshWallet } = useUser();
+  const { wallet, refreshWallet, getBalance, getAccountNumber } = useWallet();
   const fee = 10;
 
   const form = useForm<TransferFormData>({
@@ -144,9 +144,7 @@ export default function OtherBankTransfer() {
 
   useEffect(() => {
     async function loadBanks() {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
+      const token = localStorage.getItem("accessToken");
       if (!token) {
         toast.error("Please log in again");
         return;
@@ -363,7 +361,7 @@ export default function OtherBankTransfer() {
 
       const transactionKey = await generateTransactionKey();
 
-      const sourceAccountNumber = wallet?.accountNumbers?.WEMA;
+      const sourceAccountNumber = getAccountNumber("WEMA");
       if (!sourceAccountNumber) {
         toast.error("Source wallet account not found");
         setIsTransferring(false);
@@ -696,7 +694,7 @@ export default function OtherBankTransfer() {
                           </h1>
                         ) : (
                           <h1 className="font-clash text-white text-[20px] font-semibold">
-                            ₦ {wallet?.balance}
+                            ₦ {getBalance()}
                           </h1>
                         )}
                       </div>

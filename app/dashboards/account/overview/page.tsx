@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { Button } from "@/components/ui/button";
@@ -21,11 +22,18 @@ import { toast } from "sonner";
 import { handleCreateWallet } from "@/lib/utils/api/apiHelper";
 import { useStores } from "@/hooks/useStores";
 import { useWalletWebSocket } from "@/hooks/useWalletWebSocket";
-
+import { useWallet } from "@/hooks/useWalletInfo";
 
 const Home = () => {
-  const { user, isUserPending, wallet, isLoadingWallet } = useUser();
-    useWalletWebSocket({ autoConnect: true, });
+  const { user, isUserPending } = useUser();
+  const {
+    wallet,
+    isLoading: isLoadingWallet,
+    fetchWallet,
+    getBalance,
+    getAccountNumber,
+  } = useWallet();
+  useWalletWebSocket({ autoConnect: true });
 
   const [showBalance, setShowBallance] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -43,6 +51,11 @@ const Home = () => {
     }
   }, [isUserPending]);
 
+  // Fetch wallet on component mount
+  useEffect(() => {
+    fetchWallet();
+  }, [fetchWallet]);
+
   const handleCloseModal = () => {
     setShowWelcomeModal(false);
   };
@@ -57,7 +70,7 @@ const Home = () => {
     setShowWelcomeModal(false);
   };
 
-  const accountNumber = wallet?.accountNumbers?.WEMA;
+  const accountNumber = getAccountNumber("WEMA");
   const hasWalletAccount =
     wallet &&
     wallet.accountNumbers &&
@@ -81,19 +94,18 @@ const Home = () => {
 
       if (response.status === "success") {
         toast.success(response.msg || "Virtual account created successfully!");
-
-        window.location.reload();
+        // Refresh wallet data
+        await fetchWallet();
       } else {
         toast.error(response.msg || "Failed to create wallet");
-        setCreatingWallet(false);
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const errorMsg =
         error?.response?.data?.msg ||
         error?.message ||
         "Failed to create wallet. Please try again.";
       toast.error(errorMsg);
+    } finally {
       setCreatingWallet(false);
     }
   };
@@ -111,9 +123,7 @@ const Home = () => {
             {Object.keys(wallet?.accountNumbers || {})[0]}
           </p>
           <Separator orientation="vertical" className="h-4" />
-          <h1 className="flex-shrink-0">
-            {wallet?.accountNumbers?.WEMA || "N/A"}
-          </h1>
+          <h1 className="flex-shrink-0">{getAccountNumber("WEMA") || "N/A"}</h1>
           <Separator orientation="vertical" className="h-4" />
           <h1 className="flex-shrink-0">
             {wallet?.accountName
@@ -150,7 +160,7 @@ const Home = () => {
             Need quick cash flow to boost and grow your business? Get up to ₦10M
             today.
           </h1>
-          <Button className="w-[150px] sm:w-[188px] flex items-center bg-white font-medium hover:text-white hover:bg-[#0A2540] text-[16px] font-dm-sans text-[#2F2F2F]">
+          <Button className="w-[150px] pointer-events-none opacity-60 sm:w-[188px] flex items-center bg-white font-medium hover:text-white hover:bg-[#0A2540] text-[16px] font-dm-sans text-[#2F2F2F]">
             Request Loan <MoveRight />
           </Button>
         </div>
@@ -187,7 +197,7 @@ const Home = () => {
                 </div>
               ) : (
                 <h1 className="font-clash text-[#2F2F2F] text-[20px] lg:text-[25px] font-semibold">
-                  ₦ {wallet?.balance || "0.00"}
+                  ₦ {getBalance() || "0.00"}
                 </h1>
               )}
             </div>

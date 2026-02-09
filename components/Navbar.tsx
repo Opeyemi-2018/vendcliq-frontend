@@ -38,7 +38,20 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className="p-4 flex items-center justify-between sticky top-0 border-b-2 border-[#0000001A] z-10 bg-white ">
+    <nav
+      className="
+    fixed top-0
+    left-0 md:left-[16rem]
+    w-full md:w-[calc(100%-16rem)]
+    h-[72px]
+    p-4
+    flex items-center justify-between
+    border-b-2 border-[#0000001A]
+    z-40
+    bg-white
+  "
+    >
+      {" "}
       <SidebarTrigger style={{ background: "#0A2540", color: "white" }} />
       <div style={{ gap: "30px" }} className="flex items-center">
         <div
