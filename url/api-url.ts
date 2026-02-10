@@ -31,41 +31,41 @@ const CREATE_BENEFICIARY = "/client/v2/wallet/beneficiaries";
 const GET_BENEFICIARIES = "/client/v2/wallet/beneficiaries";
 
 // v1 endpoint
-const BUSINESS_INFORMATION_SETUP_STEP_ONE =
-  "/client/v1/auth/business-information";
-const BUSINESS_INFORMATION_SETUP_STEP_TWO =
-  "/client/v1/auth/business-information-step2";
-const IDENTITY_UPLOAD = "/client/v1/auth/upload-identity";
-const GET_PROFILE = "/";
-const DASHBOARD = "/";
-const CREATE_LOAN = "/client/v1/loans";
-const GET_LOAN = "/client/v1/loans";
-const GET_LOAN_DETAILS = (id: string) => `/client/v1/loans/${id}`;
-const LIST_BANKS = "/client/v1/bank-accounts/banks/all";
-const VERIFY_BANK_ACCOUNT =
-  "/client/v1/bank-accounts/banks/verify-bank-account";
-const RESEND_EMAIL_OTP = "/client/v1/auth/resend-otp";
+// const BUSINESS_INFORMATION_SETUP_STEP_ONE =
+//   "/client/v1/auth/business-information";
+// const BUSINESS_INFORMATION_SETUP_STEP_TWO =
+//   "/client/v1/auth/business-information-step2";
+// const IDENTITY_UPLOAD = "/client/v1/auth/upload-identity";
+// const GET_PROFILE = "/";
+// const DASHBOARD = "/";
+// const CREATE_LOAN = "/client/v1/loans";
+// const GET_LOAN = "/client/v1/loans";
+// const GET_LOAN_DETAILS = (id: string) => `/client/v1/loans/${id}`;
+// const LIST_BANKS = "/client/v1/bank-accounts/banks/all";
+// const VERIFY_BANK_ACCOUNT =
+//   "/client/v1/bank-accounts/banks/verify-bank-account";
+// const RESEND_EMAIL_OTP = "/client/v1/auth/resend-otp";
 // const CHANGE_PASSWORD = "/client/v1/auth/change-password";
 // const UPDATE_PIN = "/client/v1/auth/pin-update";
 // const REQUEST_PIN_TOKEN = "/client/v1/auth/request-pin-token";
-const GET_TENURES = "/client/v1/loans/list/tenures";
-const REPAYMENT_PATTERN = (tenure: string) =>
-  `/client/v1/loans/list/repayment-pattern?tenure=${tenure}`;
-const POST_REPAYMENT_PATTERN = "/client/v1/loans/repayment/pattern";
-const INVENTORY_LIST = "/v1/inventory/search";
-const GET_BANK_ACCOUNT = "/client/v1/bank-accounts";
-const TRANSACTION_HISTORYs = "/client/v1/transactions";
-const GET_ACCOUNT = "/client/v1/bank-accounts";
-const GET_ACCOUNT_BY_ID = (id: string) => `/client/v1/bank-accounts/${id}`;
-const GET_ACCOUNT_DETAILS_BY_ID = (id: string) =>
-  `/client/v1/bank-accounts/accounts/${id}`;
-const LOAN_STAT_DETAILS = "/client/v1/loans/dashboard";
-const OUTSIDE_TRANSFER = "/client/v1/transfer/outside";
-const LOCAL_TRANSFER = "/client/v1/transfer/local";
-const VERIFY_VERA_BANK_ACCOUNT = (accountNumber: string) =>
-  `/client/v1/bank-accounts/accounts/verify/${accountNumber}`;
-const PAY_LOAN = (id: string) =>
-  `/client/v1/loans/repayments/installment/${id}`;
+// const GET_TENURES = "/client/v1/loans/list/tenures";
+// const REPAYMENT_PATTERN = (tenure: string) =>
+//   `/client/v1/loans/list/repayment-pattern?tenure=${tenure}`;
+// const POST_REPAYMENT_PATTERN = "/client/v1/loans/repayment/pattern";
+// const INVENTORY_LIST = "/v1/inventory/search";
+// const GET_BANK_ACCOUNT = "/client/v1/bank-accounts";
+// const TRANSACTION_HISTORYs = "/client/v1/transactions";
+// const GET_ACCOUNT = "/client/v1/bank-accounts";
+// const GET_ACCOUNT_BY_ID = (id: string) => `/client/v1/bank-accounts/${id}`;
+// const GET_ACCOUNT_DETAILS_BY_ID = (id: string) =>
+//   `/client/v1/bank-accounts/accounts/${id}`;
+// const LOAN_STAT_DETAILS = "/client/v1/loans/dashboard";
+// const OUTSIDE_TRANSFER = "/client/v1/transfer/outside";
+// const LOCAL_TRANSFER = "/client/v1/transfer/local";
+// const VERIFY_VERA_BANK_ACCOUNT = (accountNumber: string) =>
+//   `/client/v1/bank-accounts/accounts/verify/${accountNumber}`;
+// const PAY_LOAN = (id: string) =>
+//   `/client/v1/loans/repayments/installment/${id}`;
 // EXPORT URLS
 
 // inventory endpoint
@@ -108,9 +108,9 @@ const GET_PURCHASE_REQUEST = "inventory/invoices/purchase/sales";
 const GET_PURCHASE_REQUEST_BY_ID = (id: string) => `inventory/invoices/${id}`;
 const GET_SALE_BY_ID = (id: string) => `inventory/invoices/${id}`;
 const HAND_OVER_ITEM = "inventory/items/verify-handover";
- const SUPPLIER_SALES = "inventory/dashboard/supplier-sales";
-  const GET_STORE_ITEMS_SALES = "inventory/dashboard/store-items";
-  const CREATE_OFFER = "inventory/offers";
+const SUPPLIER_SALES = "inventory/dashboard/supplier-sales";
+const GET_STORE_ITEMS_SALES = "inventory/dashboard/store-items";
+const CREATE_OFFER = "inventory/offers";
 
 export {
   // v2 endpoint
@@ -176,37 +176,37 @@ export {
   GET_SALES,
   HAND_OVER_ITEM,
   SUPPLIER_SALES,
- EDIT_INVOICE,
- GET_STORE_ITEMS_SALES,
- CREATE_OFFER,
+  EDIT_INVOICE,
+  GET_STORE_ITEMS_SALES,
+  CREATE_OFFER,
 
   // v1 endpoint
-  GET_PROFILE,
-  DASHBOARD,
-  BUSINESS_INFORMATION_SETUP_STEP_ONE,
-  BUSINESS_INFORMATION_SETUP_STEP_TWO,
-  IDENTITY_UPLOAD,
-  CREATE_LOAN,
-  LIST_BANKS,
-  VERIFY_BANK_ACCOUNT,
-  RESEND_EMAIL_OTP,
+  // GET_PROFILE,
+  // DASHBOARD,
+  // BUSINESS_INFORMATION_SETUP_STEP_ONE,
+  // BUSINESS_INFORMATION_SETUP_STEP_TWO,
+  // IDENTITY_UPLOAD,
+  // CREATE_LOAN,
+  // LIST_BANKS,
+  // VERIFY_BANK_ACCOUNT,
+  // RESEND_EMAIL_OTP,
   // CREATE_PIN,
   // UPDATE_PIN,
   // REQUEST_PIN_TOKEN,
-  GET_TENURES,
-  REPAYMENT_PATTERN,
-  POST_REPAYMENT_PATTERN,
-  GET_LOAN_DETAILS,
-  GET_LOAN,
-  INVENTORY_LIST,
-  GET_BANK_ACCOUNT,
-  TRANSACTION_HISTORYs,
-  GET_ACCOUNT,
-  GET_ACCOUNT_BY_ID,
-  GET_ACCOUNT_DETAILS_BY_ID,
-  LOAN_STAT_DETAILS,
-  OUTSIDE_TRANSFER,
-  LOCAL_TRANSFER,
-  VERIFY_VERA_BANK_ACCOUNT,
-  PAY_LOAN,
+  // GET_TENURES,
+  // REPAYMENT_PATTERN,
+  // POST_REPAYMENT_PATTERN,
+  // GET_LOAN_DETAILS,
+  // GET_LOAN,
+  // INVENTORY_LIST,
+  // GET_BANK_ACCOUNT,
+  // TRANSACTION_HISTORYs,
+  // GET_ACCOUNT,
+  // GET_ACCOUNT_BY_ID,
+  // GET_ACCOUNT_DETAILS_BY_ID,
+  // LOAN_STAT_DETAILS,
+  // OUTSIDE_TRANSFER,
+  // LOCAL_TRANSFER,
+  // VERIFY_VERA_BANK_ACCOUNT,
+  // PAY_LOAN,
 };

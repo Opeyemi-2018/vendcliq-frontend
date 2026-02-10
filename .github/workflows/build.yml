@@ -2,34 +2,43 @@ name: Build
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
 
-    - name: Build
-      run: npm run build
-      env:
-        VERA_API_BASE_URL: ${{ secrets.VERA_API_BASE_URL }}
-        PRODUCT_API_KEY: ${{ secrets.PRODUCT_API_KEY }}
-        CLIENT_ID: ${{ secrets.CLIENT_ID }}
-        CLIENT_VERSION: ${{ secrets.CLIENT_VERSION }}
-        CLIENT_ORIGIN: ${{ secrets.CLIENT_ORIGIN }}
-        APP_SECRET_KEY: ${{ secrets.APP_SECRET_KEY }}
-        AUTH_COOKIE_MAX_AGE: ${{ secrets.AUTH_COOKIE_MAX_AGE }}
-        RATE_LIMIT: ${{ secrets.RATE_LIMIT }}
-        RATE_LIMIT_WINDOW: ${{ secrets.RATE_LIMIT_WINDOW }} 
+      - name: Build
+        run: npm run build
+        env:
+          VERA_API_BASE_URL: ${{ secrets.VERA_API_BASE_URL }}
+          VERA_INVENTORY_API_BASE_URL: ${{ secrets.VERA_INVENTORY_API_BASE_URL }}
+          VENDCLIQ_LOGISTIC_API_BASE_URL: ${{ secrets.VENDCLIQ_LOGISTIC_API_BASE_URL }}
+
+          PRODUCT_API_KEY: ${{ secrets.PRODUCT_API_KEY }}
+          API_KEY: ${{ secrets.API_KEY }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_VERSION: ${{ secrets.CLIENT_VERSION }}
+          CLIENT_ORIGIN: ${{ secrets.CLIENT_ORIGIN }}
+
+          APP_SECRET_KEY: ${{ secrets.APP_SECRET_KEY }}
+          AUTH_COOKIE_NAME: ${{ secrets.AUTH_COOKIE_NAME }}
+          AUTH_COOKIE_MAX_AGE: ${{ secrets.AUTH_COOKIE_MAX_AGE }}
+
+          RATE_LIMIT: ${{ secrets.RATE_LIMIT }}
+          RATE_LIMIT_WINDOW: ${{ secrets.RATE_LIMIT_WINDOW }}

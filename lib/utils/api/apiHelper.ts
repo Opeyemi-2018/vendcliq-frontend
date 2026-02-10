@@ -78,33 +78,34 @@ import {
   CREATE_CUSTOMER,
   CREATE_CART,
   PIN_VALIDATE,
-  CREATE_LOAN,
+  // CREATE_LOAN,
   // CREATE_PIN,
   UPDATE_TRANSFER_PIN,
-  DASHBOARD,
-  GET_ACCOUNT,
-  GET_ACCOUNT_BY_ID,
-  GET_ACCOUNT_DETAILS_BY_ID,
-  GET_LOAN,
-  GET_LOAN_DETAILS,
-  GET_PROFILE,
-  GET_TENURES,
-  INVENTORY_LIST,
-  LIST_BANKS,
-  LOAN_STAT_DETAILS,
-  LOCAL_TRANSFER,
-  OUTSIDE_TRANSFER,
-  PAY_LOAN,
-  POST_REPAYMENT_PATTERN,
+  // DASHBOARD,
+  // GET_ACCOUNT,
+  // GET_ACCOUNT_BY_ID,
+  // GET_ACCOUNT_DETAILS_BY_ID,
+  // GET_LOAN,
+  // GET_LOAN_DETAILS,
+  // GET_PROFILE,
+  // GET_TENURES,
+  // INVENTORY_LIST,
+  // LIST_BANKS,
+  // LOAN_STAT_DETAILS,
+  // LOCAL_TRANSFER,
+  // OUTSIDE_TRANSFER,
+  // PAY_LOAN,
+  // POST_REPAYMENT_PATTERN,
+  // REQUEST_PIN_TOKEN,
+  // RESEND_EMAIL_OTP,
+  // VERIFY_BANK_ACCOUNT,
+  // VERIFY_VERA_BANK_ACCOUNT,
   REQUEST_PIN_TOKEN,
-  RESEND_EMAIL_OTP,
-  CHANGE_PASSWORD,
-  VERIFY_BANK_ACCOUNT,
   VERIFY_EMAIL,
   VERIFY_PHONE_NUMBER,
-  VERIFY_VERA_BANK_ACCOUNT,
   BUY_AIRTIME,
   BUY_DATA,
+  CHANGE_PASSWORD,
 
   // inventory endpoints
   GET_PRODUCTS,
@@ -588,27 +589,27 @@ export const handleRequestPinToken = async (): Promise<ApiResponse> => {
   return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
 };
 
-export const handleResendEmailOtp = async (
-  payload: ResendEmailOtpPayload,
-): Promise<ResendEmailOtpResponse> => {
-  return await poster<ResendEmailOtpResponse, ResendEmailOtpPayload>(
-    RESEND_EMAIL_OTP,
-    payload,
-  );
-};
+// export const handleResendEmailOtp = async (
+//   payload: ResendEmailOtpPayload,
+// ): Promise<ResendEmailOtpResponse> => {
+//   return await poster<ResendEmailOtpResponse, ResendEmailOtpPayload>(
+//     RESEND_EMAIL_OTP,
+//     payload,
+//   );
+// };
 
-export const handleListBanks = async (): Promise<ListBanksResponse> => {
-  return await fetcher<ListBanksResponse>(LIST_BANKS);
-};
+// export const handleListBanks = async (): Promise<ListBanksResponse> => {
+//   return await fetcher<ListBanksResponse>(LIST_BANKS);
+// };
 
-export const handleVerifyBankAccount = async (
-  payload: VerifyBankAccountPayload,
-): Promise<VerifyBankAccountResponse> => {
-  return await poster<VerifyBankAccountResponse, VerifyBankAccountPayload>(
-    VERIFY_BANK_ACCOUNT,
-    payload,
-  );
-};
+// export const handleVerifyBankAccount = async (
+//   payload: VerifyBankAccountPayload,
+// ): Promise<VerifyBankAccountResponse> => {
+//   return await poster<VerifyBankAccountResponse, VerifyBankAccountPayload>(
+//     VERIFY_BANK_ACCOUNT,
+//     payload,
+//   );
+// };
 
 // export const handleRequestPinToken = async (): Promise<ApiResponse> => {
 //   return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
@@ -919,8 +920,6 @@ export const getTotalSales = async (
   }) as SupplierSalesResponse;
 };
 
-
-
 export const getStoreStockSales = async (
   storeId: string,
   startDate: string,
@@ -936,7 +935,6 @@ export const getStoreStockSales = async (
 
   return await fetcher(url);
 };
-
 
 export const handleCreatePromo = async (payload: {
   stock_id: string;
