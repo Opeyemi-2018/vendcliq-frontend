@@ -8,10 +8,12 @@ interface UseProductsResult {
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  fetchAllProducts: (searchQuery: string) => Promise<Product[]>;
 }
 
 export function useProducts(): UseProductsResult {
   const [products, setProducts] = useState<Product[]>([]);
+  const [allProductsCache, setAllProductsCache] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +22,7 @@ export function useProducts(): UseProductsResult {
     setError(null);
 
     try {
-      const response: ProductsResponse = await handleGetProducts();
+      const response: ProductsResponse = await handleGetProducts(false);
 
       if (response.statusCode === 200 && response.data) {
         setProducts(response.data);
@@ -37,6 +39,31 @@ export function useProducts(): UseProductsResult {
     }
   };
 
+  const fetchAllProducts = async (searchQuery: string): Promise<Product[]> => {
+    // If no search query, return the initial 50
+    if (!searchQuery || searchQuery.trim() === "") {
+      return products;
+    }
+
+    // If we already have all products cached, use them
+    if (allProductsCache.length > 0) {
+      return allProductsCache;
+    }
+
+    // Fetch all products
+    try {
+      const response: ProductsResponse = await handleGetProducts(true);
+      if (response.statusCode === 200 && response.data) {
+        setAllProductsCache(response.data);
+        return response.data;
+      }
+      return products; // Fallback to initial products
+    } catch (err) {
+      console.error("Error fetching all products:", err);
+      return products; // Fallback to initial products
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -46,5 +73,6 @@ export function useProducts(): UseProductsResult {
     isLoading,
     error,
     refetch: fetchProducts,
+    fetchAllProducts,
   };
 }

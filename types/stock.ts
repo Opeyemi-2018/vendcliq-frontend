@@ -142,3 +142,18 @@ export interface StockMovementsResponse {
     nextPage: number | null;
   };
 }
+
+
+// updating stock while creating invoice 
+export interface UpdateStockPricesPayload {
+  selling_price: number;
+  selling_price_pieces: number;
+  empties_price: number;
+}
+
+export interface UpdateStockPricesResponse {
+  statusCode: number;
+  msg?: string;
+  error?: string;
+  data?: any;
+}

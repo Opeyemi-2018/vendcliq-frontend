@@ -46,6 +46,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import EditStockPriceModal from "./chunks/EditStockPriceModal";
+
 import {
   Command,
   CommandEmpty,
@@ -98,6 +100,7 @@ interface CustomerType {
 }
 
 interface StockItem {
+  selling_price_pieces: string;
   id: string;
   sku: string;
   quantity: string;
@@ -124,6 +127,51 @@ interface InvoiceItem {
 
 const Sell = () => {
   const router = useRouter();
+  const [isEditPriceModalOpen, setIsEditPriceModalOpen] = useState(false);
+  const [currentStockPrices, setCurrentStockPrices] = useState({
+    selling_price: "",
+    selling_price_pieces: "",
+    empties_price: "",
+  });
+
+  const handleOpenPriceEditModal = () => {
+    if (!selectedStockItem) {
+      toast.error("Please select a product first");
+      return;
+    }
+
+    setCurrentStockPrices({
+      selling_price: selectedStockItem.selling_price || "",
+      selling_price_pieces: selectedStockItem.selling_price_pieces || "0",
+      empties_price: selectedStockItem.empties_price || "0",
+    });
+    setIsEditPriceModalOpen(true);
+  };
+
+  const handlePriceUpdateSuccess = async () => {
+    // Refresh stock data after successful update
+    if (selectedStore) {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+        const result = await getStoreStock(token, selectedStore.id);
+        if (result.success && result.data) {
+          setStoreStock(result.data);
+
+          // Update the selected stock item with new prices
+          const updatedStock = result.data.find(
+            (s: StockItem) => s.id === selectedStockItem?.id,
+          );
+          if (updatedStock) {
+            setSelectedStockItem(updatedStock);
+            invoiceForm.setValue("price", updatedStock.selling_price);
+          }
+        }
+      } catch (err) {
+        console.error("Error refreshing stock:", err);
+      }
+    }
+  };
 
   const [stage, setStage] = useState<
     "select-store" | "select-customer" | "invoice"
@@ -918,12 +966,23 @@ const Sell = () => {
   if (stage === "invoice") {
     return (
       <div>
-        <button
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2"
-          onClick={() => setStage("select-customer")}
-        >
-          <ArrowLeft size={20} />
-        </button>
+       <div className="flex gap-4 mb-6">
+          <button
+            className="flex items-center  text-gray-600 hover:text-gray-900 font-medium"
+            onClick={() => setStage("select-store")}
+          >
+            <ArrowLeft size={20} />
+            Change Store
+          </button>
+
+          <button
+            className="flex items-center  text-gray-600 hover:text-gray-900 font-medium"
+            onClick={() => setStage("select-customer")}
+          >
+            <ArrowLeft size={20} />
+            Change Customer
+          </button>
+        </div>
         <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
           Create Invoice
         </h1>
@@ -1233,14 +1292,12 @@ const Sell = () => {
                           invoiceForm.setValue("price", value);
                         }
                       }}
-                      readOnly={!isPriceEditable}
-                      className={`bg-[#F9F9F9] h-12 border border-[#D8D8D866] pr-10 ${
-                        !isPriceEditable ? "cursor-not-allowed" : ""
-                      }`}
+                      readOnly={true}
+                      className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] pr-10 cursor-not-allowed"
                     />
                     <button
                       type="button"
-                      onClick={() => setIsPriceEditable(!isPriceEditable)}
+                      onClick={handleOpenPriceEditModal}
                       className="absolute right-3 top-3 text-[#0A6DC0] hover:text-[#085a9e]"
                     >
                       <Edit className="w-5 h-5" />
@@ -1463,6 +1520,14 @@ const Sell = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <EditStockPriceModal
+          isOpen={isEditPriceModalOpen}
+          onClose={() => setIsEditPriceModalOpen(false)}
+          stockId={selectedStockItem?.id || ""}
+          currentPrices={currentStockPrices}
+          onSuccess={handlePriceUpdateSuccess}
+        />
       </div>
     );
   }

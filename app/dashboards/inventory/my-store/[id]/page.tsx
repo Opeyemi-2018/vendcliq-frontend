@@ -1,13 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import {
-  MoveLeft,
-  Loader2,
-  Search,
-  MoveRight,
- 
-} from "lucide-react";
+import { MoveLeft, Loader2, Search, MoveRight } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getStoreById, getStoreStock } from "@/actions/stores";
@@ -63,6 +57,8 @@ const StoreDetailPage = () => {
   const router = useRouter();
   const params = useParams();
   const storeId = params.id as string;
+  const [searchTerm, setSearchTerm] = useState("");
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
@@ -84,6 +80,14 @@ const StoreDetailPage = () => {
   const [isLoadingStock, setIsLoadingStock] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddStockOpen, setIsAddStockOpen] = useState(false);
+  const filteredStocks = stocks.filter((item) => {
+    const term = searchTerm.toLowerCase();
+
+    return (
+      item.sku.toLowerCase().includes(term) ||
+      item.product?.name?.toLowerCase().includes(term)
+    );
+  });
 
   useEffect(() => {
     if (store) {
@@ -428,6 +432,8 @@ const StoreDetailPage = () => {
           <Input
             placeholder="Search products..."
             className="bg-[#F2F2F7] pl-10 py-6"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
@@ -438,7 +444,7 @@ const StoreDetailPage = () => {
               Loading stock items...
             </p>
           </div>
-        ) : stocks.length === 0 ? (
+        ) : filteredStocks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <p className="mt-4 font-bold text-[16px] text-[#2F2F2F] dark:text-white">
               No stock items found
@@ -461,7 +467,7 @@ const StoreDetailPage = () => {
                   <th className="text-left py-3 md:pl-4 font-medium text-[#2F2F2F] dark:text-gray-300">
                     <Checkbox
                       checked={
-                        selectedStocks.size === stocks.length &&
+                        selectedStocks.size === filteredStocks.length &&
                         stocks.length > 0
                       }
                       onCheckedChange={handleSelectAll}
@@ -489,7 +495,7 @@ const StoreDetailPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-gray-700">
-                {stocks.map((item) => (
+                {filteredStocks.map((item) => (
                   <tr
                     key={item.id}
                     className="hover:bg-gray-50 cursor-pointer transition-colors font-medium font-dm-sans text-[16px] text-[#2F2F2F]"

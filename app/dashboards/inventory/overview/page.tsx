@@ -158,7 +158,8 @@ const Home = () => {
   const renderTransaction = (tx: DisplayTransaction, index: number) => (
     <div
       key={`${tx.id}-${index}`}
-      className="p-1 md:p-3 rounded-xl border border-[#D8D8D866] mb-4 bg-white"
+      onClick={() => router.push(`/dashboards/inventory/sales/${tx.id}`)}
+      className="p-1 md:p-3 rounded-xl border border-[#D8D8D866] mb-4 bg-white cursor-pointer hover:bg-gray-50 transition"
     >
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
@@ -172,6 +173,7 @@ const Home = () => {
               alt="completed"
             />
           )}
+
           <div className="space-y-0.5">
             <h1 className="text-[13px] md:text-[15px] font-medium text-[#2F2F2F]">
               {tx.code}
@@ -179,6 +181,7 @@ const Home = () => {
             <p className="text-[13px] text-[#9E9A9A]">{tx.date}</p>
           </div>
         </div>
+
         <div className="text-right">
           <p className="text-[13px] md:text-[15px] font-medium text-[#464343]">
             {tx.amount.toLocaleString("en-NG", {
@@ -187,6 +190,7 @@ const Home = () => {
               minimumFractionDigits: 0,
             })}
           </p>
+
           <p
             className={cn(
               "text-[12px] font-bold px-2.5 py-0.5 rounded-full inline-block mt-1",

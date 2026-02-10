@@ -128,7 +128,8 @@ const EditInvoice = () => {
 
   const [stage, setStage] = useState<
     "select-store" | "select-customer" | "invoice"
-  >("select-store");
+  >("invoice"); // ← changed to start directly here
+
   const [stores, setStores] = useState<StoreType[]>([]);
   const [filteredStores, setFilteredStores] = useState<StoreType[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -219,10 +220,11 @@ const EditInvoice = () => {
           setStores(storeList);
           setFilteredStores(storeList);
 
-          const matchingStore = storeList.find((s: any) => s.id === inv.store_id);
+          const matchingStore = storeList.find(
+            (s: any) => s.id === inv.store_id,
+          );
           if (matchingStore) {
             setSelectedStore(matchingStore);
-            setStage("select-customer");
           }
         }
 
@@ -241,26 +243,25 @@ const EditInvoice = () => {
         }
 
         const prefilledItems: InvoiceItem[] = inv.items.map((it: any) => {
-          
           const realStockId = it.stock?.id || String(it.stock_id || "");
 
           return {
             stock_id: realStockId,
             product_name: it.product?.name || "Unknown Product",
-            sku: it.stock?.sku || "", 
+            sku: it.stock?.sku || "",
             product_image: it.product?.image || it.stock?.product?.image || "",
             quantity: Number(it.quantity) || 0,
             mode: it.mode || "PACKS",
             discounted_amount: Number(it.discounted_amount) || 0,
-            empties: it.empties ? {
-              type: it.empties.type || "CREDIT",
-              quantity: it.empties.quantity || 0
-            } : undefined,
+            empties: it.empties
+              ? {
+                  type: it.empties.type || "CREDIT",
+                  quantity: it.empties.quantity || 0,
+                }
+              : undefined,
           };
         });
         setInvoiceItems(prefilledItems);
-
-        // toast.info("Invoice loaded — you can now edit items, customer, etc.");
       } catch (err: any) {
         setError(err.message || "Failed to load invoice");
         toast.error("Could not load invoice for editing");
@@ -388,9 +389,9 @@ const EditInvoice = () => {
         },
       })),
     };
-    
+
     console.log("Update payload being sent:", JSON.stringify(payload, null, 2));
-    
+
     try {
       const response = await handleUpdateInvoice(invoiceId, payload);
 
@@ -890,16 +891,29 @@ const EditInvoice = () => {
     );
   }
 
-  // ── Invoice stage (same as Sell) ──
+  // ── Invoice stage ──
   if (stage === "invoice") {
     return (
       <div>
-        <button
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2"
-          onClick={() => setStage("select-customer")}
-        >
-          <ArrowLeft size={20} />
-        </button>
+        {/* Added change links */}
+        <div className="flex  gap-4 mb-6">
+          <button
+            className="flex items-center  text-gray-600 hover:text-gray-900 font-medium"
+            onClick={() => setStage("select-store")}
+          >
+            <ArrowLeft size={20} />
+            Change Store
+          </button>
+
+          <button
+            className="flex items-center  text-gray-600 hover:text-gray-900 font-medium"
+            onClick={() => setStage("select-customer")}
+          >
+            <ArrowLeft size={20} />
+            Change Customer
+          </button>
+        </div>
+
         <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
           Edit Invoice
         </h1>
@@ -1040,7 +1054,7 @@ const EditInvoice = () => {
                                             />
                                           </div>
                                         ) : (
-                                          <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 text-xs">
+                                          <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 text-xs border border-gray-200">
                                             No img
                                           </div>
                                         )}
@@ -1321,7 +1335,7 @@ const EditInvoice = () => {
           </Button>
         </Card>
 
-        {/* Empties Modal - same as Sell */}
+        {/* Empties Modal */}
         <Dialog open={showEmptiesModal} onOpenChange={setShowEmptiesModal}>
           <DialogContent className="sm:max-w-[425px] bg-white">
             <DialogHeader>

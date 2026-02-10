@@ -46,9 +46,9 @@ import {
 import "react-phone-input-2/lib/style.css";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createStockSchema, CreateStockFormData } from "@/types/stock";
+import { createStockSchema, CreateStockFormData, Product } from "@/types/stock";
 import { Check, ChevronDown, Info } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
 import { handleCreateStock } from "@/lib/utils/api/apiHelper";
@@ -61,13 +61,26 @@ interface StockFormProps {
 }
 
 const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
-  const { products, isLoading: loadingProducts } = useProducts();
+  const {
+    products,
+    isLoading: loadingProducts,
+    fetchAllProducts,
+  } = useProducts();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEmptiesModalOpen, setIsEmptiesModalOpen] = useState(false);
   const [tempEmptiesQty, setTempEmptiesQty] = useState("");
   const [tempEmptiesPrice, setTempEmptiesPrice] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [displayProducts, setDisplayProducts] = useState<Product[]>(products);
+
+  // Update display products when initial products change
+  useEffect(() => {
+    if (!searchQuery) {
+      setDisplayProducts(products);
+    }
+  }, [products, searchQuery]);
 
   const form = useForm<CreateStockFormData>({
     resolver: zodResolver(createStockSchema),
@@ -88,8 +101,33 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
     },
   });
 
+  // Handle search
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+
+    if (!query || query.trim() === "") {
+      setDisplayProducts(products);
+      return;
+    }
+
+    // Fetch all products when searching
+    const allProducts = await fetchAllProducts(query);
+
+    // Filter based on search query
+    const lowerQuery = query.toLowerCase();
+    const filtered = allProducts.filter(
+      (product) =>
+        product.name.toLowerCase().includes(lowerQuery) ||
+        product.productType?.toLowerCase().includes(lowerQuery) ||
+        product.containerType?.toLowerCase().includes(lowerQuery) ||
+        product.sizeCl?.toString().includes(query),
+    );
+
+    setDisplayProducts(filtered);
+  };
+
   const handleProductChange = (productId: string) => {
-    const product = products.find((p) => p.id === productId);
+    const product = displayProducts.find((p) => p.id === productId);
     setSelectedProduct(product || null);
 
     if (product) {
@@ -183,6 +221,14 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
     }
   };
 
+  const handleNumericInput = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    onChange: (...event: any[]) => void,
+  ) => {
+    const value = e.target.value.replace(/[^0-9]/g, "");
+    onChange(value);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -191,7 +237,9 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
           control={form.control}
           name="product_id"
           render={({ field }) => {
-            const selectedProduct = products.find((p) => p.id === field.value);
+            const selectedProduct = displayProducts.find(
+              (p) => p.id === field.value,
+            );
 
             return (
               <FormItem className="flex flex-col">
@@ -264,10 +312,11 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                     className="w-full p-0 max-h-[320px]"
                     align="start"
                   >
-                    <Command shouldFilter={true}>
+                    <Command shouldFilter={false}>
                       <CommandInput
                         placeholder="Search by name, type, size..."
                         className="h-9"
+                        onValueChange={handleSearch}
                       />
                       <CommandList>
                         <CommandEmpty>
@@ -281,13 +330,15 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                         </CommandEmpty>
 
                         <CommandGroup>
-                          {products.map((product) => (
+                          {displayProducts.map((product) => (
                             <CommandItem
                               key={product.id}
-                              value={product.name.toLowerCase()} // helps with filtering
+                              value={product.id}
                               onSelect={() => {
                                 handleProductChange(product.id);
                                 setOpen(false);
+                                setSearchQuery("");
+                                setDisplayProducts(products);
                               }}
                               className="cursor-pointer py-3 px-4 hover:bg-gray-50"
                             >
@@ -460,11 +511,11 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
 
               <FormControl>
                 <Input
-                  type="number"
-                  placeholder="Enter quantity"
-                  {...field}
+                  type="text"
+                  inputMode="numeric"
+                  value={field.value}
+                  onChange={(e) => handleNumericInput(e, field.onChange)}
                   className="bg-[#F3F4F6] h-12"
-                  min="1"
                 />
               </FormControl>
               <FormMessage />
@@ -491,21 +542,25 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
           name="cost_price"
           render={({ field }) => (
             <FormItem>
-              <div className="flex items-center gap-2">
-                <FormLabel className="text-[#2F2F2F] text-[16px] font-medium">
-                  Cost Price
-                </FormLabel>
-                <Info className="w-4 h-4 text-[#0A6DC0]" />
-              </div>
+              <FormLabel className="text-[#2F2F2F] text-[16px] font-medium">
+                Cost Price
+              </FormLabel>
+
               <FormControl>
-                <Input
-                  type="number"
-                  placeholder="e.g. 4300"
-                  {...field}
-                  className="bg-[#F3F4F6] h-12"
-                  min="0"
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    #
+                  </span>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    value={field.value}
+                    onChange={(e) => handleNumericInput(e, field.onChange)}
+                    className="bg-[#F3F4F6]  h-12 pl-7"
+                  />
+                </div>
               </FormControl>
+
               <FormMessage />
             </FormItem>
           )}
@@ -524,15 +579,25 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                   : "Pieces/Bottles"}
                 )
               </FormLabel>
+
               <FormControl>
-                <Input
-                  type="number"
-                  placeholder="e.g. 5000"
-                  {...field}
-                  className="bg-[#F3F4F6] h-12"
-                  min="0"
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    #
+                  </span>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    value={field.value}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, "");
+                      field.onChange(value);
+                    }}
+                    className="bg-[#F3F4F6] h-12 pl-7"
+                  />
+                </div>
               </FormControl>
+
               <FormMessage />
             </FormItem>
           )}
@@ -547,15 +612,25 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
               <FormLabel className="text-[#2F2F2F] text-[16px] font-medium">
                 Selling Price (Per Piece/Bottle)
               </FormLabel>
+
               <FormControl>
-                <Input
-                  type="number"
-                  placeholder="e.g. 200"
-                  {...field}
-                  className="bg-[#F3F4F6] h-12"
-                  min="0"
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    #
+                  </span>
+                  <Input
+                    type="text"
+                    inputMode="numeric"
+                    value={field.value}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^0-9]/g, "");
+                      field.onChange(value);
+                    }}
+                    className="bg-[#F3F4F6] h-12 pl-7"
+                  />
+                </div>
               </FormControl>
+
               <FormMessage />
             </FormItem>
           )}

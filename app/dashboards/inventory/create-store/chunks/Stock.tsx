@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -9,16 +10,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  createStockSchema,
-  CreateStockFormData,
-  Product,
-} from "@/types/stock";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -30,19 +21,34 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Info } from "lucide-react";
-import { useState } from "react";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Info, Check, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
 import { handleCreateStock } from "@/lib/utils/api/apiHelper";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createStockSchema,
+  CreateStockFormData,
+  Product,
+} from "@/types/stock";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import { useProducts } from "@/hooks/useProduct";
 
 interface StockProps {
@@ -50,12 +56,21 @@ interface StockProps {
 }
 
 const Stock: React.FC<StockProps> = ({ storeId }) => {
-  const { products, isLoading: loadingProducts } = useProducts();
+  const {
+    products: initialProducts,
+    isLoading: loadingProducts,
+    fetchAllProducts,
+  } = useProducts();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEmptiesModalOpen, setIsEmptiesModalOpen] = useState(false);
   const [tempEmptiesQty, setTempEmptiesQty] = useState("");
   const [tempEmptiesPrice, setTempEmptiesPrice] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [displayProducts, setDisplayProducts] = useState<Product[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
   const router = useRouter();
 
   const form = useForm<CreateStockFormData>({
@@ -77,11 +92,36 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
     },
   });
 
-  // Handle product selection change
-  const handleProductChange = (productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    setSelectedProduct(product || null);
+  // Sync initial products when they load or search is cleared
+  useEffect(() => {
+    if (initialProducts.length > 0 && !searchQuery.trim()) {
+      setDisplayProducts(initialProducts);
+    }
+  }, [initialProducts, searchQuery]);
 
+  // Handle search → call API to get filtered/all products
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    setSearchLoading(true);
+
+    try {
+      if (!query.trim()) {
+        setDisplayProducts(initialProducts);
+      } else {
+        const fetched = await fetchAllProducts(query);
+        setDisplayProducts(fetched || []);
+      }
+    } catch (err) {
+      console.error("Product search failed:", err);
+      toast.error("Failed to load products. Please try again.");
+      setDisplayProducts([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleProductSelect = (productId: string) => {
+    const product = displayProducts.find((p) => p.id === productId);
     if (product) {
       const skuWords = product.name
         .split(" ")
@@ -89,12 +129,18 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
         .join(" ")
         .toUpperCase();
       form.setValue("sku", skuWords);
-    } else {
-      form.setValue("sku", "");
+      form.setValue("product_id", productId);
     }
-
-    form.setValue("product_id", productId);
+    setOpen(false);
+    // Optional: reset search state after selection
+    setSearchQuery("");
+    setDisplayProducts(initialProducts);
   };
+
+  // Find selected product (prefer display list in case it was searched)
+  const selectedProduct =
+    displayProducts.find((p) => p.id === form.watch("product_id")) ||
+    initialProducts.find((p) => p.id === form.watch("product_id"));
 
   const handleSaveEmpties = () => {
     if (!tempEmptiesQty || !tempEmptiesPrice) {
@@ -131,8 +177,6 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
       },
     };
 
-    console.log("Stock Payload:", JSON.stringify(payload, null, 2));
-
     try {
       const response = await handleCreateStock(payload);
 
@@ -140,7 +184,6 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
         toast.success("Stock added successfully!");
         form.reset();
         router.push("/dashboards/inventory/my-store");
-        setSelectedProduct(null);
       } else {
         toast.error(response.error || "Failed to add stock. Please try again.");
       }
@@ -154,7 +197,7 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
 
   return (
     <div>
-      <Card className=" md:p-6 max-w-[50rem] mx-auto">
+      <Card className="md:p-6 max-w-[50rem] mx-auto">
         <div className="flex items-center gap-2 mb-6">
           <h2 className="text-[18px] text-[#2F2F2F] font-semibold font-clash">
             Add New Stock
@@ -164,77 +207,141 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Product Selection */}
+            {/* Searchable Product Combobox */}
             <FormField
               control={form.control}
               name="product_id"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                   <FormLabel className="text-[#2F2F2F] font-dm-sans text-[16px] font-medium">
                     Select Product
                   </FormLabel>
-                  <Select
-                    onValueChange={handleProductChange}
-                    defaultValue={field.value}
-                    disabled={loadingProducts}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="bg-[#F3F4F6] h-12">
-                        <SelectValue
-                          placeholder={
-                            loadingProducts
-                              ? "Loading products..."
-                              : "Select a product"
-                          }
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="max-h-[300px]">
-                      {products.length === 0 ? (
-                        <SelectItem value="no-products" disabled>
-                          {loadingProducts
-                            ? "Loading..."
-                            : "No products available"}
-                        </SelectItem>
-                      ) : (
-                        products.map((product) => (
-                          <SelectItem
-                            key={product.id}
-                            value={product.id}
-                            className="py-3"
-                          >
-                            <div className="flex items-center gap-3">
-                              {product.image && (
-                                <div className="relative w-10 h-10 flex-shrink-0">
-                                  <Image
-                                    src={product.image}
-                                    alt={product.name}
-                                    fill
-                                    className="object-cover rounded"
-                                    sizes="40px"
-                                    onError={(e) => {
-                                      (
-                                        e.target as HTMLImageElement
-                                      ).style.display = "none";
-                                    }}
-                                  />
-                                </div>
-                              )}
-                              <div className="flex flex-col">
-                                <span className="font-medium text-[#2F2F2F]">
-                                  {product.name}
-                                </span>
-                                <span className="text-sm text-[#6B7280]">
-                                  {product.productType} • {product.sizeCl}cl •{" "}
-                                  {product.containerType}
-                                </span>
+
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className={cn(
+                          "w-full justify-between h-12 bg-[#F3F4F6] text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                        disabled={loadingProducts}
+                      >
+                        {selectedProduct ? (
+                          <div className="flex items-center gap-3 truncate max-w-full">
+                            {selectedProduct.image && (
+                              <div className="relative w-10 h-10 flex-shrink-0 rounded overflow-hidden border border-gray-200">
+                                <Image
+                                  src={selectedProduct.image}
+                                  alt={selectedProduct.name}
+                                  fill
+                                  className="object-cover"
+                                  sizes="40px"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = "none";
+                                  }}
+                                />
                               </div>
+                            )}
+                            <div className="flex flex-col truncate">
+                              <span className="font-medium text-[#2F2F2F]">
+                                {selectedProduct.name}
+                              </span>
+                              <span className="text-sm text-[#6B7280] truncate">
+                                {selectedProduct.productType} • {selectedProduct.sizeCl}cl •{" "}
+                                {selectedProduct.containerType}
+                              </span>
                             </div>
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                          </div>
+                        ) : loadingProducts ? (
+                          <span className="text-gray-400">Loading products...</span>
+                        ) : (
+                          "Select a product..."
+                        )}
+
+                        <ChevronDown
+                          className={cn(
+                            "ml-2 h-4 w-4 shrink-0 opacity-50",
+                            open && "rotate-180"
+                          )}
+                        />
+                      </Button>
+                    </PopoverTrigger>
+
+                    <PopoverContent
+                      className="w-[var(--radix-popover-trigger-width)] p-0 max-h-[360px]"
+                      align="start"
+                    >
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Search by name, type, size..."
+                          value={searchQuery}
+                          onValueChange={handleSearch}
+                          className="h-10"
+                        />
+                        <CommandList>
+                          {searchLoading ? (
+                            <div className="py-6 flex justify-center">
+                              <ClipLoader size={24} color="#0A6DC0" />
+                            </div>
+                          ) : (
+                            <>
+                              <CommandEmpty>No product found.</CommandEmpty>
+
+                              <CommandGroup>
+                                {displayProducts.map((product) => (
+                                  <CommandItem
+                                    key={product.id}
+                                    value={product.id}
+                                    onSelect={() => handleProductSelect(product.id)}
+                                    className="cursor-pointer py-3 px-4 hover:bg-gray-50"
+                                  >
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      {product.image ? (
+                                        <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                                          <Image
+                                            src={product.image}
+                                            alt={product.name}
+                                            width={40}
+                                            height={40}
+                                            className="w-full h-full object-contain"
+                                            onError={(e) => {
+                                              (e.target as HTMLImageElement).style.display = "none";
+                                            }}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-400 text-xs border border-gray-200">
+                                          No img
+                                        </div>
+                                      )}
+
+                                      <div className="flex flex-col min-w-0">
+                                        <span className="font-medium text-sm">
+                                          {product.name}
+                                        </span>
+                                        <span className="text-xs text-gray-500 truncate">
+                                          {product.productType} • {product.sizeCl}cl •{" "}
+                                          {product.containerType}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {field.value === product.id && (
+                                      <Check className="h-4 w-4 text-[#0A6DC0]" />
+                                    )}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </>
+                          )}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+
                   <FormMessage />
                 </FormItem>
               )}
@@ -318,9 +425,7 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
                               type="number"
                               placeholder="e.g. 10"
                               value={tempEmptiesQty}
-                              onChange={(e) =>
-                                setTempEmptiesQty(e.target.value)
-                              }
+                              onChange={(e) => setTempEmptiesQty(e.target.value)}
                               className="mt-2 h-12"
                             />
                           </div>
@@ -332,9 +437,7 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
                               type="number"
                               placeholder="e.g. 50"
                               value={tempEmptiesPrice}
-                              onChange={(e) =>
-                                setTempEmptiesPrice(e.target.value)
-                              }
+                              onChange={(e) => setTempEmptiesPrice(e.target.value)}
                               className="mt-2 h-12"
                             />
                           </div>
@@ -370,7 +473,7 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
               )}
             />
 
-            {/* Empties Preview */}
+            {/* Empties summary */}
             {form.watch("empties_qty") &&
               form.watch("empties_qty") !== "0" &&
               form.watch("empties_qty") !== "" && (
@@ -433,7 +536,7 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
               )}
             />
 
-            {/* Selling Price Pieces (Optional) */}
+            {/* Selling Price per Piece */}
             <FormField
               control={form.control}
               name="selling_price_pieces"
@@ -465,7 +568,7 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
                     <FormLabel className="text-[#2F2F2F] text-[16px] font-medium">
                       Batch Number
                     </FormLabel>
-                    <FormControl className="">
+                    <FormControl>
                       <Input
                         placeholder="e.g. B231"
                         {...field}
@@ -520,6 +623,7 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
                   </FormItem>
                 )}
               />
+
               {/* Low Stock Alert */}
               <FormField
                 control={form.control}
@@ -546,7 +650,7 @@ const Stock: React.FC<StockProps> = ({ storeId }) => {
               />
             </div>
 
-            {/* SKU - Auto-generated from product */}
+            {/* SKU */}
             <FormField
               control={form.control}
               name="sku"

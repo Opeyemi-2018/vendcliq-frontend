@@ -47,29 +47,32 @@ const Table = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(
-    null
+    null,
   );
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  const { newTransactions, clearNewTransactions, isLiveConnected } = useWallet();
+  const { newTransactions, clearNewTransactions } =
+    useWallet();
 
   const [typeFilter, setTypeFilter] = useState<"ALL" | "CREDIT" | "DEBIT">(
-    "ALL"
+    "ALL",
   );
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (newTransactions.length > 0) {
-      setAllTransactions(prev => {
-        const existingIds = new Set(prev.map(tx => tx.id));
-        const uniqueNewTxs = newTransactions.filter(tx => !existingIds.has(tx.id));
-        
+      setAllTransactions((prev) => {
+        const existingIds = new Set(prev.map((tx) => tx.id));
+        const uniqueNewTxs = newTransactions.filter(
+          (tx) => !existingIds.has(tx.id),
+        );
+
         if (uniqueNewTxs.length > 0) {
           return [...uniqueNewTxs, ...prev];
         }
         return prev;
       });
-      
+
       clearNewTransactions();
     }
   }, [newTransactions, clearNewTransactions]);
@@ -123,7 +126,7 @@ const Table = () => {
 
     try {
       const buttonsContainer = receiptRef.current.querySelector(
-        ".receipt-buttons"
+        ".receipt-buttons",
       ) as HTMLElement;
       if (buttonsContainer) {
         buttonsContainer.style.display = "none";
@@ -164,7 +167,7 @@ const Table = () => {
 
     try {
       const buttonsContainer = receiptRef.current.querySelector(
-        ".receipt-buttons"
+        ".receipt-buttons",
       ) as HTMLElement;
       if (buttonsContainer) {
         buttonsContainer.style.display = "none";
@@ -187,7 +190,7 @@ const Table = () => {
         const file = new File(
           [blob],
           `receipt-${selectedTransaction?.transactionReference || Date.now()}.png`,
-          { type: "image/png" }
+          { type: "image/png" },
         );
 
         if (navigator.share && navigator.canShare({ files: [file] })) {
@@ -214,7 +217,7 @@ const Table = () => {
           document.body.removeChild(link);
           URL.revokeObjectURL(url);
           toast.info(
-            "Sharing not supported on this device. Receipt downloaded instead."
+            "Sharing not supported on this device. Receipt downloaded instead.",
           );
         }
       });
@@ -256,7 +259,7 @@ const Table = () => {
           ?.toLowerCase()
           .includes(searchQuery.toLowerCase()) ||
         tx.senderAccount?.Name?.toLowerCase().includes(
-          searchQuery.toLowerCase()
+          searchQuery.toLowerCase(),
         )
       : true;
 
@@ -276,7 +279,7 @@ const Table = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedTransactions = filteredTransactions.slice(
     startIndex,
-    startIndex + itemsPerPage
+    startIndex + itemsPerPage,
   );
 
   const handlePageChange = (page: number) => {
@@ -310,7 +313,7 @@ const Table = () => {
           onClick={() => handlePageChange(i)}
         >
           {i}
-        </Button>
+        </Button>,
       );
     }
 
@@ -334,12 +337,6 @@ const Table = () => {
       <div>
         <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
           Transaction History
-          {isLiveConnected && (
-            <span className="ml-2 inline-flex items-center text-xs text-green-600">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
-              Live
-            </span>
-          )}
         </h1>
         <p className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans">
           A summary of all your transactions. Easily track and reconcile all
@@ -463,7 +460,7 @@ const Table = () => {
 
                     const isCredit = transaction.transactionType === "CREDIT";
                     const amountValue = Math.abs(
-                      parseFloat(transaction.amount)
+                      parseFloat(transaction.amount),
                     );
                     const formattedAmount = isCredit
                       ? `+₦${amountValue.toLocaleString("en-NG")}`
@@ -499,7 +496,10 @@ const Table = () => {
                                 {counterparty}
                               </p>
                               <p className="text-sm text-[#6F6F6F] mt-1 hidden md:inline">
-                                Ref: {formatReference(transaction.transactionReference)}
+                                Ref:{" "}
+                                {formatReference(
+                                  transaction.transactionReference,
+                                )}
                               </p>
                             </div>
                           </div>
@@ -549,7 +549,7 @@ const Table = () => {
               onClick={() => handlePageChange(currentPage - 1)}
               className={cn(
                 "flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24",
-                currentPage === 1 && "opacity-50 cursor-not-allowed"
+                currentPage === 1 && "opacity-50 cursor-not-allowed",
               )}
             >
               <MoveLeft /> Previous
@@ -565,7 +565,7 @@ const Table = () => {
                 onClick={() => handlePageChange(currentPage + 1)}
                 className={cn(
                   "flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24",
-                  currentPage >= totalPages && "opacity-50 cursor-not-allowed"
+                  currentPage >= totalPages && "opacity-50 cursor-not-allowed",
                 )}
               >
                 Next <MoveRightIcon />
@@ -575,7 +575,7 @@ const Table = () => {
                 Showing {startIndex + 1} -{" "}
                 {Math.min(
                   startIndex + itemsPerPage,
-                  filteredTransactions.length
+                  filteredTransactions.length,
                 )}{" "}
                 of {filteredTransactions.length}
               </div>
@@ -617,7 +617,7 @@ const Table = () => {
                     <span className="font-medium text-[#2F2F2F]">
                       ₦
                       {Math.abs(
-                        parseFloat(selectedTransaction.amount)
+                        parseFloat(selectedTransaction.amount),
                       ).toLocaleString()}
                     </span>
                   </div>
@@ -629,7 +629,7 @@ const Table = () => {
                     <span className="inline-flex items-center justify-center px-3 rounded-full text-[10px] font-medium text-[#23A26D] min-h-[24px] leading-[24px]">
                       {getTransactionValue(
                         selectedTransaction.status,
-                        "Successful"
+                        "Successful",
                       )}
                     </span>
                   </div>
@@ -645,7 +645,7 @@ const Table = () => {
                         selectedTransaction.description ||
                           selectedTransaction.transactionReference ||
                           selectedTransaction.reference,
-                        "N/A"
+                        "N/A",
                       )}
                     </p>
                   </div>
@@ -657,7 +657,7 @@ const Table = () => {
                     <p className="text-[13px] font-medium">
                       {getTransactionValue(
                         selectedTransaction.beneficiaryAccount?.name,
-                        selectedTransaction.senderAccount?.Name || "N/A"
+                        selectedTransaction.senderAccount?.Name || "N/A",
                       )}
                     </p>
                   </div>
@@ -670,7 +670,7 @@ const Table = () => {
                       {getTransactionValue(
                         selectedTransaction.beneficiaryAccount?.accountNumber,
                         selectedTransaction.senderAccount?.accountNumber ||
-                          "N/A"
+                          "N/A",
                       )}
                     </p>
                   </div>
@@ -685,7 +685,7 @@ const Table = () => {
                           selectedTransaction.beneficiaryAccount?.bankName,
                         selectedTransaction.senderAccount?.provider ||
                           selectedTransaction.senderAccount?.bankName ||
-                          "N/A"
+                          "N/A",
                       )}
                     </p>
                   </div>
@@ -698,7 +698,7 @@ const Table = () => {
                       {getTransactionValue(
                         selectedTransaction.senderAccount?.accountNumber,
                         selectedTransaction.beneficiaryAccount?.accountNumber ||
-                          "N/A"
+                          "N/A",
                       )}
                     </p>
                   </div>
@@ -710,7 +710,7 @@ const Table = () => {
                     <p className="text-[13px] font-medium">
                       {getTransactionValue(
                         selectedTransaction.transactionType,
-                        "N/A"
+                        "N/A",
                       )}
                     </p>
                   </div>
@@ -724,7 +724,7 @@ const Table = () => {
                         selectedTransaction.sessionId ||
                           selectedTransaction.id ||
                           selectedTransaction.transactionReference,
-                        "N/A"
+                        "N/A",
                       )}
                     </p>
                   </div>

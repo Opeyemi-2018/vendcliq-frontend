@@ -71,7 +71,9 @@ const GET_BENEFICIARIES = "/client/v2/wallet/beneficiaries";
 // inventory endpoint
 const CREATE_STORE = "inventory/stores";
 const CREATE_STOCK = "inventory/stocks";
-const GET_PRODUCTS = "inventory/products?page=1&limit=50&all=false&search=";
+// thr 2 below endpoint get all product and also get paginated product 
+const GET_PRODUCTS_PAGINATED = "inventory/products?page=1&limit=50&all=false&search=";
+const GET_ALL_PRODUCTS = "inventory/products?all=true";
 const CREATE_INVOICE = "inventory/invoices";
 const EDIT_INVOICE = (invoiceId: string) => `inventory/invoices/${invoiceId}`;
 const CREATE_CUSTOMER = "inventory/customers";
@@ -111,6 +113,8 @@ const HAND_OVER_ITEM = "inventory/items/verify-handover";
 const SUPPLIER_SALES = "inventory/dashboard/supplier-sales";
 const GET_STORE_ITEMS_SALES = "inventory/dashboard/store-items";
 const CREATE_OFFER = "inventory/offers";
+const UPDATE_STOCK_PRICES = (stockId: string) => `inventory/stocks/${stockId}`;
+
 
 export {
   // v2 endpoint
@@ -127,7 +131,8 @@ export {
   UPLOAD_BUSINESS_VERIFICATION,
   CREATE_STORE,
   CREATE_STOCK,
-  GET_PRODUCTS,
+  GET_ALL_PRODUCTS,
+  GET_PRODUCTS_PAGINATED,
   SEND_OTP_FOR_FORGET_PASSWORD,
   RESET_PASSWORD,
   RESEND_VERIFICATION_TOKEN,
@@ -179,6 +184,7 @@ export {
   EDIT_INVOICE,
   GET_STORE_ITEMS_SALES,
   CREATE_OFFER,
+  UPDATE_STOCK_PRICES,
 
   // v1 endpoint
   // GET_PROFILE,

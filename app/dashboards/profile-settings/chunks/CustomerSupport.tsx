@@ -3,22 +3,12 @@
 import { Separator } from "@/components/ui/separator";
 import { TbWorld } from "react-icons/tb";
 import Image from "next/image";
-import { useState } from "react";
+import { BiLogoWhatsapp } from "react-icons/bi";
 import { FaXTwitter } from "react-icons/fa6";
-import { FaWhatsapp } from "react-icons/fa6";
 import { FaFacebook } from "react-icons/fa";
 import { FaInstagram } from "react-icons/fa";
-import { BiSolidMessageError } from "react-icons/bi";
 
 const CustomerSupport = () => {
-  const [message, setMessage] = useState("");
-
-  const handleSubmit = () => {
-    console.log("Support message:", message);
-    alert("Your message has been sent to support!");
-    setMessage("");
-  };
-
   return (
     <div className="">
       <div className="">
@@ -65,7 +55,6 @@ const CustomerSupport = () => {
           >
             <FaXTwitter size={22} color="#000000c" />
           </a>
-          <FaWhatsapp size={22} color="#25D366" />
           <a
             href="https://www.facebook.com/groups/1080464810962647"
             target="_blank"
@@ -89,19 +78,25 @@ const CustomerSupport = () => {
         </div>
       </div>
 
-      <div className="bg-[#0A6DC0] p-6 flex gap-3 items-center mt-6">
-        <div className="bg-[#91c7f4] p-2 rounded-full">
-          <BiSolidMessageError size={22} color="#ffffff" />
+      <a
+        href="https://wa.me/2348130293442"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="bg-[#25D366] p-6 flex gap-3 items-center mt-6 cursor-pointer hover:opacity-90 transition"
+      >
+        <div className="bg-white p-2 rounded-full">
+          <BiLogoWhatsapp size={22} color="#25D366" />
         </div>
+
         <div>
           <h1 className="text-white font-medium font-dm-sans">
-            Live Chat Support
+            WhatsApp Support
           </h1>
-          <p className="text-[10px] font-dm-sans text-white ">
-            We are standing by to answer your questions right now
+          <p className="text-[10px] font-dm-sans text-white">
+            Chat with us on WhatsApp 
           </p>
         </div>
-      </div>
+      </a>
     </div>
   );
 };

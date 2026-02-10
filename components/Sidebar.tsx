@@ -285,7 +285,7 @@ export function AppSidebar() {
                     )}
                     {isCollapsed && (
                       <div className="flex justify-center py-4">
-                        <Image
+                        <Image onClick={() => router.push("/dashboards/plans")}
                           src="/sub.svg"
                           width={32}
                           height={32}

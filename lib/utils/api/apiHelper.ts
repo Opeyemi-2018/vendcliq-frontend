@@ -108,7 +108,7 @@ import {
   CHANGE_PASSWORD,
 
   // inventory endpoints
-  GET_PRODUCTS,
+  
   CREATE_STORE,
   CREATE_STOCK,
   ADD_SHOP_ATTENDANT,
@@ -146,6 +146,9 @@ import {
   GET_WALLET,
   GET_STORE_ITEMS_SALES,
   CREATE_OFFER,
+  GET_ALL_PRODUCTS,
+  GET_PRODUCTS_PAGINATED,
+  UPDATE_STOCK_PRICES,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -161,6 +164,8 @@ import {
   CreateStockResponse,
   ProductsResponse,
   StockMovementsResponse,
+  UpdateStockPricesPayload,
+  UpdateStockPricesResponse,
 } from "@/types/stock";
 import { TransactionHistoryResponse } from "@/types/transactions";
 import {
@@ -646,9 +651,11 @@ export const handleApiError = (
 
 // inventory api call
 
-export const handleGetProducts = async (): Promise<ProductsResponse> => {
-  return await fetcher<ProductsResponse>(GET_PRODUCTS);
+export const handleGetProducts = async (fetchAll = false): Promise<ProductsResponse> => {
+  const endpoint = fetchAll ? GET_ALL_PRODUCTS : GET_PRODUCTS_PAGINATED;
+  return await fetcher<ProductsResponse>(endpoint);
 };
+
 
 export const handleCreateStore = async (
   payload: CreateStoreFormData,
@@ -945,4 +952,15 @@ export const handleCreatePromo = async (payload: {
   supply_fee: number;
 }): Promise<any> => {
   return await poster(CREATE_OFFER, payload);
+};
+
+export const handleUpdateStockPrices = async (
+  stockId: string,
+  payload: UpdateStockPricesPayload,
+): Promise<UpdateStockPricesResponse> => {
+  const url = UPDATE_STOCK_PRICES(stockId);
+  return await putter<UpdateStockPricesResponse, UpdateStockPricesPayload>(
+    url,
+    payload,
+  );
 };

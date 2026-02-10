@@ -133,7 +133,7 @@ const StockDetailPage = () => {
             <DropdownMenuItem
               onClick={() =>
                 router.push(
-                  `/dashboards/inventory/my-store/${storeId}/stock/${stockId}/history`
+                  `/dashboards/inventory/my-store/${storeId}/stock/${stockId}/history`,
                 )
               }
               className="cursor-pointer"
@@ -142,7 +142,16 @@ const StockDetailPage = () => {
             </DropdownMenuItem>
 
             <DropdownMenuItem
-              onClick={() => toast.info("Share stock link coming soon")}
+              onClick={() => {
+                const shareUrl = `https://vendcliqitemcheckout-six.vercel.app/checkout/${stockId}`;
+
+                const message = `Check out ${stock.product.name} for ₦${parseFloat(
+                  stock.selling_price,
+                ).toLocaleString()} on Vendcliq!\n\n${shareUrl}`;
+
+                navigator.clipboard.writeText(message);
+                toast.success("Stock link copied to clipboard");
+              }}
               className="cursor-pointer"
             >
               Share Stock Link

@@ -4,7 +4,6 @@ import { Supplier } from "@/types/supplier";
 import { SupplierStockItem, getSupplierStocks } from "@/actions/suppliers";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/button";
 import {
   ArrowLeft,
   Package,
@@ -16,6 +15,7 @@ import {
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface SupplierProductsProps {
   supplier: Supplier;
@@ -23,6 +23,8 @@ interface SupplierProductsProps {
 }
 
 export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
+  const router = useRouter();
+
   const [stocks, setStocks] = useState<SupplierStockItem[]>([]);
   const [loadingStocks, setLoadingStocks] = useState(true);
   const [stocksError, setStocksError] = useState<string | null>(null);
@@ -70,7 +72,7 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
     const filtered = stocks.filter(
       (stock) =>
         stock.product.name.toLowerCase().includes(value.toLowerCase()) ||
-        stock.sku.toLowerCase().includes(value.toLowerCase())
+        stock.sku.toLowerCase().includes(value.toLowerCase()),
     );
 
     if (filtered.length === 0) {
@@ -86,7 +88,7 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
     const filtered = stocks.filter(
       (stock) =>
         stock.product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        stock.sku.toLowerCase().includes(searchTerm.toLowerCase())
+        stock.sku.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     return filtered.length > 0 ? filtered : stocks;
@@ -111,6 +113,11 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
     }
   };
 
+  // Navigate to marketplace detail page - same as MarketPlace component
+  const handleViewInMarket = (stockId: string) => {
+    router.push(`/dashboards/market-place/${stockId}`);
+  };
+
   return (
     <div className="">
       <div className="flex flex-col md:flex-row md:items-center justify-between">
@@ -125,17 +132,10 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
             </p>
           </div>
         </div>
-        {/* <Button className="bg-[#0A6DC0] hover:bg-[#09599a] py-6">
-          Market Place
-        </Button> */}
       </div>
 
       <Card className="md:p-4 lg:p-8 bg-white">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          {/* <p className="font-dm-sans lowercase font-bold text-[#2F2F2F] text-[17px] md:text-[20px]">
-            {supplier.name} Price List
-          </p> */}
-
           {/* Search Input */}
           <div className="relative w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
@@ -173,7 +173,7 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px] ">
+              <table className="w-full min-w-[600px]">
                 <thead className="bg-[#F9F9F9]">
                   <tr>
                     <th className="text-left py-3 pl-4 font-medium font-dm-sans">
@@ -193,54 +193,57 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 ">
-                  {currentStocks.map((stock) => {
-                    return (
-                      <tr
-                        key={stock.id}
-                        className="hover:bg-gray-50 cursor-pointer transition-colors font-dm-sans"
-                      >
-                        <td className="w-1/5 py-4 pl-2 md:pl-4 font-medium">
-                          <div className="flex gap-2 items-center min-w-0">
-                            {stock.product.images ? (
-                              <div className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
-                                <Image
-                                  src={
-                                    stock.product.images.startsWith("//")
-                                      ? `https:${stock.product.images}`
-                                      : stock.product.images
-                                  }
-                                  alt={stock.product.name}
-                                  width={40}
-                                  height={40}
-                                  className="object-contain"
-                                />
-                              </div>
-                            ) : (
-                              <div className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center shrink-0">
-                                <Package className="w-4 h-4 text-gray-400" />
-                              </div>
-                            )}
+                <tbody className="divide-y divide-gray-200">
+                  {currentStocks.map((stock) => (
+                    <tr
+                      key={stock.id}
+                      className="hover:bg-gray-50 transition-colors font-dm-sans"
+                    >
+                      <td className="w-1/5 py-4 pl-2 md:pl-4 font-medium">
+                        <div className="flex gap-2 items-center min-w-0">
+                          {stock.product.images ? (
+                            <div className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                              <Image
+                                src={
+                                  stock.product.images.startsWith("//")
+                                    ? `https:${stock.product.images}`
+                                    : stock.product.images
+                                }
+                                alt={stock.product.name}
+                                width={40}
+                                height={40}
+                                className="object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center shrink-0">
+                              <Package className="w-4 h-4 text-gray-400" />
+                            </div>
+                          )}
 
-                            <p className="truncate lowercase">
-                              {stock.product.name}
-                            </p>
-                          </div>
-                        </td>
+                          <p className="truncate lowercase">
+                            {stock.product.name}
+                          </p>
+                        </div>
+                      </td>
 
-                        <td className="w-1/5 py-4 truncate lowercase">
-                          {stock.sku}
-                        </td>
-                        <td className="w-1/5 py-4">{stock.quantity}</td>
-                        <td className="w-1/5 py-4 truncate">
-                          ₦{parseFloat(stock.selling_price).toLocaleString()}
-                        </td>
-                        <td className="w-1/5 py-4 text-[#0A6DC0] font-bold">
+                      <td className="w-1/5 py-4 truncate lowercase">
+                        {stock.sku}
+                      </td>
+                      <td className="w-1/5 py-4">{stock.quantity}</td>
+                      <td className="w-1/5 py-4 truncate">
+                        ₦{parseFloat(stock.selling_price).toLocaleString()}
+                      </td>
+                      <td className="w-1/5 py-4">
+                        <button
+                          onClick={() => handleViewInMarket(stock.id)}
+                          className="text-[#0A6DC0] hover:text-[#085a9e] font-bold transition-colors"
+                        >
                           View In Market
-                        </td>
-                      </tr>
-                    );
-                  })}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -251,7 +254,7 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
                 <button
                   onClick={handlePreviousPage}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-[#0A6DC0] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <MoveLeft className="w-4 h-4" />
                   Previous
@@ -265,7 +268,7 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
                 <button
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 text-[#0A6DC0] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                   <MoveRight className="w-4 h-4" />

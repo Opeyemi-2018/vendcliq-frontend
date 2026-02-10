@@ -53,6 +53,29 @@ export default function SaleInvoiceDetailPage() {
     fetchInvoice();
   }, [id]);
 
+  const getStatusBadge = (status: string) => {
+    const s = status?.toLowerCase() || "";
+    if (s === "completed") {
+      return (
+        <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+          Completed
+        </span>
+      );
+    }
+    if (s === "pending") {
+      return (
+        <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+          Pending
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
+        {status || "Unknown"}
+      </span>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -106,13 +129,15 @@ export default function SaleInvoiceDetailPage() {
             View all items sold in this invoice
           </p>
         </div>
-        <Edit
-          color="#0A6DC0"
-          className="cursor-pointer"
-          onClick={() =>
-            router.push(`/dashboards/inventory/sales/edit/${invoice.id}`)
-          }
-        />
+        {invoice.status?.toLowerCase() === "pending" && (
+          <Edit
+            color="#0A6DC0"
+            className="cursor-pointer"
+            onClick={() =>
+              router.push(`/dashboards/inventory/sales/edit/${invoice.id}`)
+            }
+          />
+        )}
       </div>
 
       {/* Items Table */}
@@ -142,6 +167,10 @@ export default function SaleInvoiceDetailPage() {
                       Subtotal
                     </th>
                     <th className="px-6 py-3 text-left font-medium">Profit</th>
+                    {/* New column */}
+                    <th className="px-6 py-3 text-left font-medium">
+                      Invoice Status
+                    </th>
                     <th className="px-6 py-3 text-left font-medium">More</th>
                   </tr>
                 </thead>
@@ -196,8 +225,12 @@ export default function SaleInvoiceDetailPage() {
                       <td className="px-6 py-4 whitespace-nowrap font-medium">
                         {formatCurrency(item.sub_total)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium ">
+                      <td className="px-6 py-4 whitespace-nowrap font-medium">
                         {formatCurrency(item.profit)}
+                      </td>
+                      {/* New status column – same value for every row since it's invoice-level */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {getStatusBadge(invoice.status || "unknown")}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <MoveRight className="w-5 h-5 text-gray-500" />

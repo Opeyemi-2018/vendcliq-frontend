@@ -35,7 +35,7 @@ export function SupplierFullDetails({
           onClick={onViewProducts}
         >
           <ShoppingCart className="mr-2 w-5 h-5" />
-          See his Products
+          See Product List
         </Button>
       </div>
 

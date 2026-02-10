@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { getStores, moveStock } from "@/actions/stores";
 import Image from "next/image";
-import { ThreeDots } from "react-loader-spinner";
+import { X } from "lucide-react";
 
 interface StockItem {
   id: string;
@@ -47,6 +47,22 @@ const MoveStockPage = () => {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [prices, setPrices] = useState<Record<string, number>>({});
 
+  const handleRemoveStock = (stockId: string) => {
+    setSelectedStocks((prev) => prev.filter((s) => s.id !== stockId));
+
+    setQuantities((prev) => {
+      const updated = { ...prev };
+      delete updated[stockId];
+      return updated;
+    });
+
+    setPrices((prev) => {
+      const updated = { ...prev };
+      delete updated[stockId];
+      return updated;
+    });
+  };
+
   useEffect(() => {
     // Get selected stocks from sessionStorage
     const storedStocks = sessionStorage.getItem("selectedStocksToMove");
@@ -76,8 +92,7 @@ const MoveStockPage = () => {
   }, [storeId, router]);
 
   const fetchStores = async () => {
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("authToken");
+    const token = localStorage.getItem("accessToken");
     if (!token) return;
 
     setIsLoadingStores(true);
@@ -86,7 +101,7 @@ const MoveStockPage = () => {
     if (result.success && Array.isArray(result.data)) {
       // Filter out the current store
       const availableStores = result.data.filter(
-        (store: Store) => store.id !== storeId
+        (store: Store) => store.id !== storeId,
       );
       setStores(availableStores);
     } else {
@@ -98,7 +113,7 @@ const MoveStockPage = () => {
   const handleQuantityChange = (stockId: string, value: string) => {
     const numValue = parseFloat(value) || 0;
     const maxQty = parseFloat(
-      selectedStocks.find((s) => s.id === stockId)?.quantity || "0"
+      selectedStocks.find((s) => s.id === stockId)?.quantity || "0",
     );
 
     if (numValue > maxQty) {
@@ -143,8 +158,7 @@ const MoveStockPage = () => {
       return;
     }
 
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("authToken");
+    const token = localStorage.getItem("accessToken");
     if (!token) {
       toast.error("Authentication required");
       return;
@@ -164,7 +178,7 @@ const MoveStockPage = () => {
       toast.success(
         `Successfully moved ${getTotalQuantity()} items to ${
           stores.find((s) => s.id === selectedDestinationStore)?.name
-        }`
+        }`,
       );
 
       // Clear sessionStorage
@@ -181,9 +195,18 @@ const MoveStockPage = () => {
 
   if (selectedStocks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <ThreeDots height="80" width="80" color="#0A6DC0" visible={true} />
-        <p className="mt-4 text-[#9E9A9A]">Loading...</p>
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <p className="text-lg font-medium text-[#2F2F2F]">No stocks to move</p>
+        <p className="mt-1 text-[#9E9A9A]">
+          You’ve removed all selected products
+        </p>
+
+        <Button
+          className="mt-6 bg-[#0A6DC0] hover:bg-[#09599a]"
+          onClick={() => router.back()}
+        >
+          Go back
+        </Button>
       </div>
     );
   }
@@ -220,7 +243,17 @@ const MoveStockPage = () => {
         </div>
 
         {selectedStocks.map((stock) => (
-          <div key={stock.id} className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
+          <div
+            key={stock.id}
+            className="relative md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white"
+          >
+            <button
+              onClick={() => handleRemoveStock(stock.id)}
+              className="absolute top-4 right-4 p-1 rounded-full hover:bg-red-50 transition"
+            >
+              <X className="w-5 h-5 text-red-500" />
+            </button>
+
             <div className="flex items-center gap-2">
               <div className="w-[42px] h-[44px] border border-[#E3E3E3] bg-[#FAFAFA] rounded-xl overflow-hidden flex-shrink-0">
                 <Image

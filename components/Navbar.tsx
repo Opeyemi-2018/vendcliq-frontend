@@ -9,6 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useSidebar } from "@/components/ui/sidebar";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +34,8 @@ const Navbar = () => {
   const { user, isUserPending } = useUser();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   useEffect(() => {
     setMounted(true);
@@ -39,17 +43,22 @@ const Navbar = () => {
 
   return (
     <nav
-      className="
+      className={`
     fixed top-0
-    left-0 md:left-[16rem]
-    w-full md:w-[calc(100%-16rem)]
     h-[72px]
     p-4
     flex items-center justify-between
     border-b-2 border-[#0000001A]
     z-40
     bg-white
-  "
+    transition-all duration-300
+    ${
+      isCollapsed
+        ? "md:left-[4rem] md:w-[calc(100%-4rem)]"
+        : "md:left-[16rem] md:w-[calc(100%-16rem)]"
+    }
+    left-0 w-full
+  `}
     >
       {" "}
       <SidebarTrigger style={{ background: "#0A2540", color: "white" }} />
