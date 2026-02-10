@@ -48,7 +48,9 @@ export function UpdateStockModal({
   triggerButton,
 }: UpdateStockModalProps) {
   const [open, setOpen] = useState(false);
-  const [action, setAction] = useState<"update_stock" | "update_movement">("update_stock");
+  const [action, setAction] = useState<"update_stock" | "update_movement">(
+    "update_stock",
+  );
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -84,7 +86,8 @@ export function UpdateStockModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = localStorage.getItem("accessToken") || localStorage.getItem("authToken");
+    const token =
+      localStorage.getItem("accessToken") || localStorage.getItem("authToken");
 
     if (!token) {
       toast.error("No authentication token found.");
@@ -150,7 +153,7 @@ export function UpdateStockModal({
       <DialogContent className="max-w-[95vw] sm:max-w-[600px] bg-white dark:bg-gray-900 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] dark:text-white">
-         {productName}
+            {productName}
           </DialogTitle>
           <DialogDescription className="text-[#9E9A9A]">
             Select action and fill in the details below
@@ -169,8 +172,10 @@ export function UpdateStockModal({
                 <SelectValue placeholder="Choose action" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="update_stock">Update Stock Details</SelectItem>
-                <SelectItem value="update_movement">Record Stock Movement</SelectItem>
+                <SelectItem value="update_stock">Update Price</SelectItem>
+                <SelectItem value="update_movement">
+                  Add / Remove Stock
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

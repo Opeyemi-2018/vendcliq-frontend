@@ -44,7 +44,7 @@ export default function AuthHero() {
   return (
     <div className="relative w-full max-w-2xl mx-auto  ">
       <Image
-        src="/stock-woman.svg"
+        src="/w.avif"
         alt="Stock woman"
         fill
         priority

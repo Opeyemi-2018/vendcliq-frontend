@@ -1,6 +1,5 @@
 import { usePathname } from "next/navigation";
 import {
-  
   BookOpen,
   Home,
   RectangleEllipsis,
@@ -93,10 +92,9 @@ const items = [
       { title: "Customer List", url: "/dashboards/customer" },
       { title: "Expenses", url: "/dashboards/expenses" },
       { title: "Profile Settings", url: "/dashboards/profile-settings" },
-      { title: "Referral",  url: "/dashboards/referral" },
+      { title: "Referral", url: "/dashboards/referral" },
     ],
   },
-
 ];
 
 export function AppSidebar() {
@@ -142,7 +140,7 @@ export function AppSidebar() {
         <SidebarGroup>
           {!isCollapsed && (
             <div className="px-4 py-4">
-              <Image src={"/vl.svg"} width={150} height={150} alt="logo" />
+              <Image src={"/vl.avif"} width={150} height={150} alt="logo" />
             </div>
           )}
 
@@ -262,7 +260,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild className="">
                   <div
                     style={{
-                      backgroundImage: "url('/mesh.svg')",
+                      backgroundImage: "url('/mech.avif')",
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                       height: "127px",

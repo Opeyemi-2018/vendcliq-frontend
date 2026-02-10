@@ -9,7 +9,6 @@ import { DisplayPlan } from "@/types/plans";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { Label } from "@/components/ui/label";
-import { useUser } from "@/context/userContext";
 import {
   Dialog,
   DialogContent,
@@ -19,8 +18,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { handlePaySubscription } from "@/lib/utils/api/apiHelper";
-import { SubscriptionPaymentPayload } from "@/types/plans"; 
-import { useRouter } from "next/navigation"; 
+import { SubscriptionPaymentPayload } from "@/types/plans";
+import { useRouter } from "next/navigation";
+import { useWallet } from "@/hooks/useWallet";
 
 interface PaymentInfoProps {
   plan: DisplayPlan;
@@ -48,8 +48,9 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
 }) => {
   const totalAmount =
     (isAnnual ? plan.annualPrice : plan.monthlyPrice) * months;
-  const { wallet } = useUser();
   const router = useRouter();
+
+  const { getBalance } = useWallet();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("WALLET");
   const [transactionPin, setTransactionPin] = useState("");
@@ -74,7 +75,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
     setPaying(true);
 
     const payload: SubscriptionPaymentPayload = {
-      planId: Number(plan.id), 
+      planId: Number(plan.id),
       billingType: isAnnual ? "yearly" : "monthly",
       multiplier: months,
       paymentType: paymentMethod,
@@ -94,7 +95,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
           setShowPinModal(false);
           setTransactionPin("");
           toast.success("Payment completed! Your plan is now active.");
-          router.push("/dashboards/payment-subscription"); 
+          router.push("/dashboards/payment-subscription");
         } else {
           const payData = response.data.paymentPayload;
 
@@ -102,7 +103,7 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
             accountNumber: payData.accountNumber || "N/A",
             accountName: payData.accountName || "N/A",
             bankName: payData.bankName || "N/A",
-            amount: totalAmount, 
+            amount: totalAmount,
             reference: payData.paymentReference || "N/A",
             expiresAt: payData.expiresAt,
           });
@@ -288,7 +289,8 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
                   <h1 className="text-3xl font-bold font-clash">
                     {showBalance
                       ? "****"
-                      : `₦${wallet?.balance?.toLocaleString() || "0"}`}
+                      : `₦${(getBalance() ?? 0).toLocaleString()}`}{" "}
+                    {/* ← only change */}
                   </h1>
                 </div>
               </div>
@@ -393,7 +395,8 @@ const PaymentInfo: React.FC<PaymentInfoProps> = ({
                   }}
                   ref={(el) => {
                     pinRefs.current[index] = el;
-                  }} // ← fixed ref callback (no return value)
+                  }}
+                  id={`pin-${index}`}
                   className="absolute inset-0 opacity-0"
                 />
               </div>

@@ -9,18 +9,9 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
-import {
-  ChevronLeft,
-  Banknote,
-  Eye,
-  EyeOff,
-  Landmark,
-  MoveRight,
-  MoveLeft,
-} from "lucide-react";
+import { Eye, EyeOff, Landmark, MoveRight, MoveLeft } from "lucide-react";
 
 import {
   Form,
@@ -43,7 +34,6 @@ import {
 
 import { transferSchema, TransferFormData } from "@/types/transfer";
 import { Separator } from "@/components/ui/separator";
-import { useUser } from "@/context/userContext";
 import { lookupAccount } from "@/actions/getAccountNumber";
 import { ClipLoader } from "react-spinners";
 import {
@@ -54,24 +44,7 @@ import { generateTransactionKey } from "@/lib/utils/generateTransactionKey";
 import Lottie from "lottie-react";
 import animationData from "@/public/animate.json";
 import CreatePinPrompt from "@/components/SetPinModal";
-
-const beneficiaries = [
-  {
-    name: "Shotayo Samson Olumide",
-    accountNo: "2764758697",
-    bank: "United Bank for Africa",
-  },
-  {
-    name: "Shotayo Samson Olumide",
-    accountNo: "2764758697",
-    bank: "United Bank for Africa",
-  },
-  {
-    name: "Shotayo Samson Olumide",
-    accountNo: "2764758697",
-    bank: "United Bank for Africa",
-  },
-];
+import { useWallet } from "@/hooks/useWallet";
 
 export default function VendCliqTransfer() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -85,9 +58,10 @@ export default function VendCliqTransfer() {
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const router = useRouter();
-  const [showAccount, setShowAccount] = useState(false);
   const [isTransferring, setIsTransferring] = useState(false);
-  const { wallet, refreshWallet } = useUser();
+
+  const {  refreshWallet, getBalance, getAccountNumber } = useWallet();
+
   const fee = 3;
 
   const form = useForm<TransferFormData>({
@@ -98,7 +72,7 @@ export default function VendCliqTransfer() {
       savedBeneficiaryIndex: undefined,
       bank: "",
       accountNumber: "",
-      accountName: "Shotayo Samson Olumide",
+      accountName: "",
       amount: 0,
       narration: "",
       pin: "",
@@ -106,26 +80,7 @@ export default function VendCliqTransfer() {
   });
 
   const { watch, setValue, trigger } = form;
-  const beneficiaryType = watch("beneficiaryType");
-  const savedIndex = watch("savedBeneficiaryIndex");
   const pin = watch("pin");
-
-  const selectedBeneficiary =
-    beneficiaryType === "saved" && savedIndex !== undefined
-      ? beneficiaries[savedIndex]
-      : null;
-
-  const handleStep1 = async () => {
-    const fields: (keyof TransferFormData)[] = ["beneficiaryType"];
-    if (beneficiaryType === "new")
-      fields.push("accountName", "bank", "accountNumber");
-    else if (savedIndex === undefined) {
-      toast.error("Please select a beneficiary");
-      return;
-    }
-    const valid = await trigger(fields);
-    if (valid) setStep(2);
-  };
 
   const handleStep2 = async () => {
     const amount = watch("amount");
@@ -147,23 +102,19 @@ export default function VendCliqTransfer() {
       return;
     }
 
-    // Validate narration
     if (!narration || narration.trim() === "") {
       toast.error("Please enter a narration");
       return;
     }
 
-    // Check narration minimum length
     if (narration.trim().length < 2) {
       toast.error("Narration is too short (minimum 2 characters)");
       return;
     }
 
-    // If all validations pass, proceed to next step
     setStep(3);
   };
 
-  // Final submission with PIN validation + transfer
   const handleFinalSubmit = async () => {
     if (!pin || pin.length !== 4) {
       toast.error("Please enter a 4-digit PIN");
@@ -184,7 +135,6 @@ export default function VendCliqTransfer() {
     setIsTransferring(true);
 
     try {
-      // 1. Validate PIN → get pinToken
       const validateRes = await handleValidatePin({ pin });
 
       if (validateRes.status !== "success" || !validateRes.data?.validated) {
@@ -195,22 +145,18 @@ export default function VendCliqTransfer() {
 
       const pinToken = validateRes.data.pinToken;
 
-      // 2. Generate unique transactionKey
       const transactionKey = await generateTransactionKey();
 
-      // 3. Get source account number
-      const sourceAccountNumber = wallet?.accountNumbers?.WEMA;
+      const sourceAccountNumber = getAccountNumber("WEMA");
       if (!sourceAccountNumber) {
         toast.error("Your wallet account number not found");
         setIsTransferring(false);
         return;
       }
 
-      // 4. Build payload - ONLY SEND THE AMOUNT USER ENTERED (no fee added)
-      // The server will automatically add ₦3 fee
       const payload = {
         transactionKey,
-        amount: Number(amount), // ← Just the amount user entered (e.g., 100)
+        amount: Number(amount), 
         beneficiaryAccountNumber: accountNumberInput,
         beneficiaryAccountName: accountInfo.accountName,
         beneficiaryProvider: accountInfo.provider,
@@ -221,7 +167,6 @@ export default function VendCliqTransfer() {
         ipAddress: "0.0.0.0",
       };
 
-      // 5. Execute transfer
       const transferRes = await handleVendCliqTransfer(payload);
 
       if (transferRes.status === "success") {
@@ -276,7 +221,6 @@ export default function VendCliqTransfer() {
                         .slice(0, 10);
                       setAccountNumberInput(value);
 
-                      // Reset previous results
                       setAccountInfo(null);
                       setLookupError(null);
 
@@ -324,10 +268,7 @@ export default function VendCliqTransfer() {
                       onClick={() => setStep(2)}
                       className="hover:bg-[#0A6DC012] p-2 rounded-md space-y-1 cursor-pointer transition-all select-none"
                     >
-                      <p
-                        onClick={() => setStep(2)}
-                        className="flex items-center gap-5 font-medium text-[#2F2F2F] text-[16px] font-dm-sans"
-                      >
+                      <p className="flex items-center gap-5 font-medium text-[#2F2F2F] text-[16px] font-dm-sans">
                         {accountInfo.accountName}{" "}
                         <MoveRight className="text-[#0A6DC0]" />
                       </p>
@@ -356,12 +297,12 @@ export default function VendCliqTransfer() {
                   confirm transfer
                 </p>
 
-                <div className="bg-[url('/balance-bg.svg')] my-6 bg-cover bg-no-repeat bg-center  h-[100px] rounded-2xl p-6">
+                <div className="bg-[url('/balance-bg.svg')] my-6 bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6">
                   <div className="space-y-3">
-                    <div className=" flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                       <div className="space-y-1 md:space-y-2">
                         <div className="flex items-center gap-4">
-                          <h1 className="font-bold font-dm-sans font-regular text-[13px]   text-white">
+                          <h1 className="font-bold font-dm-sans font-regular text-[13px] text-white">
                             Wallet Balance
                           </h1>
                           <button
@@ -380,8 +321,8 @@ export default function VendCliqTransfer() {
                             * * * *
                           </h1>
                         ) : (
-                          <h1 className="font-clash text-white text-[20px]  font-semibold">
-                            ₦ {wallet?.balance}
+                          <h1 className="font-clash text-white text-[20px] font-semibold">
+                            ₦ {getBalance() || "0.00"}
                           </h1>
                         )}
                       </div>
@@ -394,7 +335,7 @@ export default function VendCliqTransfer() {
 
                   <div>
                     <p className="font-medium text-[#2F2F2F] font-dm-sans">
-                      {accountInfo?.accountName || "Shotayo Samson Olumide"}
+                      {accountInfo?.accountName}
                     </p>
                     <p className="text-[13px] text-[#2F2F2F] font-dm-sans">
                       {accountNumberInput}
@@ -414,7 +355,7 @@ export default function VendCliqTransfer() {
                         <FormLabel>Enter Amount</FormLabel>
                         <FormControl>
                           <Input
-                            type="number"
+                            
                             placeholder="Enter amount"
                             className="h-[55px]"
                             {...field}
@@ -475,7 +416,7 @@ export default function VendCliqTransfer() {
                       Beneficiary Account Name
                     </h2>
                     <p className="text-[13px] md:text-[16px]">
-                      {accountInfo?.accountName || "Shotayo Samson Olumide"}
+                      {accountInfo?.accountName}
                     </p>
                   </div>
                   <div>

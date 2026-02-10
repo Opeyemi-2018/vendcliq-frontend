@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import { CreatePromoModal } from "./chunks/OfferModal";
 
 const StockDetailPage = () => {
   const router = useRouter();
@@ -29,6 +30,9 @@ const StockDetailPage = () => {
   const [stock, setStock] = useState<StoreStockDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Promo modal control
+  const [promoModalOpen, setPromoModalOpen] = useState(false);
 
   const fetchStockDetail = async () => {
     const token =
@@ -62,6 +66,12 @@ const StockDetailPage = () => {
 
   const handleUpdateSuccess = () => {
     fetchStockDetail();
+  };
+
+  const handlePromoSuccess = () => {
+    // Optional: refresh stock or show message
+    toast.info("Promo created — you may want to refresh stock stats");
+    fetchStockDetail(); // optional
   };
 
   if (loading) {
@@ -109,10 +119,10 @@ const StockDetailPage = () => {
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild className="">
+          <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className=" flex items-center justify-between gap-2"
+              className="flex items-center justify-between gap-2"
             >
               Actions
               <ChevronDown className="h-4 w-4" />
@@ -123,7 +133,7 @@ const StockDetailPage = () => {
             <DropdownMenuItem
               onClick={() =>
                 router.push(
-                  `/dashboards/inventory/my-store/${storeId}/stock/${stockId}/history`,
+                  `/dashboards/inventory/my-store/${storeId}/stock/${stockId}/history`
                 )
               }
               className="cursor-pointer"
@@ -269,11 +279,23 @@ const StockDetailPage = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mt-8">
-          <Button className="w-full py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#09599a]">
+          {/* Create Promo - now opens modal */}
+          <Button
+            className="w-full py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#09599a]"
+            onClick={() => setPromoModalOpen(true)}
+          >
             Create Promo
           </Button>
 
-          {/* Unified Modal */}
+          {/* Promo Modal */}
+          <CreatePromoModal
+            stockId={stock.id}
+            open={promoModalOpen}
+            onOpenChange={setPromoModalOpen}
+            onSuccess={handlePromoSuccess}
+          />
+
+          {/* Existing Update Modal */}
           <UpdateStockModal
             stockId={stock.id}
             productName={stock.product.name}

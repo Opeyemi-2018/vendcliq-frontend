@@ -17,8 +17,8 @@ import { handleGetTransactions } from "@/lib/utils/api/apiHelper";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
-import { useWalletWebSocket } from "@/hooks/useWalletWebSocket";
 import { cn } from "@/lib/utils";
+import { useWallet } from "@/hooks/useWallet";
 
 const TransactionSkeleton = () => (
   <tr className="animate-pulse">
@@ -51,43 +51,28 @@ const Table = () => {
   );
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  const openReceipt = (tx: any) => {
-    setSelectedTransaction(tx);
-  };
+  const { newTransactions, clearNewTransactions, isLiveConnected } = useWallet();
 
-  const closeReceipt = () => {
-    setSelectedTransaction(null);
-  };
-
-  const formatReceiptDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
-
-  // Filter & Search states
   const [typeFilter, setTypeFilter] = useState<"ALL" | "CREDIT" | "DEBIT">(
     "ALL"
   );
   const [searchQuery, setSearchQuery] = useState("");
 
-  // WebSocket for real-time transaction updates
-  useWalletWebSocket({
-    autoConnect: true,
-    onTransactionReceived: (newTransaction) => {
-      setAllTransactions((prev) => {
-        const exists = prev.some((tx) => tx.id === newTransaction.id);
-        if (exists) return prev;
-        return [newTransaction, ...prev];
+  useEffect(() => {
+    if (newTransactions.length > 0) {
+      setAllTransactions(prev => {
+        const existingIds = new Set(prev.map(tx => tx.id));
+        const uniqueNewTxs = newTransactions.filter(tx => !existingIds.has(tx.id));
+        
+        if (uniqueNewTxs.length > 0) {
+          return [...uniqueNewTxs, ...prev];
+        }
+        return prev;
       });
-    },
-  });
+      
+      clearNewTransactions();
+    }
+  }, [newTransactions, clearNewTransactions]);
 
   useEffect(() => {
     const fetchAllTransactions = async () => {
@@ -133,7 +118,6 @@ const Table = () => {
     window.location.reload();
   };
 
-  // Download Receipt Function
   const handleDownloadReceipt = async () => {
     if (!receiptRef.current) return;
 
@@ -175,7 +159,6 @@ const Table = () => {
     }
   };
 
-  // Share Receipt Function
   const handleShareReceipt = async () => {
     if (!receiptRef.current) return;
 
@@ -239,6 +222,26 @@ const Table = () => {
       console.error("Error sharing receipt:", error);
       toast.error("Failed to share receipt. Please try again.");
     }
+  };
+
+  const openReceipt = (tx: any) => {
+    setSelectedTransaction(tx);
+  };
+
+  const closeReceipt = () => {
+    setSelectedTransaction(null);
+  };
+
+  const formatReceiptDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
   };
 
   // Filter & search logic
@@ -331,6 +334,12 @@ const Table = () => {
       <div>
         <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
           Transaction History
+          {isLiveConnected && (
+            <span className="ml-2 inline-flex items-center text-xs text-green-600">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+              Live
+            </span>
+          )}
         </h1>
         <p className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans">
           A summary of all your transactions. Easily track and reconcile all

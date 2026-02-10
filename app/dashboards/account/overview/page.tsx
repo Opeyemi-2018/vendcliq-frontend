@@ -21,8 +21,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { handleCreateWallet } from "@/lib/utils/api/apiHelper";
 import { useStores } from "@/hooks/useStores";
-import { useWalletWebSocket } from "@/hooks/useWalletWebSocket";
-import { useWallet } from "@/hooks/useWalletInfo";
+import { useWallet } from "@/hooks/useWallet";
 
 const Home = () => {
   const { user, isUserPending } = useUser();
@@ -32,8 +31,8 @@ const Home = () => {
     fetchWallet,
     getBalance,
     getAccountNumber,
+    isLiveConnected,
   } = useWallet();
-  useWalletWebSocket({ autoConnect: true });
 
   const [showBalance, setShowBallance] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -161,7 +160,7 @@ const Home = () => {
             today.
           </h1>
           <Button className="w-[150px] pointer-events-none opacity-60 sm:w-[188px] flex items-center bg-white font-medium hover:text-white hover:bg-[#0A2540] text-[16px] font-dm-sans text-[#2F2F2F]">
-            Request Loan <MoveRight />
+            Coming Soon <MoveRight />
           </Button>
         </div>
         <Image
@@ -178,7 +177,7 @@ const Home = () => {
           <div className="flex justify-between items-start">
             <div className="space-y-1 md:space-y-2">
               <div className="flex items-center gap-4">
-                <h1 className="font-bold font-dm-sans text-[13px]  md:text-[16px] text-[#2F2F2F]">
+                <h1 className="font-bold font-dm-sans text-[13px] md:text-[16px] text-[#2F2F2F]">
                   Wallet Balance
                 </h1>
                 <button
@@ -190,11 +189,6 @@ const Home = () => {
               </div>
               {showBalance ? (
                 <h1 className="text-[28px] font-clash font-bold">* * * *</h1>
-              ) : isLoadingWallet ? (
-                <div className="flex items-center gap-2">
-                  <ClipLoader size={20} color="#0A6DC0" />
-                  <span className="text-sm text-[#9E9A9A]">Updating...</span>
-                </div>
               ) : (
                 <h1 className="font-clash text-[#2F2F2F] text-[20px] lg:text-[25px] font-semibold">
                   ₦ {getBalance() || "0.00"}

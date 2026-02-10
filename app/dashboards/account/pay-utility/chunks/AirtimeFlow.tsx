@@ -1,21 +1,27 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-// components/AirtimeFlow.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { airtimeSchema, AirtimeFormData } from "@/types/utilityBills";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/Input";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import Lottie from "lottie-react";
 import animationData from "@/public/animate.json";
-import { ClipLoader } from "react-spinners";
+
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/label";
+import {
+  ChevronLeft,
+  Eye,
+  EyeOff,
+  MoveRight,
+  ChevronDown,
+  MoveLeft,
+} from "lucide-react";
 
 import {
   Form,
@@ -25,47 +31,46 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 
-import { ChevronLeft, EyeOff, Eye } from "lucide-react";
-import Lottie from "lottie-react";
+import { airtimeSchema, AirtimeFormData } from "@/types/utilityBills";
+import { Separator } from "@/components/ui/separator";
 import { getNetworkProvider } from "@/actions/utility";
-import { handleValidatePin } from "@/lib/utils/api/apiHelper";
-import { handleBuyAirtime } from "@/lib/utils/api/apiHelper"; 
-import { generateIdempotencyKey } from "@/lib/utils/generateIdempotencyKey"; 
-import { useUser } from "@/context/userContext";
-import Image from "next/image";
+import { handleValidatePin, handleBuyAirtime } from "@/lib/utils/api/apiHelper";
+import { generateIdempotencyKey } from "@/lib/utils/generateIdempotencyKey";
+import { ClipLoader } from "react-spinners";
 import CreatePinPrompt from "@/components/SetPinModal";
-
+import Image from "next/image";
+import { useWallet } from "@/hooks/useWallet";
 
 const networkLogos: Record<string, string> = {
   MTN: "/logos/mtn.jpeg",
   AIRTEL: "/logos/airtel.svg",
   GLO: "/logos/glo.png",
   "9MOBILE": "/logos/9mobile.jpeg",
-  ETISALAT: "/logos/9mobile.png", 
+  ETISALAT: "/logos/9mobile.png",
 };
 
 const amounts = [100, 200, 500, 1000, 2000, 5000];
 
 export default function AirtimeFlow() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [formData, setFormData] = useState<Partial<AirtimeFormData>>({});
   const [showSuccess, setShowSuccess] = useState(false);
-  const [showBallance, setShowBallance] = useState(false);
-  const [isTransferring, setIsTransferring] = useState(false); 
+  const [showBalance, setShowBalance] = useState(false);
+  const [isTransferring, setIsTransferring] = useState(false);
   const router = useRouter();
   const pinInputRef = useRef<HTMLInputElement>(null);
-  const { wallet } = useUser();
+
+  const { wallet, refreshWallet, getBalance } = useWallet();
 
   const [detectedNetwork, setDetectedNetwork] = useState<string | null>(null);
   const [networkLoading, setNetworkLoading] = useState(false);
@@ -87,11 +92,7 @@ export default function AirtimeFlow() {
 
   useEffect(() => {
     const timer = setTimeout(async () => {
-      // Clean phone: remove everything except digits
       const cleanPhone = phoneNumber?.replace(/\D/g, "") || "";
-
-      console.log("Current phone (raw):", phoneNumber);
-      console.log("Cleaned phone:", cleanPhone, "Length:", cleanPhone.length);
 
       if (cleanPhone.length === 11) {
         setNetworkLoading(true);
@@ -102,8 +103,6 @@ export default function AirtimeFlow() {
           localStorage.getItem("accessToken") ||
           localStorage.getItem("authToken");
 
-        console.log("Token:", token ? "Found" : "Missing");
-
         if (!token) {
           setNetworkError("Please log in to detect network");
           setNetworkLoading(false);
@@ -111,7 +110,6 @@ export default function AirtimeFlow() {
         }
 
         const result = await getNetworkProvider(token, cleanPhone);
-        console.log("API Result:", result);
 
         if (result.success && result.network) {
           setDetectedNetwork(result.network);
@@ -127,7 +125,7 @@ export default function AirtimeFlow() {
         setNetworkError(null);
         setValue("network", "");
       }
-    }, 10);
+    }, 800); // slight debounce
 
     return () => clearTimeout(timer);
   }, [phoneNumber, setValue]);
@@ -157,7 +155,6 @@ export default function AirtimeFlow() {
       return;
     }
 
-    setFormData(values);
     setStep(2);
   };
 
@@ -204,39 +201,36 @@ export default function AirtimeFlow() {
       // 2. Idempotency key
       const idempotencyKey = generateIdempotencyKey();
 
-      // 3. Build payload - match Postman exactly
+      // 3. Build payload - match your Postman exactly
       const payload = {
         phoneNumber: phoneNumber.replace(/\D/g, ""),
-        amount: amountRaw.toString(), // ← force string like Postman
+        amount: amountRaw.toString(), // force string
         pinToken,
         idempotencyKey,
-        deviceFingerprint: "web-client-" + Date.now(), // ← non-empty, realistic
-        ipAddress: "127.0.0.1", // ← non-empty, common fallback
+        deviceFingerprint: "web-client-" + Date.now(),
+        ipAddress: "127.0.0.1",
       };
 
       // 4. Buy airtime
       const response = await handleBuyAirtime(payload);
 
-      console.log("[AIR] Full response:", JSON.stringify(response, null, 2));
-
-      // Success check - matches both success and your error structure
       if (response.status === "success") {
         const ref = response?.data?.transactionReference || "N/A";
         toast.success(
-          response.msg || `Airtime of ₦${amountRaw} sent! Ref: ${ref}`
+          response.msg || `Airtime of ₦${amountRaw} sent! Ref: ${ref}`,
         );
+        await refreshWallet(); // refresh wallet balance
         setShowSuccess(true);
       } else {
-        // Show the REAL backend message
         const errorMsg = response.msg || "Airtime purchase failed";
         toast.error(errorMsg);
       }
     } catch (error: any) {
-      console.error("[AIR] Exception:", error);
+      console.error("[AIRTIME] Exception:", error);
 
       let msg = "Something went wrong. Please try again.";
       if (error?.response?.data?.msg) {
-        msg = error.response.data.msg; // proxy-wrapped error
+        msg = error.response.data.msg;
       } else if (error?.response?.data) {
         msg =
           error.response.data.msg ||
@@ -255,13 +249,12 @@ export default function AirtimeFlow() {
   return (
     <Form {...form}>
       <form>
-        <div className=" md:p-6 lg:border border-[#E4E4E4] rounded-lg bg-white">
+        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg bg-white">
           <div className="flex justify-between mb-2">
-            <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash ">
-            Airtime
-          </h2>
-          
-                    <CreatePinPrompt />
+            <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash">
+              Airtime
+            </h2>
+            <CreatePinPrompt />
           </div>
           <Separator
             orientation="horizontal"
@@ -271,12 +264,12 @@ export default function AirtimeFlow() {
 
           {/* Step 1 */}
           {step === 1 && (
-            <div className="space-y-3 ">
+            <div className="space-y-3">
               <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
                 Buy Airtime with your Vendcliq Account
               </p>
 
-              {/* Phone Number - Simple Input */}
+              {/* Phone Number */}
               <FormField
                 control={form.control}
                 name="phoneNumber"
@@ -384,16 +377,16 @@ export default function AirtimeFlow() {
           )}
 
           {/* Step 2 - Confirm */}
-          {step === 2 && formData && (
+          {step === 2 && (
             <div className="space-y-2 mt-1">
               <button type="button" onClick={() => setStep(1)} className="mt-2">
-                <ChevronLeft size={30} className="" />
+                <MoveLeft />
               </button>
               <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
                 Confirm this purchase before you input PIN
               </p>
 
-              <div className="bg-[url('/balance-bg.svg')]  bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6">
+              <div className="bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <div className="space-y-1 md:space-y-2">
@@ -403,22 +396,22 @@ export default function AirtimeFlow() {
                         </h1>
                         <button
                           type="button"
-                          onClick={() => setShowBallance(!showBallance)}
+                          onClick={() => setShowBalance(!showBalance)}
                         >
-                          {showBallance ? (
+                          {showBalance ? (
                             <EyeOff size={21} color="white" />
                           ) : (
                             <Eye size={23} color="white" />
                           )}
                         </button>
                       </div>
-                      {showBallance ? (
+                      {showBalance ? (
                         <h1 className="text-[28px] text-white font-clash font-bold">
                           ******
                         </h1>
                       ) : (
                         <h1 className="font-clash text-white text-[20px] font-semibold">
-                          ₦{wallet?.balance?.toLocaleString() || "0"}
+                          ₦{getBalance()?.toLocaleString() || "0"}
                         </h1>
                       )}
                     </div>
@@ -432,7 +425,7 @@ export default function AirtimeFlow() {
                     Airtime Amount
                   </p>
                   <p className="text-[16px] font-dm-sans text-[#2F2F2F] font-regular">
-                    ₦{formData.amount?.toLocaleString()}
+                    ₦{watch("amount")?.toLocaleString()}
                   </p>
                 </div>
                 <div>
@@ -440,7 +433,7 @@ export default function AirtimeFlow() {
                     Phone Number
                   </p>
                   <p className="text-[16px] font-dm-sans text-[#2F2F2F] font-regular">
-                    {formData.phoneNumber}
+                    {watch("phoneNumber")}
                   </p>
                 </div>
                 <div>
@@ -448,7 +441,7 @@ export default function AirtimeFlow() {
                     Network Provider
                   </p>
                   <p className="text-[16px] font-dm-sans text-[#2F2F2F] font-regular">
-                    {formData.network}
+                    {detectedNetwork || watch("network")}
                   </p>
                 </div>
               </div>
@@ -467,7 +460,7 @@ export default function AirtimeFlow() {
           {step === 3 && (
             <div className="space-y-8 mt-3">
               <button type="button" onClick={() => setStep(2)} className="mt-2">
-                <ChevronLeft size={30} className="" />
+                <MoveLeft />
               </button>
               <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
                 To proceed with this transaction, please enter your PIN
@@ -588,17 +581,17 @@ export default function AirtimeFlow() {
               className="w-64 h-64 mx-auto drop-shadow-lg"
             />
             <AlertDialogTitle className="text-center text-[#2F2F2F] text-[20px] md:text-[25px] font-semibold font-clash">
-              🎉 Airtime Purchased Successfully🎉
+              🎉 Airtime Purchased Successfully 🎉
             </AlertDialogTitle>
             <AlertDialogDescription className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans text-center">
               <div>
                 <span className="font-bold text-[#2F2F2F]">
-                  ₦{formData.amount?.toLocaleString()}
+                  ₦{watch("amount")?.toLocaleString()}
                 </span>{" "}
                 airtime has been successfully sent to
               </div>
               <div className="font-bold text-[#0A6DC0] text-[18px] tracking-wide">
-                {formData.phoneNumber}
+                {watch("phoneNumber")}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -52,7 +52,6 @@ const SignIN = () => {
         }
 
         const userData = response.data?.user;
-        const walletData = response.data?.user?.wallet;
         const businessData = response.data?.user?.business;
 
         if (userData) {
@@ -72,33 +71,17 @@ const SignIN = () => {
             } : undefined,
           };
 
-          const formattedWalletData = walletData
-            ? {
-                walletId: walletData.walletId,
-                balance: walletData.balance,
-                currency: walletData.currency,
-                accountName: walletData.accountName,
-                accountNumbers: walletData.accountNumbers || {},
-                createdAt: walletData.createdAt,
-                updatedAt: walletData.updatedAt,
-              }
-            : null;
-
           const verificationStatus = businessData
             ? extractVerificationStatus(businessData)
             : null;
 
           setAllUserData(
             formattedUserData,
-            formattedWalletData,
             verificationStatus,
           );
 
           // Store in localStorage for persistence
           localStorage.setItem("user", JSON.stringify(formattedUserData));
-          if (formattedWalletData) {
-            localStorage.setItem("wallet", JSON.stringify(formattedWalletData));
-          }
           if (verificationStatus) {
             localStorage.setItem(
               "verificationStatus",
@@ -123,8 +106,8 @@ const SignIN = () => {
   };
 
   return (
-    <div className="w-full mt-20 lg:max-w-[40rem] mx-auto  px-3 lg:px-10 xl:px-24">
-      <h1 className="font-clash  text-[22px] font-semibold mb-2 text-[#2F2F2F]">
+    <div className="w-full mt-20 lg:max-w-[40rem] mx-auto px-3 lg:px-10 xl:px-24">
+      <h1 className="font-clash text-[22px] font-semibold mb-2 text-[#2F2F2F]">
         Welcome Back
       </h1>
       <p className="text-[#9E9A9A] mb-4 text-[16px] leading-relaxed">
@@ -151,7 +134,7 @@ const SignIN = () => {
                       type="email"
                       placeholder="Enter email"
                       {...field}
-                      className="pl-10 bg-[#D8D8D866] h-12 "
+                      className="pl-10 bg-[#D8D8D866] h-12"
                       disabled={isLoading}
                     />
                   </div>
@@ -177,7 +160,7 @@ const SignIN = () => {
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter password"
                       {...field}
-                      className="pl-10 bg-[#D8D8D866] h-12 "
+                      className="pl-10 bg-[#D8D8D866] h-12"
                       disabled={isLoading}
                     />
                     <button

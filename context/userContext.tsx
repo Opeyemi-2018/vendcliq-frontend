@@ -5,7 +5,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 export interface UserData {
-  createdAt?: string;          
+  createdAt?: string;
   firstname: string;
   lastname: string;
   email: string;
@@ -21,19 +21,6 @@ export interface UserData {
     referredBy: string | null;
     referralCount: number;
   };
-}
-
-export interface WalletData {
-  walletId: number;
-  balance: string;
-  currency: string;
-  accountName: string;
-  accountNumbers: {
-    WEMA?: string;
-    [key: string]: string | undefined;
-  };
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface VerificationStatus {
@@ -72,25 +59,16 @@ export interface VerificationStatus {
 
 interface UserContextType {
   user: UserData | null;
-  wallet: WalletData | null;
   verificationStatus: VerificationStatus | null;
   hasPin: boolean;
-  isLoadingWallet: boolean;
-  walletError: string | null;
   setUser: (user: UserData | null) => void;
-  setWallet: (wallet: WalletData | null) => void;
   setVerificationStatus: (status: VerificationStatus | null) => void;
-  setUserAndWallet: (user: UserData | null, wallet: WalletData | null) => void;
   setAllUserData: (
     user: UserData | null,
-    wallet: WalletData | null,
     verification: VerificationStatus | null,
   ) => void;
-  fetchWallet: () => Promise<void>;
-  refreshWallet: () => Promise<void>;
   isUserPending: boolean;
   getUserFullName: () => string;
-  getWalletBalance: () => string;
   getVerificationProgress: () => {
     completed: number;
     total: number;
@@ -112,20 +90,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
           return JSON.parse(storedUser);
         } catch (error) {
           console.error("Error parsing user data:", error);
-        }
-      }
-    }
-    return null;
-  });
-
-  const [wallet, setWalletState] = useState<WalletData | null>(() => {
-    if (typeof window !== "undefined") {
-      const storedWallet = localStorage.getItem("wallet");
-      if (storedWallet) {
-        try {
-          return JSON.parse(storedWallet);
-        } catch (error) {
-          console.error("Error parsing wallet data:", error);
         }
       }
     }
@@ -155,9 +119,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return false;
   });
 
-  const [isLoadingWallet, setIsLoadingWallet] = useState(false);
-  const [walletError, setWalletError] = useState<string | null>(null);
-
   const setUser = (userData: UserData | null) => {
     setUserState(userData);
     if (userData) {
@@ -173,15 +134,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const setWallet = (walletData: WalletData | null) => {
-    setWalletState(walletData);
-    if (walletData) {
-      localStorage.setItem("wallet", JSON.stringify(walletData));
-    } else {
-      localStorage.removeItem("wallet");
-    }
-  };
-
   const setVerificationStatus = (status: VerificationStatus | null) => {
     setVerificationStatusState(status);
     if (status) {
@@ -191,86 +143,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const setUserAndWallet = (
-    userData: UserData | null,
-    walletData: WalletData | null,
-  ) => {
-    setUser(userData);
-    setWallet(walletData);
-  };
-
   const setAllUserData = (
     userData: UserData | null,
-    walletData: WalletData | null,
     verification: VerificationStatus | null,
   ) => {
     setUser(userData);
-    setWallet(walletData);
     setVerificationStatus(verification);
   };
-
-  // Fetch wallet from API endpoint
-  const fetchWallet = async () => {
-    setIsLoadingWallet(true);
-    setWalletError(null);
-
-    try {
-      const token = 
-        localStorage.getItem("accessToken") || 
-        localStorage.getItem("authToken");
-      
-      if (!token) {
-        setWalletError("No authentication token found");
-        setIsLoadingWallet(false);
-        return;
-      }
-
-      const response = await fetch("https://api.vendcliq.com/api/v1/wallet", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      const data = await response.json();
-
-      if (data.status === "success" && data.data) {
-        const formattedWalletData: WalletData = {
-          walletId: data.data.walletId,
-          balance: data.data.balance,
-          currency: data.data.currency,
-          accountName: data.data.accountName,
-          accountNumbers: data.data.accountNumbers || {},
-          createdAt: data.data.lastUpdated || new Date().toISOString(),
-          updatedAt: data.data.lastUpdated || new Date().toISOString(),
-        };
-
-        setWallet(formattedWalletData);
-      } else {
-        setWalletError(data.msg || "Failed to fetch wallet");
-      }
-    } catch (error: any) {
-      console.error("Wallet fetch error:", error);
-      setWalletError(error.message || "Failed to fetch wallet");
-    } finally {
-      setIsLoadingWallet(false);
-    }
-  };
-
-  // Alias for better semantics
-  const refreshWallet = fetchWallet;
 
   const isUserPending = user?.status === "PENDING";
 
   const getUserFullName = () => {
     if (!user) return "";
     return `${user.firstname} ${user.lastname}`;
-  };
-
-  const getWalletBalance = () => {
-    if (!wallet) return "0.00";
-    return wallet.balance;
   };
 
   const getVerificationProgress = () => {
@@ -301,13 +186,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const clearUserData = () => {
     setUserState(null);
-    setWalletState(null);
     setVerificationStatusState(null);
     setHasPin(false);
-    setIsLoadingWallet(false);
-    setWalletError(null);
     localStorage.removeItem("user");
-    localStorage.removeItem("wallet");
     localStorage.removeItem("userStatus");
     localStorage.removeItem("verificationStatus");
     localStorage.removeItem("hasPin");
@@ -319,21 +200,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
     <UserContext.Provider
       value={{
         user,
-        wallet,
         verificationStatus,
         hasPin,
-        isLoadingWallet,
-        walletError,
         setUser,
-        setWallet,
         setVerificationStatus,
-        setUserAndWallet,
         setAllUserData,
-        fetchWallet,
-        refreshWallet,
         isUserPending,
         getUserFullName,
-        getWalletBalance,
         getVerificationProgress,
         getReferralCode,
         getReferralCount,

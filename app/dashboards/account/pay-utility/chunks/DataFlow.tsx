@@ -1,19 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-// components/DataFlow.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DataSchema, DataFormData, DataPlanItem } from "@/types/utilityBills";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import Lottie from "lottie-react";
 import animationData from "@/public/animate.json";
+
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/label";
+import {
+  ChevronLeft,
+  Eye,
+  EyeOff,
+  MoveRight,
+  ChevronDown,
+  MoveLeft,
+  ChevronRight,
+} from "lucide-react";
 
 import {
   Form,
@@ -23,10 +32,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -34,21 +43,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import { ChevronLeft, ChevronRight, EyeOff, Eye } from "lucide-react";
-import Lottie from "lottie-react";
-import { getNetworkProvider } from "@/actions/utility";
-import { Input } from "@/components/ui/Input";
+import { DataSchema, DataFormData, DataPlanItem } from "@/types/utilityBills";
+import { Separator } from "@/components/ui/separator";
+import { getNetworkProvider, fetchDataPlans } from "@/actions/utility";
 import { ClipLoader } from "react-spinners";
-import { fetchDataPlans } from "@/actions/utility";
-import { useUser } from "@/context/userContext";
-import Image from "next/image";
-import CreatePinPrompt from "@/components/SetPinModal";
-
-
 import { handleValidatePin, handleBuyData } from "@/lib/utils/api/apiHelper";
 import { generateIdempotencyKey } from "@/lib/utils/generateIdempotencyKey";
+import CreatePinPrompt from "@/components/SetPinModal";
+import Image from "next/image";
+import { useWallet } from "@/hooks/useWallet";
 
-// Network logos
 const networkLogos: Record<string, string> = {
   MTN: "/logos/mtn.jpeg",
   AIRTEL: "/logos/airtel.svg",
@@ -59,14 +63,14 @@ const networkLogos: Record<string, string> = {
 
 export default function DataFlow() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [formData, setFormData] = useState<Partial<DataFormData>>({});
   const [showSuccess, setShowSuccess] = useState(false);
-  const [showBallance, setShowBallance] = useState(false);
+  const [showBalance, setShowBalance] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [isPaying, setIsPaying] = useState(false);
   const router = useRouter();
   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { wallet } = useUser();
+
+  const { wallet, refreshWallet, getBalance } = useWallet();
 
   const [detectedNetwork, setDetectedNetwork] = useState<string | null>(null);
   const [networkLoading, setNetworkLoading] = useState(false);
@@ -106,7 +110,7 @@ export default function DataFlow() {
   const startIndex = currentPage * ITEMS_PER_PAGE;
   const currentPlans = fetchedPlans.slice(
     startIndex,
-    startIndex + ITEMS_PER_PAGE
+    startIndex + ITEMS_PER_PAGE,
   );
 
   // Network detection
@@ -145,12 +149,12 @@ export default function DataFlow() {
         setNetworkError(null);
         setValue("network", "");
       }
-    }, 10);
+    }, 800); // debounce
 
     return () => clearTimeout(timer);
   }, [phoneNumber, setValue]);
 
-  // Fetch plans after network detection
+  // Fetch data plans when network is detected
   useEffect(() => {
     const cleanPhone = phoneNumber?.replace(/\D/g, "") || "";
 
@@ -188,7 +192,7 @@ export default function DataFlow() {
     }
   }, [phoneNumber, detectedNetwork]);
 
-  // Auto-select first plan
+  // Auto-select first plan if none selected
   useEffect(() => {
     if (fetchedPlans.length > 0 && !getValues("dataBundle")?.size) {
       const first = fetchedPlans[0];
@@ -224,7 +228,6 @@ export default function DataFlow() {
       return;
     }
 
-    setFormData(values);
     setStep(2);
   };
 
@@ -252,7 +255,7 @@ export default function DataFlow() {
 
       // 2. Selected plan
       const selectedPlan = fetchedPlans.find(
-        (p) => p.dataBundle === getValues("dataBundle.size")
+        (p) => p.dataBundle === getValues("dataBundle.size"),
       );
 
       if (!selectedPlan) {
@@ -260,30 +263,33 @@ export default function DataFlow() {
         return;
       }
 
-      // 3. Build payload (exact Postman format)
+      // 3. Build payload
       const payload = {
         phoneNumber: getValues("phoneNumber").replace(/\D/g, ""),
         productId: selectedPlan.productId,
-        amount: selectedPlan.amount, // string
+        amount: selectedPlan.amount.toString(), // string
         network: getValues("network"),
         pinToken,
         idempotencyKey: generateIdempotencyKey(),
-        deviceFingerprint: "3.345",
+        deviceFingerprint: "web-client-" + Date.now(),
         ipAddress: "127.0.0.1",
       };
 
-      // 4. Real purchase
+      // 4. Buy data
       const response = await handleBuyData(payload);
 
       if (response.status === "success") {
         toast.success(response.msg || "Data purchased successfully!");
+        await refreshWallet(); // refresh balance
         setShowSuccess(true);
       } else {
         toast.error(response.msg || "Data purchase failed");
       }
     } catch (error: any) {
-      console.error("Purchase error:", error);
-      toast.error(error.message || "Something went wrong");
+      console.error("[DATA] Exception:", error);
+      const msg =
+        error?.response?.data?.msg || error?.message || "Something went wrong";
+      toast.error(msg);
     } finally {
       setIsPaying(false);
     }
@@ -304,12 +310,12 @@ export default function DataFlow() {
   return (
     <Form {...form}>
       <form>
-        <div className=" md:p-6 lg:border border-[#E4E4E4] rounded-lg bg-white">
+        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg bg-white">
           <div className="flex justify-between mb-2">
-            <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash ">
-            Data
-          </h2>
-          <CreatePinPrompt/>
+            <h2 className="text-[16px] text-[#2F2F2F] font-semibold font-clash">
+              Data
+            </h2>
+            <CreatePinPrompt />
           </div>
           <Separator
             orientation="horizontal"
@@ -318,7 +324,7 @@ export default function DataFlow() {
           />
 
           {step === 1 && (
-            <div className="space-y-3 ">
+            <div className="space-y-3">
               <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
                 Buy Data with your Vendcliq Account
               </p>
@@ -383,7 +389,7 @@ export default function DataFlow() {
                 </div>
               </div>
 
-              {/* Real Data Plans */}
+              {/* Data Plans */}
               <div>
                 <Label>Select Data Plans</Label>
 
@@ -399,8 +405,6 @@ export default function DataFlow() {
                   </p>
                 ) : (
                   <>
-                    {/* Prev/Next */}
-
                     {/* Plans Grid */}
                     <div className="grid grid-cols-3 md:grid-cols-4 gap-1 md:gap-4 mt-1">
                       {currentPlans.map((plan: DataPlanItem, index: number) => (
@@ -415,7 +419,7 @@ export default function DataFlow() {
                                 validity: plan.validity,
                                 price: Number(plan.amount),
                               },
-                              { shouldValidate: true }
+                              { shouldValidate: true },
                             )
                           }
                           className={`p-2 h-[110px] md:h-[95px] flex flex-col items-center justify-center text-[12px] font-medium font-dm-sans rounded-xl transition-all ${
@@ -431,6 +435,7 @@ export default function DataFlow() {
                       ))}
                     </div>
 
+                    {/* Pagination */}
                     <div className="flex justify-between items-center my-4">
                       <Button
                         variant="outline"
@@ -476,16 +481,15 @@ export default function DataFlow() {
           )}
 
           {/* Step 2 - Confirm */}
-          {step === 2 && formData && (
+          {step === 2 && (
             <div className="space-y-2 mt-1">
-              <button onClick={() => setStep(1)}>
-                <ChevronLeft size={30} />
+              <button type="button" onClick={() => setStep(1)} className="mt-2">
+                <MoveLeft />
               </button>
               <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
                 Confirm this purchase before you input PIN
               </p>
 
-              {/* Wallet Balance */}
               <div className="bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -496,22 +500,22 @@ export default function DataFlow() {
                         </h1>
                         <button
                           type="button"
-                          onClick={() => setShowBallance(!showBallance)}
+                          onClick={() => setShowBalance(!showBalance)}
                         >
-                          {showBallance ? (
+                          {showBalance ? (
                             <EyeOff size={21} color="white" />
                           ) : (
                             <Eye size={23} color="white" />
                           )}
                         </button>
                       </div>
-                      {showBallance ? (
+                      {showBalance ? (
                         <h1 className="text-[28px] text-white font-clash font-bold">
                           ******
                         </h1>
                       ) : (
                         <h1 className="font-clash text-white text-[20px] font-semibold">
-                          ₦{wallet?.balance?.toLocaleString() || "0"}
+                          ₦{getBalance()?.toLocaleString() || "0"}
                         </h1>
                       )}
                     </div>
@@ -519,14 +523,13 @@ export default function DataFlow() {
                 </div>
               </div>
 
-              {/* Purchase Details */}
               <div className="space-y-2">
                 <div>
                   <p className="text-[#2F2F2F] font-dm-sans font-bold text-[16px]">
                     Amount
                   </p>
                   <p className="text-[16px] font-dm-sans text-[#2F2F2F] font-regular">
-                    ₦{formData.dataBundle?.price?.toLocaleString()}
+                    ₦{watch("dataBundle.price")?.toLocaleString()}
                   </p>
                 </div>
                 <div>
@@ -534,8 +537,7 @@ export default function DataFlow() {
                     Data Bundle
                   </p>
                   <p className="text-[16px] font-dm-sans text-[#2F2F2F] font-regular">
-                    {formData.dataBundle?.size} •{" "}
-                    {formData.dataBundle?.validity}
+                    {watch("dataBundle.size")} • {watch("dataBundle.validity")}
                   </p>
                 </div>
                 <div>
@@ -543,7 +545,7 @@ export default function DataFlow() {
                     Phone Number
                   </p>
                   <p className="text-[16px] font-dm-sans text-[#2F2F2F] font-regular">
-                    {formData.phoneNumber}
+                    {watch("phoneNumber")}
                   </p>
                 </div>
               </div>
@@ -558,24 +560,24 @@ export default function DataFlow() {
             </div>
           )}
 
-          {/* Step 3 - 4-box PIN */}
+          {/* Step 3 - PIN Entry */}
           {step === 3 && (
             <div className="space-y-8 mt-3">
-              <button type="button" onClick={() => setStep(2)} className="mt-8">
-                <ChevronLeft size={30} />
+              <button type="button" onClick={() => setStep(2)} className="mt-2">
+                <MoveLeft />
               </button>
               <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
                 To proceed with this transaction, please enter your PIN
               </p>
 
-              {/* 4-Box PIN */}
-              <div className="flex gap-4 ">
+              {/* PIN Boxes */}
+              <div className="flex gap-4">
                 {[0, 1, 2, 3].map((index) => (
                   <div key={index} className="relative">
                     <div
                       className={`w-16 h-16 border-2 rounded-xl flex items-center justify-center text-[16px] font-medium transition-all relative ${
                         watch("pin")?.[index]
-                          ? "border-[#0A6DC0] bg-[#0A6DC01A] "
+                          ? "border-[#0A6DC0] bg-[#0A6DC01A]"
                           : "border-[#D8D8D866] bg-[#F9F9F9]"
                       } ${
                         watch("pin")?.length === index
@@ -652,17 +654,23 @@ export default function DataFlow() {
               <Button
                 type="button"
                 onClick={handleMakePayment}
-                disabled={isPaying}
+                disabled={isPaying || watch("pin")?.length !== 4}
                 className="w-full bg-[#0A6DC0] hover:bg-[#09599a] font-dm-sans py-6"
               >
-                {isPaying ? "Processing..." : "Make Payment"}
+                {isPaying ? (
+                  <>
+                    <ClipLoader size={20} color="white" className="mr-2" />
+                    Processing...
+                  </>
+                ) : (
+                  "Make Payment"
+                )}
               </Button>
             </div>
           )}
         </div>
       </form>
 
-      {/* Success Modal */}
       {/* Success Modal */}
       <AlertDialog open={showSuccess} onOpenChange={setShowSuccess}>
         <AlertDialogContent className="text-center w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[600px]">
@@ -678,15 +686,13 @@ export default function DataFlow() {
             <AlertDialogDescription className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans text-center">
               <div>
                 <span className="font-bold text-[#2F2F2F]">
-                  {formData.dataBundle?.size} . {formData.dataBundle?.validity}
+                  {watch("dataBundle.size")} • {watch("dataBundle.validity")}
                 </span>{" "}
                 data has been sent!
               </div>
-
               <div className="text-[#0A6DC0] font-semibold tracking-wide text-[17px]">
-                to {formData.phoneNumber}
+                to {watch("phoneNumber")}
               </div>
-
               <div className="text-[#9E9A9A] text-[14px] mt-4">
                 Thank you for using Vendcliq!
               </div>

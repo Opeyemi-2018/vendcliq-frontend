@@ -17,7 +17,7 @@ import { useState, useEffect, useMemo } from "react";
 import { handleGetTransactions } from "@/lib/utils/api/apiHelper";
 import { TransactionHistoryResponse } from "@/types/transactions";
 import { useRouter } from "next/navigation";
-import { useWalletWebSocket } from "@/hooks/useWalletWebSocket";
+import { useWallet } from "@/hooks/useWallet";
 
 const Loans = [
   {
@@ -83,21 +83,31 @@ const Table = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
 
-  // WebSocket for real-time transaction updates
-  useWalletWebSocket({
-    autoConnect: true,
-    onTransactionReceived: (newTransaction) => {
-      // Add new transaction to the top of the list
+  // Use wallet hook for WebSocket updates
+  const { newTransactions, clearNewTransactions, isLiveConnected } =
+    useWallet();
+
+  // Add new transactions from WebSocket to the list
+  useEffect(() => {
+    if (newTransactions.length > 0) {
       setTransactions((prev) => {
-        // Check if transaction already exists (avoid duplicates)
-        const exists = prev.some((tx) => tx.id === newTransaction.id);
-        if (exists) return prev;
-        
-        // Add new transaction to the top
-        return [newTransaction, ...prev];
+        // Filter out duplicates
+        const existingIds = new Set(prev.map((tx) => tx.id));
+        const uniqueNewTxs = newTransactions.filter(
+          (tx) => !existingIds.has(tx.id),
+        );
+
+        if (uniqueNewTxs.length > 0) {
+          // Add new transactions to the top
+          return [...uniqueNewTxs, ...prev];
+        }
+        return prev;
       });
-    },
-  });
+
+      // Clear new transactions after adding them
+      clearNewTransactions();
+    }
+  }, [newTransactions, clearNewTransactions]);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -186,6 +196,7 @@ const Table = () => {
             }`}
           >
             Payment Transactions
+            
           </button>
           {/* <button
             onClick={() => setActiveTab(tabs[1])}

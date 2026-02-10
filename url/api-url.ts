@@ -109,6 +109,8 @@ const GET_PURCHASE_REQUEST_BY_ID = (id: string) => `inventory/invoices/${id}`;
 const GET_SALE_BY_ID = (id: string) => `inventory/invoices/${id}`;
 const HAND_OVER_ITEM = "inventory/items/verify-handover";
  const SUPPLIER_SALES = "inventory/dashboard/supplier-sales";
+  const GET_STORE_ITEMS_SALES = "inventory/dashboard/store-items";
+  const CREATE_OFFER = "inventory/offers";
 
 export {
   // v2 endpoint
@@ -175,6 +177,8 @@ export {
   HAND_OVER_ITEM,
   SUPPLIER_SALES,
  EDIT_INVOICE,
+ GET_STORE_ITEMS_SALES,
+ CREATE_OFFER,
 
   // v1 endpoint
   GET_PROFILE,

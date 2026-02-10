@@ -143,6 +143,8 @@ import {
   SUPPLIER_SALES,
   EDIT_INVOICE,
   GET_WALLET,
+  GET_STORE_ITEMS_SALES,
+  CREATE_OFFER,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -915,4 +917,34 @@ export const getTotalSales = async (
     stores: [],
     medium: {},
   }) as SupplierSalesResponse;
+};
+
+
+
+export const getStoreStockSales = async (
+  storeId: string,
+  startDate: string,
+  endDate: string,
+): Promise<any> => {
+  const params = new URLSearchParams({
+    startDate,
+    endDate,
+    storeId,
+  }).toString();
+
+  const url = `${GET_STORE_ITEMS_SALES}?${params}`;
+
+  return await fetcher(url);
+};
+
+
+export const handleCreatePromo = async (payload: {
+  stock_id: string;
+  qty: number;
+  price: number;
+  expiry_date: string;
+  minimum_qty: number;
+  supply_fee: number;
+}): Promise<any> => {
+  return await poster(CREATE_OFFER, payload);
 };

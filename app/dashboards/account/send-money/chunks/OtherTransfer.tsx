@@ -74,7 +74,7 @@ import {
 } from "@/lib/utils/api/apiHelper";
 import { generateTransactionKey } from "@/lib/utils/generateTransactionKey";
 import CreatePinPrompt from "@/components/SetPinModal";
-import { useWallet } from "@/hooks/useWalletInfo";
+import { useWallet } from "@/hooks/useWallet";
 
 export default function OtherBankTransfer() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);

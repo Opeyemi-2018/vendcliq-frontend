@@ -5,30 +5,24 @@ import { ReactNode, useEffect, useRef } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 
-// Create an inner component that uses the sidebar hook
 const DashboardContent = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const mainRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Reset scroll position when route changes
   useEffect(() => {
-    // Try scrolling the content div first
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
     }
 
-    // Also try the main element
     if (mainRef.current) {
       mainRef.current.scrollTop = 0;
     }
 
-    // And window as fallback
     window.scrollTo(0, 0);
 
-    // Also try to find any element with overflow
     const scrollContainers = document.querySelectorAll(
-      "[data-scroll-container]"
+      "[data-scroll-container]",
     );
     scrollContainers.forEach((container) => {
       container.scrollTop = 0;

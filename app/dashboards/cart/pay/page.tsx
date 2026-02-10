@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -19,8 +20,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { handlePayInvoice } from "@/lib/utils/api/apiHelper";
-import { useUser } from "@/context/userContext";
 import { toast } from "sonner";
+import { useWallet } from "@/hooks/useWallet";
 
 interface CheckoutData {
   invoiceId: string;
@@ -43,7 +44,7 @@ interface TransferDetails {
 
 const PayPage = () => {
   const router = useRouter();
-  const { wallet } = useUser();
+  const { wallet, getBalance } = useWallet();
 
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -220,7 +221,7 @@ const PayPage = () => {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-2 md:gap-8 mt-3 md:mt-8">
-        <div className="block lg:hidden flex gap-2  bg-[#ECECF080] p-1 rounded-lg">
+        <div className="block lg:hidden flex gap-2 bg-[#ECECF080] p-1 rounded-lg">
           <button
             onClick={() => setPaymentMethod("WALLET")}
             className={`
@@ -243,12 +244,12 @@ const PayPage = () => {
                     ? "bg-[#0A6DC0] text-white"
                     : "text-[#9E9A9A]"
                 }
-        `}
+              `}
           >
             Bank Transfer
           </button>
         </div>
-        <div className=" md:p-6 lg:border border-[#E4E4E4] rounded-lg h-full lg:w-[35%] bg-white hidden lg:block">
+        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg h-full lg:w-[35%] bg-white hidden lg:block">
           {/* Desktop Cards */}
           <div className="hidden lg:block space-y-4">
             <div
@@ -276,7 +277,7 @@ const PayPage = () => {
         </div>
 
         {/* Right: Summary & Form */}
-        <div className=" md:p-6 lg:border border-[#E4E4E4] rounded-lg  lg:w-[65%] bg-white">
+        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg lg:w-[65%] bg-white">
           <h1 className="font-semibold font-clash mb-2">Summary</h1>
           <Separator className="md:mb-4" />
           <p className="font-dm-sans text-[#9E9A9A] mb-2 md:mb-6">
@@ -298,7 +299,7 @@ const PayPage = () => {
                   <h1 className="text-3xl font-bold font-clash">
                     {showBalance
                       ? "****"
-                      : `₦${wallet?.balance?.toLocaleString() || "0"}`}
+                      : `₦${(getBalance() ?? 0).toLocaleString()}`}
                   </h1>
                 </div>
               </div>
@@ -320,7 +321,7 @@ const PayPage = () => {
               <span className="">₦{checkoutData.cost.toLocaleString()}</span>
             </div>
             <Separator />
-            <div className="flex justify-between  font-bold">
+            <div className="flex justify-between font-bold">
               <span>Total Amount</span>
               <span>₦{checkoutData.total.toLocaleString()}</span>
             </div>
@@ -480,7 +481,7 @@ const PayPage = () => {
               <div className="bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg p-2 flex justify-between items-start">
                 <div>
                   <p className="text-gray-600 text-sm">Account Number</p>
-                  <p className=" font-medium">
+                  <p className="font-medium">
                     {transferDetails.accountNumber || "N/A"}
                   </p>
                 </div>
@@ -529,20 +530,23 @@ const PayPage = () => {
                   )}
                 </Button>
               </div>
+
               <div className="bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg p-2">
                 <p className="text-gray-600 text-sm">Bank</p>
                 <p className="font-medium">
                   {transferDetails.bankName || "N/A"}
                 </p>
               </div>
+
               {transferDetails.expectedAmount && (
-                <div className="bg-[#F7FAFF] border border-[#0A6DC0] rounded-lg p-2  text-center">
+                <div className="bg-[#F7FAFF] border border-[#0A6DC0] rounded-lg p-2 text-center">
                   <p className="text-gray-600 text-sm">Amount</p>
-                  <p className=" font-bold text-[#0A6DC0]">
+                  <p className="font-bold text-[#0A6DC0]">
                     ₦{transferDetails.expectedAmount.toLocaleString()}
                   </p>
                 </div>
               )}
+
               {transferDetails.expiresAt && (
                 <div className="bg-[#FFF4E6] border-[#FFB020] border rounded-lg p-2 text-[#FFB020] text-sm pt-2">
                   Expires:{" "}
@@ -585,7 +589,7 @@ const PayPage = () => {
 
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-3">
             <AlertDialogCancel onClick={handleTransferNotSent}>
-              I haven&apos;t sent it yet
+              I haven’t sent it yet
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleTransferSent}

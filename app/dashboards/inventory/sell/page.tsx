@@ -25,6 +25,7 @@ import {
   Trash2,
   UserRound,
   X,
+  Edit,
 } from "lucide-react";
 import { getStores } from "@/actions/stores";
 import { getCustomers } from "@/actions/getcustomers";
@@ -115,7 +116,9 @@ interface InvoiceItem {
   product_image: string;
   quantity: number;
   mode: "PACKS" | "PIECES";
+  price: number;
   discounted_amount: number;
+  payable_amount: number;
   empties?: { type: "CREDIT" | "SELL"; quantity: number };
 }
 
@@ -149,6 +152,8 @@ const Sell = () => {
     null,
   );
   const [emptiesQuantityInput, setEmptiesQuantityInput] = useState("");
+  const [isPriceEditable, setIsPriceEditable] = useState(false);
+
   const customerForm = useForm<CustomerForm>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
@@ -163,16 +168,36 @@ const Sell = () => {
   const invoiceForm = useForm({
     defaultValues: {
       stock_id: "",
-      quantity: "",
+      quantity: "1",
       delivery: false,
       mode: "PACKS",
-      discounted_amount: "",
+      discounted_amount: "0",
       empties_type: "",
       empties_quantity: "",
       store_address: "",
       price: "",
+      payable_amount: "",
     },
   });
+
+  // Calculate payable amount whenever price, quantity, or discount changes
+  useEffect(() => {
+    const price = parseFloat(invoiceForm.getValues("price") || "0");
+    const quantity = parseInt(invoiceForm.getValues("quantity") || "1");
+    const discount = parseFloat(
+      invoiceForm.getValues("discounted_amount") || "0",
+    );
+
+    const totalPrice = price * quantity;
+    const totalDiscount = discount * quantity;
+    const payable = totalPrice - totalDiscount;
+
+    invoiceForm.setValue("payable_amount", payable.toFixed(2));
+  }, [
+    invoiceForm.watch("price"),
+    invoiceForm.watch("quantity"),
+    invoiceForm.watch("discounted_amount"),
+  ]);
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -280,6 +305,7 @@ const Sell = () => {
       if (stockItem) {
         invoiceForm.setValue("price", stockItem.selling_price);
         setSelectedStockItem(stockItem);
+        setIsPriceEditable(false);
       }
     }
   }, [invoiceForm.watch("stock_id"), storeStock]);
@@ -294,17 +320,32 @@ const Sell = () => {
       toast.error("Please select a product and enter quantity");
       return;
     }
+
+    const quantity = parseInt(values.quantity, 10);
+    if (quantity <= 0) {
+      toast.error("Quantity must be greater than 0");
+      return;
+    }
+
     const stockItem = storeStock.find((s) => s.id === values.stock_id);
     if (!stockItem) return;
+
+    const price = parseFloat(values.price || "0");
+    const discount = parseFloat(values.discounted_amount || "0");
+    const totalPrice = price * quantity;
+    const totalDiscount = discount * quantity;
+    const payableAmount = totalPrice - totalDiscount;
 
     const newItem: InvoiceItem = {
       stock_id: values.stock_id,
       product_name: stockItem.product.name,
       sku: stockItem.sku,
       product_image: stockItem.product.image,
-      quantity: parseInt(values.quantity, 10),
+      quantity: quantity,
       mode: values.mode as "PACKS" | "PIECES",
-      discounted_amount: parseFloat(values.discounted_amount || "0"),
+      price: price,
+      discounted_amount: discount,
+      payable_amount: payableAmount,
       empties: values.empties_type
         ? {
             type: values.empties_type as "CREDIT" | "SELL",
@@ -318,16 +359,18 @@ const Sell = () => {
 
     invoiceForm.reset({
       stock_id: "",
-      quantity: "",
+      quantity: "1",
       delivery: false,
       mode: "PACKS",
-      discounted_amount: "",
+      discounted_amount: "0",
       empties_type: "",
       empties_quantity: "",
       store_address: invoiceForm.getValues("store_address"),
       price: "",
+      payable_amount: "",
     });
     setSelectedStockItem(null);
+    setIsPriceEditable(false);
   };
 
   const submitInvoice = async () => {
@@ -346,7 +389,7 @@ const Sell = () => {
       items: invoiceItems.map((item) => ({
         stock_id: item.stock_id,
         quantity: item.quantity,
-        delivery: false,
+        // delivery: false, // Commented out as requested
         mode: item.mode,
         discounted_amount: item.discounted_amount,
         empties: item.empties,
@@ -476,6 +519,12 @@ const Sell = () => {
       setStage("invoice");
     }
   };
+
+  // Calculate total payable amount
+  const totalPayable = invoiceItems.reduce(
+    (sum, item) => sum + item.payable_amount,
+    0,
+  );
 
   if (stage === "select-store") {
     return (
@@ -929,7 +978,6 @@ const Sell = () => {
                           <Button
                             variant="outline"
                             role="combobox"
-                            // bg-[#F9F9F9] h-12 border border-[#D8D8D866]
                             className="w-full justify-between h-12 bg-[#F9F9F9] border border-[#D8D8D866]"
                             disabled={isLoadingStock || storeStock.length === 0}
                           >
@@ -1037,7 +1085,7 @@ const Sell = () => {
                                             {stock.product.name}
                                           </span>
                                           <span className="text-xs text-gray-500 truncate">
-                                            # {stock.selling_price}
+                                            ₦ {stock.selling_price}
                                           </span>
                                         </div>
                                       </div>
@@ -1101,10 +1149,16 @@ const Sell = () => {
                       <FormLabel>Quantity</FormLabel>
                       <FormControl>
                         <Input
-                          type="number"
+                          min="1"
                           placeholder="e.g. 1"
                           {...field}
-                          className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] cursor-pointer"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "" || parseInt(value) > 0) {
+                              field.onChange(value);
+                            }
+                          }}
+                          className="bg-[#F9F9F9] h-12 border border-[#D8D8D866]"
                         />
                       </FormControl>
                       <FormMessage />
@@ -1135,24 +1189,6 @@ const Sell = () => {
                               Sell
                             </label>
                           </div>
-
-                          <FormField
-                            control={invoiceForm.control}
-                            name="delivery"
-                            render={({ field }) => (
-                              <div className="flex items-center space-x-3">
-                                <input
-                                  type="checkbox"
-                                  checked={field.value}
-                                  onChange={field.onChange}
-                                  className="w-5 h-5 accent-[#0A6DC0]"
-                                />
-                                <label className="font-normal cursor-pointer">
-                                  Delivery required
-                                </label>
-                              </div>
-                            )}
-                          />
                         </div>
                       </RadioGroup>
                       <FormMessage />
@@ -1165,12 +1201,18 @@ const Sell = () => {
                   name="discounted_amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Discounted Amount</FormLabel>
+                      <FormLabel>Discount per Unit</FormLabel>
                       <FormControl>
                         <Input
-                          type="number"
+                          min="1"
                           placeholder="e.g. 20"
                           {...field}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "" || parseFloat(value) >= 0) {
+                              field.onChange(value);
+                            }
+                          }}
                           className="bg-[#F9F9F9] h-12 border border-[#D8D8D866]"
                         />
                       </FormControl>
@@ -1180,13 +1222,30 @@ const Sell = () => {
                 />
 
                 <div className="space-y-2">
-                  <Label className="">Price</Label>
-                  <Input
-                    type="number"
-                    value={invoiceForm.getValues("price")}
-                    readOnly
-                          className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] cursor-not-allowed"
-                  />
+                  <Label>Price</Label>
+                  <div className="relative">
+                    <Input
+                      min="0"
+                      value={invoiceForm.getValues("price")}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || parseFloat(value) >= 0) {
+                          invoiceForm.setValue("price", value);
+                        }
+                      }}
+                      readOnly={!isPriceEditable}
+                      className={`bg-[#F9F9F9] h-12 border border-[#D8D8D866] pr-10 ${
+                        !isPriceEditable ? "cursor-not-allowed" : ""
+                      }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsPriceEditable(!isPriceEditable)}
+                      className="absolute right-3 top-3 text-[#0A6DC0] hover:text-[#085a9e]"
+                    >
+                      <Edit className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
 
                 <FormField
@@ -1199,7 +1258,7 @@ const Sell = () => {
                         <Input
                           {...field}
                           readOnly
-                          className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] cursor-pointer"
+                          className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] cursor-not-allowed"
                         />
                       </FormControl>
                       <FormMessage />
@@ -1218,6 +1277,16 @@ const Sell = () => {
                     className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] cursor-pointer"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Amount Payable</Label>
+                <Input
+                  type="number"
+                  value={invoiceForm.getValues("payable_amount")}
+                  readOnly
+                  className="bg-[#F9F9F9] h-12 w-full border border-[#D8D8D866] cursor-not-allowed"
+                />
               </div>
 
               <Button
@@ -1254,6 +1323,9 @@ const Sell = () => {
                         Discount
                       </th>
                       <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                        Payable
+                      </th>
+                      <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                         Actions
                       </th>
                     </tr>
@@ -1269,7 +1341,12 @@ const Sell = () => {
                         </td>
                         <td className="py-4">{item.quantity}</td>
                         <td className="py-4 lowercase">{item.mode}</td>
-                        <td className="py-4">₦{item.discounted_amount}</td>
+                        <td className="py-4">
+                          ₦{item.discounted_amount * item.quantity}
+                        </td>
+                        <td className="py-4 font-semibold text-[#0A6DC0]">
+                          ₦{item.payable_amount.toFixed(2)}
+                        </td>
                         <td className="py-4">
                           <button
                             onClick={() => {
@@ -1287,6 +1364,19 @@ const Sell = () => {
                     ))}
                   </tbody>
                 </table>
+
+                <div className="px-4 pb-4 flex justify-end">
+                  <div className="bg-[#0A6DC012] rounded-lg p-4 min-w-[250px]">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-[16px] text-[#2F2F2F]">
+                        Total Payable:
+                      </span>
+                      <span className="font-bold text-[20px] text-[#0A6DC0]">
+                        ₦{totalPayable.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -1328,11 +1418,10 @@ const Sell = () => {
                   placeholder="Enter quantity"
                   value={emptiesQuantityInput}
                   onChange={(e) => {
-                    // Only allow numbers
                     const value = e.target.value.replace(/[^0-9]/g, "");
                     setEmptiesQuantityInput(value);
                   }}
-                  className="h-12 bg-[#FAFAFA] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="h-12 bg-[#FAFAFA]"
                 />
               </div>
 

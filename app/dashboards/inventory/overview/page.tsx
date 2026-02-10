@@ -23,10 +23,8 @@ import {
 } from "@/lib/utils/api/apiHelper";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
-import { useUser } from "@/context/userContext";
 import { toast } from "sonner";
 import { SupplierSalesMedium, SupplierSalesResponse } from "@/types/sales";
-// ← import your types (adjust path)
 
 type InvoiceItem = {
   id: string;
@@ -45,7 +43,6 @@ type DisplayTransaction = {
 };
 
 const Home = () => {
-  const { user } = useUser();
   const router = useRouter();
 
   const [showBalance, setShowBalance] = useState(true);
@@ -73,18 +70,16 @@ const Home = () => {
   const [salesLoadingRecent, setSalesLoadingRecent] = useState(true);
   const [purchasesLoading, setPurchasesLoading] = useState(true);
 
+  // Set default date range: last 30 days → today
   useEffect(() => {
-    if (user?.createdAt) {
-      const created = new Date(user.createdAt);
-      const userCreatedDate = format(created, "yyyy-MM-dd");
-      const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
+    const today = format(new Date(), "yyyy-MM-dd");
+    const thirtyDaysAgo = format(subDays(new Date(), 30), "yyyy-MM-dd");
 
-      setStartDate(userCreatedDate);
-      setEndDate(yesterday);
-      setTempStartDate(userCreatedDate);
-      setTempEndDate(yesterday);
-    }
-  }, [user]);
+    setStartDate(thirtyDaysAgo);
+    setEndDate(today);
+    setTempStartDate(thirtyDaysAgo);
+    setTempEndDate(today);
+  }, []); // Only run once on mount
 
   // Fetch total + medium breakdown
   useEffect(() => {
@@ -273,7 +268,10 @@ const Home = () => {
                   </h1>
                 ) : (
                   <h1 className="text-[18px] md:text-[28px] font-clash font-bold text-white">
-                    ₦{totalSales.toLocaleString("en-NG")}
+                    ₦
+                    {totalSales.toLocaleString("en-NG", {
+                      minimumFractionDigits: 2,
+                    })}
                   </h1>
                 )}
               </div>
@@ -387,10 +385,6 @@ const Home = () => {
                     </span>
                   </div>
                 ))}
-
-                {/* <div className="mt-6 pt-4 border-t text-right text-lg font-bold text-[#2F2F2F]">
-                  Total Sales: ₦{totalSales.toLocaleString("en-NG")}
-                </div> */}
               </div>
             ) : (
               <p className="text-center text-gray-500 py-10">
@@ -398,16 +392,6 @@ const Home = () => {
               </p>
             )}
           </div>
-          {/* 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setMediumModalOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Close
-            </Button>
-          </DialogFooter> */}
         </DialogContent>
       </Dialog>
 
