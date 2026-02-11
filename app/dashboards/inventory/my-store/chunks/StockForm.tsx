@@ -146,27 +146,46 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
   };
 
   const handleSaveEmpties = () => {
-    if (!tempEmptiesQty) {
+    if (!tempEmptiesQty || tempEmptiesQty.trim() === "") {
       toast.error("Please enter empties quantity");
       return;
     }
-    // price is optional now — server might accept 0 or null
-    form.setValue("empties_qty", tempEmptiesQty);
-    form.setValue("empties_price", tempEmptiesPrice || "0");
+
+    if (!tempEmptiesPrice || tempEmptiesPrice.trim() === "") {
+      toast.error("Please enter empties price");
+      return;
+    }
+
+    // Validate numeric values
+    const qty = parseInt(tempEmptiesQty, 10);
+    const price = parseFloat(tempEmptiesPrice);
+
+    if (isNaN(qty) || qty < 0) {
+      toast.error("Please enter a valid empties quantity");
+      return;
+    }
+
+    if (isNaN(price) || price < 0) {
+      toast.error("Please enter a valid empties price");
+      return;
+    }
+
+    form.setValue("empties_qty", qty.toString());
+    form.setValue("empties_price", price.toString());
     setIsEmptiesModalOpen(false);
-    toast.success("Empties added");
+    toast.success("Empties added successfully");
     setTempEmptiesQty("");
     setTempEmptiesPrice("");
   };
 
   const safeParseInt = (val: string | undefined): number => {
-    if (!val) return 0;
+    if (!val || val === "") return 0;
     const num = parseInt(val, 10);
     return isNaN(num) ? 0 : num;
   };
 
   const safeParseFloat = (val: string | undefined): number => {
-    if (!val) return 0;
+    if (!val || val === "") return 0;
     const num = parseFloat(val);
     return isNaN(num) ? 0 : num;
   };
@@ -174,30 +193,88 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
   const onSubmit = async (values: CreateStockFormData) => {
     setIsSubmitting(true);
 
+    // Parse all numeric values
+    const quantity = safeParseInt(values.quantity);
     const emptiesQty = safeParseInt(values.empties_qty);
+    const emptiesPrice = safeParseFloat(values.empties_price);
+    const costPrice = safeParseFloat(values.cost_price);
+    const sellingPrice = safeParseFloat(values.selling_price);
+    const sellingPricePieces = safeParseFloat(values.selling_price_pieces);
+    const stockAlertNo = safeParseInt(values.stock_alert_no);
+
+    // Validate ALL required fields (everything except batch and supplier)
+    if (!values.product_id || values.product_id.trim() === "") {
+      toast.error("Please select a product");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (quantity <= 0) {
+      toast.error("Please enter a valid quantity (must be greater than 0)");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Empties are optional - no validation needed, backend will handle 0 values
+
+    if (costPrice <= 0) {
+      toast.error("Please enter a valid cost price (must be greater than 0)");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (sellingPrice <= 0) {
+      toast.error(
+        "Please enter a valid selling price (must be greater than 0)",
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (sellingPricePieces <= 0) {
+      toast.error(
+        "Please enter a valid selling price per piece (must be greater than 0)",
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!values.exp_date || values.exp_date.trim() === "") {
+      toast.error("Please select an expiry date");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!values.sku || values.sku.trim() === "") {
+      toast.error("SKU is required");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (stockAlertNo < 0) {
+      toast.error("Stock alert number cannot be negative");
+      setIsSubmitting(false);
+      return;
+    }
 
     const payload: any = {
       product_id: values.product_id,
       store_id: storeId,
-      quantity: safeParseInt(values.quantity),
+      quantity: quantity,
       empties_qty: emptiesQty,
-      cost_price: safeParseFloat(values.cost_price),
-      selling_price: safeParseFloat(values.selling_price),
-      selling_price_pieces: safeParseFloat(values.selling_price_pieces),
-      exp_date: values.exp_date?.trim() || "",
-      sku: (values.sku || selectedProduct?.name || "").trim(),
-      stock_alert_no: safeParseInt(values.stock_alert_no),
+      empties_price: emptiesPrice,
+      cost_price: costPrice,
+      selling_price: sellingPrice,
+      selling_price_pieces: sellingPricePieces,
+      exp_date: values.exp_date.trim(),
+      sku: values.sku.trim(),
+      stock_alert_no: stockAlertNo,
       attributes: {
         type: values.type,
         batch: (values.batch || "").trim(),
         supplier: (values.supplier || "").trim(),
       },
     };
-
-    // Only include empties_price when there are empties
-    if (emptiesQty > 0) {
-      payload.empties_price = safeParseFloat(values.empties_price);
-    }
 
     console.log("Sending stock payload:", JSON.stringify(payload, null, 2));
 
@@ -206,7 +283,21 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
 
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Stock added successfully!");
-        form.reset();
+        form.reset({
+          product_id: "",
+          quantity: "",
+          empties_qty: "",
+          empties_price: "",
+          cost_price: "",
+          selling_price: "",
+          selling_price_pieces: "",
+          exp_date: "",
+          sku: "",
+          stock_alert_no: "",
+          type: "packs",
+          batch: "",
+          supplier: "",
+        });
         setSelectedProduct(null);
         onSuccess?.();
       } else {
@@ -229,6 +320,19 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
     onChange(value);
   };
 
+  const handleDecimalInput = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    onChange: (...event: any[]) => void,
+  ) => {
+    const value = e.target.value.replace(/[^0-9.]/g, "");
+    // Prevent multiple decimal points
+    const parts = value.split(".");
+    if (parts.length > 2) {
+      return;
+    }
+    onChange(value);
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -244,7 +348,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
             return (
               <FormItem className="flex flex-col">
                 <FormLabel className="text-[#2F2F2F] font-dm-sans text-[16px] font-medium">
-                  Select Product
+                  Select Product 
                 </FormLabel>
 
                 <Popover open={open} onOpenChange={setOpen} modal={true}>
@@ -401,7 +505,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-[#2F2F2F] font-dm-sans text-[16px] font-medium">
-                Add Product in
+                Add Product in 
               </FormLabel>
               <FormControl>
                 <RadioGroup
@@ -442,7 +546,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
             <FormItem>
               <div className="flex justify-between items-center mb-2">
                 <FormLabel className="text-[#2F2F2F] text-[16px] font-medium">
-                  Quantity
+                  Quantity 
                 </FormLabel>
 
                 <Dialog
@@ -488,13 +592,18 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                           onChange={(e) => setTempEmptiesPrice(e.target.value)}
                           className="mt-2 h-12"
                           min="0"
+                          step="0.01"
                         />
                       </div>
                     </div>
                     <DialogFooter>
                       <Button
                         variant="outline"
-                        onClick={() => setIsEmptiesModalOpen(false)}
+                        onClick={() => {
+                          setIsEmptiesModalOpen(false);
+                          setTempEmptiesQty("");
+                          setTempEmptiesPrice("");
+                        }}
                       >
                         Cancel
                       </Button>
@@ -513,6 +622,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                 <Input
                   type="text"
                   inputMode="numeric"
+                  placeholder="Enter quantity"
                   value={field.value}
                   onChange={(e) => handleNumericInput(e, field.onChange)}
                   className="bg-[#F3F4F6] h-12"
@@ -525,13 +635,28 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
 
         {/* Show added empties summary */}
         {form.watch("empties_qty") && Number(form.watch("empties_qty")) > 0 && (
-          <div className="bg-blue-50 border border-blue-200 p-2 rounded-lg">
-            <div className="text-[#2F2F2F] font-medium">
-              <span className="text-[12px]">Empties Added:</span>{" "}
-              <span className="text-[12px] font-bold">
-                {form.watch("empties_qty")} units @ ₦
-                {form.watch("empties_price") || "0"} each
-              </span>
+          <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="text-[#2F2F2F] font-medium">
+                <span className="text-[14px]">Empties Added:</span>{" "}
+                <span className="text-[14px] font-bold">
+                  {form.watch("empties_qty")} units @ ₦
+                  {form.watch("empties_price") || "0"} each
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  form.setValue("empties_qty", "");
+                  form.setValue("empties_price", "");
+                  toast.success("Empties removed");
+                }}
+                className="text-red-500 hover:text-red-700 h-auto p-1"
+              >
+                Remove
+              </Button>
             </div>
           </div>
         )}
@@ -543,20 +668,21 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-[#2F2F2F] text-[16px] font-medium">
-                Cost Price
+                Cost Price 
               </FormLabel>
 
               <FormControl>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    #
+                    ₦
                   </span>
                   <Input
                     type="text"
-                    inputMode="numeric"
+                    inputMode="decimal"
+                    placeholder="Enter cost price"
                     value={field.value}
-                    onChange={(e) => handleNumericInput(e, field.onChange)}
-                    className="bg-[#F3F4F6]  h-12 pl-7"
+                    onChange={(e) => handleDecimalInput(e, field.onChange)}
+                    className="bg-[#F3F4F6] h-12 pl-8"
                   />
                 </div>
               </FormControl>
@@ -577,23 +703,21 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
                 {form.watch("type") === "packs"
                   ? "Packs/Crates"
                   : "Pieces/Bottles"}
-                )
+                ) 
               </FormLabel>
 
               <FormControl>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    #
+                    ₦
                   </span>
                   <Input
                     type="text"
-                    inputMode="numeric"
+                    inputMode="decimal"
+                    placeholder="Enter selling price"
                     value={field.value}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^0-9]/g, "");
-                      field.onChange(value);
-                    }}
-                    className="bg-[#F3F4F6] h-12 pl-7"
+                    onChange={(e) => handleDecimalInput(e, field.onChange)}
+                    className="bg-[#F3F4F6] h-12 pl-8"
                   />
                 </div>
               </FormControl>
@@ -603,30 +727,29 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
           )}
         />
 
-        {/* Selling Price per Piece (shown always, but can be optional) */}
+        {/* Selling Price per Piece */}
         <FormField
           control={form.control}
           name="selling_price_pieces"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-[#2F2F2F] text-[16px] font-medium">
-                Selling Price (Per Piece/Bottle)
+                Selling Price (Per Piece/Bottle){" "}
+                
               </FormLabel>
 
               <FormControl>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    #
+                    ₦
                   </span>
                   <Input
                     type="text"
-                    inputMode="numeric"
+                    inputMode="decimal"
+                    placeholder="Enter price per piece"
                     value={field.value}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^0-9]/g, "");
-                      field.onChange(value);
-                    }}
-                    className="bg-[#F3F4F6] h-12 pl-7"
+                    onChange={(e) => handleDecimalInput(e, field.onChange)}
+                    className="bg-[#F3F4F6] h-12 pl-8"
                   />
                 </div>
               </FormControl>
@@ -636,7 +759,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
           )}
         />
 
-        <div className="flex flex-col lg:flex-row items-center gap-4">
+        <div className="flex flex-col lg:flex-row items-start gap-4">
           <FormField
             control={form.control}
             name="batch"
@@ -678,14 +801,14 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
           />
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col lg:flex-row items-start gap-4">
           <FormField
             control={form.control}
             name="exp_date"
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormLabel className="text-[#2F2F2F] text-[16px] font-medium">
-                  Expiry Date
+                  Expiry Date 
                 </FormLabel>
                 <FormControl>
                   <Input type="date" {...field} className="bg-[#F3F4F6] h-12" />
@@ -702,7 +825,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
               <FormItem className="w-full">
                 <div className="flex items-center gap-2">
                   <FormLabel className="text-[#2F2F2F] text-[16px] font-medium">
-                    Low Stock Alert
+                    Low Stock Alert 
                   </FormLabel>
                   <Info className="w-4 h-4 text-[#0A6DC0]" />
                 </div>
@@ -727,7 +850,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-[#2F2F2F] text-[16px] font-medium">
-                SKU
+                SKU 
               </FormLabel>
               <FormControl>
                 <Input
@@ -744,20 +867,22 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
           )}
         />
 
-        <Button
-          type="submit"
-          disabled={isSubmitting || !form.watch("product_id")}
-          className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] h-12 text-[16px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? (
-            <>
-              Adding Stock...{" "}
-              <ClipLoader size={20} color="white" className="ml-2" />
-            </>
-          ) : (
-            "Add Stock"
-          )}
-        </Button>
+        <div className="pt-2">
+          <Button
+            type="submit"
+            disabled={isSubmitting || !form.watch("product_id")}
+            className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] h-12 text-[16px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? (
+              <>
+                Adding Stock...{" "}
+                <ClipLoader size={20} color="white" className="ml-2" />
+              </>
+            ) : (
+              "Add Stock"
+            )}
+          </Button>
+        </div>
       </form>
     </Form>
   );

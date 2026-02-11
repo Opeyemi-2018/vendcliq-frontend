@@ -3,7 +3,7 @@
 
 import { MoveLeft, Loader2, Search, MoveRight } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getStoreById, getStoreStock } from "@/actions/stores";
 import { ThreeDots } from "react-loader-spinner";
 import Image from "next/image";
@@ -53,10 +53,26 @@ interface StockItem {
   status: string;
 }
 
+interface StockResponse {
+  success: boolean;
+  data?: StockItem[];
+  pagination?: {
+    totalPages: number;
+    currentPage: number;
+    totalCount: number;
+    limit: number;
+    nextPage?: number | null;
+  } | null;
+  message?: string;
+}
+
+const ITEMS_PER_PAGE = 5;
+
 const StoreDetailPage = () => {
   const router = useRouter();
   const params = useParams();
   const storeId = params.id as string;
+
   const [searchTerm, setSearchTerm] = useState("");
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -75,19 +91,82 @@ const StoreDetailPage = () => {
     phone: "",
   });
   const [stocks, setStocks] = useState<StockItem[]>([]);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [selectedStocks, setSelectedStocks] = useState<Set<string>>(new Set());
   const [isLoadingStore, setIsLoadingStore] = useState(true);
   const [isLoadingStock, setIsLoadingStock] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddStockOpen, setIsAddStockOpen] = useState(false);
-  const filteredStocks = stocks.filter((item) => {
-    const term = searchTerm.toLowerCase();
 
-    return (
-      item.sku.toLowerCase().includes(term) ||
-      item.product?.name?.toLowerCase().includes(term)
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const filteredStocks = useMemo(() => {
+    if (!searchTerm.trim()) return stocks;
+    const term = searchTerm.toLowerCase().trim();
+    return stocks.filter(
+      (item) =>
+        item.sku?.toLowerCase().includes(term) ||
+        item.product?.name?.toLowerCase().includes(term),
     );
-  });
+  }, [stocks, searchTerm]);
+
+  const paginatedStocks = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredStocks.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredStocks, currentPage]);
+
+  const totalPages = useMemo(
+    () => Math.ceil(filteredStocks.length / ITEMS_PER_PAGE) || 1,
+    [filteredStocks.length],
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(Math.max(1, totalPages));
+    }
+  }, [totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    const fetchData = async () => {
+      setIsLoadingStore(true);
+      const storeResult = await getStoreById(storeId, token);
+
+      if (storeResult?.data) {
+        setStore(storeResult.data);
+      } else {
+        setError("Failed to load store details");
+      }
+      setIsLoadingStore(false);
+
+      setIsLoadingStock(true);
+      const stockResult = (await getStoreStock(
+        storeId,
+        token,
+      )) as StockResponse;
+
+      if (stockResult.success && stockResult.data) {
+        setStocks(stockResult.data);
+        // Prefer server totalCount if available, otherwise use array length
+        setTotalCount(
+          stockResult.pagination?.totalCount ?? stockResult.data.length,
+        );
+      } else {
+        setError(stockResult.message || "Failed to load stock items");
+      }
+      setIsLoadingStock(false);
+    };
+
+    if (storeId) {
+      fetchData();
+    }
+  }, [storeId]);
 
   useEffect(() => {
     if (store) {
@@ -106,37 +185,6 @@ const StoreDetailPage = () => {
       });
     }
   }, [store]);
-
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) return;
-
-    const fetchData = async () => {
-      setIsLoadingStore(true);
-      const storeResult = await getStoreById(storeId, token);
-
-      if (storeResult?.data) {
-        setStore(storeResult.data);
-      } else {
-        setError("Failed to load store details");
-      }
-      setIsLoadingStore(false);
-
-      setIsLoadingStock(true);
-      const stockResult = await getStoreStock(storeId, token);
-
-      if (stockResult.success && Array.isArray(stockResult.data)) {
-        setStocks(stockResult.data);
-      } else {
-        setError(stockResult.message || "Failed to load stock items");
-      }
-      setIsLoadingStock(false);
-    };
-
-    if (storeId) {
-      fetchData();
-    }
-  }, [storeId]);
 
   const handleUpdateStoreDetails = async () => {
     try {
@@ -220,24 +268,90 @@ const StoreDetailPage = () => {
   };
 
   const handleSelectAll = () => {
-    if (selectedStocks.size === stocks.length) {
+    if (
+      selectedStocks.size === filteredStocks.length &&
+      filteredStocks.length > 0
+    ) {
       setSelectedStocks(new Set());
     } else {
-      setSelectedStocks(new Set(stocks.map((s) => s.id)));
+      setSelectedStocks(new Set(filteredStocks.map((s) => s.id)));
     }
   };
 
   const handleMoveSelected = () => {
     const selectedStockItems = stocks.filter((s) => selectedStocks.has(s.id));
-
-    // Store selected stocks in sessionStorage to pass to move page
     sessionStorage.setItem(
       "selectedStocksToMove",
       JSON.stringify(selectedStockItems),
     );
-
-    // Navigate to move stock page
     router.push(`/dashboards/inventory/my-store/${storeId}/moveStock`);
+  };
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    const end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(
+        <Button
+          key={i}
+          variant={currentPage === i ? "default" : "outline"}
+          size="sm"
+          className={`h-8 w-8 ${
+            currentPage === i
+              ? "bg-[#0A6DC0] text-white hover:bg-[#0A6DC0]"
+              : ""
+          }`}
+          onClick={() => setCurrentPage(i)}
+        >
+          {i}
+        </Button>,
+      );
+    }
+
+    const showingStart = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+    const showingEnd = Math.min(
+      currentPage * ITEMS_PER_PAGE,
+      filteredStocks.length,
+    );
+
+    return (
+      <div className="flex flex-row justify-between items-center mt-6 gap-4 px-2">
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((p) => p - 1)}
+          className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24 disabled:opacity-40"
+        >
+          <MoveLeft /> Previous
+        </button>
+
+        <div className="hidden lg:flex items-center gap-2 flex-wrap justify-center">
+          {pages}
+        </div>
+
+        <div className="flex items-center gap-8 lg:gap-10">
+          <button
+            disabled={currentPage >= totalPages}
+            onClick={() => setCurrentPage((p) => p + 1)}
+            className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24 disabled:opacity-40"
+          >
+            Next <MoveRight />
+          </button>
+
+          <div className="hidden lg:block text-sm text-gray-600 dark:text-gray-400">
+            Showing {showingStart} – {showingEnd} of {filteredStocks.length}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (isLoadingStore || isLoadingStock) {
@@ -274,7 +388,7 @@ const StoreDetailPage = () => {
 
       <div className="flex flex-col gap-2 md:flex-row md:items-center justify-between">
         <div>
-          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F] dark:text-white">
+          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F] ">
             {store.name}
           </h1>
           <p className="text-[16px] font-dm-sans text-[#9E9A9A] dark:text-gray-400">
@@ -290,7 +404,6 @@ const StoreDetailPage = () => {
         </Button>
       </div>
 
-      {/* Stock Value Card */}
       <div className="bg-[url('/balance-bg.svg')] my-6 bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6">
         <div className="space-y-2">
           <div className="flex items-center gap-1">
@@ -303,7 +416,6 @@ const StoreDetailPage = () => {
         </div>
       </div>
 
-      {/* Store Info Card */}
       <div className="mt-6 md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-6 mt-6">
           <div className="space-y-2">
@@ -376,25 +488,6 @@ const StoreDetailPage = () => {
           )}
         </div>
 
-        {/* <div className="space-y-2 font-dm-sans mt-8">
-          <div className="text-[#2F2F2F]  flex justify-between items-center">
-            <p className="font-bold text-[13px] md:text-[16px]">
-              Payment Options
-            </p>
-            <button className="text-[#0A6DC0] font-bold text-[13px] md:text-[16px]">
-              + New Payment Method
-            </button>
-          </div>
-          <div className="flex justify-between items-center border border-[#D8D8D866] dark:border-gray-700 p-2 rounded-lg">
-            <p className="text-[13px] md:text-[16px]">Opay POS</p>
-            <Trash2 color="#9E9A9A" size={20} />
-          </div>
-          <div className="flex justify-between items-center border border-[#D8D8D866] dark:border-gray-700 p-2 rounded-lg">
-            <p className="text-[13px] md:text-[16px]">Ajo POS</p>
-            <Trash2 color="#9E9A9A" size={20} />
-          </div>
-        </div> */}
-
         <div className="flex items-center justify-between mt-8 gap-4">
           <Button
             onClick={() => setIsEditOpen(true)}
@@ -404,7 +497,7 @@ const StoreDetailPage = () => {
           </Button>
           <Button
             variant="outline"
-            className="w-full py-5 md:py-6 bg-white dark:bg-gray-900"
+            className="w-full py-5 md:py-6 bg-white "
             onClick={() => setIsSettingsOpen(true)}
           >
             Store Settings
@@ -412,11 +505,10 @@ const StoreDetailPage = () => {
         </div>
       </div>
 
-      {/* Stock Items Table */}
       <div className="mt-8 md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
         <div className="flex justify-between items-center my-3">
           <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
-            Products in Store ({stocks.length})
+            Products in Store ({totalCount ?? stocks.length})
           </h2>
           <Button
             className="bg-[#0A2540] hover:bg-[#304c6a] py-5 md:py-6"
@@ -446,11 +538,13 @@ const StoreDetailPage = () => {
           </div>
         ) : filteredStocks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="mt-4 font-bold text-[16px] text-[#2F2F2F] dark:text-white">
+            <p className="mt-4 font-bold text-[16px] text-[#2F2F2F] ">
               No stock items found
             </p>
             <p className="text-[#9E9A9A] dark:text-gray-400 mt-2">
-              Add stock to see items here
+              {searchTerm.trim()
+                ? "Try a different search"
+                : "Add stock to see items here"}
             </p>
             <Button
               onClick={() => setIsAddStockOpen(true)}
@@ -460,85 +554,83 @@ const StoreDetailPage = () => {
             </Button>
           </div>
         ) : (
-          <div className="overflow-x-auto lg:border border-[#E4E4E4] rounded-[20px] bg-white">
-            <table className="w-full">
-              <thead className="border-b border-[#E6E6E6]">
-                <tr className="border-b">
-                  <th className="text-left py-3 md:pl-4 font-medium text-[#2F2F2F] dark:text-gray-300">
-                    <Checkbox
-                      checked={
-                        selectedStocks.size === filteredStocks.length &&
-                        stocks.length > 0
-                      }
-                      onCheckedChange={handleSelectAll}
-                      className="h-[20px] w-[20px]"
-                    />
-                  </th>
-                  <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
-                    SKU
-                  </th>
-                  <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
-                    Quantity
-                  </th>
-                  <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
-                    Selling Price
-                  </th>
-                  <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
-                    Cost Price
-                  </th>
-                  {/* <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
-                    Action
-                  </th> */}
-                  <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
-                    More
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y dark:divide-gray-700">
-                {filteredStocks.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors font-medium font-dm-sans text-[16px] text-[#2F2F2F]"
-                  >
-                    <td className="py-4 md:pl-4">
+          <>
+            <div className="overflow-x-auto lg:border border-[#E4E4E4] rounded-[20px] bg-white">
+              <table className="w-full">
+                <thead className="border-b border-[#E6E6E6]">
+                  <tr className="border-b">
+                    <th className="text-left py-3 md:pl-4 font-medium text-[#2F2F2F] dark:text-gray-300">
                       <Checkbox
-                        checked={selectedStocks.has(item.id)}
-                        onCheckedChange={() => handleSelectStock(item.id)}
+                        checked={
+                          selectedStocks.size === filteredStocks.length &&
+                          filteredStocks.length > 0
+                        }
+                        onCheckedChange={handleSelectAll}
                         className="h-[20px] w-[20px]"
                       />
-                    </td>
-                    <td className="py-4">
-                      <p className="font-medium text-[#2F2F2F]">{item.sku}</p>
-                    </td>
-                    <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
-                      {parseFloat(item.quantity).toFixed(0)}
-                    </td>
-                    <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
-                      ₦{parseFloat(item.selling_price).toLocaleString()}
-                    </td>
-                    <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
-                      ₦{parseFloat(item.cost_price).toLocaleString()}
-                    </td>
-                    {/* <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
-                      <Trash2 color="#FF3B30" />{" "}
-                    </td> */}
-                    <td className="py-4">
-                      <button
-                        onClick={() =>
-                          router.push(
-                            `/dashboards/inventory/my-store/${storeId}/stock/${item.id}`,
-                          )
-                        }
-                        className="text-[#0A6DC0] hover:text-[#09599a] underline font-medium"
-                      >
-                        <MoveRight className="w-5 h-5 text-gray-500" />
-                      </button>
-                    </td>
+                    </th>
+                    <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                      SKU
+                    </th>
+                    <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                      Quantity
+                    </th>
+                    <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                      Selling Price
+                    </th>
+                    <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                      Cost Price
+                    </th>
+                    <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                      More
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y dark:divide-gray-700">
+                  {paginatedStocks.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-gray-50 cursor-pointer transition-colors font-medium font-dm-sans text-[16px] text-[#2F2F2F]"
+                    >
+                      <td className="py-4 md:pl-4">
+                        <Checkbox
+                          checked={selectedStocks.has(item.id)}
+                          onCheckedChange={() => handleSelectStock(item.id)}
+                          className="h-[20px] w-[20px]"
+                        />
+                      </td>
+                      <td className="py-4">
+                        <p className="font-medium text-[#2F2F2F]">{item.sku}</p>
+                      </td>
+                      <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
+                        {parseFloat(item.quantity).toFixed(0)}
+                      </td>
+                      <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
+                        ₦{parseFloat(item.selling_price).toLocaleString()}
+                      </td>
+                      <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
+                        ₦{parseFloat(item.cost_price).toLocaleString()}
+                      </td>
+                      <td className="py-4">
+                        <button
+                          onClick={() =>
+                            router.push(
+                              `/dashboards/inventory/my-store/${storeId}/stock/${item.id}`,
+                            )
+                          }
+                          className="text-[#0A6DC0] hover:text-[#09599a] underline font-medium"
+                        >
+                          <MoveRight className="w-5 h-5 text-gray-500" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {renderPagination()}
+          </>
         )}
       </div>
 
@@ -547,7 +639,7 @@ const StoreDetailPage = () => {
         <DialogContent className="sm:max-w-[500px] bg-white font-dm-sans">
           <DialogHeader>
             <div className="flex justify-between items-center">
-              <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] dark:text-white">
+              <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] ">
                 Edit Store
               </DialogTitle>
             </div>
@@ -555,7 +647,6 @@ const StoreDetailPage = () => {
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            {/* Address Field */}
             <div className="space-y-2">
               <Label
                 htmlFor="address"
@@ -587,7 +678,6 @@ const StoreDetailPage = () => {
               />
             </div>
 
-            {/* Phone Field */}
             <div className="space-y-2">
               <Label
                 htmlFor="phone"
@@ -634,19 +724,17 @@ const StoreDetailPage = () => {
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
         <DialogContent className="sm:max-w-[425px] bg-white font-dm-sans">
           <DialogHeader>
-            <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] dark:text-white">
+            <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] ">
               Store Settings
             </DialogTitle>
             <p className="text-[#9E9A9A]">Manage your settings here</p>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            {/* Set as Default Store */}
             <div className="flex items-center justify-between space-x-2">
               <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
                 Make Default Store
               </p>
-
               <Switch
                 id="is_default"
                 checked={storeSettings.is_default}
@@ -659,7 +747,6 @@ const StoreDetailPage = () => {
               />
             </div>
 
-            {/* Show on Marketplace */}
             <div className="flex items-center justify-between space-x-2">
               <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
                 Show Store Contents on Marketplace
@@ -676,7 +763,6 @@ const StoreDetailPage = () => {
               />
             </div>
 
-            {/* Archive Store */}
             <div className="flex items-center justify-between space-x-2">
               <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
                 Temporary Archive Store{" "}
@@ -694,7 +780,7 @@ const StoreDetailPage = () => {
             </div>
           </div>
 
-          <div className=" pt-4">
+          <div className="pt-4">
             <Button
               className="w-full py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#09599a]"
               onClick={handleSaveSettings}
@@ -711,9 +797,9 @@ const StoreDetailPage = () => {
       </Dialog>
 
       <Dialog open={isAddStockOpen} onOpenChange={setIsAddStockOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] bg-white dark:bg-gray-900 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] bg-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] dark:text-white">
+            <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] ">
               Add Stock to {store.name}
             </DialogTitle>
           </DialogHeader>

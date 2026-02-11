@@ -13,7 +13,7 @@ export async function getStores(token: string) {
           Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!res.ok) {
@@ -29,7 +29,7 @@ export async function getStores(token: string) {
     if (data.statusCode === 200) {
       return {
         success: true,
-        data: data.data, 
+        data: data.data,
         pagination: data.pagination,
       };
     }
@@ -41,17 +41,22 @@ export async function getStores(token: string) {
   }
 }
 
-export async function getStoreById(storeId: string, token: string): Promise<StoreDetailResponse | null> {
-
+export async function getStoreById(
+  storeId: string,
+  token: string,
+): Promise<StoreDetailResponse | null> {
   try {
-    const res = await fetch(`${process.env.VERA_INVENTORY_API_BASE_URL}inventory/stores/${storeId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+    const res = await fetch(
+      `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/stores/${storeId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
       },
-      cache: "no-store",
-    });
+    );
 
     if (!res.ok) {
       console.error("Failed to fetch store:", res.status);
@@ -74,7 +79,9 @@ export async function getStoreById(storeId: string, token: string): Promise<Stor
 
 export async function getStoreStock(storeId: string, token: string) {
   try {
-    const response = await fetch(`${process.env.VERA_INVENTORY_API_BASE_URL}inventory/stocks/${storeId}`, {
+    const url = `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/stocks/${storeId}?limit=200&all=true`;
+
+    const response = await fetch(url, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -87,7 +94,8 @@ export async function getStoreStock(storeId: string, token: string) {
       const errData = await response.json().catch(() => ({}));
       return {
         success: false,
-        message: errData.message || `Failed to fetch stock (HTTP ${response.status})`,
+        message:
+          errData.message || `Failed to fetch stock (HTTP ${response.status})`,
       };
     }
 
@@ -103,6 +111,7 @@ export async function getStoreStock(storeId: string, token: string) {
     return {
       success: true,
       data: json.data,
+      pagination: json.pagination || null,
     };
   } catch (error) {
     console.error("Fetch store stock error:", error);
@@ -113,8 +122,6 @@ export async function getStoreStock(storeId: string, token: string) {
   }
 }
 
-// actions/stores.ts
-
 export async function moveStock(
   targetStoreId: string,
   items: Array<{
@@ -122,7 +129,7 @@ export async function moveStock(
     quantity: number;
     selling_price: number;
   }>,
-  token: string
+  token: string,
 ) {
   try {
     const response = await fetch(
@@ -137,14 +144,15 @@ export async function moveStock(
           target_store_id: targetStoreId,
           items,
         }),
-      }
+      },
     );
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
       return {
         success: false,
-        message: errData.message || `Failed to move stock (HTTP ${response.status})`,
+        message:
+          errData.message || `Failed to move stock (HTTP ${response.status})`,
       };
     }
 
@@ -226,7 +234,7 @@ export async function updateStock(
     sku: string;
     remark: string;
   },
-  token: string
+  token: string,
 ) {
   try {
     const response = await fetch(
@@ -240,14 +248,15 @@ export async function updateStock(
         },
         body: JSON.stringify(data),
         cache: "no-store",
-      }
+      },
     );
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
       return {
         success: false,
-        message: errData.message || `Failed to update stock (HTTP ${response.status})`,
+        message:
+          errData.message || `Failed to update stock (HTTP ${response.status})`,
       };
     }
 
@@ -282,7 +291,7 @@ export async function updateStockWithMovement(
     empties_qty: number;
     remark: string;
   },
-  token: string
+  token: string,
 ) {
   try {
     const response = await fetch(
@@ -296,14 +305,16 @@ export async function updateStockWithMovement(
         },
         body: JSON.stringify(data),
         cache: "no-store",
-      }
+      },
     );
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
       return {
         success: false,
-        message: errData.message || `Failed to update stock movement (HTTP ${response.status})`,
+        message:
+          errData.message ||
+          `Failed to update stock movement (HTTP ${response.status})`,
       };
     }
 
@@ -330,12 +341,14 @@ export async function updateStockWithMovement(
   }
 }
 
-
 export async function getStockDetail(
   stockId: string,
   storeId: string,
-  token: string
-): Promise<{ success: true; data: StoreStockDetail } | { success: false; message: string }> {
+  token: string,
+): Promise<
+  | { success: true; data: StoreStockDetail }
+  | { success: false; message: string }
+> {
   try {
     const response = await fetch(
       `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/stocks/${stockId}/${storeId}`,
@@ -346,14 +359,16 @@ export async function getStockDetail(
           Accept: "application/json",
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
       return {
         success: false,
-        message: errData.message || `Failed to fetch stock detail (HTTP ${response.status})`,
+        message:
+          errData.message ||
+          `Failed to fetch stock detail (HTTP ${response.status})`,
       };
     }
 
@@ -378,5 +393,3 @@ export async function getStockDetail(
     };
   }
 }
-
-

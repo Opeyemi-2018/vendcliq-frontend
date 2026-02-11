@@ -3,7 +3,7 @@
 export async function getStoreStock(token: string, storeId: string) {
   try {
     const res = await fetch(
-      `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/stocks/${storeId}`,
+      `${process.env.VERA_INVENTORY_API_BASE_URL}inventory/stocks/${storeId}?limit=200&all=true`,
       {
         method: "GET",
         headers: {
@@ -11,7 +11,7 @@ export async function getStoreStock(token: string, storeId: string) {
           Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!res.ok) {
@@ -27,7 +27,7 @@ export async function getStoreStock(token: string, storeId: string) {
     if (data.statusCode === 200) {
       return {
         success: true,
-        data: data.data, // array of stock items
+        data: data.data,
         pagination: data.pagination,
       };
     }

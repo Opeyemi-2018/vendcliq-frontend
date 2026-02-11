@@ -1,12 +1,18 @@
 "use client";
 
-import { MoveRight, Loader2, UserPen } from "lucide-react";
+import {
+  MoveRight,
+  Loader2,
+  UserPen,
+  MoveLeft,
+  MoveRightIcon,
+} from "lucide-react";
 import { ThreeDots } from "react-loader-spinner";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useStores } from "@/hooks/useStores";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getAttendants } from "@/actions/getAttendant";
 
 interface Attendant {
@@ -16,6 +22,8 @@ interface Attendant {
   phone: string;
   accountStatus: "ACTIVE" | "INACTIVE" | string;
 }
+
+const ITEMS_PER_PAGE = 5;
 
 const MyStore = () => {
   const {
@@ -29,6 +37,43 @@ const MyStore = () => {
   const [attendants, setAttendants] = useState<Attendant[]>([]);
   const [attendantsLoading, setAttendantsLoading] = useState(true);
   const [attendantsError, setAttendantsError] = useState<string | null>(null);
+
+  const [storesPage, setStoresPage] = useState(1);
+
+  const storesTotalPages = useMemo(
+    () => Math.ceil((stores?.length || 0) / ITEMS_PER_PAGE) || 1,
+    [stores?.length],
+  );
+
+  const paginatedStores = useMemo(() => {
+    if (!stores) return [];
+    const start = (storesPage - 1) * ITEMS_PER_PAGE;
+    return stores.slice(start, start + ITEMS_PER_PAGE);
+  }, [stores, storesPage]);
+
+  useEffect(() => {
+    if (storesPage > storesTotalPages) {
+      setStoresPage(Math.max(1, storesTotalPages));
+    }
+  }, [storesTotalPages, storesPage]);
+
+  const [attendantsPage, setAttendantsPage] = useState(1);
+
+  const attendantsTotalPages = useMemo(
+    () => Math.ceil(attendants.length / ITEMS_PER_PAGE) || 1,
+    [attendants.length],
+  );
+
+  const paginatedAttendants = useMemo(() => {
+    const start = (attendantsPage - 1) * ITEMS_PER_PAGE;
+    return attendants.slice(start, start + ITEMS_PER_PAGE);
+  }, [attendants, attendantsPage]);
+
+  useEffect(() => {
+    if (attendantsPage > attendantsTotalPages) {
+      setAttendantsPage(Math.max(1, attendantsTotalPages));
+    }
+  }, [attendantsTotalPages, attendantsPage]);
 
   useEffect(() => {
     const fetchAttendants = async () => {
@@ -69,15 +114,85 @@ const MyStore = () => {
     }
   };
 
+  const renderPagination = (
+    currentPage: number,
+    totalPages: number,
+    onChange: (page: number) => void,
+  ) => {
+    if (totalPages <= 1) return null;
+
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    const end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(
+        <Button
+          key={i}
+          variant={currentPage === i ? "default" : "outline"}
+          size="sm"
+          className={`h-8 w-8 ${
+            currentPage === i
+              ? "bg-[#0A6DC0] text-white hover:bg-[#0A6DC0]"
+              : ""
+          }`}
+          onClick={() => onChange(i)}
+        >
+          {i}
+        </Button>,
+      );
+    }
+
+    return (
+      <div className="flex flex-row justify-between items-center mt-6 gap-4">
+        <button
+          disabled={currentPage === 1}
+          onClick={() => onChange(currentPage - 1)}
+          className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24 disabled:opacity-40"
+        >
+          <MoveLeft /> Previous
+        </button>
+
+        <div className="hidden lg:flex items-center gap-2 flex-wrap justify-center">
+          {pages}
+        </div>
+
+        <div className="flex items-center gap-8 lg:gap-10">
+          <button
+            disabled={currentPage >= totalPages}
+            onClick={() => onChange(currentPage + 1)}
+            className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24 disabled:opacity-40"
+          >
+            Next <MoveRightIcon />
+          </button>
+
+          <div className="hidden lg:block text-sm text-gray-600 dark:text-gray-400">
+            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} –{" "}
+            {Math.min(
+              currentPage * ITEMS_PER_PAGE,
+              totalPages * ITEMS_PER_PAGE,
+            )}{" "}
+            of {totalPages * ITEMS_PER_PAGE}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="">
-      {/* Header & Actions – always visible */}
+      {/* Header & Actions */}
       <div className="flex md:items-center md:gap-0 gap-3 justify-between flex-col md:flex-row mb-3">
         <div>
-          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F] ">
+          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
             My Stores
           </h1>
-          <p className="font-medium font-dm-sans text-[#9E9A9A] ">
+          <p className="font-medium font-dm-sans text-[#9E9A9A]">
             Here are all the details about your stores
           </p>
         </div>
@@ -97,7 +212,7 @@ const MyStore = () => {
         </div>
       </div>
 
-      {/* Stores Section – shows error/loading/empty/table */}
+      {/* ── Stores Section ─────────────────────────────────────── */}
       <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white mb-3 md:mb-5">
         <h1 className="font-dm-sans text-[#2F2F2F] dark:text-white font-bold">
           My Stores ({stores?.length ?? 0})
@@ -105,6 +220,7 @@ const MyStore = () => {
 
         <div className="py-3 relative min-h-[300px]">
           {storesError ? (
+            /* error state */
             <div className="py-20 px-4 flex flex-col items-center justify-center gap-4">
               <p className="text-red-600 dark:text-red-400 text-center">
                 {storesError}
@@ -117,6 +233,7 @@ const MyStore = () => {
               </Button>
             </div>
           ) : storesLoading ? (
+            /* loading */
             <div className="py-20 px-4 flex flex-col items-center justify-center">
               <ThreeDots
                 height="80"
@@ -128,7 +245,8 @@ const MyStore = () => {
                 Loading stores...
               </p>
             </div>
-          ) : stores.length === 0 ? (
+          ) : (stores?.length ?? 0) === 0 ? (
+            /* empty */
             <div className="py-20 px-4 flex flex-col items-center justify-center space-y-4">
               <Image src="/store.svg" alt="No store" height={90} width={90} />
               <p className="font-bold font-dm-sans text-[16px] text-[#2F2F2F] dark:text-white">
@@ -139,59 +257,65 @@ const MyStore = () => {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto lg:border border-[#E4E4E4] md:rounded-[20px] bg-white">
-              <table className="w-full">
-                <thead className="border-b border-[#E6E6E6]">
-                  <tr>
-                    <th className="text-left py-3 md:pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                      Store Name
-                    </th>
-                    <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                      Store Address
-                    </th>
-                    <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                      Product Count
-                    </th>
-                    <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                      Inventory Value
-                    </th>
-                    <th className="text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {stores.map((store) => (
-                    <tr
-                      key={store.id}
-                      className="hover:bg-gray-50 cursor-pointer transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
-                      onClick={() =>
-                        router.push(`/dashboards/inventory/my-store/${store.id}`)
-                      }
-                    >
-                      <td className="py-4 md:pl-4 font-medium">{store.name}</td>
-                      <td className="hidden md:table-cell py-4">
-                        {store.address?.name || "—"}
-                      </td>
-                      <td className="hidden md:table-cell py-4">
-                        {store.stock_count ?? 0}
-                      </td>
-                      <td className="hidden md:table-cell py-4">
-                        ₦{(store.stock_value ?? 0).toLocaleString()}
-                      </td>
-                      <td className="py-4">
-                        <MoveRight className="w-5 h-5 text-gray-500" />
-                      </td>
+            <>
+              <div className="overflow-x-auto lg:border border-[#E4E4E4] md:rounded-[20px] bg-white">
+                <table className="w-full">
+                  <thead className="border-b border-[#E6E6E6]">
+                    <tr>
+                      <th className="text-left py-3 md:pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                        Store Name
+                      </th>
+                      <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                        Store Address
+                      </th>
+                      <th className="hidden md:table-cell ...">
+                        Product Count
+                      </th>
+                      <th className="hidden md:table-cell ...">
+                        Inventory Value
+                      </th>
+                      <th className="text-left py-3 ...">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y">
+                    {paginatedStores.map((store) => (
+                      <tr
+                        key={store.id}
+                        className="hover:bg-gray-50 cursor-pointer ..."
+                        onClick={() =>
+                          router.push(
+                            `/dashboards/inventory/my-store/${store.id}`,
+                          )
+                        }
+                      >
+                        <td className="py-4 md:pl-4 font-medium">
+                          {store.name}
+                        </td>
+                        <td className="hidden md:table-cell py-4">
+                          {store.address?.name || "—"}
+                        </td>
+                        <td className="hidden md:table-cell py-4">
+                          {store.stock_count ?? 0}
+                        </td>
+                        <td className="hidden md:table-cell py-4">
+                          ₦{(store.stock_value ?? 0).toLocaleString()}
+                        </td>
+                        <td className="py-4">
+                          <MoveRight className="w-5 h-5 text-gray-500" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Stores Pagination */}
+              {renderPagination(storesPage, storesTotalPages, setStoresPage)}
+            </>
           )}
         </div>
       </div>
 
-      {/* Attendants Section – now always visible */}
       <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
         <h1 className="font-dm-sans text-[#2F2F2F] dark:text-white font-bold">
           My Attendants ({attendants.length})
@@ -199,6 +323,7 @@ const MyStore = () => {
 
         <div className="py-3 relative min-h-[300px]">
           {attendantsLoading ? (
+            /* loading */
             <div className="py-20 px-4 flex flex-col items-center justify-center">
               <Loader2 className="h-10 w-10 animate-spin text-[#0A6DC0]" />
               <p className="mt-4 text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
@@ -206,23 +331,20 @@ const MyStore = () => {
               </p>
             </div>
           ) : attendantsError ? (
+            /* error */
             <div className="py-20 px-4 flex flex-col items-center justify-center gap-4">
               <p className="text-red-600 dark:text-red-400 text-center">
                 {attendantsError}
               </p>
               <Button
-                onClick={() => {
-                  setAttendantsLoading(true);
-                  setAttendantsError(null);
-                  // You can call fetchAttendants() here if you extract it
-                  window.location.reload(); // temporary – better to refetch
-                }}
+                onClick={() => window.location.reload()}
                 className="bg-[#0A6DC0] hover:bg-[#085a9e]"
               >
                 Retry
               </Button>
             </div>
           ) : attendants.length === 0 ? (
+            /* empty */
             <div className="py-20 px-4 flex flex-col items-center justify-center space-y-4">
               <UserPen size={40} />
               <p className="font-bold font-dm-sans text-[16px] text-[#2F2F2F] dark:text-white">
@@ -233,59 +355,54 @@ const MyStore = () => {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto lg:border border-[#E4E4E4] md:rounded-[20px] bg-white">
-              <table className="w-full">
-                <thead className="border-b border-[#E6E6E6]">
-                  <tr>
-                    <th className="text-left py-3 md:pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                      Full Name
-                    </th>
-                    <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                      Email
-                    </th>
-                    <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                      Phone Number
-                    </th>
-                    <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                      Status
-                    </th>
-                    {/* <th className="text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                      Actions
-                    </th> */}
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {attendants.map((attendant) => (
-                    <tr
-                      key={attendant.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
-                    >
-                      <td className="py-4 md:pl-4 font-medium">
-                        {attendant.fullname}
-                      </td>
-                      <td className="hidden md:table-cell py-4">
-                        {attendant.email}
-                      </td>
-                      <td className="hidden md:table-cell py-4">
-                        {attendant.phone}
-                      </td>
-                      <td className="hidden md:table-cell py-4">
-                        <span
-                          className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            attendant.accountStatus
-                          )}`}
-                        >
-                          {attendant.accountStatus}
-                        </span>
-                      </td>
-                      {/* <td className="py-4">
-                        <MoveRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                      </td> */}
+            <>
+              <div className="overflow-x-auto lg:border border-[#E4E4E4] md:rounded-[20px] bg-white">
+                <table className="w-full">
+                  <thead className="border-b border-[#E6E6E6]">
+                    <tr>
+                      <th className="text-left py-3 md:pl-4 ...">Full Name</th>
+                      <th className="hidden md:table-cell ...">Email</th>
+                      <th className="hidden md:table-cell ...">Phone Number</th>
+                      <th className="hidden md:table-cell ...">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y">
+                    {paginatedAttendants.map((attendant) => (
+                      <tr
+                        key={attendant.id}
+                        className="hover:bg-gray-50 dark:hover:bg-gray-800/50 ..."
+                      >
+                        <td className="py-4 md:pl-4 font-medium">
+                          {attendant.fullname}
+                        </td>
+                        <td className="hidden md:table-cell py-4">
+                          {attendant.email}
+                        </td>
+                        <td className="hidden md:table-cell py-4">
+                          {attendant.phone}
+                        </td>
+                        <td className="hidden md:table-cell py-4">
+                          <span
+                            className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                              attendant.accountStatus,
+                            )}`}
+                          >
+                            {attendant.accountStatus}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Attendants Pagination */}
+              {renderPagination(
+                attendantsPage,
+                attendantsTotalPages,
+                setAttendantsPage,
+              )}
+            </>
           )}
         </div>
       </div>

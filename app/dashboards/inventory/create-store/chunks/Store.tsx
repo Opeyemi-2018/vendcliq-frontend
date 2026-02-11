@@ -50,7 +50,6 @@ const Store: React.FC<StoreProps> = ({ onCreateStore }) => {
   const onSubmit = async (values: CreateStoreFormData) => {
     try {
       setIsSubmitting(true);
-      console.log("Creating store with data:", values);
 
       // Call the API function
       const response: CreateStoreResponse = await handleCreateStore(values);
