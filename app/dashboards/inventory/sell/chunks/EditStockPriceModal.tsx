@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +46,15 @@ const EditStockPriceModal: React.FC<EditStockPriceModalProps> = ({
     currentPrices.empties_price || "",
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update state when currentPrices prop changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSellingPrice(currentPrices.selling_price || "");
+      setSellingPricePieces(currentPrices.selling_price_pieces || "");
+      setEmptiesPrice(currentPrices.empties_price || "");
+    }
+  }, [isOpen, currentPrices]);
 
   const handleSubmit = async () => {
     // Validation
@@ -132,22 +141,25 @@ const EditStockPriceModal: React.FC<EditStockPriceModalProps> = ({
             >
               Selling Price (Packs/Crates)
             </Label>
-            <Input
-              id="selling_price"
-              type="text"
-              inputMode="decimal"
-              placeholder="e.g. 5000"
-              value={sellingPrice}
-              onChange={(e) => {
-                const value = e.target.value;
-                // Allow only numbers and decimal point
-                if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                  setSellingPrice(value);
-                }
-              }}
-              className="bg-[#F3F4F6] h-12"
-              disabled={isSubmitting}
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-3.5 text-gray-500">₦</span>
+              <Input
+                id="selling_price"
+                type="text"
+                inputMode="decimal"
+                placeholder="e.g. 5000"
+                value={sellingPrice}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow only numbers and decimal point
+                  if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                    setSellingPrice(value);
+                  }
+                }}
+                className="bg-[#F3F4F6] h-12 pl-8"
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
 
           {/* Selling Price per Piece/Bottle */}
@@ -158,21 +170,24 @@ const EditStockPriceModal: React.FC<EditStockPriceModalProps> = ({
             >
               Selling Price (Per Piece/Bottle)
             </Label>
-            <Input
-              id="selling_price_pieces"
-              type="text"
-              inputMode="decimal"
-              placeholder="e.g. 200"
-              value={sellingPricePieces}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                  setSellingPricePieces(value);
-                }
-              }}
-              className="bg-[#F3F4F6] h-12"
-              disabled={isSubmitting}
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-3.5 text-gray-500">₦</span>
+              <Input
+                id="selling_price_pieces"
+                type="text"
+                inputMode="decimal"
+                placeholder="e.g. 200"
+                value={sellingPricePieces}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                    setSellingPricePieces(value);
+                  }
+                }}
+                className="bg-[#F3F4F6] h-12 pl-8"
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
 
           {/* Empties Price */}
@@ -181,23 +196,26 @@ const EditStockPriceModal: React.FC<EditStockPriceModalProps> = ({
               htmlFor="empties_price"
               className="text-[#2F2F2F] font-dm-sans text-[16px] font-medium"
             >
-              Empties Price (Optional)
+              Empties Price
             </Label>
-            <Input
-              id="empties_price"
-              type="text"
-              inputMode="decimal"
-              placeholder="e.g. 50"
-              value={emptiesPrice}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                  setEmptiesPrice(value);
-                }
-              }}
-              className="bg-[#F3F4F6] h-12"
-              disabled={isSubmitting}
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-3.5 text-gray-500">₦</span>
+              <Input
+                id="empties_price"
+                type="text"
+                inputMode="decimal"
+                placeholder="e.g. 50"
+                value={emptiesPrice}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                    setEmptiesPrice(value);
+                  }
+                }}
+                className="bg-[#F3F4F6] h-12 pl-8"
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
         </div>
 

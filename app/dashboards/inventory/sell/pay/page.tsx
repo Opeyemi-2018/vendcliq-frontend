@@ -45,6 +45,7 @@ interface TransferDetails {
 
 interface InvoicePreviewItem {
   id: string;
+
   stock_id: string;
   product_id: number;
   quantity: number;
@@ -64,8 +65,10 @@ interface InvoicePreviewItem {
 
 interface InvoicePreview {
   invoiceId: string;
+  items_count: number;
   code: string;
   total: number;
+  empties_value: number;
   status: string;
   storeAddress: string;
   items: InvoicePreviewItem[];
@@ -147,15 +150,18 @@ function PayInvoiceContent() {
     );
   }
 
-  const totalQuantity = invoicePreview.items.reduce(
-    (sum, item) => sum + item.quantity,
-    0,
-  );
-  const totalDiscount = invoicePreview.items.reduce(
-    (sum, item) => sum + item.discounted_amount,
-    0,
-  );
+  const totalQuantity = invoicePreview.items_count;
+
+  // const totalQuantity = invoicePreview.items.reduce(
+  //   (sum, item) => sum + item.quantity,
+  //   0,
+  // );
+  // const totalDiscount = invoicePreview.items.reduce(
+  //   (sum, item) => sum + item.discounted_amount,
+  //   0,
+  // );
   const grandTotal = invoicePreview.total;
+  const empty = invoicePreview.empties_value;
 
   const handlePayment = async () => {
     setLoading(true);
@@ -384,7 +390,7 @@ function PayInvoiceContent() {
                     </div>
 
                     <p className="font-medium text-[16px] font-dm-sans">
-                      ₦{item.sub_total.toLocaleString()}
+                      ₦{(Number(item.cost) * item.quantity).toLocaleString()}
                     </p>
                   </div>
                 ))}
@@ -399,16 +405,30 @@ function PayInvoiceContent() {
           <div className="space-y-3 text-sm border-t pt-4 text-[#2F2F2F]">
             <div className="flex justify-between font-medium">
               <span className="font-dm-sans font-bold">Total Quantity:</span>
-              <span className="font-regular">{totalQuantity}</span>
+              <span className="font-regular">{totalQuantity} Qty</span>
             </div>
 
             <div className="flex justify-between ">
               <span className="font-dm-sans font-bold">Total Discount:</span>
               <span className="font-dm-sans font-bold">
-                {totalDiscount > 0
-                  ? `-₦${totalDiscount.toLocaleString()}`
+                {invoicePreview.items.reduce(
+                  (sum, item) => sum + Number(item.discounted_amount || 0),
+                  0,
+                ) > 0
+                  ? `₦${invoicePreview.items
+                      .reduce(
+                        (sum, item) =>
+                          sum + Number(item.discounted_amount || 0),
+                        0,
+                      )
+                      .toLocaleString()}`
                   : "₦0"}
               </span>
+            </div>
+
+            <div className="flex justify-between font-medium">
+              <span className="font-dm-sans font-bold">Empty Values:</span>
+              <span className="font-regular">{empty}</span>
             </div>
 
             <div className="flex justify-between font-bold ">

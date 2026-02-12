@@ -125,6 +125,14 @@ interface InvoiceItem {
   empties?: { type: "CREDIT" | "SELL"; quantity: number };
 }
 
+// Helper function to format currency
+const formatCurrency = (value: number): string => {
+  return value.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 const Sell = () => {
   const router = useRouter();
   const [isEditPriceModalOpen, setIsEditPriceModalOpen] = useState(false);
@@ -228,23 +236,25 @@ const Sell = () => {
     },
   });
 
-  // Calculate payable amount whenever price, quantity, or discount changes
+  // Live calculation for payable_amount display
   useEffect(() => {
-    const price = parseFloat(invoiceForm.getValues("price") || "0");
-    const quantity = parseInt(invoiceForm.getValues("quantity") || "1");
-    const discount = parseFloat(
-      invoiceForm.getValues("discounted_amount") || "0",
-    );
+    const values = invoiceForm.getValues();
+    const price = parseFloat(values.price || "0");
+    const quantity = parseFloat(values.quantity || "0");
+    const discount = parseFloat(values.discounted_amount || "0");
+    const emptiesQty = parseFloat(values.empties_quantity || "0");
+    const emptiesPrice = parseFloat(selectedStockItem?.empties_price || "0");
 
-    const totalPrice = price * quantity;
-    const totalDiscount = discount * quantity;
-    const payable = totalPrice - totalDiscount;
+    const perUnitPayable = price - discount;
+    const totalPayable = perUnitPayable * quantity + emptiesQty * emptiesPrice;
 
-    invoiceForm.setValue("payable_amount", payable.toFixed(2));
+    invoiceForm.setValue("payable_amount", totalPayable.toFixed(2));
   }, [
     invoiceForm.watch("price"),
     invoiceForm.watch("quantity"),
     invoiceForm.watch("discounted_amount"),
+    invoiceForm.watch("empties_quantity"),
+    selectedStockItem?.empties_price,
   ]);
 
   useEffect(() => {
@@ -369,8 +379,8 @@ const Sell = () => {
       return;
     }
 
-    const quantity = parseInt(values.quantity, 10);
-    if (quantity <= 0) {
+    const quantity = parseFloat(values.quantity);
+    if (isNaN(quantity) || quantity <= 0) {
       toast.error("Quantity must be greater than 0");
       return;
     }
@@ -380,9 +390,11 @@ const Sell = () => {
 
     const price = parseFloat(values.price || "0");
     const discount = parseFloat(values.discounted_amount || "0");
-    const totalPrice = price * quantity;
-    const totalDiscount = discount * quantity;
-    const payableAmount = totalPrice - totalDiscount;
+    const emptiesQty = parseFloat(values.empties_quantity || "0");
+    const emptiesPrice = parseFloat(stockItem.empties_price || "0");
+
+    const perUnitPayable = price - discount;
+    const totalPayable = perUnitPayable * quantity + emptiesQty * emptiesPrice;
 
     const newItem: InvoiceItem = {
       stock_id: values.stock_id,
@@ -393,11 +405,11 @@ const Sell = () => {
       mode: values.mode as "PACKS" | "PIECES",
       price: price,
       discounted_amount: discount,
-      payable_amount: payableAmount,
+      payable_amount: totalPayable,
       empties: values.empties_type
         ? {
             type: values.empties_type as "CREDIT" | "SELL",
-            quantity: parseInt(values.empties_quantity || "0", 10),
+            quantity: emptiesQty,
           }
         : undefined,
     };
@@ -419,6 +431,7 @@ const Sell = () => {
     });
     setSelectedStockItem(null);
     setIsPriceEditable(false);
+    setEmptiesQuantityInput("");
   };
 
   const submitInvoice = async () => {
@@ -465,6 +478,7 @@ const Sell = () => {
             status: invoiceData.status,
             storeAddress:
               invoiceData.items[0]?.attributes?.address || "No address",
+            items_count: invoiceData.items_count,
             items: invoiceData.items.map((item: any, index: number) => {
               const localItem = invoiceItems[index];
 
@@ -966,7 +980,7 @@ const Sell = () => {
   if (stage === "invoice") {
     return (
       <div>
-       <div className="flex gap-4 mb-6">
+        <div className="flex gap-4 mb-6">
           <button
             className="flex items-center  text-gray-600 hover:text-gray-900 font-medium"
             onClick={() => setStage("select-store")}
@@ -1208,12 +1222,12 @@ const Sell = () => {
                       <FormLabel>Quantity</FormLabel>
                       <FormControl>
                         <Input
-                          min="1"
-                          placeholder="e.g. 1"
+                          placeholder="e.g. 1 or 0.5"
                           {...field}
                           onChange={(e) => {
                             const value = e.target.value;
-                            if (value === "" || parseInt(value) > 0) {
+                            // Allow numbers with decimals, but prevent just "0" or "0."
+                            if (value === "" || /^\d*\.?\d*$/.test(value)) {
                               field.onChange(value);
                             }
                           }}
@@ -1262,18 +1276,22 @@ const Sell = () => {
                     <FormItem>
                       <FormLabel>Discount per Unit</FormLabel>
                       <FormControl>
-                        <Input
-                          min="1"
-                          placeholder="e.g. 20"
-                          {...field}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === "" || parseFloat(value) >= 0) {
-                              field.onChange(value);
-                            }
-                          }}
-                          className="bg-[#F9F9F9] h-12 border border-[#D8D8D866]"
-                        />
+                        <div className="relative">
+                          <span className="absolute left-3 top-3.5 text-gray-500">
+                            ₦
+                          </span>
+                          <Input
+                            placeholder="e.g. 20"
+                            {...field}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                                field.onChange(value);
+                              }
+                            }}
+                            className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] pl-8"
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1283,17 +1301,19 @@ const Sell = () => {
                 <div className="space-y-2">
                   <Label>Price</Label>
                   <div className="relative">
+                    <span className="absolute left-3 top-3.5 text-gray-500">
+                      ₦
+                    </span>
                     <Input
-                      min="0"
                       value={invoiceForm.getValues("price")}
                       onChange={(e) => {
                         const value = e.target.value;
-                        if (value === "" || parseFloat(value) >= 0) {
+                        if (value === "" || /^\d*\.?\d*$/.test(value)) {
                           invoiceForm.setValue("price", value);
                         }
                       }}
                       readOnly={true}
-                      className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] pr-10 cursor-not-allowed"
+                      className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] pl-8 pr-10 cursor-not-allowed"
                     />
                     <button
                       type="button"
@@ -1326,8 +1346,7 @@ const Sell = () => {
                 <div className="space-y-2">
                   <Label>Empties Quantity</Label>
                   <Input
-                    type="number"
-                    placeholder="e.g. 3"
+                    placeholder="e.g. 3 or 2.5"
                     value={invoiceForm.getValues("empties_quantity")}
                     onClick={handleOpenEmptiesModal}
                     readOnly
@@ -1338,12 +1357,21 @@ const Sell = () => {
 
               <div className="space-y-2">
                 <Label>Amount Payable</Label>
-                <Input
-                  type="number"
-                  value={invoiceForm.getValues("payable_amount")}
-                  readOnly
-                  className="bg-[#F9F9F9] h-12 w-full border border-[#D8D8D866] cursor-not-allowed"
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-3.5 text-gray-500">
+                    ₦
+                  </span>
+                  <Input
+                    type="text"
+                    value={formatCurrency(
+                      parseFloat(
+                        invoiceForm.getValues("payable_amount") || "0",
+                      ),
+                    )}
+                    readOnly
+                    className="bg-[#F9F9F9] h-12 w-full border border-[#D8D8D866] cursor-not-allowed pl-8"
+                  />
+                </div>
               </div>
 
               <Button
@@ -1399,10 +1427,10 @@ const Sell = () => {
                         <td className="py-4">{item.quantity}</td>
                         <td className="py-4 lowercase">{item.mode}</td>
                         <td className="py-4">
-                          ₦{item.discounted_amount * item.quantity}
+                          ₦{formatCurrency(item.discounted_amount)}
                         </td>
                         <td className="py-4 font-semibold text-[#0A6DC0]">
-                          ₦{item.payable_amount.toFixed(2)}
+                          ₦{formatCurrency(item.payable_amount)}
                         </td>
                         <td className="py-4">
                           <button
@@ -1429,7 +1457,7 @@ const Sell = () => {
                         Total Payable:
                       </span>
                       <span className="font-bold text-[20px] text-[#0A6DC0]">
-                        ₦{totalPayable.toFixed(2)}
+                        ₦{formatCurrency(totalPayable)}
                       </span>
                     </div>
                   </div>
@@ -1469,14 +1497,13 @@ const Sell = () => {
                 <Label htmlFor="empties-quantity">Empties Quantity</Label>
                 <Input
                   id="empties-quantity"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder="Enter quantity"
+                  placeholder="Enter quantity (e.g. 3 or 2.5)"
                   value={emptiesQuantityInput}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9]/g, "");
-                    setEmptiesQuantityInput(value);
+                    const value = e.target.value;
+                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                      setEmptiesQuantityInput(value);
+                    }
                   }}
                   className="h-12 bg-[#FAFAFA]"
                 />
