@@ -407,6 +407,7 @@ function PayInvoiceContent() {
               <span className="font-dm-sans font-bold">Total Quantity:</span>
               <span className="font-regular">{totalQuantity} Qty</span>
             </div>
+            
 
             <div className="flex justify-between ">
               <span className="font-dm-sans font-bold">Total Discount:</span>
