@@ -68,7 +68,7 @@ interface InvoicePreview {
   items_count: number;
   code: string;
   total: number;
-  empties_value: number;
+  empties_value?: number;
   status: string;
   storeAddress: string;
   items: InvoicePreviewItem[];
@@ -161,7 +161,7 @@ function PayInvoiceContent() {
   //   0,
   // );
   const grandTotal = invoicePreview.total;
-  const empty = invoicePreview.empties_value;
+  // const empty = invoicePreview.empties_value;
 
   const handlePayment = async () => {
     setLoading(true);
@@ -407,7 +407,6 @@ function PayInvoiceContent() {
               <span className="font-dm-sans font-bold">Total Quantity:</span>
               <span className="font-regular">{totalQuantity} Qty</span>
             </div>
-            
 
             <div className="flex justify-between ">
               <span className="font-dm-sans font-bold">Total Discount:</span>
@@ -429,7 +428,9 @@ function PayInvoiceContent() {
 
             <div className="flex justify-between font-medium">
               <span className="font-dm-sans font-bold">Empty Values:</span>
-              <span className="font-regular">{empty}</span>
+              <span className={`font-regular `}>
+                ₦{(invoicePreview.empties_value ?? 0).toLocaleString()}
+              </span>
             </div>
 
             <div className="flex justify-between font-bold ">
