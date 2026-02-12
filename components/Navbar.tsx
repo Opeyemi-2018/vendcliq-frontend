@@ -31,11 +31,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const Navbar = () => {
-  const { user, isUserPending } = useUser();
+  const { user } = useUser();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+
+  const isUserWalletNull = user?.wallet === null;
 
   useEffect(() => {
     setMounted(true);
@@ -67,12 +69,12 @@ const Navbar = () => {
           style={{ gap: "30px" }}
           className="flex items-center text-[13px] md:text-[16px] font-medium"
         >
-          {mounted && isUserPending && (
+          {mounted && user && isUserWalletNull && (
             <Link
-              href={"/dashboards/business-account"}
+              href="/dashboards/business-account"
               className="font-inter font-dm-sans cursor-pointer whitespace-nowrap text-[14px] lg:text-[16px] font-medium text-[#0A6DC0] hover:text-[#09599a] border-b-2 border-[#0A6DC0]"
             >
-              Create Business Account{" "}
+              Create Business Account
             </Link>
           )}
           <a

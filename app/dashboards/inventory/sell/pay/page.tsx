@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { usePaymentSocket } from "@/hooks/invoiceSocket";
 
 type PaymentType = "TRANSFER" | "CASH" | "POS";
 
@@ -45,7 +46,6 @@ interface TransferDetails {
 
 interface InvoicePreviewItem {
   id: string;
-
   stock_id: string;
   product_id: number;
   quantity: number;
@@ -95,14 +95,14 @@ function PayInvoiceContent() {
     terminal_id: "",
   });
 
-  const [transferDetails, setTransferDetails] =
-    useState<TransferDetails | null>(null);
+  const [transferDetails, setTransferDetails] = useState<TransferDetails | null>(null);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(
-    null,
-  );
+  const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(null);
+
+  // Initialize payment socket
+  const { subscribeToInvoice, isConnected } = usePaymentSocket();
 
   useEffect(() => {
     if (invoiceId) {
@@ -151,17 +151,7 @@ function PayInvoiceContent() {
   }
 
   const totalQuantity = invoicePreview.items_count;
-
-  // const totalQuantity = invoicePreview.items.reduce(
-  //   (sum, item) => sum + item.quantity,
-  //   0,
-  // );
-  // const totalDiscount = invoicePreview.items.reduce(
-  //   (sum, item) => sum + item.discounted_amount,
-  //   0,
-  // );
   const grandTotal = invoicePreview.total;
-  // const empty = invoicePreview.empties_value;
 
   const handlePayment = async () => {
     setLoading(true);
@@ -196,6 +186,10 @@ function PayInvoiceContent() {
               expiresAt: payLoad.expiresAt,
             });
             setShowTransferModal(true);
+            
+            // ✅ Subscribe to this invoice for real-time payment updates
+            subscribeToInvoice(invoiceId);
+            
           } else {
             toast.info(
               "Transfer initialized! Check payment history for bank details.",
@@ -217,12 +211,6 @@ function PayInvoiceContent() {
     }
   };
 
-  const handleSuccessClose = () => {
-    cleanupPreview();
-    setShowSuccessModal(false);
-    router.push("/dashboards/inventory/overview");
-  };
-
   const handleTransferSent = () => {
     cleanupPreview();
     setShowTransferModal(false);
@@ -233,8 +221,12 @@ function PayInvoiceContent() {
   const handleTransferNotSent = () => {
     setShowTransferModal(false);
     toast.info("You can come back anytime to complete the payment.");
-    // Optional: keep preview if they didn't confirm payment yet
-    // cleanupPreview(); // uncomment if you want to remove anyway
+  };
+
+  const handleSuccessClose = () => {
+    cleanupPreview();
+    setShowSuccessModal(false);
+    router.push("/dashboards/inventory/overview");
   };
 
   return (
@@ -253,6 +245,15 @@ function PayInvoiceContent() {
         <p className="font-dm-sans text-[#9E9A9A] font-medium">
           How would you like to pay for invoice {invoicePreview.code}?
         </p>
+        {isConnected && (
+          <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            Live payment updates active
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 md:gap-8 mt-4 md:mt-8">

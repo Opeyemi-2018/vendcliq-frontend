@@ -9,7 +9,6 @@ export interface UserData {
   firstname: string;
   lastname: string;
   email: string;
-  status: "PENDING" | "ACTIVE" | "SUSPENDED" | string;
   userId?: number;
   phone?: {
     number: string;
@@ -21,6 +20,16 @@ export interface UserData {
     referredBy: string | null;
     referralCount: number;
   };
+
+  wallet?: {
+    walletId: number;
+    balance?: string;
+    currency?: string;
+    accountName?: string;
+    accountNumbers?: Record<string, string>;
+    createdAt?: string;
+    updatedAt?: string;
+  } | null;
 }
 
 export interface VerificationStatus {
@@ -67,7 +76,7 @@ interface UserContextType {
     user: UserData | null,
     verification: VerificationStatus | null,
   ) => void;
-  isUserPending: boolean;
+  isUserWalletNull: boolean;
   getUserFullName: () => string;
   getVerificationProgress: () => {
     completed: number;
@@ -123,12 +132,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUserState(userData);
     if (userData) {
       localStorage.setItem("user", JSON.stringify(userData));
-      localStorage.setItem("userStatus", userData.status);
       localStorage.setItem("hasPin", String(!!userData.pin));
       setHasPin(!!userData.pin);
     } else {
       localStorage.removeItem("user");
-      localStorage.removeItem("userStatus");
       localStorage.removeItem("hasPin");
       setHasPin(false);
     }
@@ -151,8 +158,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setVerificationStatus(verification);
   };
 
-  const isUserPending = user?.status === "PENDING";
-
+  const isUserWalletNull = user?.wallet === null;
   const getUserFullName = () => {
     if (!user) return "";
     return `${user.firstname} ${user.lastname}`;
@@ -189,7 +195,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setVerificationStatusState(null);
     setHasPin(false);
     localStorage.removeItem("user");
-    localStorage.removeItem("userStatus");
     localStorage.removeItem("verificationStatus");
     localStorage.removeItem("hasPin");
     localStorage.removeItem("accessToken");
@@ -205,7 +210,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUser,
         setVerificationStatus,
         setAllUserData,
-        isUserPending,
+        isUserWalletNull,
         getUserFullName,
         getVerificationProgress,
         getReferralCode,

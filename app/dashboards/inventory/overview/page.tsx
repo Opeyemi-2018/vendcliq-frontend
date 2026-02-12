@@ -1,9 +1,20 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { EyeOff, Eye, CalendarIcon, ChevronRight } from "lucide-react";
-import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { format, subDays } from "date-fns";
+import { getSales, getTotalSales, getPurchaseRequest } from "@/lib/utils/api/apiHelper";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import {
+  EyeOff,
+  Eye,
+  CalendarIcon,
+  ChevronRight,
+  Loader2,
+} from "lucide-react";
+import Image from "next/image";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -13,18 +24,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
-import { format, subDays } from "date-fns";
-import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
-import {
-  getPurchaseRequest,
-  getSales,
-  getTotalSales,
-} from "@/lib/utils/api/apiHelper";
-import Image from "next/image";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { SupplierSalesMedium, SupplierSalesResponse } from "@/types/sales";
+import { Button } from "@/components/ui/button";
 
 type InvoiceItem = {
   id: string;
@@ -56,9 +57,7 @@ const Home = () => {
 
   // Sales data
   const [totalSales, setTotalSales] = useState<number>(0);
-  const [mediumBreakdown, setMediumBreakdown] = useState<SupplierSalesMedium>(
-    {},
-  );
+  const [mediumBreakdown, setMediumBreakdown] = useState<SupplierSalesMedium>({});
   const [salesLoading, setSalesLoading] = useState(true);
 
   // Medium modal
@@ -79,7 +78,7 @@ const Home = () => {
     setEndDate(today);
     setTempStartDate(thirtyDaysAgo);
     setTempEndDate(today);
-  }, []); // Only run once on mount
+  }, []);
 
   // Fetch total + medium breakdown
   useEffect(() => {
@@ -106,15 +105,17 @@ const Home = () => {
     fetchSalesData();
   }, [startDate, endDate]);
 
-  // Fetch recent sales
+  // Fetch recent sales (latest 10, then show first 2)
   useEffect(() => {
     const fetchSales = async () => {
       try {
         setSalesLoadingRecent(true);
-        const salesRes = await getSales(1, 10);
-        setSales(salesRes.data || []);
+        const salesRes = await getSales(); // No pagination
+        const recent = Array.isArray(salesRes) ? salesRes.slice(0, 10) : [];
+        setSales(recent);
       } catch (err) {
         console.error("Failed to load sales invoices:", err);
+        setSales([]);
       } finally {
         setSalesLoadingRecent(false);
       }
@@ -128,10 +129,12 @@ const Home = () => {
     const fetchPurchases = async () => {
       try {
         setPurchasesLoading(true);
-        const purchaseRes = await getPurchaseRequest(1, 10);
-        setPurchases(purchaseRes.data || []);
+        const purchaseRes = await getPurchaseRequest(); 
+        const recent = Array.isArray(purchaseRes) ? purchaseRes.slice(0, 10) : [];
+        setPurchases(recent);
       } catch (err) {
         console.error("Failed to load purchase invoices:", err);
+        setPurchases([]);
       } finally {
         setPurchasesLoading(false);
       }
@@ -363,7 +366,7 @@ const Home = () => {
       <Dialog open={mediumModalOpen} onOpenChange={setMediumModalOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-[500px] font-dm-sans text-[#2F2F2F] rounded-xl bg-white">
           <DialogHeader>
-            <DialogTitle className="md:text-[21px] font-bold  ">
+            <DialogTitle className="md:text-[21px] font-bold">
               Sales Breakdown by Medium
             </DialogTitle>
             <p className="text-sm text-gray-500">{displayDateRange()}</p>
@@ -379,12 +382,12 @@ const Home = () => {
                 {Object.entries(mediumBreakdown).map(([medium, amount]) => (
                   <div
                     key={medium}
-                    className="flex justify-between  text-[#2F2F2F] items-center p-4  rounded-lg border border-[#D8D8D866] "
+                    className="flex justify-between text-[#2F2F2F] items-center p-4 rounded-lg border border-[#D8D8D866]"
                   >
-                    <span className="text-[18px] font-medium capitalize ">
+                    <span className="text-[18px] font-medium capitalize">
                       {medium.toLowerCase()}
                     </span>
-                    <span className="text-[14px] font-regular ">
+                    <span className="text-[14px] font-regular">
                       ₦{(amount ?? 0).toLocaleString("en-NG")}
                     </span>
                   </div>

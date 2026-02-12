@@ -24,7 +24,7 @@ import { useStores } from "@/hooks/useStores";
 import { useWallet } from "@/hooks/useWallet";
 
 const Home = () => {
-  const { user, isUserPending } = useUser();
+  const { user, isUserWalletNull } = useUser();
   const {
     wallet,
     isLoading: isLoadingWallet,
@@ -37,18 +37,24 @@ const Home = () => {
   const [showBalance, setShowBallance] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [creatingWallet, setCreatingWallet] = useState(false);
+  const [mounted, setMounted] = useState(false); // ← NEW: prevents hydration mismatch
 
   const router = useRouter();
   const { stores } = useStores();
 
+  // Set mounted after client hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     const hasSeenWelcomeModal = localStorage.getItem("hasSeenWelcomeModal");
 
-    if (isUserPending && !hasSeenWelcomeModal) {
+    if (isUserWalletNull && !hasSeenWelcomeModal) {
       setShowWelcomeModal(true);
       localStorage.setItem("hasSeenWelcomeModal", "true");
     }
-  }, [isUserPending]);
+  }, [isUserWalletNull]);
 
   // Fetch wallet on component mount
   useEffect(() => {
@@ -111,12 +117,15 @@ const Home = () => {
 
   return (
     <div className="">
+      {/* Fixed greeting – safe for hydration */}
       <h1 className="font-bold font-dm-sans text-[#2F2F2F] text-[20px] md:text-[25px]">
-        Welcome back, {user?.firstname}
+        Welcome back, {mounted ? user?.firstname || "User" : ""}
       </h1>
 
+      
+
       {/* Conditional rendering for wallet account details */}
-      {hasWalletAccount ? (
+      {hasWalletAccount && (
         <div className="bg-white font-dm-sans text-center text-[14px] md:font-bold text-[#2F2F2F] py-3 px-4 md:px-6 items-center justify-between gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
           <p className="flex-shrink-0">
             {Object.keys(wallet?.accountNumbers || {})[0]}
@@ -136,23 +145,9 @@ const Home = () => {
             onClick={handleCopyAccountNumber}
           />
         </div>
-      ) : (
-        <button
-          onClick={handleCreateWalletClick}
-          disabled={creatingWallet}
-          className="font-dm-sans text-center text-[14px] md:font-bold text-[#0A6DC0] border-b-2 border-[#0A6DC0] hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {creatingWallet ? (
-            <>
-              Creating Wallet...
-              <ClipLoader size={16} color="#0A6DC0" />
-            </>
-          ) : (
-            "Create Wallet"
-          )}
-        </button>
       )}
 
+      {/* Rest of your component remains unchanged */}
       <div className="bg-[url('/blue.svg')] bg-no-repeat bg-cover bg-center  overflow-hidden h-[218px] mt-6 flex justify-between rounded-2xl">
         <div className="max-w-[50rem] justify-between h-full p-6 flex flex-col ">
           <h1 className="text-[16px] lg:text-[25px] xl:text-[31px] md:font-semibold font-clash text-white  md:leading-6 lg:leading-10">

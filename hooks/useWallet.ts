@@ -54,47 +54,58 @@ export const useWallet = (): UseWalletReturn => {
   const [error, setError] = useState<string | null>(null);
   const [newTransactions, setNewTransactions] = useState<any[]>([]);
 
-  const handleWebSocketMessage = useCallback((msg: any) => {
-    if (msg.action === "balanceUpdate" && msg.status === "success" && msg.data) {
-      const updatedWallet: WalletData = {
-        walletId: msg.data.walletId || wallet?.walletId || 0,
-        balance: msg.data.balance?.toString() || "0.00",
-        currency: msg.data.currency || "NGN",
-        accountName: msg.data.accountName || "",
-        accountNumbers: msg.data.accountNumbers || {},
-        lastUpdated: msg.data.updatedAt || new Date().toISOString(),
-      };
+  const handleWebSocketMessage = useCallback(
+    (msg: any) => {
+      if (
+        msg.action === "balanceUpdate" &&
+        msg.status === "success" &&
+        msg.data
+      ) {
+        const updatedWallet: WalletData = {
+          walletId: msg.data.walletId || wallet?.walletId || 0,
+          balance: msg.data.balance?.toString() || "0.00",
+          currency: msg.data.currency || "NGN",
+          accountName: msg.data.accountName || "",
+          accountNumbers: msg.data.accountNumbers || {},
+          lastUpdated: msg.data.updatedAt || new Date().toISOString(),
+        };
 
-      setWallet(updatedWallet);
-      localStorage.setItem("wallet", JSON.stringify(updatedWallet));
+        setWallet(updatedWallet);
+        localStorage.setItem("wallet", JSON.stringify(updatedWallet));
+      }
 
-    }
+      if (msg.action === "getWallet" && msg.status === "success" && msg.data) {
+        const walletData: WalletData = {
+          walletId: msg.data.walletId || wallet?.walletId || 0,
+          balance: msg.data.balance?.toString() || "0.00",
+          currency: msg.data.currency || "NGN",
+          accountName: msg.data.accountName || "",
+          accountNumbers: msg.data.accountNumbers || {},
+          lastUpdated: msg.data.lastUpdated || new Date().toISOString(),
+        };
 
-    if (msg.action === "getWallet" && msg.status === "success" && msg.data) {
-      const walletData: WalletData = {
-        walletId: msg.data.walletId || wallet?.walletId || 0,
-        balance: msg.data.balance?.toString() || "0.00",
-        currency: msg.data.currency || "NGN",
-        accountName: msg.data.accountName || "",
-        accountNumbers: msg.data.accountNumbers || {},
-        lastUpdated: msg.data.lastUpdated || new Date().toISOString(),
-      };
+        setWallet(walletData);
+        localStorage.setItem("wallet", JSON.stringify(walletData));
+      }
 
-      setWallet(walletData);
-      localStorage.setItem("wallet", JSON.stringify(walletData));
-    }
+      if (
+        msg.action === "transactionNotification" &&
+        msg.status === "success" &&
+        msg.data?.transaction
+      ) {
+        const tx = msg.data.transaction;
+        const amount = tx.amount?.toLocaleString() || "0";
+        const type = tx.type === "CREDIT" ? "Received" : "Sent";
 
-    if (msg.action === "transactionNotification" && msg.status === "success" && msg.data?.transaction) {
-      const tx = msg.data.transaction;
-      const amount = tx.amount?.toLocaleString() || "0";
-      const type = tx.type === "CREDIT" ? "Received" : "Sent";
+        setNewTransactions((prev) => [tx, ...prev]);
+      }
+    },
+    [wallet],
+  );
 
-      setNewTransactions((prev) => [tx, ...prev]);
-
-    }
-  }, [wallet]);
-
-  const { isConnected, sendMessage } = useWebSocketConnection(handleWebSocketMessage);
+  const { isConnected, sendMessage } = useWebSocketConnection(
+    handleWebSocketMessage,
+  );
 
   const fetchWallet = useCallback(async () => {
     try {
@@ -115,7 +126,7 @@ export const useWallet = (): UseWalletReturn => {
         localStorage.setItem("wallet", JSON.stringify(walletData));
       }
     } catch (err: any) {
-      toast.error(err?.message || "Failed to fetch wallet");
+      console.log(err?.message || "Failed to fetch wallet");
     } finally {
       setIsLoading(false);
     }
@@ -129,9 +140,12 @@ export const useWallet = (): UseWalletReturn => {
     return wallet?.balance || "0.00";
   }, [wallet]);
 
-  const getAccountNumber = useCallback((bank: string = "WEMA") => {
-    return wallet?.accountNumbers?.[bank] || "";
-  }, [wallet]);
+  const getAccountNumber = useCallback(
+    (bank: string = "WEMA") => {
+      return wallet?.accountNumbers?.[bank] || "";
+    },
+    [wallet],
+  );
 
   const getWalletViaWS = useCallback(() => {
     return sendMessage("getWallet");

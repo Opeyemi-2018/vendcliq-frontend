@@ -77,6 +77,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface StoreType {
   id: string;
@@ -661,26 +662,28 @@ const Sell = () => {
                       </div>
                     ))}
                   </div>
-
                   <div className="lg:hidden">
-                    <select
+                    <Select
                       value={selectedStore?.id?.toString() || ""}
-                      onChange={(e) => {
+                      onValueChange={(value) => {
                         const store = filteredStores.find(
-                          (s) => s.id === e.target.value,
+                          (s) => s.id === value,
                         );
                         if (store) setSelectedStore(store);
                       }}
-                      className="w-full h-12 border rounded px-3"
                       disabled={isLoadingStores || !!error}
                     >
-                      <option value="">Select a store</option>
-                      {filteredStores.map((store) => (
-                        <option key={store.id} value={store.id}>
-                          {store.name}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-full h-12 border rounded px-3">
+                        <SelectValue placeholder="Select a store" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredStores.map((store) => (
+                          <SelectItem key={store.id} value={store.id}>
+                            {store.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </>
               )}

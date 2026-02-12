@@ -64,21 +64,21 @@ const SignIN = () => {
             phone: userData.phone,
             pin: userData.pin ?? false,
             createdAt: userData.createdAt,
-            referral: (userData as any).referral ? {
-              code: (userData as any).referral.code,
-              referredBy: (userData as any).referral.referredBy,
-              referralCount: (userData as any).referral.referralCount,
-            } : undefined,
+            referral: (userData as any).referral
+              ? {
+                  code: (userData as any).referral.code,
+                  referredBy: (userData as any).referral.referredBy,
+                  referralCount: (userData as any).referral.referralCount,
+                }
+              : undefined,
+            wallet: userData.wallet || null,
           };
 
           const verificationStatus = businessData
             ? extractVerificationStatus(businessData)
             : null;
 
-          setAllUserData(
-            formattedUserData,
-            verificationStatus,
-          );
+          setAllUserData(formattedUserData, verificationStatus);
 
           // Store in localStorage for persistence
           localStorage.setItem("user", JSON.stringify(formattedUserData));

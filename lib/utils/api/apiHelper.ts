@@ -108,7 +108,6 @@ import {
   CHANGE_PASSWORD,
 
   // inventory endpoints
-  
   CREATE_STORE,
   CREATE_STOCK,
   ADD_SHOP_ATTENDANT,
@@ -231,10 +230,15 @@ import {
 import { UserStocksResponse } from "@/types/allMyStocks";
 import { BusinessReportResponse } from "@/types/businessReport";
 import {
+  PurchaseRequest,
   PurchaseRequestDetailResponse,
   PurchaseRequestListResponse,
 } from "@/types/purchaseRequest";
-import { SaleDetailResponse, SupplierSalesResponse } from "@/types/sales";
+import {
+  SaleDetailResponse,
+  SaleInvoice,
+  SupplierSalesResponse,
+} from "@/types/sales";
 
 interface UserProfile {
   data: {
@@ -651,11 +655,12 @@ export const handleApiError = (
 
 // inventory api call
 
-export const handleGetProducts = async (fetchAll = false): Promise<ProductsResponse> => {
+export const handleGetProducts = async (
+  fetchAll = false,
+): Promise<ProductsResponse> => {
   const endpoint = fetchAll ? GET_ALL_PRODUCTS : GET_PRODUCTS_PAGINATED;
   return await fetcher<ProductsResponse>(endpoint);
 };
-
 
 export const handleCreateStore = async (
   payload: CreateStoreFormData,
@@ -867,26 +872,20 @@ export const handleGetStockMovements = async (
   return await fetcher<StockMovementsResponse>(STOCK_HISTORY, params);
 };
 
-export const getSales = async (
-  page: number = 1,
-  limit: number = 10,
-): Promise<{ data: any[]; pagination: any }> => {
-  const params = { page: page.toString(), limit: limit.toString() };
-  return await fetcher<any>(`${GET_SALES}?${new URLSearchParams(params)}`);
+export const getSales = async (): Promise<SaleInvoice[]> => {
+  const response = await fetcher<any>(`${GET_SALES}?limit=1000`);
+  return response?.data || [];
 };
 
 export const getSaleById = async (id: string): Promise<SaleDetailResponse> => {
   return await fetcher<SaleDetailResponse>(GET_SALE_BY_ID(id));
 };
 
-export const getPurchaseRequest = async (
-  page: number = 1,
-  limit: number = 10,
-): Promise<PurchaseRequestListResponse> => {
-  const params = { page: page.toString(), limit: limit.toString() };
-  return await fetcher<PurchaseRequestListResponse>(
-    `${GET_PURCHASE_REQUEST}?${new URLSearchParams(params)}`,
+export const getPurchaseRequest = async (): Promise<PurchaseRequest[]> => {
+  const response = await fetcher<PurchaseRequestListResponse>(
+    `${GET_PURCHASE_REQUEST}?limit=1000`,
   );
+  return response?.data || [];
 };
 
 // Single purchase request detail by ID

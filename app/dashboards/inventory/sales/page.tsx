@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { toast } from "sonner";
+import { usePaymentSocket } from "@/hooks/invoiceSocket";
 
 const SalesListPage = () => {
   const [invoices, setInvoices] = useState<SaleInvoice[]>([]);
@@ -30,54 +32,82 @@ const SalesListPage = () => {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const itemsPerPage = 5;
-
-  // Single date filter
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  // Stats
-  const completedCount = filteredInvoices.filter(
-    (inv) => inv.status?.toLowerCase() === "completed"
-  ).length;
+  // WebSocket for real-time payment updates
+  const { isConnected } = usePaymentSocket((paymentData) => {
+    if (paymentData.type === "invoice") {
+      setInvoices((prev) =>
+        prev.map((inv) =>
+          inv.id === paymentData.id
+            ? {
+                ...inv,
+                status: paymentData.status === "success" ? "completed" : paymentData.status,
+              }
+            : inv,
+        ),
+      );
 
-  const pendingCount = filteredInvoices.filter(
-    (inv) => inv.status?.toLowerCase() === "pending"
-  ).length;
-
-  useEffect(() => {
-    const fetchInvoices = async () => {
-      setLoading(true);
-      try {
-        const res = await getSales(page, itemsPerPage);
-        const allInvoices = res.data || [];
-        setInvoices(allInvoices);
-      } catch (err) {
-        console.error("Failed to load sales invoices:", err);
-      } finally {
-        setLoading(false);
+      if (paymentData.status === "success") {
+        toast.success(`Invoice #${paymentData.id.slice(0, 8)} payment successful!`);
+      } else if (paymentData.status === "failed") {
+        toast.error(`Payment failed for invoice #${paymentData.id.slice(0, 8)}`);
       }
-    };
+    }
+  });
 
-    fetchInvoices();
-  }, [page]);
+  // Safe stats
+  const completedCount = Array.isArray(filteredInvoices)
+    ? filteredInvoices.filter((inv) => inv.status?.toLowerCase() === "completed").length
+    : 0;
 
-  // Filter by selected date
+  const pendingCount = Array.isArray(filteredInvoices)
+    ? filteredInvoices.filter((inv) => inv.status?.toLowerCase() === "pending").length
+    : 0;
+
+  const fetchInvoices = async () => {
+    setLoading(true);
+    try {
+      const allInvoices = await getSales(); // No pagination – full list
+      setInvoices(Array.isArray(allInvoices) ? allInvoices : []);
+    } catch (err) {
+      console.error("Failed to load sales invoices:", err);
+      setInvoices([]);
+      toast.error("Failed to load invoices");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (!selectedDate) {
-      setFilteredInvoices(invoices);
-      return;
+    fetchInvoices();
+  }, []);
+
+  // Filter by date + status
+  useEffect(() => {
+    let filtered = Array.isArray(invoices) ? [...invoices] : [];
+
+    if (selectedDate) {
+      filtered = filtered.filter((inv) => {
+        try {
+          const invDate = new Date(inv.created_at);
+          return isSameDay(invDate, selectedDate);
+        } catch {
+          return false;
+        }
+      });
     }
 
-    const filtered = invoices.filter((inv) => {
-      try {
-        const invDate = new Date(inv.created_at);
-        return isSameDay(invDate, selectedDate);
-      } catch {
-        return false;
-      }
-    });
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(
+        (inv) => inv.status?.toLowerCase() === statusFilter.toLowerCase(),
+      );
+    }
 
     setFilteredInvoices(filtered);
-  }, [selectedDate, invoices]);
+    setPage(1);
+  }, [selectedDate, statusFilter, invoices]);
 
   const formatDate = (iso: string) => {
     try {
@@ -114,14 +144,11 @@ const SalesListPage = () => {
     ? format(selectedDate, "MMM dd, yyyy")
     : "Select date";
 
-  // Pagination logic
+  // Client-side pagination
   const totalItems = filteredInvoices.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const startIndex = (page - 1) * itemsPerPage;
-  const paginatedInvoices = filteredInvoices.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
+  const paginatedInvoices = filteredInvoices.slice(startIndex, startIndex + itemsPerPage);
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -147,9 +174,7 @@ const SalesListPage = () => {
           variant={page === i ? "default" : "outline"}
           size="sm"
           className={`h-8 w-8 ${
-            page === i
-              ? "bg-[#0A6DC0] text-white hover:bg-[#0A6DC0]"
-              : ""
+            page === i ? "bg-[#0A6DC0] text-white hover:bg-[#0A6DC0]" : ""
           }`}
           onClick={() => handlePageChange(i)}
         >
@@ -162,17 +187,29 @@ const SalesListPage = () => {
   };
 
   return (
-    <div className="">
-      <div className="mb-4 md:mb-6">
-        <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
-          Sales Invoices
-        </h1>
-        <p className="font-medium font-dm-sans text-[#9E9A9A]">
-          View and track all your sales invoices easily.
-        </p>
+    <div className="p-4 md:p-6">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
+            Sales Invoices
+          </h1>
+          <p className="font-medium font-dm-sans text-[#9E9A9A]">
+            View and track all your sales invoices easily.
+          </p>
+        </div>
+
+        {isConnected && (
+          <span className="hidden md:flex items-center gap-2 text-xs text-green-600 bg-green-50 px-3 py-1.5 rounded-full">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            Live payment updates
+          </span>
+        )}
       </div>
 
-      {/* Banner with total + date picker */}
+      {/* Banner */}
       <div className="mb-4 bg-[url('/purchase-bg.svg')] bg-no-repeat bg-cover bg-center p-3 md:p-6 overflow-hidden md:h-[150px] mt-3 flex flex-col md:flex-row justify-between rounded-2xl">
         <div className="flex w-full md:items-center justify-between flex-col md:flex-row h-full">
           <div>
@@ -192,7 +229,7 @@ const SalesListPage = () => {
                 variant="outline"
                 className={cn(
                   "justify-start text-left font-normal h-10 px-4 bg-white/90 text-gray-700 hover:bg-white/95",
-                  !selectedDate && "text-muted-foreground"
+                  !selectedDate && "text-muted-foreground",
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
@@ -225,7 +262,9 @@ const SalesListPage = () => {
             </h1>
             <Image src="/in.svg" height={40} width={40} alt="completed" />
           </div>
-          <p className="font-regular text-[13px] font-dm-sans">Completed Sales</p>
+          <p className="font-regular text-[13px] font-dm-sans">
+            Completed Sales
+          </p>
         </div>
 
         <div className="border border-[#EAECF0] w-full shadowX min-w-[258px] h-[80px] md:h-[112px] rounded-[12px] flex flex-col justify-center items-start px-6 gap-2">
@@ -247,7 +286,7 @@ const SalesListPage = () => {
       <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white mb-3 md:mb-5">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-[16px] font-bold font-dm-sans">Sales Invoices</h1>
-          <Select defaultValue="all">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[160px] border border-gray-300 focus:ring-2 focus:ring-blue-500">
               <SelectValue placeholder="Filter status" />
             </SelectTrigger>
@@ -272,12 +311,14 @@ const SalesListPage = () => {
                   <th className="px-6 py-3 text-left font-medium">More</th>
                 </tr>
               </thead>
-              
+
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
-                      Loading sales invoices...
+                      <div className="flex justify-center">
+                        <ThreeDots height="30" width="30" color="#0A6DC0" visible />
+                      </div>
                     </td>
                   </tr>
                 ) : paginatedInvoices.length === 0 ? (
@@ -291,19 +332,15 @@ const SalesListPage = () => {
                 ) : (
                   paginatedInvoices.map((inv) => (
                     <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">
                         {inv.id.substring(0, 8)}...
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">{inv.code}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {formatDate(inv.created_at)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {inv.total.toLocaleString("en-NG", {
-                          style: "currency",
-                          currency: "NGN",
-                          minimumFractionDigits: 0,
-                        })}
+                      <td className="px-6 py-4 whitespace-nowrap font-medium">
+                        ₦{inv.total.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(inv.status)}
@@ -324,7 +361,7 @@ const SalesListPage = () => {
           </div>
         </div>
 
-        {/* Pagination - styled like transaction history */}
+        {/* Pagination */}
         {!loading && filteredInvoices.length > 0 && (
           <div className="flex flex-row justify-between items-center mt-6 gap-4">
             <button
@@ -332,7 +369,7 @@ const SalesListPage = () => {
               onClick={() => handlePageChange(page - 1)}
               className={cn(
                 "flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24",
-                page === 1 && "opacity-50 cursor-not-allowed"
+                page === 1 && "opacity-50 cursor-not-allowed",
               )}
             >
               <MoveLeft /> Previous
@@ -348,7 +385,7 @@ const SalesListPage = () => {
                 onClick={() => handlePageChange(page + 1)}
                 className={cn(
                   "flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24",
-                  page >= totalPages && "opacity-50 cursor-not-allowed"
+                  page >= totalPages && "opacity-50 cursor-not-allowed",
                 )}
               >
                 Next <MoveRightIcon />
@@ -363,6 +400,17 @@ const SalesListPage = () => {
           </div>
         )}
       </div>
+
+      {/* Mobile live indicator */}
+      {isConnected && (
+        <div className="fixed bottom-4 right-4 md:hidden bg-green-50 text-green-700 px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-xs">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          </span>
+          Live
+        </div>
+      )}
     </div>
   );
 };

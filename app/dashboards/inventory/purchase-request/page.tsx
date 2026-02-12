@@ -7,32 +7,28 @@ import { getPurchaseRequest } from "@/lib/utils/api/apiHelper";
 import { cn } from "@/lib/utils";
 import { PurchaseRequest } from "@/types/purchaseRequest";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { MoveRight, CalendarIcon } from "lucide-react";
-import Image from "next/image";
-import { ThreeDots } from "react-loader-spinner";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon, MoveRight } from "lucide-react";
+import Image from "next/image";
+import { ThreeDots } from "react-loader-spinner";
 
 const PurchaseRequestListPage = () => {
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
-  const [filteredRequests, setFilteredRequests] = useState<PurchaseRequest[]>([]);
+  const [filteredRequests, setFilteredRequests] = useState<PurchaseRequest[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
 
-  // Single date filter – no default value
+  // Client-side pagination
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10; // Adjust as needed
+
+  // Single date filter
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   // Derived stats from filtered data
@@ -46,44 +42,41 @@ const PurchaseRequestListPage = () => {
     (r) => r.status?.toLowerCase() === "pending",
   ).length;
 
+  // Fetch all purchase requests (no pagination)
   useEffect(() => {
     const fetchRequests = async () => {
       setLoading(true);
       try {
-        const res = await getPurchaseRequest(page, 10);
-        const allRequests = res.data || [];
-        setRequests(allRequests);
-        setTotalPages(res.pagination?.totalPages || 1);
-        setTotalCount(res.pagination?.totalCount || allRequests.length || 0);
+        const allRequests = await getPurchaseRequest(); // Now returns full array
+        setRequests(Array.isArray(allRequests) ? allRequests : []);
       } catch (err) {
         console.error("Failed to load purchase requests:", err);
+        setRequests([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchRequests();
-  }, [page]);
+  }, []);
 
   // Filter requests when selectedDate changes
   useEffect(() => {
-    if (!selectedDate) {
-      // No date selected → show all requests
-      setFilteredRequests(requests);
-      return;
+    let filtered = requests || [];
+
+    if (selectedDate) {
+      filtered = filtered.filter((req) => {
+        try {
+          const reqDate = new Date(req.created_at);
+          return isSameDay(reqDate, selectedDate);
+        } catch {
+          return false;
+        }
+      });
     }
 
-    // Filter by exact date match
-    const filtered = requests.filter((req) => {
-      try {
-        const reqDate = new Date(req.created_at);
-        return isSameDay(reqDate, selectedDate);
-      } catch {
-        return false;
-      }
-    });
-
     setFilteredRequests(filtered);
+    setPage(1); // Reset to page 1 on filter change
   }, [selectedDate, requests]);
 
   const formatDate = (iso: string) => {
@@ -117,10 +110,24 @@ const PurchaseRequestListPage = () => {
     );
   };
 
-  // Button display text
   const formattedDate = selectedDate
     ? format(selectedDate, "MMM dd, yyyy")
     : "Select date";
+
+  // Client-side pagination
+  const totalItems = filteredRequests.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const startIndex = (page - 1) * itemsPerPage;
+  const paginatedRequests = filteredRequests.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
 
   return (
     <div className="">
@@ -141,7 +148,7 @@ const PurchaseRequestListPage = () => {
               {loading ? (
                 <ThreeDots height="20" width="20" color="#ffffff" visible />
               ) : (
-                filteredRequests.length 
+                filteredRequests.length
               )}
             </h1>
           </div>
@@ -183,7 +190,12 @@ const PurchaseRequestListPage = () => {
                 completedCount
               )}
             </h1>
-            <Image src="/invoice-in.svg" height={40} width={40} alt="completed" />
+            <Image
+              src="/invoice-in.svg"
+              height={40}
+              width={40}
+              alt="completed"
+            />
           </div>
           <p className="font-regular text-[13px] font-dm-sans">
             Completed Requests
@@ -213,16 +225,8 @@ const PurchaseRequestListPage = () => {
           <h1 className="text-[16px] font-bold font-dm-sans">
             Purchase Requests
           </h1>
-          <Select defaultValue="all">
-            <SelectTrigger className="w-[160px] border border-gray-300 focus:ring-2 focus:ring-blue-500">
-              <SelectValue placeholder="Filter status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Optional: Add status filter if you want */}
+          {/* <Select defaultValue="all"> ... </Select> */}
         </div>
 
         <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
@@ -241,25 +245,43 @@ const PurchaseRequestListPage = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
-                      Loading purchase requests...
+                    <td
+                      colSpan={6}
+                      className="px-6 py-10 text-center text-gray-500"
+                    >
+                      <div className="flex justify-center">
+                        <ThreeDots
+                          height="30"
+                          width="30"
+                          color="#0A6DC0"
+                          visible
+                        />
+                      </div>
                     </td>
                   </tr>
-                ) : filteredRequests.length === 0 ? (
+                ) : paginatedRequests.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-10 text-center text-gray-500"
+                    >
                       {selectedDate
                         ? `No requests found for ${format(selectedDate, "MMM dd, yyyy")}`
                         : "No purchase requests found"}
                     </td>
                   </tr>
                 ) : (
-                  filteredRequests.map((req) => (
-                    <tr key={req.id} className="hover:bg-gray-50 transition-colors">
+                  paginatedRequests.map((req) => (
+                    <tr
+                      key={req.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         {req.id.substring(0, 8)}...
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">{req.code}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {req.code}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {formatDate(req.created_at)}
                       </td>
@@ -288,39 +310,42 @@ const PurchaseRequestListPage = () => {
             </table>
           </div>
         </div>
+
+        {/* Client-side Pagination */}
+        {!loading && filteredRequests.length > 0 && totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page === 1}
+              className={cn(
+                "px-4 py-2 border rounded-md text-sm",
+                page === 1
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-gray-50",
+              )}
+            >
+              Previous
+            </button>
+
+            <span className="text-sm text-gray-700">
+              Page {page} of {totalPages}
+            </span>
+
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page === totalPages}
+              className={cn(
+                "px-4 py-2 border rounded-md text-sm",
+                page === totalPages
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-gray-50",
+              )}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
-
-      {!loading && totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className={cn(
-              "px-4 py-2 border rounded-md text-sm",
-              page === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50",
-            )}
-          >
-            Previous
-          </button>
-
-          <span className="text-sm text-gray-700">
-            Page {page} of {totalPages}
-          </span>
-
-          <button
-            onClick={() => setPage((p) => p + 1)}
-            disabled={page === totalPages}
-            className={cn(
-              "px-4 py-2 border rounded-md text-sm",
-              page === totalPages
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-gray-50",
-            )}
-          >
-            Next
-          </button>
-        </div>
-      )}
     </div>
   );
 };
