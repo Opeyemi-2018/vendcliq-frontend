@@ -1,7 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-"use client";
-
+import { usePathname } from "next/navigation";
 import {
   BookOpen,
   Home,
@@ -21,6 +18,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 import Link from "next/link";
@@ -43,6 +41,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const items = [
@@ -76,11 +75,13 @@ const items = [
       { title: "My Purchase", url: "/dashboards/my-purchase" },
     ],
   },
+  // { title: "Loans", url: "/dashboards/loan", icon: BriefcaseBusiness },
   {
     title: "Market Place",
     url: "/dashboards/market-place",
     icon: Percent,
   },
+
   {
     title: "More",
     url: "#",
@@ -97,11 +98,37 @@ const items = [
 ];
 
 export function AppSidebar() {
+  const { state, isMobile, setOpenMobile } = useSidebar();
+  const isCollapsed = state === "collapsed";
+  const [openItems, setOpenItems] = useState<string[]>([]);
+  const pathname = usePathname();
   const router = useRouter();
 
+  const isActive = (url: string) => {
+    if (!url || url === "#") return false;
+    return pathname === url || pathname?.startsWith(url + "/");
+  };
+
+  const hasActiveChild = (children?: { url: string }[]) => {
+    if (!children) return false;
+    return children.some((child) => isActive(child.url));
+  };
+
+  const toggleItem = (title: string) => {
+    setOpenItems(
+      (prev) =>
+        prev.includes(title) ? prev.filter((item) => item !== title) : [title], // Only keep the newly opened item
+    );
+  };
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
-    <Sidebar collapsible="icon" className="" suppressHydrationWarning>
-      {/* ↑ Add suppressHydrationWarning here – fixes all Radix ID mismatches */}
+    <Sidebar collapsible="icon" className="">
       <SidebarContent
         style={{
           backgroundColor: "#0A2540",
@@ -111,11 +138,22 @@ export function AppSidebar() {
         }}
       >
         <SidebarGroup>
-          {/* Logo */}
-          <div className="px-4 py-4">
-            <Image src={"/vl.avif"} width={150} height={150} alt="logo" />
-          </div>
+          {!isCollapsed && (
+            <div className="px-4 py-4">
+              <Image src={"/vl.avif"} width={150} height={150} alt="logo" />
+            </div>
+          )}
 
+          {isCollapsed && (
+            <div className="flex justify-center py-4">
+              <Image
+                src="/sidebar-logo.svg"
+                width={32}
+                height={32}
+                alt="logo"
+              />
+            </div>
+          )}
           <Separator
             orientation="horizontal"
             className="h-[1px] bg-[#FFFFFF1A]"
@@ -124,13 +162,20 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="mt-4">
               {items.map((item) => {
+                const parentActive =
+                  hasActiveChild(item.children) || isActive(item.url);
+
                 return (
                   <SidebarMenuItem key={item.title}>
                     {item.children ? (
-                      <Collapsible defaultOpen={false}>
+                      <Collapsible
+                        open={openItems.includes(item.title)}
+                        onOpenChange={() => toggleItem(item.title)}
+                      >
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton
                             tooltip={item.title}
+                            isActive={parentActive}
                             className="menuButton mb-3 text-white hover:bg-white/10"
                           >
                             <item.icon
@@ -142,27 +187,38 @@ export function AppSidebar() {
                               {item.title}
                             </span>
                             <ChevronDown
-                              className="ml-auto text-white transition-transform duration-200"
+                              className={`ml-auto text-white transition-transform duration-200 ${
+                                openItems.includes(item.title)
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
                               style={{ width: "20px", height: "20px" }}
                             />
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <SidebarMenuSub className="border-l-0 ml-0 pl-0">
-                            {item.children.map((child) => (
-                              <SidebarMenuSubItem key={child.title}>
-                                <SidebarMenuSubButton
-                                  asChild
-                                  className="menuButton text-white hover:bg-white/10 ml-8"
-                                >
-                                  <Link href={child.url}>
-                                    <span className="text-white font-dm-sans text-[14px]">
-                                      {child.title}
-                                    </span>
-                                  </Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            ))}
+                            {item.children.map((child) => {
+                              const childActive = isActive(child.url);
+                              return (
+                                <SidebarMenuSubItem key={child.title}>
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    isActive={childActive}
+                                    className="menuButton text-white hover:bg-white/10 ml-8"
+                                  >
+                                    <Link
+                                      href={child.url}
+                                      onClick={handleLinkClick}
+                                    >
+                                      <span className="text-white font-dm-sans text-[14px]">
+                                        {child.title}
+                                      </span>
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              );
+                            })}
                           </SidebarMenuSub>
                         </CollapsibleContent>
                       </Collapsible>
@@ -170,12 +226,17 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         asChild
                         tooltip={item.title}
+                        isActive={isActive(item.url)}
                         className="menuButton mb-3 text-white hover:bg-white/10"
                       >
-                        <Link href={item.url} className="flex">
+                        <Link
+                          href={item.url}
+                          className="flex "
+                          onClick={handleLinkClick}
+                        >
                           <item.icon
                             style={{ width: "30px", height: "30px" }}
-                            className="text-white pr-2"
+                            className="text-white pr-2 "
                             strokeWidth={2}
                           />
                           <span className="text-white font-dm-sans text-[16px]">
@@ -191,10 +252,9 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Bottom section – unchanged */}
+        {/* Bottom section */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent className="space-y-3">
-            {/* Payment Subscriptions card */}
             <SidebarMenu className="mt-4">
               <SidebarMenuItem>
                 <SidebarMenuButton asChild className="">
@@ -207,26 +267,38 @@ export function AppSidebar() {
                     }}
                     className="h-[127px] w-[217px]"
                   >
-                    <div className="space-y-3">
-                      <h1 className="text-white font-clash text-[14px] font-semibold">
-                        Payment Subscriptions
-                      </h1>
-                      <p className="text-[13px] font-dm-sans font-medium text-white leading-none">
-                        View subscription, manage your plan and upgrade.
-                      </p>
-                      <Button
-                        onClick={() => router.push("/dashboards/plans")}
-                        className="bg-white text-[#0A2540] hover:bg-[#0A2540] hover:text-white"
-                      >
-                        Upgrade Plan
-                      </Button>
-                    </div>
+                    {!isCollapsed && (
+                      <div className="space-y-3">
+                        <h1 className="text-white font-clash text-[14px] font-semibold">
+                          Payment Subscriptions
+                        </h1>
+                        <p className="text-[13px] font-dm-sans font-medium text-white leading-none ">
+                          View subscription, manage your plan and upgrade.
+                        </p>
+                        <Button
+                          onClick={() => router.push("/dashboards/plans")}
+                          className="bg-white text-[#0A2540] hover:bg-[#0A2540] hover:text-white"
+                        >
+                          Upgrade Plan
+                        </Button>
+                      </div>
+                    )}
+                    {isCollapsed && (
+                      <div className="flex justify-center py-4">
+                        <Image
+                          onClick={() => router.push("/dashboards/plans")}
+                          src="/sub.svg"
+                          width={32}
+                          height={32}
+                          alt="logo"
+                        />
+                      </div>
+                    )}
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
 
-            {/* Logout */}
             <SidebarMenu>
               <SidebarMenuItem>
                 <AlertDialog>
@@ -245,14 +317,14 @@ export function AppSidebar() {
                       </span>
                     </SidebarMenuButton>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className=" ">
                     <AlertDialogHeader>
                       <AlertDialogTitle className="font-clash font-semibold text-[25px]">
-                        Log Out
+                        Log Out{" "}
                       </AlertDialogTitle>
-                      <AlertDialogDescription className="font-dm-sans text-[#464343]">
+                      <AlertDialogDescription className="font-dm-sans text-[#464343] ">
                         Are you sure you want to Log Out of your Vendcliq
-                        Account?
+                        Account?{" "}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex items-center flex-col gap-3 sm:flex-row justify-center">
