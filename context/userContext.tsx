@@ -199,6 +199,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("hasPin");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("authToken");
+    localStorage.removeItem("wallet"); 
   };
 
   return (
