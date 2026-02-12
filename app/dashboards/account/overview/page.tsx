@@ -31,12 +31,10 @@ const Home = () => {
     fetchWallet,
     getBalance,
     getAccountNumber,
-    isLiveConnected,
   } = useWallet();
 
   const [showBalance, setShowBallance] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [creatingWallet, setCreatingWallet] = useState(false);
   const [mounted, setMounted] = useState(false); // ← NEW: prevents hydration mismatch
 
   const router = useRouter();
@@ -92,28 +90,28 @@ const Home = () => {
     }
   };
 
-  const handleCreateWalletClick = async () => {
-    setCreatingWallet(true);
-    try {
-      const response = await handleCreateWallet();
+  // const handleCreateWalletClick = async () => {
+  //   setCreatingWallet(true);
+  //   try {
+  //     const response = await handleCreateWallet();
 
-      if (response.status === "success") {
-        toast.success(response.msg || "Virtual account created successfully!");
-        // Refresh wallet data
-        await fetchWallet();
-      } else {
-        toast.error(response.msg || "Failed to create wallet");
-      }
-    } catch (error: any) {
-      const errorMsg =
-        error?.response?.data?.msg ||
-        error?.message ||
-        "Failed to create wallet. Please try again.";
-      toast.error(errorMsg);
-    } finally {
-      setCreatingWallet(false);
-    }
-  };
+  //     if (response.status === "success") {
+  //       toast.success(response.msg || "Virtual account created successfully!");
+  //       // Refresh wallet data
+  //       await fetchWallet();
+  //     } else {
+  //       toast.error(response.msg || "Failed to create wallet");
+  //     }
+  //   } catch (error: any) {
+  //     const errorMsg =
+  //       error?.response?.data?.msg ||
+  //       error?.message ||
+  //       "Failed to create wallet. Please try again.";
+  //     toast.error(errorMsg);
+  //   } finally {
+  //     setCreatingWallet(false);
+  //   }
+  // };
 
   return (
     <div className="">
@@ -122,29 +120,34 @@ const Home = () => {
         Welcome back, {mounted ? user?.firstname || "User" : ""}
       </h1>
 
-      
-
-      {/* Conditional rendering for wallet account details */}
-      {hasWalletAccount && (
-        <div className="bg-white font-dm-sans text-center text-[14px] md:font-bold text-[#2F2F2F] py-3 px-4 md:px-6 items-center justify-between gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
-          <p className="flex-shrink-0">
-            {Object.keys(wallet?.accountNumbers || {})[0]}
-          </p>
-          <Separator orientation="vertical" className="h-4" />
-          <h1 className="flex-shrink-0">{getAccountNumber("WEMA") || "N/A"}</h1>
-          <Separator orientation="vertical" className="h-4" />
-          <h1 className="flex-shrink-0">
-            {wallet?.accountName
-              ? wallet.accountName.length > 10
-                ? `${wallet.accountName.slice(0, 10)}....`
-                : wallet.accountName
-              : "N/A"}
-          </h1>
-          <Copy
-            className="w-5 h-5 text-[#0A6DC0] flex-shrink-0 cursor-pointer"
-            onClick={handleCopyAccountNumber}
-          />
+      {isLoadingWallet ? (
+        <div className="mt-4 flex items-center gap-3 text-gray-600">
+          <ClipLoader size={20} color="#0A6DC0" />
         </div>
+      ) : (
+        hasWalletAccount && (
+          <div className="bg-white font-dm-sans text-center text-[14px] md:font-bold text-[#2F2F2F] py-3 px-4 md:px-6 items-center justify-between gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
+            <p className="flex-shrink-0">
+              {Object.keys(wallet?.accountNumbers || {})[0]}
+            </p>
+            <Separator orientation="vertical" className="h-4" />
+            <h1 className="flex-shrink-0">
+              {getAccountNumber("WEMA") || "N/A"}
+            </h1>
+            <Separator orientation="vertical" className="h-4" />
+            <h1 className="flex-shrink-0">
+              {wallet?.accountName
+                ? wallet.accountName.length > 10
+                  ? `${wallet.accountName.slice(0, 10)}....`
+                  : wallet.accountName
+                : "N/A"}
+            </h1>
+            <Copy
+              className="w-5 h-5 text-[#0A6DC0] flex-shrink-0 cursor-pointer"
+              onClick={handleCopyAccountNumber}
+            />
+          </div>
+        )
       )}
 
       {/* Rest of your component remains unchanged */}
