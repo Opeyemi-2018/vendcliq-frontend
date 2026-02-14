@@ -35,6 +35,7 @@ export interface SaleInvoiceItem {
 }
 
 export interface SaleInvoice {
+  total_amount(total_amount: any): import("react").ReactNode;
   id: string;
   user_id: number;
   customer_id: number | null;

@@ -47,6 +47,25 @@
   display: none; /* Chrome, Safari */
 }
 
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #print-section,
+  #print-section * {
+    visibility: visible;
+  }
+
+  #print-section {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
+
+
 @layer base {
   :root {
     --background: 0 0% 100%;

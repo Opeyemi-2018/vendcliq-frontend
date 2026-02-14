@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { format, isSameDay } from "date-fns";
 import { getSales } from "@/lib/utils/api/apiHelper";
 import { cn } from "@/lib/utils";
@@ -16,6 +15,7 @@ import {
 import { MoveRight, MoveLeft, MoveRightIcon, CalendarIcon } from "lucide-react";
 import Image from "next/image";
 import { ThreeDots } from "react-loader-spinner";
+import { useRouter } from "next/navigation";
 import {
   Popover,
   PopoverContent,
@@ -34,7 +34,7 @@ const SalesListPage = () => {
   const itemsPerPage = 5;
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState<string>("all");
-
+  const router = useRouter();
   // WebSocket for real-time payment updates
   const { isConnected } = usePaymentSocket((paymentData) => {
     if (paymentData.type === "invoice") {
@@ -43,27 +43,37 @@ const SalesListPage = () => {
           inv.id === paymentData.id
             ? {
                 ...inv,
-                status: paymentData.status === "success" ? "completed" : paymentData.status,
+                status:
+                  paymentData.status === "success"
+                    ? "completed"
+                    : paymentData.status,
               }
             : inv,
         ),
       );
 
       if (paymentData.status === "success") {
-        toast.success(`Invoice #${paymentData.id.slice(0, 8)} payment successful!`);
+        toast.success(
+          `Invoice #${paymentData.id.slice(0, 8)} payment successful!`,
+        );
       } else if (paymentData.status === "failed") {
-        toast.error(`Payment failed for invoice #${paymentData.id.slice(0, 8)}`);
+        toast.error(
+          `Payment failed for invoice #${paymentData.id.slice(0, 8)}`,
+        );
       }
     }
   });
 
   // Safe stats
   const completedCount = Array.isArray(filteredInvoices)
-    ? filteredInvoices.filter((inv) => inv.status?.toLowerCase() === "completed").length
+    ? filteredInvoices.filter(
+        (inv) => inv.status?.toLowerCase() === "completed",
+      ).length
     : 0;
 
   const pendingCount = Array.isArray(filteredInvoices)
-    ? filteredInvoices.filter((inv) => inv.status?.toLowerCase() === "pending").length
+    ? filteredInvoices.filter((inv) => inv.status?.toLowerCase() === "pending")
+        .length
     : 0;
 
   const fetchInvoices = async () => {
@@ -148,7 +158,10 @@ const SalesListPage = () => {
   const totalItems = filteredInvoices.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const startIndex = (page - 1) * itemsPerPage;
-  const paginatedInvoices = filteredInvoices.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedInvoices = filteredInvoices.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -197,7 +210,6 @@ const SalesListPage = () => {
             View and track all your sales invoices easily.
           </p>
         </div>
-
       </div>
 
       {/* Banner */}
@@ -306,15 +318,26 @@ const SalesListPage = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-10 text-center text-gray-500"
+                    >
                       <div className="flex justify-center">
-                        <ThreeDots height="30" width="30" color="#0A6DC0" visible />
+                        <ThreeDots
+                          height="30"
+                          width="30"
+                          color="#0A6DC0"
+                          visible
+                        />
                       </div>
                     </td>
                   </tr>
                 ) : paginatedInvoices.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-10 text-center text-gray-500"
+                    >
                       {selectedDate
                         ? `No sales found for ${format(selectedDate, "MMM dd, yyyy")}`
                         : "No sales invoices found"}
@@ -322,11 +345,19 @@ const SalesListPage = () => {
                   </tr>
                 ) : (
                   paginatedInvoices.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
+                    <tr
+                      key={inv.id}
+                      onClick={() =>
+                        router.push(`/dashboards/inventory/sales/${inv.id}`)
+                      }
+                      className="hover:bg-gray-50 transition-colors"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">
                         {inv.id.substring(0, 8)}...
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">{inv.code}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {inv.code}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {formatDate(inv.created_at)}
                       </td>
@@ -337,12 +368,7 @@ const SalesListPage = () => {
                         {getStatusBadge(inv.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <Link
-                          href={`/dashboards/inventory/sales/${inv.id}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
-                        >
-                          <MoveRight className="w-5 h-5 text-gray-500" />
-                        </Link>
+                        <MoveRight className="w-5 h-5 text-gray-500" />
                       </td>
                     </tr>
                   ))

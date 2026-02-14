@@ -4,11 +4,10 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { Edit, MoveLeft, MoveRight } from "lucide-react";
+import { Edit, MoveLeft, MoveRight, Printer } from "lucide-react";
 import { ThreeDots } from "react-loader-spinner";
 import { getSaleById } from "@/lib/utils/api/apiHelper";
 import { SaleInvoice, SaleInvoiceItem } from "@/types/sales";
-import { Button } from "@/components/ui/button";
 
 export default function SaleInvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -18,12 +17,14 @@ export default function SaleInvoiceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const formatCurrency = (amount: number) =>
-    amount.toLocaleString("en-NG", {
+  const formatCurrency = (amount?: number | null) => {
+    const safeAmount = typeof amount === "number" ? amount : 0;
+    return safeAmount.toLocaleString("en-NG", {
       style: "currency",
       currency: "NGN",
       minimumFractionDigits: 0,
     });
+  };
 
   useEffect(() => {
     if (!id) {
@@ -76,77 +77,72 @@ export default function SaleInvoiceDetailPage() {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="py-20 px-4 flex flex-col items-center">
-          <ThreeDots height="80" width="80" color="#0A6DC0" visible />
-          <p className="mt-5 text-[#9E9A9A] font-dm-sans text-lg">
-            Loading invoice details...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !invoice) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 text-center">
-        <h2 className="text-2xl font-bold text-red-600 mb-4 font-dm-sans">
-          Error
-        </h2>
-        <p className="text-gray-700 mb-4 max-w-md">
-          {error || "Missing invoice ID in the URL"}
-        </p>
-        <p className="text-sm text-gray-500 mb-6">
-          Current ID: {id || "missing"}
-        </p>
-        <Button
-          onClick={() => router.back()}
-          className="px-8 py-3.5 bg-[#0A6DC0] text-white rounded-lg hover:bg-[#085a9e]"
-        >
-          Go Back
-        </Button>
-      </div>
-    );
-  }
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
     <div className="">
+      {/* BACK BUTTON */}
       <button
         onClick={() => router.back()}
-        className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors mb-4"
+        className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors mb-4 print:hidden"
       >
         <MoveLeft className="w-5 h-5" />
       </button>
 
+      {/* HEADER */}
       <div className="flex items-center justify-between">
         <div className="mb-4 md:mb-6">
           <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
-            {invoice.code}
+            {invoice?.code || "Loading..."}
           </h1>
           <p className="font-medium font-dm-sans text-[#9E9A9A]">
             View all items sold in this invoice
           </p>
         </div>
-        {invoice.status?.toLowerCase() === "pending" && (
-          <Edit
-            color="#0A6DC0"
-            className="cursor-pointer"
-            onClick={() =>
-              router.push(`/dashboards/inventory/sales/edit/${invoice.id}`)
-            }
-          />
-        )}
+
+        <div className="flex items-center gap-10">
+          {invoice?.status?.toLowerCase() === "pending" && (
+            <div className="flex items-center gap-2 text-[#0A2540] hover:text-[#0A6DC0] print:hidden">
+              <Edit
+                className="cursor-pointer"
+                onClick={() =>
+                  router.push(`/dashboards/inventory/sales/edit/${invoice.id}`)
+                }
+              />
+              Edit
+            </div>
+          )}
+
+          <div
+            className="flex items-center gap-2 text-[#0A2540] hover:text-[#0A6DC0] cursor-pointer print:hidden"
+            onClick={handlePrint}
+          >
+            <Printer />
+            <button>Print</button>
+          </div>
+        </div>
       </div>
 
-      {/* Items Table */}
+      {/* ITEMS TABLE */}
       <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Sold Items ({invoice.items_count})
+          Sold Items ({invoice?.items_count || 0})
         </h2>
 
-        {invoice.items?.length === 0 ? (
+        {loading ? (
+          <div className="py-16 text-center text-gray-500">
+            <div className="flex justify-center">
+              <ThreeDots height="40" width="40" color="#0A6DC0" visible />
+            </div>
+            <p className="mt-4">Loading invoice details...</p>
+          </div>
+        ) : error || !invoice ? (
+          <div className="py-16 text-center text-red-600">
+            {error || "Invoice not found"}
+          </div>
+        ) : invoice.items?.length === 0 ? (
           <div className="p-12 text-center text-gray-500">
             No items in this invoice
           </div>
@@ -167,7 +163,6 @@ export default function SaleInvoiceDetailPage() {
                       Subtotal
                     </th>
                     <th className="px-6 py-3 text-left font-medium">Profit</th>
-                    {/* New column */}
                     <th className="px-6 py-3 text-left font-medium">
                       Invoice Status
                     </th>
@@ -198,7 +193,7 @@ export default function SaleInvoiceDetailPage() {
                                 alt={item.product.name || "Product"}
                                 width={48}
                                 height={48}
-                                className="object-cover w-full h-full"
+                                className="object-contain w-full h-full"
                               />
                             ) : (
                               <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
@@ -216,23 +211,18 @@ export default function SaleInvoiceDetailPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {item.quantity}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {formatCurrency(item.cost)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium">
+                      <td className="px-6 py-4">{item.quantity}</td>
+                      <td className="px-6 py-4">{formatCurrency(item.cost)}</td>
+                      <td className="px-6 py-4 font-medium">
                         {formatCurrency(item.sub_total)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium">
+                      <td className="px-6 py-4 font-medium">
                         {formatCurrency(item.profit)}
                       </td>
-                      {/* New status column – same value for every row since it's invoice-level */}
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         {getStatusBadge(invoice.status || "unknown")}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 text-sm">
                         <MoveRight className="w-5 h-5 text-gray-500" />
                       </td>
                     </tr>
@@ -242,6 +232,49 @@ export default function SaleInvoiceDetailPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* ================= PRINT SECTION ================= */}
+      <div id="print-section" className="hidden print:block">
+        <div className="w-[80mm] mx-auto p-4 text-sm">
+          <h3 className="text-center font-bold">{invoice?.code}</h3>
+          <p className="text-center text-xs mb-2">
+            {invoice?.created_at
+              ? new Date(invoice.created_at).toLocaleString()
+              : ""}
+          </p>
+          <hr className="my-2 border-dashed" />
+
+          {invoice?.items?.map((item) => (
+            <div key={item.id} className="mb-2">
+              <div className="flex justify-between">
+                <span>{item.product?.name}</span>
+                <span>{item.quantity}x</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span>{formatCurrency(item.cost)}</span>
+                <span>{formatCurrency(item.sub_total)}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span>Profit</span>
+                <span>{formatCurrency(item.profit)}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span>Status</span>
+                <span>{invoice.status}</span>
+              </div>
+            </div>
+          ))}
+
+          <hr className="my-2 border-dashed" />
+          <div className="flex justify-between font-semibold">
+            <span>Total</span>
+            <span>{formatCurrency(Number(invoice?.total_amount))}</span>
+          </div>
+          <p className="text-center text-xs mt-4">
+            Thank you for your purchase
+          </p>
+        </div>
       </div>
     </div>
   );
