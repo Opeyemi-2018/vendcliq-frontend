@@ -4,43 +4,24 @@
 import { CustomerForm, customerSchema } from "@/types/customer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
-import {
-  Mail,
-  Search,
-  X,
-  Plus,
-  Trash2,
-  UserPen,
-  MoveLeft,
-  MoveRight,
-} from "lucide-react";
+import { Mail, Search, X, Plus, MoveRight, MoveLeft } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { deleteCustomer, getCustomers } from "@/actions/getcustomers";
+import { getCustomers } from "@/actions/getcustomers";
 import { handleCreateCustomer } from "@/lib/utils/api/apiHelper";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ClipLoader } from "react-spinners";
 import { ThreeDots } from "react-loader-spinner";
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
 import {
   Form,
   FormControl,
@@ -58,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import PlacesAutocompleteInput from "@/hooks/googleMap";
+import { Label } from "@/components/ui/label";
 
 interface CustomerType {
   id: string;
@@ -70,14 +52,17 @@ interface CustomerType {
     latitude: number;
     longitude: number;
   };
+  totalSales: number;
+  customer_empties: any[]; // adjust type if you have a proper interface
 }
 
 const Customer = () => {
   const [customers, setCustomers] = useState<CustomerType[]>([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerType | null>(
+    null,
+  );
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -163,39 +148,9 @@ const Customer = () => {
     }
   };
 
-  const onDeleteCustomer = async (customerId: string) => {
-    try {
-      setDeletingId(customerId);
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
-      if (!token) {
-        toast.error("No authentication token found");
-        return;
-      }
-
-      const result = await deleteCustomer(token, customerId);
-
-      if (result.success) {
-        toast.success(result.message || "Customer deleted successfully");
-        const refreshResult = await getCustomers(token);
-        if (refreshResult.success && refreshResult.data) {
-          setCustomers(refreshResult.data);
-        }
-      } else {
-        toast.error(result.error || "Failed to delete customer");
-      }
-    } catch (err: any) {
-      toast.error(err?.message || "Error deleting customer");
-    } finally {
-      setDeletingId(null);
-      setDeleteDialogOpen(null);
-    }
-  };
-
   const filteredCustomers = customers.filter((customer) =>
     `${customer.name} ${customer.phone} ${customer.email} ${customer.type} ${
-      customer.address || ""
+      customer.address?.address || ""
     }`
       .toLowerCase()
       .includes(searchQuery.toLowerCase()),
@@ -255,7 +210,7 @@ const Customer = () => {
 
   return (
     <div>
-      <div className="flex md:items-center justify-between gap-3 md:gap-0  flex-col md:flex-row mb-6">
+      <div className="flex md:items-center justify-between gap-3 md:gap-0 flex-col md:flex-row mb-6">
         <div>
           <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
             Customer List
@@ -265,26 +220,26 @@ const Customer = () => {
           </p>
         </div>
 
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
+        <Dialog>
+          <DialogTrigger asChild>
             <Button className="bg-[#0A6DC0] hover:bg-[#09599a] text-white flex items-center gap-2 px-6 py-5 md:py-6">
               <Plus size={18} />
               Add New Customer
             </Button>
-          </AlertDialogTrigger>
+          </DialogTrigger>
 
-          <AlertDialogContent className="max-w-[95vw] md:max-w-[600px] max-h-[90vh] overflow-y-auto">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex font-clash justify-between items-center">
+          <DialogContent className="max-w-[95vw] md:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex font-clash justify-between items-center">
                 Create New Customer
-                <AlertDialogCancel className="border-0 bg-transparent p-0">
-                  <X className="w-5 h-5" />
-                </AlertDialogCancel>
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-left">
+                <DialogTrigger asChild>
+                  <X className="w-5 h-5 cursor-pointer" />
+                </DialogTrigger>
+              </DialogTitle>
+              <DialogDescription className="text-left">
                 Fill in the necessary details to create a new customer
-              </AlertDialogDescription>
-            </AlertDialogHeader>
+              </DialogDescription>
+            </DialogHeader>
 
             <Form {...customerForm}>
               <form
@@ -414,8 +369,10 @@ const Customer = () => {
                   )}
                 />
 
-                <AlertDialogFooter className="mt-6">
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <DialogFooter className="mt-6">
+                  <DialogTrigger asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogTrigger>
                   <Button
                     type="submit"
                     disabled={customerForm.formState.isSubmitting}
@@ -430,11 +387,11 @@ const Customer = () => {
                       "Create Customer"
                     )}
                   </Button>
-                </AlertDialogFooter>
+                </DialogFooter>
               </form>
             </Form>
-          </AlertDialogContent>
-        </AlertDialog>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Search Bar */}
@@ -494,7 +451,6 @@ const Customer = () => {
                 <tr>
                   <td colSpan={6} className="py-20 px-4">
                     <div className="flex flex-col items-center justify-center space-y-4">
-                      <UserPen size={40} className="text-gray-400" />
                       <p className="font-bold font-dm-sans text-[16px] text-[#2F2F2F] dark:text-white">
                         {searchQuery
                           ? "No matching customers"
@@ -512,7 +468,8 @@ const Customer = () => {
                 paginatedCustomers.map((customer) => (
                   <tr
                     key={customer.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
+                    onClick={() => setSelectedCustomer(customer)}
+                    className="hover:bg-gray-50 cursor-pointer dark:hover:bg-gray-800/50 transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
                   >
                     <td className="py-4 pl-4 font-medium">{customer.name}</td>
                     <td className="hidden md:table-cell py-4">
@@ -528,64 +485,13 @@ const Customer = () => {
                       {customer.address?.address}
                     </td>
                     <td className="py-4">
-                      <Dialog
-                        open={deleteDialogOpen === customer.id}
-                        onOpenChange={(open) =>
-                          setDeleteDialogOpen(open ? customer.id : null)
-                        }
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-[#0A6DC0] hover:text-[#09599a]"
                       >
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <Trash2 size={18} />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Delete Customer</DialogTitle>
-                            <DialogDescription>
-                              Are you sure you want to delete{" "}
-                              <strong className="text-black">
-                                {customer.name}
-                              </strong>
-                              ?
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="flex justify-end gap-3 mt-4">
-                            <Button
-                              variant="outline"
-                              onClick={() => setDeleteDialogOpen(null)}
-                              disabled={deletingId === customer.id}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              onClick={async () => {
-                                await onDeleteCustomer(customer.id);
-                                setDeleteDialogOpen(null);
-                              }}
-                              className="bg-red-600 hover:bg-red-700 text-white"
-                              disabled={deletingId === customer.id}
-                            >
-                              {deletingId === customer.id ? (
-                                <>
-                                  Deleting...
-                                  <ClipLoader
-                                    size={18}
-                                    color="white"
-                                    className="mr-2"
-                                  />
-                                </>
-                              ) : (
-                                "Delete"
-                              )}
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                        <MoveRight size={18} />
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -594,7 +500,6 @@ const Customer = () => {
           </table>
         </div>
 
-        {/* Pagination – only show if more than 5 items */}
         {!isLoadingCustomers && filteredCustomers.length > itemsPerPage && (
           <div className="flex flex-row justify-between items-center mt-6 px-4 gap-4">
             <button
@@ -625,6 +530,83 @@ const Customer = () => {
           </div>
         )}
       </div>
+
+      {/* Customer Details Modal */}
+      <Dialog
+        open={!!selectedCustomer}
+        onOpenChange={() => setSelectedCustomer(null)}
+      >
+        <DialogContent className="sm:max-w-[500px] bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">
+              {selectedCustomer?.name || "Customer Details"}
+            </DialogTitle>
+            <DialogDescription>
+              Sales and empties information for this customer.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Total Sales – uneditable input */}
+            <div className="space-y-2">
+              <Label>Total Sales</Label>
+              <Input
+                value={`₦${selectedCustomer?.totalSales?.toLocaleString() ?? "0"}`}
+                readOnly
+                className="bg-[#FAFAFA] text-gray-900 cursor-default border-gray-300 focus-visible:ring-0 shadow-sm"
+              />
+            </div>
+
+            {/* Empties Returned Count – uneditable input */}
+            <div className="space-y-2">
+              <Label>Empties Returned</Label>
+              <Input
+                value={selectedCustomer?.customer_empties?.length ?? 0}
+                readOnly
+                className="bg-[#FAFAFA] text-gray-900 cursor-default border-gray-300 focus-visible:ring-0 shadow-sm"
+              />
+            </div>
+
+            {/* Empties Details – safe conditional */}
+            {(selectedCustomer?.customer_empties?.length ?? 0) > 0 ? (
+              <div className="space-y-2">
+                <Label>Empties Details</Label>
+                <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3 bg-gray-50">
+                  <ul className="space-y-2 text-sm">
+                    {selectedCustomer!.customer_empties.map(
+                      (empty: any, index: number) => (
+                        <li
+                          key={index}
+                          className="flex justify-between items-center py-1 px-2 bg-white rounded border border-gray-200"
+                        >
+                          <span>{empty.name || "Unnamed"}</span>
+                          <span className="font-medium">
+                            Qty: {empty.quantity || "N/A"}
+                          </span>
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground py-4 italic">
+                No empties recorded for this customer yet.
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedCustomer(null)}
+              className="w-full sm:w-auto"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
