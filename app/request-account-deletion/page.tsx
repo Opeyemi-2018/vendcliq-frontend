@@ -93,21 +93,21 @@ export default function AccountDeletionPage() {
         </Button>
       </div>
 
-      <div className="lg:max-w-[70%] mx-auto">
+      <div className="lg:max-w-[70%] mx-auto font-dm-sans">
         <Card className="md:p-6">
-          <h2 className="text-xl md:text-2xl font-semibold text-[#2F2F2F]">
+          <h2 className="text-[16px] md:text-xl  font-clash font-semibold text-[#2F2F2F]">
             Delete Account
           </h2>
 
           <Separator className="my-2 bg-[#E0E0E0]" />
 
-          <p className="text-[#9E9A9A] text-base mb-3">
+          <p className="text-[#9E9A9A] text-sm md:text-[16px] leading-16 mb-2">
             We&apos;re sorry to see you go. Please let us know why you&apos;re leaving so
             we can improve.
           </p>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2 lg:space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -182,7 +182,7 @@ export default function AccountDeletionPage() {
                     <FormControl>
                       <Textarea
                         placeholder="Please tell us why you're leaving..."
-                        className="min-h-[90px] resize-none bg-[#F3F4F6]"
+                        className="min-h-[90px] resize-none bg-[#F3F4F6] placeholder:text-sm"
                         {...field}
                       />
                     </FormControl>
