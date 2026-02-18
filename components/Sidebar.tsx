@@ -47,38 +47,38 @@ import { useRouter } from "next/navigation";
 const items = [
   {
     title: "Account",
-    url: "/dashboards/account/overview",
+    url: "/account/overview",
     icon: Home,
     children: [
-      { title: "Overview", url: "/dashboards/account/overview" },
-      { title: "Send Money", url: "/dashboards/account/send-money" },
-      { title: "Pay Utility Bill", url: "/dashboards/account/pay-utility" },
+      { title: "Overview", url: "/account/overview" },
+      { title: "Send Money", url: "/account/send-money" },
+      { title: "Pay Utility Bill", url: "/account/pay-utility" },
       {
         title: "Transaction History",
-        url: "/dashboards/account/transactionHistory",
+        url: "/account/transactionHistory",
       },
       {
         title: "Payment & Subscription",
-        url: "/dashboards/payment-subscription",
+        url: "/payment-subscription",
       },
     ],
   },
   {
     title: "Inventory",
-    url: "/dashboards/inventory/overview",
+    url: "/inventory/overview",
     icon: BookOpen,
     children: [
-      { title: "Overview", url: "/dashboards/inventory/overview" },
-      { title: "Sell", url: "/dashboards/inventory/sell" },
-      { title: "Buy", url: "/dashboards/inventory/buy" },
-      { title: "My Store", url: "/dashboards/inventory/my-store" },
-      { title: "My Purchase", url: "/dashboards/my-purchase" },
+      { title: "Overview", url: "/inventory/overview" },
+      { title: "Sell", url: "/inventory/sell" },
+      { title: "Buy", url: "/inventory/buy" },
+      { title: "My Store", url: "/inventory/my-store" },
+      { title: "My Purchase", url: "/my-purchase" },
     ],
   },
-  // { title: "Loans", url: "/dashboards/loan", icon: BriefcaseBusiness },
+  // { title: "Loans", url: "/loan", icon: BriefcaseBusiness },
   {
     title: "Market Place",
-    url: "/dashboards/market-place",
+    url: "/market-place",
     icon: Percent,
   },
 
@@ -87,12 +87,13 @@ const items = [
     url: "#",
     icon: RectangleEllipsis,
     children: [
-      { title: "Business Report", url: "/dashboards/business-report" },
-      { title: "Supplier List", url: "/dashboards/suppliers" },
-      { title: "Customer List", url: "/dashboards/customer" },
-      { title: "Expenses", url: "/dashboards/expenses" },
-      { title: "Profile Settings", url: "/dashboards/profile-settings" },
-      { title: "Referral", url: "/dashboards/referral" },
+      { title: "Business Report", url: "/business-report" },
+      { title: "Supplier List", url: "/suppliers" },
+      { title: "Customer List", url: "/customer" },
+      { title: "Expenses", url: "/expenses" },
+      { title: "Profile Settings", url: "/profile-settings" },
+      { title: "Referral", url: "/referral" },
+      { title: "Account Deletion", url: "/request-account-deletion" },
     ],
   },
 ];
@@ -276,7 +277,7 @@ export function AppSidebar() {
                           View subscription, manage your plan and upgrade.
                         </p>
                         <Button
-                          onClick={() => router.push("/dashboards/plans")}
+                          onClick={() => router.push("/plans")}
                           className="bg-white text-[#0A2540] hover:bg-[#0A2540] hover:text-white"
                         >
                           Upgrade Plan
@@ -286,7 +287,7 @@ export function AppSidebar() {
                     {isCollapsed && (
                       <div className="flex justify-center py-4">
                         <Image
-                          onClick={() => router.push("/dashboards/plans")}
+                          onClick={() => router.push("/plans")}
                           src="/sub.svg"
                           width={32}
                           height={32}

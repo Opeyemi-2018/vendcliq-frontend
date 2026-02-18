@@ -1,4 +1,3 @@
-// actions/getCustomers.ts
 'use server';
 
 export async function getCustomers(token: string) {

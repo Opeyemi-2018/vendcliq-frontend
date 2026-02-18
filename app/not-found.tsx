@@ -13,7 +13,7 @@ export default function Custom404() {
           Oops! The page you&apos;re looking for doesn&apos;t exist.
         </p>
         <Link
-          href="/dashboards/overview/account"
+          href="/overview/account"
           className="text-blue-500 hover:text-blue-700 underline"
         >
           Return to Home

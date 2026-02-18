@@ -90,7 +90,7 @@ const SignIN = () => {
           }
 
           toast.success("Signed in successfully!");
-          router.push("/dashboards/account/overview");
+          router.push("/account/overview");
         } else {
           toast.error("User data not found in response");
         }

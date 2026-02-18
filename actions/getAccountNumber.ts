@@ -1,4 +1,3 @@
-// src/actions/lookupAccount.ts
 "use server";
 
 export async function lookupAccount(accountNumber: string, token: string) {

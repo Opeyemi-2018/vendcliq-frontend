@@ -71,7 +71,7 @@ const Navbar = () => {
         >
           {mounted && user && isUserWalletNull && (
             <Link
-              href="/dashboards/business-account"
+              href="/business-account"
               className="font-inter font-dm-sans cursor-pointer whitespace-nowrap text-[14px] lg:text-[16px] font-medium text-[#0A6DC0] hover:text-[#09599a] border-b-2 border-[#0A6DC0]"
             >
               Create Business Account
@@ -107,7 +107,7 @@ const Navbar = () => {
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => router.push("/dashboards/profile-settings")}
+              onClick={() => router.push("/profile-settings")}
             >
               <User className="h-[1.2rem] w-[1.2rem] mr-2" /> Profile
             </DropdownMenuItem>
