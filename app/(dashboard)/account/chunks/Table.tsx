@@ -346,7 +346,7 @@ const Table = () => {
                 }
                 className="text-[#39498C] font-medium font-dm-sans text-[14px] md:pt-4"
               >
-                Show More
+                Show all
               </button>
             )}
           </div>

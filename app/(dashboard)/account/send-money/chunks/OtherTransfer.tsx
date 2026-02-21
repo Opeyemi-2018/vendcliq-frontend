@@ -372,7 +372,7 @@ export default function OtherBankTransfer() {
 
       const payload = {
         transactionKey,
-        amount: totalAmount,
+        amount: Number(amount),
         beneficiaryAccountNumber: finalAccountNumber,
         beneficiaryBankCode: finalBankCode,
         beneficiaryAccountName: finalAccountName,
