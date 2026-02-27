@@ -25,15 +25,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {  MoveLeft } from "lucide-react";
+import { MoveLeft } from "lucide-react";
 import Image from "next/image";
 import { ThreeDots } from "react-loader-spinner";
 
@@ -111,12 +104,6 @@ export default function CustomerEmptiesPage() {
     if (!customerId || !selectedEmpty || !returnQty) return;
 
     const qty = parseInt(returnQty, 10);
-    const max = getRemainingQty(selectedEmpty);
-
-    if (isNaN(qty) || qty < 1 || qty > max) {
-      toast.error("Invalid return quantity");
-      return;
-    }
 
     try {
       setIsSubmittingReturn(true);
@@ -142,7 +129,6 @@ export default function CustomerEmptiesPage() {
       setIsSubmittingReturn(false);
     }
   };
-
   if (loading) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center flex-col gap-4">
@@ -180,15 +166,9 @@ export default function CustomerEmptiesPage() {
               View {customer.name} empties details
             </p>
           </div>
-          {/* <h1 className="text-3xl font-bold tracking-tight">{customer.name}</h1>
-          <p className="mt-1 text-muted-foreground">
-            Empty Returns · Total Sales: ₦
-            {(customer.totalSales ?? 0).toLocaleString()}
-          </p> */}
         </div>
       </div>
 
-      {/* Table */}
       <div className="rounded-xl border bg-card shadow-sm">
         <Table>
           <TableHeader>
@@ -202,7 +182,36 @@ export default function CustomerEmptiesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {empties.length > 0 ? (
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-md bg-muted animate-pulse shrink-0" />
+                      <div className="space-y-2">
+                        <div className="h-3 w-32 bg-muted animate-pulse rounded" />
+                        <div className="h-3 w-20 bg-muted animate-pulse rounded" />
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-3 w-20 bg-muted animate-pulse rounded" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-3 w-10 bg-muted animate-pulse rounded" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-3 w-10 bg-muted animate-pulse rounded" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-3 w-10 bg-muted animate-pulse rounded" />
+                  </TableCell>
+                  <TableCell className="text-right pr-6">
+                    <div className="h-8 w-16 bg-muted animate-pulse rounded ml-auto" />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : empties.length > 0 ? (
               empties.map((item) => {
                 const remaining = getRemainingQty(item);
                 return (
@@ -236,7 +245,6 @@ export default function CustomerEmptiesPage() {
                       </div>
                     </TableCell>
 
-                    {/* Date */}
                     <TableCell>
                       {new Date(item.created_at).toLocaleDateString("en-GB", {
                         day: "numeric",
@@ -249,7 +257,6 @@ export default function CustomerEmptiesPage() {
 
                     <TableCell>{getReturnedQty(item)}</TableCell>
 
-                    {/* Qty Remaining */}
                     <TableCell
                       className={
                         remaining > 0
@@ -260,7 +267,6 @@ export default function CustomerEmptiesPage() {
                       {remaining}
                     </TableCell>
 
-                    {/* Action */}
                     <TableCell className="text-right pr-6">
                       {remaining > 0 ? (
                         <Button
@@ -306,7 +312,6 @@ export default function CustomerEmptiesPage() {
 
           {selectedEmpty && (
             <div className="space-y-5 pt-2">
-              {/* Product summary */}
               <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
                 {selectedEmpty.stock?.product?.image ? (
                   <Image
@@ -356,26 +361,22 @@ export default function CustomerEmptiesPage() {
                 </div>
               </div>
 
-              {/* Qty to return */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">
                   Quantity to Return
                 </label>
-                <Select value={returnQty} onValueChange={setReturnQty}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select quantity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from(
-                      { length: getRemainingQty(selectedEmpty) },
-                      (_, i) => i + 1,
-                    ).map((n) => (
-                      <SelectItem key={n} value={String(n)}>
-                        {n}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <input
+                  type="number"
+                  min={1}
+                  max={getRemainingQty(selectedEmpty)}
+                  value={returnQty}
+                  onChange={(e) => setReturnQty(e.target.value)}
+                  placeholder="Enter quantity"
+                  className="w-full border border-input rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0A6DC0] focus:border-transparent"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Max returnable: {getRemainingQty(selectedEmpty)}
+                </p>
               </div>
 
               {/* Notes */}
