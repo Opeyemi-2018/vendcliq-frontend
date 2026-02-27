@@ -148,6 +148,9 @@ import {
   GET_ALL_PRODUCTS,
   GET_PRODUCTS_PAGINATED,
   UPDATE_STOCK_PRICES,
+  UPDATE_CUSTOMER,
+  RETURN_CUSTOMER_EMPTIES,
+  GET_CUSTOMER_BY_ID,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -711,6 +714,30 @@ export const handleCreateCustomer = async (
     CREATE_CUSTOMER,
     payload,
   );
+};
+
+export const handleUpdateCustomer = async (
+  customerId: string,
+  payload: Omit<CreateCustomerPayload, "email">,   
+): Promise<CreateCustomerResponse> => {
+  const url = UPDATE_CUSTOMER(customerId);         
+  return await putter<CreateCustomerResponse, typeof payload>(url, payload);
+};
+
+export const handleGetCustomerById = async (
+  customerId: string
+): Promise<any> => {
+  const url = GET_CUSTOMER_BY_ID(customerId);
+  return await fetcher<any>(url);
+};
+
+export const handleReturnCustomerEmpties = async (
+  customerId: string,
+  emptiesId: string,
+  payload: { quantityReturned: number; notes?: string }
+): Promise<any> => {
+  const url = RETURN_CUSTOMER_EMPTIES(customerId, emptiesId);
+  return await poster<any, typeof payload>(url, payload);
 };
 
 export const handleAddToCart = async (

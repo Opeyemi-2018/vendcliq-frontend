@@ -71,12 +71,20 @@ const GET_BENEFICIARIES = "/client/v2/wallet/beneficiaries";
 // inventory endpoint
 const CREATE_STORE = "inventory/stores";
 const CREATE_STOCK = "inventory/stocks";
-// thr 2 below endpoint get all product and also get paginated product 
-const GET_PRODUCTS_PAGINATED = "inventory/products?page=1&limit=50&all=false&search=";
+// thr 2 below endpoint get all product and also get paginated product
+const GET_PRODUCTS_PAGINATED =
+  "inventory/products?page=1&limit=50&all=false&search=";
 const GET_ALL_PRODUCTS = "inventory/products?all=true";
 const CREATE_INVOICE = "inventory/invoices";
 const EDIT_INVOICE = (invoiceId: string) => `inventory/invoices/${invoiceId}`;
 const CREATE_CUSTOMER = "inventory/customers";
+const UPDATE_CUSTOMER = (customerId: string) =>
+  `inventory/customers/${customerId}`;
+const GET_CUSTOMER_BY_ID = (customerId: string) =>
+  `inventory/customers/${customerId}`;
+
+const RETURN_CUSTOMER_EMPTIES = (customerId: string, emptiesId: string) =>
+  `inventory/customers/${customerId}/empties/${emptiesId}/return`;
 const CREATE_CART = "inventory/carts";
 const CHECKOUT_CART = "inventory/carts/checkout";
 const PAY_CART = (invoiceId: string) => `inventory/invoices/${invoiceId}/pay`;
@@ -115,7 +123,6 @@ const GET_STORE_ITEMS_SALES = "inventory/dashboard/store-items";
 const CREATE_OFFER = "inventory/offers";
 const UPDATE_STOCK_PRICES = (stockId: string) => `inventory/stocks/${stockId}`;
 
-
 export {
   // v2 endpoint
   VERIFY_EMAIL,
@@ -147,6 +154,9 @@ export {
   ADD_SHOP_ATTENDANT,
   CREATE_INVOICE,
   CREATE_CUSTOMER,
+  UPDATE_CUSTOMER,
+  GET_CUSTOMER_BY_ID,
+  RETURN_CUSTOMER_EMPTIES,
   CREATE_CART,
   CHECKOUT_CART,
   PAY_CART,

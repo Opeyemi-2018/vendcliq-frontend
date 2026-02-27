@@ -43,19 +43,28 @@ const Cart = () => {
   const [checkingOut, setCheckingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [updatingQuantityId, setUpdatingQuantityId] = useState<string | null>(null);
-  const [updatingDeliveryId, setUpdatingDeliveryId] = useState<string | null>(null);
+  const [updatingQuantityId, setUpdatingQuantityId] = useState<string | null>(
+    null,
+  );
+  const [updatingDeliveryId, setUpdatingDeliveryId] = useState<string | null>(
+    null,
+  );
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const router = useRouter();
 
   const calculateSubtotal = useCallback(() => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+    return cartItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0,
+    );
   }, [cartItems]);
 
   const fetchCart = useCallback(async () => {
     try {
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("authToken");
+      const token =
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("authToken");
       if (!token) {
         setLoading(false);
         return;
@@ -84,17 +93,21 @@ const Cart = () => {
     if (newQuantity < 1) return;
 
     try {
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("authToken");
+      const token =
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("authToken");
       if (!token) return toast.error("Please log in");
 
       setUpdatingQuantityId(itemId);
-      const result = await updateCartItem(token, itemId, { quantity: newQuantity });
+      const result = await updateCartItem(token, itemId, {
+        quantity: newQuantity,
+      });
 
       if (result.success) {
         setCartItems((prev) =>
           prev.map((item) =>
-            item.id === itemId ? { ...item, quantity: newQuantity } : item
-          )
+            item.id === itemId ? { ...item, quantity: newQuantity } : item,
+          ),
         );
       } else {
         toast.error(result.error || "Failed to update quantity");
@@ -108,17 +121,21 @@ const Cart = () => {
 
   const handleToggleDelivery = async (itemId: string, current: boolean) => {
     try {
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("authToken");
+      const token =
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("authToken");
       if (!token) return toast.error("Please log in");
 
       setUpdatingDeliveryId(itemId);
-      const result = await updateCartItem(token, itemId, { delivery: !current });
+      const result = await updateCartItem(token, itemId, {
+        delivery: !current,
+      });
 
       if (result.success) {
         setCartItems((prev) =>
           prev.map((item) =>
-            item.id === itemId ? { ...item, delivery: !current } : item
-          )
+            item.id === itemId ? { ...item, delivery: !current } : item,
+          ),
         );
       } else {
         toast.error(result.error || "Failed to update delivery");
@@ -132,7 +149,9 @@ const Cart = () => {
 
   const handleDelete = async (itemId: string) => {
     try {
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("authToken");
+      const token =
+        localStorage.getItem("accessToken") ||
+        localStorage.getItem("authToken");
       if (!token) return toast.error("Please log in");
 
       setDeletingId(itemId);
@@ -165,11 +184,11 @@ const Cart = () => {
 
         const totalQuantity = items.reduce(
           (sum: number, item: any) => sum + parseFloat(item.quantity),
-          0
+          0,
         );
         const totalCost = items.reduce(
           (sum: number, item: any) => sum + item.cost,
-          0
+          0,
         );
 
         const checkoutData = {
@@ -259,12 +278,17 @@ const Cart = () => {
                 <div className="flex flex-col gap-4">
                   <div className="flex items-center gap-6 border border-[#D8D8D866] p-1 rounded-full w-fit">
                     <button
-                      disabled={updatingQuantityId === item.id}
-                      onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                      className="p-1 rounded-full hover:bg-[#0A6DC0] hover:text-white transition"
+                      disabled={
+                        updatingQuantityId === item.id || item.quantity <= 1
+                      }
+                      onClick={() =>
+                        handleUpdateQuantity(item.id, item.quantity - 1)
+                      }
+                      className="p-1 rounded-full bg-gray-100 hover:bg-[#0A6DC0] hover:text-white transition disabled:opacity-50"
                     >
-                      <Plus size={18} />
+                      <Minus size={18} />
                     </button>
+
                     <span className="font-semibold min-w-8 text-center">
                       {updatingQuantityId === item.id ? (
                         <div className="w-5 h-5 border-2 border-t-blue-600 border-gray-300 rounded-full animate-spin" />
@@ -273,11 +297,13 @@ const Cart = () => {
                       )}
                     </span>
                     <button
-                      disabled={updatingQuantityId === item.id || item.quantity <= 1}
-                      onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                      className="p-1 rounded-full hover:bg-[#0A6DC0] hover:text-white transition disabled:opacity-50"
+                      disabled={updatingQuantityId === item.id}
+                      onClick={() =>
+                        handleUpdateQuantity(item.id, item.quantity + 1)
+                      }
+                      className="p-1 rounded-full bg-gray-100 hover:bg-[#0A6DC0] hover:text-white transition"
                     >
-                      <Minus size={18} />
+                      <Plus size={18} />
                     </button>
                   </div>
 
@@ -291,7 +317,9 @@ const Cart = () => {
                       ) : (
                         <Switch
                           checked={item.delivery}
-                          onCheckedChange={() => handleToggleDelivery(item.id, item.delivery)}
+                          onCheckedChange={() =>
+                            handleToggleDelivery(item.id, item.delivery)
+                          }
                           className="data-[state=checked]:bg-[#0A6DC0]"
                         />
                       )}
@@ -311,7 +339,8 @@ const Cart = () => {
                         <DialogHeader>
                           <DialogTitle>Remove Item?</DialogTitle>
                           <DialogDescription>
-                            Are you sure you want to remove this item from your cart?
+                            Are you sure you want to remove this item from your
+                            cart?
                           </DialogDescription>
                         </DialogHeader>
                         <DialogFooter>
