@@ -60,6 +60,7 @@ interface CustomerType {
     longitude: number;
   };
   totalSales: number;
+  totalEmptiesOwed: number;
   customer_empties: any[];
 }
 
@@ -166,10 +167,8 @@ const Customer = () => {
 
       let response;
       if (isEditing && editingCustomer) {
-        // update — no email
         response = await handleUpdateCustomer(editingCustomer.id, basePayload);
       } else {
-        // create — email required
         response = await handleCreateCustomer({
           ...basePayload,
           email: data.email.trim(),
@@ -279,13 +278,7 @@ const Customer = () => {
                 </tr>
               ) : (
                 paginatedCustomers.map((customer) => {
-                  const emptiesOwed =
-                    customer.customer_empties?.reduce(
-                      (sum: number, e: any) =>
-                        sum +
-                        (e.attributes?.remainingQuantity ?? e.quantity ?? 0),
-                      0,
-                    ) ?? 0;
+                  
 
                   return (
                     <tr key={customer.id} className="hover:bg-gray-50/70">
@@ -297,7 +290,7 @@ const Customer = () => {
                         ₦{customer.totalSales.toLocaleString()}
                       </td>
                       <td className="px-6 py-4 hidden md:table-cell">
-                        {emptiesOwed > 0 ? emptiesOwed : "—"}
+                        {customer.totalEmptiesOwed}
                       </td>
                       <td className="px-6 py-4">
                         <DropdownMenu>
@@ -330,7 +323,6 @@ const Customer = () => {
           </table>
         </div>
 
-        {/* Pagination */}
         {filteredCustomers.length > 0 && (
           <div className="flex items-center justify-between px-6 py-4 border-t">
             <Button
