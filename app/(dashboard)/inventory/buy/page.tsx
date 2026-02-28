@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { getSuppliers, getSupplierStock } from "@/actions/suppliers";
@@ -205,7 +206,6 @@ const Buy = () => {
   // Fetch stock when entering invoice stage
   useEffect(() => {
     if (stage === "invoice" && selectedSupplier) {
-      // ← changed from selectedStore
       const fetchSupplierStock = async () => {
         setIsLoadingSupplierStock(true);
         try {
@@ -236,7 +236,7 @@ const Buy = () => {
 
       fetchSupplierStock();
     }
-  }, [stage, selectedSupplier]); // ← dependency changed
+  }, [stage, selectedSupplier]);
 
   const addItemToInvoice = () => {
     const values = invoiceForm.getValues();
@@ -314,7 +314,7 @@ const Buy = () => {
     }
   };
 
-  // Stage 1: Select Supplier (UNCHANGED)
+  // Stage 1: Select Supplier
   if (stage === "select-supplier") {
     return (
       <div>
@@ -337,19 +337,16 @@ const Buy = () => {
         </div>
 
         {/* MOBILE TABS - Only visible on mobile */}
-        <div className="lg:hidden flex gap-2  bg-[#ECECF080] p-1 rounded-lg">
+        <div className="lg:hidden flex gap-2 bg-[#ECECF080] p-1 rounded-lg">
+          {/* Disabled "Buy from Suppliers" tab */}
           <button
-            onClick={() => setSupplierOptionSelected("suppliers")}
-            className={`
-            flex-1 py-3  rounded-lg font-dm-sans font-medium text-[13px] transition-all
-            ${
-              supplierOptionSelected === "suppliers"
-                ? "bg-[#0A6DC0] text-white"
-                : "text-[#9E9A9A]"
-            }
-          `}
+            disabled
+            className="flex-1 py-3 rounded-lg font-dm-sans font-medium text-[13px] transition-all text-[#9E9A9A] opacity-60 cursor-not-allowed flex items-center justify-center gap-2"
           >
             Buy from Suppliers
+            <span className="text-[10px] bg-gray-200 text-gray-500 rounded-full px-2 py-0.5 font-semibold">
+              Soon
+            </span>
           </button>
           <button
             onClick={() => router.push("/market-place")}
@@ -368,8 +365,8 @@ const Buy = () => {
 
         <div className="md:mt-8 flex flex-col lg:flex-row gap-4">
           {/* Left Card - Only visible on desktop (lg+) */}
-          <div className="hidden lg:flex flex-col justify-between py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg  w-full lg:w-[35%] bg-white h-[550px] ">
-            <div className=" ">
+          <div className="hidden lg:flex flex-col justify-between py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg w-full lg:w-[35%] bg-white h-[550px]">
+            <div>
               <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
                 Select where to buy from
               </h1>
@@ -380,19 +377,18 @@ const Buy = () => {
               />
 
               <div className="mt-6 space-y-4">
-                <div
-                  onClick={() => setSupplierOptionSelected("suppliers")}
-                  className={`cursor-pointer hover:bg-[#0A6DC012] flex items-center gap-2 justify-between border border-[#D8D8D866] rounded-lg px-3 py-2 transition-colors ${
-                    supplierOptionSelected === "suppliers"
-                      ? "bg-[#0A6DC012] border-[#0A6DC0]"
-                      : ""
-                  }`}
-                >
+                {/* Disabled "Buy from Suppliers" option */}
+                <div className="opacity-50 cursor-not-allowed flex items-center gap-2 justify-between border border-[#D8D8D866] bg-yellow-100 rounded-lg px-3 py-2">
                   <Truck size={30} className="shrink-0" />
-                  <div>
-                    <p className="text-[#2F2F2F] font-dm-sans font-medium">
-                      Buy from Suppliers
-                    </p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-[#2F2F2F] font-dm-sans font-medium">
+                        Buy from Suppliers
+                      </p>
+                      <span className="text-[10px] bg-yellow-100 text-yellow-700 border border-yellow-700 rounded-full px-2 py-0.5 font-semibold">
+                        Coming Soon
+                      </span>
+                    </div>
                     <p className="text-[#2F2F2F] text-[13px] font-regular">
                       Buy from other suppliers near you, that are also on the
                       Vendcliq network.
@@ -432,7 +428,7 @@ const Buy = () => {
                   className="rotate-180"
                 />
                 <div>
-                  <h1 className="font-bold ">My Purchases</h1>
+                  <h1 className="font-bold">My Purchases</h1>
                   <p className="text-[13px] font-regular">
                     View your purchases or add new purchases
                   </p>
@@ -442,17 +438,13 @@ const Buy = () => {
             </div>
           </div>
 
-          {/* Right Card - Supplier List / Placeholder */}
-          <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg  w-full lg:w-[70%] bg-white">
+          {/* Right Card - Coming Soon */}
+          <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg w-full lg:w-[70%] bg-white">
             <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
-              {supplierOptionSelected === "suppliers"
-                ? "Suppliers"
-                : "Select an option"}
+              Suppliers
             </h1>
             <p className="text-[#9E9A9A] font-dm-sans">
-              {supplierOptionSelected === "suppliers"
-                ? "Search and select suppliers you want to buy from"
-                : "Click 'Buy from Suppliers' to view available suppliers"}
+              Search and select suppliers you want to buy from
             </p>
             <Separator
               orientation="horizontal"
@@ -460,113 +452,123 @@ const Buy = () => {
               style={{ background: "#E0E0E0" }}
             />
 
-            {supplierOptionSelected !== "suppliers" ? (
-              <div className="mt-6 text-center py-8 text-gray-500">
-                Click Buy from Suppliers&quot; on the left to see available
-                suppliers
+            {/* COMING SOON — remove this block and unhide the div below when ready */}
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <div className="w-16 h-16 rounded-full bg-[#0A6DC012] flex items-center justify-center">
+                <Truck size={28} className="text-[#0A6DC0]" />
               </div>
-            ) : (
-              <>
-                <div className="relative my-6">
-                  <Search className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-                  <Input
-                    placeholder="Type to search"
-                    className="pl-10 border-2 bg-[#F2F2F7]"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    disabled={loading || !!error}
-                  />
+              <div className="text-center">
+                <p className="text-[18px] font-semibold text-[#2F2F2F] font-clash">
+                  Coming Soon
+                </p>
+                <p className="text-[#9E9A9A] font-dm-sans text-[14px] mt-1">
+                  Buying from suppliers is currently unavailable. Check back
+                  soon!
+                </p>
+              </div>
+              {/* <span className="text-[12px] bg-[#0A6DC012] text-[#0A6DC0] border border-[#0A6DC033] rounded-full px-4 py-1.5 font-semibold font-dm-sans">
+                In Progress
+              </span> */}
+            </div>
+
+            {/* SUPPLIER LIST — hidden until ready. Remove "hidden" class and delete Coming Soon block above to re-enable */}
+            <div className="hidden">
+              <div className="relative my-6">
+                <Search className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                <Input
+                  placeholder="Type to search"
+                  className="pl-10 border-2 bg-[#F2F2F7]"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  disabled={loading || !!error}
+                />
+              </div>
+
+              {loading ? (
+                <div className="mt-6 text-center py-8">
+                  <div className="inline-block">
+                    <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                  <p className="mt-2 text-gray-500">Loading suppliers...</p>
                 </div>
-
-                {loading ? (
-                  <div className="mt-6 text-center py-8">
-                    <div className="inline-block">
-                      <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              ) : error ? (
+                <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600">{error}</p>
+                  <Button
+                    onClick={fetchSuppliers}
+                    className="mt-2 bg-red-600 hover:bg-red-700"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {filteredSupplier.length === 0 && searchTerm.trim() !== "" ? (
+                    <div className="min-h-[200px] flex items-center justify-center">
+                      <p className="text-gray-400 text-sm italic">
+                        No matches found — showing all suppliers
+                      </p>
                     </div>
-                    <p className="mt-2 text-gray-500">Loading suppliers...</p>
-                  </div>
-                ) : error ? (
-                  <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-red-600">{error}</p>
-                    <Button
-                      onClick={fetchSuppliers}
-                      className="mt-2 bg-red-600 hover:bg-red-700"
-                    >
-                      Try Again
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    {/* Always show full list or filtered list */}
-                    {filteredSupplier.length === 0 &&
-                    searchTerm.trim() !== "" ? (
-                      // Toast only - list remains full (original suppliers)
-                      <div className="min-h-[200px] flex items-center justify-center">
-                        <p className="text-gray-400 text-sm italic">
-                          No matches found — showing all suppliers
-                        </p>
-                      </div>
-                    ) : null}
+                  ) : null}
 
-                    {filteredSupplier.map((supplier) => (
-                      <div
-                        key={supplier.id}
-                        className="mb-4 flex items-center justify-between border border-gray-200 rounded-lg py-3 md:p-4 hover:shadow-md transition-shadow cursor-pointer"
-                        onClick={() => {
-                          setSelectedSupplier(supplier);
-                          setStage("supplier-info");
-                        }}
-                      >
-                        <div className="flex items-center space-x-4 text-[#2F2F2F]">
-                          {supplier.logo ? (
-                            <div className="w-12 h-12 rounded-full border border-gray-200 overflow-hidden">
-                              <Image
-                                height={50}
-                                width={50}
-                                src={supplier.logo}
-                                alt={supplier.name}
-                                className="w-full h-full object-cover hidden md:inline "
-                              />
-                            </div>
-                          ) : (
-                            <div className="hidden md:flex w-12 h-12 rounded-full bg-blue-100  items-center justify-center">
-                              <span className="text-lg font-bold text-blue-600">
-                                {supplier.name.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                          )}
-                          <div>
-                            <h3 className="font-medium capitalize text-[14px] md:text-[16px]">
-                              {supplier.name}
-                            </h3>
-                            <div className="text-[13px] flex items-center gap-1 text-gray-600">
-                              <MapPin size={14} className="hidden md:inline" />
-                              <span className="hidden md:inline">
-                                {supplier.address}
-                              </span>
-                              <span className="hidden md:inline">|</span>
-                              <Phone size={14} />
-                              <span>{supplier.phone}</span>
-                            </div>
-                            <p className="text-[13px] hidden md:inline text-gray-600">
-                              {supplier.email}
-                            </p>
+                  {filteredSupplier.map((supplier) => (
+                    <div
+                      key={supplier.id}
+                      className="mb-4 flex items-center justify-between border border-gray-200 rounded-lg py-3 md:p-4 hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => {
+                        setSelectedSupplier(supplier);
+                        setStage("supplier-info");
+                      }}
+                    >
+                      <div className="flex items-center space-x-4 text-[#2F2F2F]">
+                        {supplier.logo ? (
+                          <div className="w-12 h-12 rounded-full border border-gray-200 overflow-hidden">
+                            <Image
+                              height={50}
+                              width={50}
+                              src={supplier.logo}
+                              alt={supplier.name}
+                              className="w-full h-full object-cover hidden md:inline"
+                            />
                           </div>
+                        ) : (
+                          <div className="hidden md:flex w-12 h-12 rounded-full bg-blue-100 items-center justify-center">
+                            <span className="text-lg font-bold text-blue-600">
+                              {supplier.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <h3 className="font-medium capitalize text-[14px] md:text-[16px]">
+                            {supplier.name}
+                          </h3>
+                          <div className="text-[13px] flex items-center gap-1 text-gray-600">
+                            <MapPin size={14} className="hidden md:inline" />
+                            <span className="hidden md:inline">
+                              {supplier.address}
+                            </span>
+                            <span className="hidden md:inline">|</span>
+                            <Phone size={14} />
+                            <span>{supplier.phone}</span>
+                          </div>
+                          <p className="text-[13px] hidden md:inline text-gray-600">
+                            {supplier.email}
+                          </p>
                         </div>
-                        <ChevronRight color="#9E9A9A" />
                       </div>
-                    ))}
-                  </>
-                )}
-              </>
-            )}
+                      <ChevronRight color="#9E9A9A" />
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  // Stage 2: Supplier Info (UNCHANGED)
+  // Stage 2: Supplier Info
   if (stage === "supplier-info" && selectedSupplier) {
     return (
       <div>
@@ -585,7 +587,7 @@ const Buy = () => {
           All info you need to know about this store
         </p>
 
-        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg  bg-white">
+        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg bg-white">
           <div className="grid md:grid-cols-2 md:gap-y-5 gap-y-2 font-dm-sans text-[#2F2F2F]">
             <div className="font-regular lowercase">
               <p className="font-bold">Supplier Name</p>
@@ -632,7 +634,7 @@ const Buy = () => {
     );
   }
 
-  // Stage 3: Select Store (UNCHANGED)
+  // Stage 3: Select Store
   if (stage === "Store") {
     return (
       <div>
@@ -642,7 +644,7 @@ const Buy = () => {
           }}
           className="mr-2 h-4 w-4 mb-3"
         />
-        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg  bg-white">
+        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg bg-white">
           <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
             Select the store you want to restock
           </h1>
@@ -721,7 +723,7 @@ const Buy = () => {
     );
   }
 
-  // Stage 4: Invoice Generation (NEW – matches Sell page exactly)
+  // Stage 4: Invoice Generation
   if (stage === "invoice" && selectedSupplier && selectedStore) {
     return (
       <div>
@@ -739,7 +741,7 @@ const Buy = () => {
           Kindly fill the details below to create invoice
         </p>
 
-        <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg  md:mt-8 bg-white">
+        <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg md:mt-8 bg-white">
           <div className="mb-2 flex items-center justify-between font-dm-sans font-medium">
             <p className="text-[16px] text-[#000000]">Supplier</p>
             <button
@@ -777,7 +779,7 @@ const Buy = () => {
               <p className="text-[#2F2F2F] font-medium">{selectedStore.name}</p>
               <div className="flex items-center gap-2 text-[13px] hidden md:flex">
                 <p className="text-[#2F2F2F] font-medium">Inventory value: </p>
-                <p className="text-[#9E9A9A] ">₦{selectedStore.stock_value}</p>
+                <p className="text-[#9E9A9A]">₦{selectedStore.stock_value}</p>
               </div>
               <div className="flex items-center gap-2 text-[13px] hidden md:flex">
                 <p className="text-[#2F2F2F] font-medium">Product Count:</p>

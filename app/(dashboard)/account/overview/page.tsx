@@ -115,13 +115,12 @@ const Home = () => {
 
   return (
     <div className="">
-      {/* Fixed greeting – safe for hydration */}
       <h1 className="font-bold font-dm-sans text-[#2F2F2F] text-[20px] md:text-[25px]">
         Welcome back, {mounted ? user?.firstname || "User" : ""}
       </h1>
 
       {isLoadingWallet ? (
-        <div className="mt-4 flex items-center gap-3 text-gray-600">
+        <div className="mt-2 flex items-center gap-3 text-gray-600">
           <ClipLoader size={20} color="#0A6DC0" />
         </div>
       ) : (
@@ -150,8 +149,7 @@ const Home = () => {
         )
       )}
 
-      {/* Rest of your component remains unchanged */}
-      <div className="bg-[url('/blue.svg')] bg-no-repeat bg-cover bg-center  overflow-hidden h-[218px] mt-6 flex justify-between rounded-2xl">
+      <div className="bg-[url(https://opeyemi-2018.github.io/js-project/images/blue.svg)] bg-no-repeat bg-cover bg-center  overflow-hidden h-[218px] mt-6 flex justify-between rounded-2xl">
         <div className="max-w-[50rem] justify-between h-full p-6 flex flex-col ">
           <h1 className="text-[16px] lg:text-[25px] xl:text-[31px] md:font-semibold font-clash text-white  md:leading-6 lg:leading-10">
             Need quick cash flow to boost and grow your business? Get up to ₦10M
