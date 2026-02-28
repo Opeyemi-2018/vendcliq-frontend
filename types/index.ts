@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export interface IButton {
   children: React.ReactNode;
   className?: string;
@@ -144,11 +146,15 @@ export interface SignInResponse {
   status: string;
   msg: string;
   data: {
+    tokens: any;
     token: {
+      [x: string]: any;
       token: string;
       type: string;
     };
     user: {
+      userId: number | undefined;
+      wallet: any;
       firstname: string;
       lastname: string;
       email: {
@@ -159,6 +165,7 @@ export interface SignInResponse {
         number: string;
         verified: string | null;
       };
+      createdAt?: string;
       account: {
         status: string;
         accountRole: string;
@@ -258,6 +265,8 @@ export interface ResendEmailOtpResponse {
 }
 
 export interface ApiResponse {
+  success: any;
+  error: string | undefined;
   status: number | string;
   msg?: string;
   message?: string;
@@ -270,11 +279,7 @@ export interface ChangePasswordPayload {
   confirmPassword: string;
 }
 
-export interface PinPayload {
-  otp?: string;
-  pin: string;
-  confirmPin: string;
-}
+
 
 export interface UpdatePinPayload {
   currentPin: string;
@@ -450,10 +455,7 @@ export interface ResetPasswordPayload {
   confirmPassword: string;
 }
 
-export interface ResetPasswordResponse {
-  status: string;
-  msg: string;
-}
+
 
 export interface LoanItem {
   item: string;
@@ -471,48 +473,48 @@ export interface ResendVerificationResponse {
   msg: string;
 }
 
-export interface TransactionHistoryResponse {
-  status: string;
-  msg: string;
-  data: {
-    meta: {
-      total: number;
-      perPage: number;
-      currentPage: number;
-      lastPage: number;
-      firstPage: number;
-      firstPageUrl: string;
-      lastPageUrl: string;
-      nextPageUrl: string | null;
-      previousPageUrl: string | null;
-    };
-    data: Array<{
-      id: number;
-      accountId: number;
-      reference: string;
-      transactionId: string;
-      amount: number;
-      type: string;
-      currency: string;
-      status: string;
-      narration: string;
-      date: string;
-      createdAt: string;
-      updatedAt: string;
-      accountBalance: string;
-      fee: string;
-      provider: string;
-      action: string;
-      meta: {
-        settledAmount: number;
-        senderAccountName: string;
-        senderAccountNumber: string;
-        beneficiaryAccountName?: string;
-        beneficiaryAccountNumber?: string;
-      };
-    }>;
-  };
-}
+// export interface TransactionHistoryResponse {
+//   status: string;
+//   msg: string;
+//   data: {
+//     meta: {
+//       total: number;
+//       perPage: number;
+//       currentPage: number;
+//       lastPage: number;
+//       firstPage: number;
+//       firstPageUrl: string;
+//       lastPageUrl: string;
+//       nextPageUrl: string | null;
+//       previousPageUrl: string | null;
+//     };
+//     data: Array<{
+//       id: number;
+//       accountId: number;
+//       reference: string;
+//       transactionId: string;
+//       amount: number;
+//       type: string;
+//       currency: string;
+//       status: string;
+//       narration: string;
+//       date: string;
+//       createdAt: string;
+//       updatedAt: string;
+//       accountBalance: string;
+//       fee: string;
+//       provider: string;
+//       action: string;
+//       meta: {
+//         settledAmount: number;
+//         senderAccountName: string;
+//         senderAccountNumber: string;
+//         beneficiaryAccountName?: string;
+//         beneficiaryAccountNumber?: string;
+//       };
+//     }>;
+//   };
+// }
 
 export interface AccountResponse {
   status: string;

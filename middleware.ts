@@ -1,63 +1,75 @@
+// In middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export default function middleware(request: NextRequest) {
-  // Log middleware invocation
-  // console.log("Middleware invoked");
-
-  // Get tokens from cookies
-  const accessToken = request.cookies.get("authToken")?.value;
-  const refreshToken = request.cookies.get("refreshToken")?.value;
-
-  // Define public routes (e.g., login or signup pages)
+export function middleware(request: NextRequest) {
   const publicRoutes = [
     "/",
-    "/login",
+    "/signin",
     "/signup",
     "/forget-password/otp",
     "/forget-password/reset",
   ];
 
-  // Skip middleware for public routes
+  // Allow public routes
   if (publicRoutes.includes(request.nextUrl.pathname)) {
-    // console.log("Public route accessed:", request.nextUrl.pathname);
     return NextResponse.next();
   }
 
-  // If no tokens found, redirect to login
-  if (!accessToken && !refreshToken) {
-    // console.log("No tokens found. Redirecting to login.");
-    return NextResponse.redirect(new URL("/login", request.url));
+  // Check for valid token in BOTH sources
+  let hasValidAuth = false;
+
+  // 1. Check cookie (for server-side auth)
+  const cookieToken = request.cookies.get("authToken")?.value;
+  if (cookieToken) {
+    hasValidAuth = true;
   }
 
-  // If access token expired but refresh token exists
-  if (!accessToken && refreshToken) {
-    // Call refresh token endpoint
-    try {
-      const response = NextResponse.next();
-      response.cookies.set("authToken", "new_access_token"); // Set new access token
-      return response;
-    } catch (error) {
-      // If refresh fails, redirect to login
-      // console.log("Token refresh failed. Redirecting to login.");
-      const response = NextResponse.redirect(new URL("/login", request.url));
-      response.cookies.delete("refreshToken");
-      return response;
+  // 2. Check for Authorization header (for client-side auth)
+  const authHeader = request.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.substring(7);
+    if (token) {
+      hasValidAuth = true;
     }
   }
 
-  // Proceed with valid access token
-  return NextResponse.next();
+  // 3. **CRITICAL FIX**: Check request headers for client-side token indicator
+  // When user clicks back button or manually enters URL, the browser
+  // might still have localStorage token. We need to detect this.
+  const clientTokenIndicator = request.headers.get("x-client-token-check");
+  if (clientTokenIndicator === "true") {
+    // This indicates the client-side axios interceptor added a token
+    // We'll rely on API calls to fail if token is invalid
+    hasValidAuth = true;
+  }
+
+  // If no valid auth found → redirect to signin with force-clear flag
+  if (!hasValidAuth) {
+    const url = new URL("/signin", request.url);
+    url.searchParams.set("callbackUrl", request.nextUrl.pathname);
+    url.searchParams.set("forceClear", "true"); // Add flag for client-side cleanup
+
+    const response = NextResponse.redirect(url);
+
+    // Add headers to prevent caching
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+
+    return response;
+  }
+
+  // Add cache control to prevent browser from caching protected pages
+  const response = NextResponse.next();
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+
+  return response;
 }
 
-// Specify routes to apply middleware
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|.*\\.png$|.*\\.jpg$).*)",
-    "/request",
-    "/request/:path*",
     "/dashboard/:path*",
     "/profile/:path*",
     "/settings/:path*",
+    "/request/:path*",
   ],
 };

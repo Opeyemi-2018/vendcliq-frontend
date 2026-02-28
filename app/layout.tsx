@@ -1,53 +1,27 @@
-"use client";
-
 import localFont from "next/font/local";
 import "./globals.css";
-import Head from "next/head";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { RequestProvider } from "@/components/dashboard/loadRequest/RequestContext";
+import { Toaster } from "sonner";
+import { UserProvider } from "@/context/userContext";
+import TopLoader from "@/components/TopLoader";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+const dmSans = localFont({
+  src: "./fonts/DmSans-Regular.woff2",
+  variable: "--font-dm-sans",
+  weight: "400",
+  display: "swap",
 });
 
-// const metadata: Metadata = {
-//   title: "vendcliq",
-//   description: "",
-// };
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const [queryClient] = useState(() => new QueryClient());
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <Head>
+    <html lang="en" className={dmSans.variable}>
+      <head>
         <link rel="icon" href="/favicon.ico" />
-        <link
-          rel="apple-touch-icon"
-          sizes="180x180"
-          href="/apple-touch-icon.png"
-        />
-      </Head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background`}
-      >
-        <QueryClientProvider client={queryClient}>
-          <RequestProvider>{children}</RequestProvider>
-          <ToastContainer />
-        </QueryClientProvider>
+      </head>
+      <body className="antialiased bg-white">
+        {/* These are client components */}
+        <TopLoader />
+        <UserProvider>{children}</UserProvider>
+        <Toaster position="top-center" richColors />
       </body>
     </html>
   );

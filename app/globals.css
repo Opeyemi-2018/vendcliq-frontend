@@ -3,18 +3,69 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: "Clash Display", sans-serif;
+@font-face {
+  font-family: "Clash Display";
+  src: url("/fonts/ClashDisplay-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
 }
-.custom-dashed-border {
+/* .custom-dashed-border {
   border-style: dashed;
-  border-width: 1px; /* Adjust as needed */
-  border-color: gray; /* Replace with desired color */
-  border-radius: 0.5rem; /* Optional, for rounded edges */
-  /* Adjust the dash length and gap */
+  border-width: 1px; 
+  border-color: gray; 
+  border-radius: 0.5rem; 
   border-image: linear-gradient(to right, gray 33%, rgba(255, 255, 255, 0) 33%)
     5;
+} */
+
+.menuButton[data-active="true"] {
+  background-color: #ffffff1a !important;
 }
+
+.menuButton {
+  transition: background-color 200ms !important;
+}
+.menuButton:hover {
+  background-color: #ffffff1a !important;
+}
+
+.alert-danger {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+.alert-danger:hover {
+  background-color: #dc2626 !important;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #print-section,
+  #print-section * {
+    visibility: visible;
+  }
+
+  #print-section {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
+
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -42,6 +93,14 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
     --background: 224 71.4% 4.1%;
@@ -68,8 +127,29 @@ body {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
+/* [data-sonner-toast] {
+  background-color: rgb(246, 234, 234) !important;
+  color: red !important;
+  border: 1px solid red !important;
+} */
+
+[data-sonner-toast][data-type="success"] {
+  background-color: white !important;
+  color: #0a6dc0 !important;
+  border-color: #0a6dc0 !important;
+  z-index: 30 !important;
+}
+
 @layer base {
   * {
     @apply border-border;
