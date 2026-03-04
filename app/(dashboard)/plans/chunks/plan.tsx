@@ -4,6 +4,7 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { ClipLoader } from "react-spinners";
 import { DisplayPlan } from "@/types/plans";
+import { useSidebar } from "@/components/ui/sidebar";
 
 interface PlansSelectionProps {
   plans: DisplayPlan[];
@@ -18,6 +19,9 @@ const PlansSelection: React.FC<PlansSelectionProps> = ({
 }) => {
   const [isAnnual, setIsAnnual] = useState(false);
 
+  const { state } = useSidebar();
+
+  const isCollapsed = state === "collapsed";
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
@@ -63,7 +67,7 @@ const PlansSelection: React.FC<PlansSelectionProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-2 lg:gap-3">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 ${isCollapsed ? "xl:grid-cols-4" : "xl:grid-cols-2"} gap-2 lg:gap-3`}>
         {plans.map((plan) => (
           <div
             key={plan.id}

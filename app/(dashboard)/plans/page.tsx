@@ -86,7 +86,6 @@ const Subscription = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [months, setMonths] = useState(1);
 
-
   const enterprisePlan: DisplayPlan = {
     id: 999,
     name: "Enterprise",
@@ -155,13 +154,11 @@ const Subscription = () => {
   };
 
   const handlePlanSelect = (plan: DisplayPlan) => {
-    // If Enterprise is selected → navigate to contact us
     if (plan.id === "enterprise" || plan.name.toLowerCase() === "enterprise") {
-      window.open("https://vendcliq.com/contact", "_blank"); // ← change to your actual contact page route
+      window.open("https://vendcliq.com/contact", "_blank");
       return;
     }
 
-    // Normal flow for other plans
     setSelectedPlan(plan);
     setStep(2);
   };

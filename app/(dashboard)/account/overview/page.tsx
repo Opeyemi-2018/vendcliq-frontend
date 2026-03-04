@@ -40,21 +40,18 @@ const Home = () => {
   const router = useRouter();
   const { stores } = useStores();
 
-  // Set mounted after client hydration
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
     const hasSeenWelcomeModal = localStorage.getItem("hasSeenWelcomeModal");
-
     if (isUserWalletNull && !hasSeenWelcomeModal) {
       setShowWelcomeModal(true);
       localStorage.setItem("hasSeenWelcomeModal", "true");
     }
   }, [isUserWalletNull]);
 
-  // Fetch wallet on component mount
   useEffect(() => {
     fetchWallet();
   }, [fetchWallet]);
