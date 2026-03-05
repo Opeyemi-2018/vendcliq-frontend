@@ -67,7 +67,7 @@ const PlansSelection: React.FC<PlansSelectionProps> = ({
         </div>
       </div>
 
-      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 ${isCollapsed ? "xl:grid-cols-4" : "xl:grid-cols-2"} gap-2 lg:gap-3`}>
+      <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 ${isCollapsed ? "xl:grid-cols-4" : "xl:grid-cols-2"} gap-5`}>
         {plans.map((plan) => (
           <div
             key={plan.id}
@@ -130,7 +130,7 @@ const PlansSelection: React.FC<PlansSelectionProps> = ({
             </div>
 
             <Button
-              className="w-full py-3 rounded-lg font-semibold transition-all bg-[#0A6DC0] hover:bg-[#09599a] text-white hover:scale-105"
+              className="w-full py-3 rounded-lg font-semibold  bg-[#0A6DC0] hover:bg-[#09599a] text-white"
               onClick={() => onSelectPlan(plan)}
             >
               {plan.buttonText}
