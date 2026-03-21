@@ -1328,7 +1328,7 @@ const Sell = () => {
                   </div>
                 </div>
 
-                <FormField
+                {/* <FormField
                   control={invoiceForm.control}
                   name="store_address"
                   render={({ field }) => (
@@ -1344,7 +1344,7 @@ const Sell = () => {
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                /> */}
 
                 <div className="space-y-2">
                   <Label>Empties Quantity</Label>

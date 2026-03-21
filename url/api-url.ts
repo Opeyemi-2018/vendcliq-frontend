@@ -82,6 +82,8 @@ const UPDATE_CUSTOMER = (customerId: string) =>
   `inventory/customers/${customerId}`;
 const GET_CUSTOMER_BY_ID = (customerId: string) =>
   `inventory/customers/${customerId}`;
+const GET_SUPPLIER_STORES = (userId: number) => `inventory/suppliers/${userId}/stores`;
+const GET_STORE_STOCKS = (storeId: string) => `inventory/stocks/${storeId}`;
 
 const RETURN_CUSTOMER_EMPTIES = (customerId: string, emptiesId: string) =>
   `inventory/customers/${customerId}/empties/${emptiesId}/return`;
@@ -153,6 +155,8 @@ export {
   GET_WALLET,
   ADD_SHOP_ATTENDANT,
   CREATE_INVOICE,
+  GET_SUPPLIER_STORES,
+  GET_STORE_STOCKS,
   CREATE_CUSTOMER,
   UPDATE_CUSTOMER,
   GET_CUSTOMER_BY_ID,

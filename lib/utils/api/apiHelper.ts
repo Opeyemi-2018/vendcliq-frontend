@@ -151,6 +151,8 @@ import {
   UPDATE_CUSTOMER,
   RETURN_CUSTOMER_EMPTIES,
   GET_CUSTOMER_BY_ID,
+  GET_SUPPLIER_STORES,
+  GET_STORE_STOCKS,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -989,4 +991,12 @@ export const handleUpdateStockPrices = async (
     url,
     payload,
   );
+};
+
+export const handleGetSupplierStores = async (userId: number): Promise<any> => {
+  return await fetcher<any>(GET_SUPPLIER_STORES(userId));
+};
+
+export const handleGetStoreStocks = async (storeId: string): Promise<any> => {
+  return await fetcher<any>(GET_STORE_STOCKS(storeId));
 };

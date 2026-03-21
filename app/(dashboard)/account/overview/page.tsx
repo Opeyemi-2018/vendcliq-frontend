@@ -184,7 +184,11 @@ const Home = () => {
                 <h1 className="text-[28px] font-clash font-bold">* * * *</h1>
               ) : (
                 <h1 className="font-clash text-[#2F2F2F] text-[20px] lg:text-[25px] font-semibold">
-                  ₦ {getBalance() || "0.00"}
+                  ₦{" "}
+                  {Number(getBalance() || 0).toLocaleString("en-NG", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </h1>
               )}
             </div>
