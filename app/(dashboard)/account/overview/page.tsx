@@ -35,7 +35,7 @@ const Home = () => {
 
   const [showBalance, setShowBallance] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [mounted, setMounted] = useState(false); // ← NEW: prevents hydration mismatch
+  const [mounted, setMounted] = useState(false); 
 
   const router = useRouter();
   const { stores } = useStores();

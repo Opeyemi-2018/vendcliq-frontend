@@ -98,7 +98,6 @@ const SUPPLIERS_PER_PAGE = 4;
 const formatCurrency = (value: number): string =>
   value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// ── Component ─────────────────────────────────────────────────────────────────
 
 const Buy = () => {
   const router = useRouter();
@@ -107,7 +106,6 @@ const Buy = () => {
     "select-supplier" | "supplier-info" | "supplier-store" | "my-store" | "invoice"
   >("select-supplier");
 
-  // Suppliers
   const [suppliers, setSuppliers]               = useState<Supplier[]>([]);
   const [filteredSupplier, setFilteredSupplier] = useState<Supplier[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
@@ -117,13 +115,11 @@ const Buy = () => {
   const [supplierPage, setSupplierPage]         = useState(0);
   const [supplierOptionSelected, setSupplierOptionSelected] = useState<"suppliers" | "marketplace" | null>("suppliers");
 
-  // Supplier stores
   const [supplierStores, setSupplierStores]                   = useState<SupplierStore[]>([]);
   const [isLoadingSupplierStores, setIsLoadingSupplierStores] = useState(false);
   const [selectedSupplierStore, setSelectedSupplierStore]     = useState<SupplierStore | null>(null);
   const [searchSupplierStore, setSearchSupplierStore]         = useState("");
 
-  // Buyer's own stores
   const [myStores, setMyStores]                   = useState<MyStoreType[]>([]);
   const [filteredMyStores, setFilteredMyStores]   = useState<MyStoreType[]>([]);
   const [isLoadingMyStores, setIsLoadingMyStores] = useState(true);
@@ -131,12 +127,10 @@ const Buy = () => {
   const [selectedMyStore, setSelectedMyStore]     = useState<MyStoreType | null>(null);
   const [searchMyStore, setSearchMyStore]         = useState("");
 
-  // Stock
   const [supplierStock, setSupplierStock]                   = useState<StockItem[]>([]);
   const [isLoadingSupplierStock, setIsLoadingSupplierStock] = useState(false);
   const [selectedStockItem, setSelectedStockItem]           = useState<StockItem | null>(null);
 
-  // Invoice
   const [invoiceItems, setInvoiceItems]               = useState<InvoiceItem[]>([]);
   const [isSubmittingInvoice, setIsSubmittingInvoice] = useState(false);
 
@@ -144,7 +138,6 @@ const Buy = () => {
     defaultValues: { stock_id: "", quantity: "1", mode: "PACKS", price: "" },
   });
 
-  // ── Fetch suppliers ───────────────────────────────────────────────────────
 
   const fetchSuppliers = async () => {
     const token = localStorage.getItem("accessToken") || localStorage.getItem("authToken");
@@ -165,7 +158,6 @@ const Buy = () => {
     else { setFilteredSupplier(filtered); }
   }, [searchTerm, suppliers]);
 
-  // ── Fetch buyer's own stores ──────────────────────────────────────────────
 
   useEffect(() => {
     const load = async () => {
@@ -195,7 +187,6 @@ const Buy = () => {
     );
   }, [searchMyStore, myStores]);
 
-  // ── Fetch supplier stores ─────────────────────────────────────────────────
 
   useEffect(() => {
     if (stage === "supplier-store" && selectedSupplier) {
@@ -212,7 +203,6 @@ const Buy = () => {
     }
   }, [stage, selectedSupplier]);
 
-  // ── Fetch supplier stock ──────────────────────────────────────────────────
 
   useEffect(() => {
     if (stage === "invoice" && selectedSupplierStore) {
@@ -229,7 +219,6 @@ const Buy = () => {
     }
   }, [stage, selectedSupplierStore]);
 
-  // Auto-fill price when stock selected
   useEffect(() => {
     const stockId = invoiceForm.watch("stock_id");
     if (stockId) {
@@ -238,7 +227,6 @@ const Buy = () => {
     }
   }, [invoiceForm.watch("stock_id"), supplierStock]);
 
-  // ── Invoice helpers ───────────────────────────────────────────────────────
 
   const addItemToInvoice = () => {
     const values = invoiceForm.getValues();
@@ -342,7 +330,7 @@ const Buy = () => {
 
         <div className="md:mt-8 flex flex-col lg:flex-row gap-4">
           {/* Left card */}
-          <div className="flex flex-col justify-between py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg w-full lg:w-[35%] bg-white h-[550px]">
+          <div className="hidden lg:flex flex-col justify-between py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg w-full lg:w-[35%] bg-white h-[550px]">
             <div>
               <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">Select where to buy from</h1>
               <Separator orientation="horizontal" className="h-[1px] mt-3" style={{ background: "#E0E0E0" }} />
@@ -443,7 +431,6 @@ const Buy = () => {
     );
   }
 
-  // ── Stage 2: Supplier Info ────────────────────────────────────────────────
 
   if (stage === "supplier-info" && selectedSupplier) {
     return (
