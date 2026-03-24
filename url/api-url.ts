@@ -120,6 +120,7 @@ const GET_PURCHASE_REQUEST = "inventory/invoices/purchase/sales";
 const GET_PURCHASE_REQUEST_BY_ID = (id: string) => `inventory/invoices/${id}`;
 const GET_SALE_BY_ID = (id: string) => `inventory/invoices/${id}`;
 const HAND_OVER_ITEM = "inventory/items/verify-handover";
+const SUCCESSFUL_HANDOVER = "inventory/items/add-to-store";
 const SUPPLIER_SALES = "inventory/dashboard/supplier-sales";
 const GET_STORE_ITEMS_SALES = "inventory/dashboard/store-items";
 const CREATE_OFFER = "inventory/offers";
@@ -194,6 +195,7 @@ export {
   GET_SALE_BY_ID,
   GET_SALES,
   HAND_OVER_ITEM,
+  SUCCESSFUL_HANDOVER,
   SUPPLIER_SALES,
   EDIT_INVOICE,
   GET_STORE_ITEMS_SALES,

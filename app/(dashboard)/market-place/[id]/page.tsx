@@ -332,7 +332,6 @@ const StockDetailPage = () => {
             </div>
           </div>
 
-          {/* Product Details */}
           <div>
             <div className="space-y-1">
               <div className="flex items-center justify-between">
@@ -359,20 +358,37 @@ const StockDetailPage = () => {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-6 border border-[#D8D8D866] p-2 rounded-full w-auto">
+                <div className="flex items-center gap-3 border border-[#D8D8D866] p-2 rounded-full">
+                  <button
+                    onClick={() => handleQuantityChange(quantity - 1)}
+                    disabled={quantity === 1}
+                    className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-[#0A6DC0] hover:text-white duration-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Minus size={16} />
+                  </button>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={quantity === 0 ? "" : quantity}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (raw === "") {
+                        setQuantity(0);
+                        return;
+                      }
+                      const val = parseInt(raw.replace(/\D/g, ""));
+                      if (!isNaN(val)) setQuantity(val);
+                    }}
+                    onBlur={() => {
+                      if (!quantity || quantity < 1) setQuantity(1);
+                    }}
+                    className="w-12 h-9 text-center text-[#2F2F2F] font-semibold text-[16px] bg-white border border-[#D8D8D8] rounded-lg outline-none focus:border-[#0A6DC0] transition-colors"
+                  />
                   <button
                     onClick={() => handleQuantityChange(quantity + 1)}
-                    className="hover:bg-[#0A6DC0] hover:text-white duration-200 rounded-full"
+                    className="w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-[#0A6DC0] hover:text-white duration-200 rounded-full"
                   >
-                    <Plus />
-                  </button>
-                  <span>{quantity}</span>
-                  <button
-                    disabled={quantity === 1}
-                    onClick={() => handleQuantityChange(quantity - 1)}
-                    className="hover:bg-[#0A6DC0] hover:text-white duration-200 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Minus />
+                    <Plus size={16} />
                   </button>
                 </div>
               </div>

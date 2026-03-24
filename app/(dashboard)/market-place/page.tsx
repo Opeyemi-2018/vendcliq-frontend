@@ -205,7 +205,6 @@ const MarketPlace = () => {
         </Button>
       </div>
 
-      {/* Search */}
       <div className="relative mb-6">
         <Search className="absolute left-3 top-3.5 w-5 h-5 text-[#313131]" />
         <Input

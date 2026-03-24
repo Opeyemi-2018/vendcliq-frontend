@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export interface PurchaseRequestItem {
-  /** Unique ID of this item line */
   id: string;
 
   stock_id: number;
@@ -52,10 +51,7 @@ export interface PurchaseRequestItem {
   } | null;
 }
 
-/**
- * Core purchase request object
- * Used both in list (partial fields) and detail view (all fields)
- */
+
 export interface PurchaseRequest {
   id: string;
   code: string;
@@ -64,28 +60,26 @@ export interface PurchaseRequest {
   created_at: string;
   updated_at: string;
 
-  user_id?: number; // only in detail
+  user_id?: number; 
   customer_id: number | null;
   store_id: number | null;
   terminal_id: number | null;
 
-  empties_value?: number; // only in detail
-  supplier_subtotal?: number; // only in list/detail variations
-  attributes?: any | null; // only in detail
-  customer?: any | null; // only in detail
-  store?: any | null; // only in detail
+  empties_value?: number; 
+  supplier_subtotal?: number; 
+  attributes?: any | null; 
+  customer?: any | null; 
+  store?: any | null; 
 
-  items_count?: number; // only in detail
-  items: PurchaseRequestItem[]; // partial in list, full in detail
+  items_count?: number; 
+  items: PurchaseRequestItem[]; 
 }
 
-/**
- * Full list response (with pagination)
- */
+
 export interface PurchaseRequestListResponse {
   statusCode: number;
   error: null | string;
-  data: PurchaseRequest[]; // uses the same core type
+  data: PurchaseRequest[];
   pagination: {
     totalCount: number;
     currentPage: number;
@@ -95,11 +89,9 @@ export interface PurchaseRequestListResponse {
   };
 }
 
-/**
- * Single request response (no pagination)
- */
+
 export interface PurchaseRequestDetailResponse {
   statusCode: number;
   error: null | string;
-  data: PurchaseRequest; // same core type, just more fields filled
+  data: PurchaseRequest; 
 }

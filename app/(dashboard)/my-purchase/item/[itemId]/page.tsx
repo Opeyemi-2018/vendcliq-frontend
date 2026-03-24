@@ -88,13 +88,10 @@ const ItemDetailPage = () => {
       setLoadingTracking(true);
       const response = await handleGetItemTrackingStatus(itemId);
 
-      // Handle the new response format from logistics API
       if (response.message) {
-        // Plain text response wrapped in { message: "..." }
         setTrackingMessage(response.message);
         setTrackingData(null);
       } else if (response.statusCode === 200 && response.data) {
-        // Normal JSON response with tracking data
         setTrackingData(response.data);
         setTrackingMessage("");
       } else {
@@ -145,7 +142,7 @@ const ItemDetailPage = () => {
           </p>
         </div>
       </div>
-      {delivery && (
+      {/* {delivery && ( */}
         <div className="mb-5">
           <p className=" md:font-bold mb-2 text-[13px] md:text-[16px]">
             Share this OTP delivery confirmation code with the driver or
@@ -162,7 +159,7 @@ const ItemDetailPage = () => {
             ))}
           </div>
         </div>
-      )}
+      {/* )} */}
 
       <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white font-dm-sans mb-3">
         <div className="bg-[#FAFAFA] rounded-lg lg:border border-[#E4E4E4]">
@@ -195,10 +192,12 @@ const ItemDetailPage = () => {
             <h1 className="font-bold">Amount</h1>
             <p>{cost}</p>
           </div>
-          <div>
-            <h1 className="font-bold">Delivery Address</h1>
-            <p>{address}</p>
-          </div>
+          {address && (
+            <div>
+              <h1 className="font-bold">Delivery Address</h1>
+              <p>{address}</p>
+            </div>
+          )}
           <div>
             <h1 className="font-bold">You rated the driver</h1>
             <div className="flex items-center gap-2">
