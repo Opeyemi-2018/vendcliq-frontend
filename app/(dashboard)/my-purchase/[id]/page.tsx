@@ -55,44 +55,46 @@ const PurchasedInvoiceDetailPage = () => {
     }).format(amount);
   };
 
-  // Format date
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "dd/MM/yyyy HH:mm");
   };
 
   const navigateToItemDetail = (item: InvoiceItem) => {
-    const params = new URLSearchParams();
-    params.set("delivery", item.delivery.toString());
-    params.set("productName", encodeURIComponent(item.product.name));
-    params.set("quantity", item.quantity.toString());
-    params.set("cost", item.cost.toString());
-    params.set("price", item.stock.price.toString());
-    params.set("subTotal", item.sub_total.toString());
-    params.set("profit", item.profit.toString());
-    if (item.product.image) {
-      params.set("productImage", encodeURIComponent(item.product.image));
-    }
-    if (item.stock.sku) {
-      params.set("sku", encodeURIComponent(item.stock.sku));
-    }
-    if (item.mode) {
-      params.set("mode", item.mode);
-    }
-    if (item.attributes.address) {
-      params.set("address", encodeURIComponent(item.attributes.address));
-    }
-    if (item.attributes.storeId) {
-      params.set("storeId", item.attributes.storeId);
-    }
-    // Add OTP codes if they exist
-    if (item.otp_codes?.driver_otp) {
-      params.set("driverOtp", item.otp_codes.driver_otp);
-    }
-    if (item.otp_codes?.customer_otp) {
-      params.set("customerOtp", item.otp_codes.customer_otp);
+    if (!item?.id) {
+      console.warn("Item has no ID");
+      return;
     }
 
-    router.push(`/my-purchase/item/${item.id}?${params.toString()}`);
+    const queryParams = new URLSearchParams();
+
+    queryParams.set("delivery", item.delivery.toString());
+    queryParams.set("productName", encodeURIComponent(item.product.name));
+    queryParams.set("quantity", item.quantity.toString());
+    queryParams.set("cost", item.cost.toString());
+    queryParams.set("price", item.stock.price.toString());
+    queryParams.set("subTotal", item.sub_total.toString());
+    queryParams.set("profit", item.profit.toString());
+
+    if (item.product.image) {
+      queryParams.set("productImage", encodeURIComponent(item.product.image));
+    }
+    if (item.stock.sku) {
+      queryParams.set("sku", encodeURIComponent(item.stock.sku));
+    }
+    if (item.mode) {
+      queryParams.set("mode", item.mode);
+    }
+
+    // Safely handle otp_codes
+    if (item.otp_codes?.driver_otp) {
+      queryParams.set("driverOtp", item.otp_codes.driver_otp);
+    }
+    if (item.otp_codes?.customer_otp) {
+      queryParams.set("customerOtp", item.otp_codes.customer_otp);
+    }
+
+
+    router.push(`/my-purchase/item/${item.id}?${queryParams.toString()}`);
   };
 
   if (error) {
@@ -117,10 +119,10 @@ const PurchasedInvoiceDetailPage = () => {
         <ArrowLeft size={20} onClick={() => router.back()} />
         <div>
           <h1 className="text-right font-clash text-[20px] md:text-[25px] lg:text-[32px] font-semibold ">
-            {loading ? "Loading..." : invoice?.code.slice(0, 10)}
+            {loading ? "Loading..." : invoice?.code}
           </h1>
           <p className=" font-medium font-dm-sans text-[#9E9A9A] text-[13px] md:text-[16px]">
-            See see items on this invoice
+            see items on this invoice
           </p>
         </div>
       </div>
@@ -234,7 +236,9 @@ const PurchasedInvoiceDetailPage = () => {
                     <td className="hidden md:table-cell py-4 truncate">
                       {formatCurrency(item.stock.price)}
                     </td>
-                    <td className="hidden md:table-cell py-4 truncate">{item.quantity}</td>
+                    <td className="hidden md:table-cell py-4 truncate">
+                      {item.quantity}
+                    </td>
                     <td className="hidden md:table-cell py-4 truncate">
                       {formatCurrency(item.cost)}
                     </td>

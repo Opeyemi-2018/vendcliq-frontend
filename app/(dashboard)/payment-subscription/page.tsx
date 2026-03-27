@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { handleGetMySubscription } from "@/lib/utils/api/apiHelper";
 import { format } from "date-fns";
 import { GetSubscriptionResponse } from "@/types/plans";
+import { ClipLoader } from "react-spinners";
 
 const PaymentSubscription = () => {
   const router = useRouter();
@@ -113,23 +114,23 @@ const PaymentSubscription = () => {
               </p>
             </div>
 
-            <div className="flex items-center justify-between">
-              <button
+            {/* <div className="flex items-center justify-between"> */}
+            {/* <button
                 className="border-b hover:opacity-80 transition-opacity"
                 onClick={() => router.push("/plans")}
               >
                 View usage
-              </button>
+              </button> */}
 
-              <Button
-                className={`font-bold ${statusColor}`}
-                // disabled={status !== "ACTIVE"}
-              >
-                {daysRemaining > 0
-                  ? `${daysRemaining} day${daysRemaining > 1 ? "s" : ""} remaining`
-                  : "Expired"}
-              </Button>
-            </div>
+            <Button
+              className={`md:font-bold float-right ${statusColor}`}
+              // disabled={status !== "ACTIVE"}
+            >
+              {daysRemaining > 0
+                ? `${daysRemaining} day${daysRemaining > 1 ? "s" : ""} remaining`
+                : "Expired"}
+            </Button>
+            {/* </div> */}
           </>
         )}
       </div>
@@ -144,7 +145,7 @@ const PaymentSubscription = () => {
           {loading ? (
             <div className="py-20 px-4">
               <div className="flex flex-col items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0A6DC0]" />
+                <ClipLoader size={30} color="#0A6DC0" className="ml-2" />
                 <p className="mt-4 text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
                   Loading subscription...
                 </p>

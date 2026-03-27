@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import AirtimeFlow from "./chunks/AirtimeFlow";
@@ -25,7 +24,6 @@ const PayUtility = () => {
 
       <div className="h-[calc(100vh-120px)] mt-2 md:mt-5">
         <div className="flex justify-between md:gap-4 flex-col md:flex-row">
-          {/* LEFT PANEL - Utility Selector (Desktop) */}
           <div className="hidden md:block py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg bg-white md:w-[35%] h-full ">
             <h2 className="text-[16px] text-[#2F2F2F] font-clash font-semibold mb-2">
               Utility Type
@@ -36,7 +34,6 @@ const PayUtility = () => {
               style={{ background: "#E0E0E0" }}
             />
             <div className="space-y-6 mt-6">
-              {/* AIRTIME */}
               <Label
                 onClick={() => setSelectedUtility("airtime")}
                 className={`
@@ -131,7 +128,6 @@ const PayUtility = () => {
             </div>
           </div>
 
-          {/* MOBILE TABS - Only visible on mobile */}
           <div className="md:hidden flex gap-2 mb-3 bg-[#ECECF080] p-1 rounded-lg">
             <button
               onClick={() => setSelectedUtility("airtime")}
@@ -161,7 +157,6 @@ const PayUtility = () => {
             </button>
           </div>
 
-          {/* RIGHT PANEL - Dynamic Flow */}
           <div className="w-full md:w-[70%]">
             {selectedUtility === "airtime" ? <AirtimeFlow /> : <DataFlow />}
           </div>

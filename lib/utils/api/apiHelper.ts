@@ -151,6 +151,9 @@ import {
   UPDATE_CUSTOMER,
   RETURN_CUSTOMER_EMPTIES,
   GET_CUSTOMER_BY_ID,
+  GET_SUPPLIER_STORES,
+  GET_STORE_STOCKS,
+  SUCCESSFUL_HANDOVER,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -931,6 +934,12 @@ export const verifyHandover = async (payload: {
 }): Promise<any> => {
   return await poster<any>(HAND_OVER_ITEM, payload);
 };
+export const handleSuccessfulHandover = async (payload: {
+  item_id: string;
+  store_id: string;
+}): Promise<any> => {
+  return await poster<any>(SUCCESSFUL_HANDOVER, payload);
+};
 
 export const getTotalSales = async (
   startDate: string,
@@ -945,7 +954,6 @@ export const getTotalSales = async (
 
   const response = await fetcher<any>(url);
 
-  // Return the full data object (or fallback)
   return (response.data ?? {
     total_sales: 0,
     stores: [],
@@ -989,4 +997,12 @@ export const handleUpdateStockPrices = async (
     url,
     payload,
   );
+};
+
+export const handleGetSupplierStores = async (userId: number): Promise<any> => {
+  return await fetcher<any>(GET_SUPPLIER_STORES(userId));
+};
+
+export const handleGetStoreStocks = async (storeId: string): Promise<any> => {
+  return await fetcher<any>(GET_STORE_STOCKS(storeId));
 };

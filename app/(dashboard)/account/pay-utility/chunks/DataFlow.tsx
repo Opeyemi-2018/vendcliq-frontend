@@ -95,7 +95,6 @@ export default function DataFlow() {
   const phoneNumber = watch("phoneNumber");
   const dataBundle = watch("dataBundle");
 
-  // Pagination
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -113,7 +112,6 @@ export default function DataFlow() {
     startIndex + ITEMS_PER_PAGE,
   );
 
-  // Network detection
   useEffect(() => {
     const timer = setTimeout(async () => {
       const cleanPhone = phoneNumber?.replace(/\D/g, "") || "";
@@ -124,8 +122,7 @@ export default function DataFlow() {
         setDetectedNetwork(null);
 
         const token =
-          localStorage.getItem("accessToken") ||
-          localStorage.getItem("authToken");
+          localStorage.getItem("accessToken") 
 
         if (!token) {
           setNetworkError("Please log in to detect network");
@@ -138,7 +135,6 @@ export default function DataFlow() {
         if (result.success && result.network) {
           setDetectedNetwork(result.network);
           setValue("network", result.network);
-          // toast.success(`Network detected: ${result.network}`);
         } else {
           setNetworkError(result.error || "Could not detect network");
         }
@@ -149,12 +145,11 @@ export default function DataFlow() {
         setNetworkError(null);
         setValue("network", "");
       }
-    }, 800); // debounce
+    }, 800); 
 
     return () => clearTimeout(timer);
   }, [phoneNumber, setValue]);
 
-  // Fetch data plans when network is detected
   useEffect(() => {
     const cleanPhone = phoneNumber?.replace(/\D/g, "") || "";
 

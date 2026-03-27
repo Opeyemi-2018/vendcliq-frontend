@@ -38,7 +38,6 @@ const PurchaseRequestDetailPage = () => {
         const res: PurchaseRequestDetailResponse =
           await getPurchaseRequestById(id);
 
-        // IMPORTANT: Extract the inner data object
         if (res.statusCode === 200 && res.data) {
           setRequest(res.data);
         } else {

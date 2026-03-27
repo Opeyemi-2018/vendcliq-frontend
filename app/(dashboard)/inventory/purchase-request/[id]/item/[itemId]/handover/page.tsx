@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import {
   getPurchaseRequestById,
   verifyHandover,
+  handleSuccessfulHandover,
 } from "@/lib/utils/api/apiHelper";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
@@ -29,11 +30,10 @@ export default function HandoverVerificationPage() {
   );
   const [submitting, setSubmitting] = useState(false);
   const [itemData, setItemData] = useState<any>(null);
-  const [loadingOtp, setLoadingOtp] = useState(true); // New state for OTP loading
+  const [loadingOtp, setLoadingOtp] = useState(true);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Fetch request to get item with otp_codes
   useEffect(() => {
     if (!requestId || !itemId) {
       toast.error("Missing request or item information");
@@ -42,7 +42,7 @@ export default function HandoverVerificationPage() {
     }
 
     const fetchItem = async () => {
-      setLoadingOtp(true); // Start loading
+      if (handoverType === "driver") setLoadingOtp(true);
       try {
         const res = await getPurchaseRequestById(requestId as string);
         if (res.statusCode === 200 && res.data) {
@@ -64,26 +64,27 @@ export default function HandoverVerificationPage() {
               "An error occurred";
         toast.error(errorMessage);
       } finally {
-        setLoadingOtp(false); // Stop loading
+        setLoadingOtp(false);
       }
     };
 
     fetchItem();
   }, [requestId, itemId, router]);
 
-  // Auto-fill OTP when tab changes or item loads
   useEffect(() => {
     if (!itemData?.otp_codes) return;
 
-    const customerOtp = itemData.otp_codes.customer_otp || "";
     const driverOtp = itemData.otp_codes.driver_otp || "";
 
-    const selectedOtp = handoverType === "customer" ? customerOtp : driverOtp;
-
-    if (selectedOtp.length === 4 && /^\d{4}$/.test(selectedOtp)) {
-      setOtp(selectedOtp.split(""));
-      inputRefs.current[3]?.focus();
+    if (handoverType === "driver") {
+      if (driverOtp.length === 4 && /^\d{4}$/.test(driverOtp)) {
+        setOtp(driverOtp.split(""));
+        inputRefs.current[3]?.focus();
+      } else {
+        setOtp(Array(4).fill(""));
+      }
     } else {
+      // customer — always show empty boxes
       setOtp(Array(4).fill(""));
     }
   }, [handoverType, itemData]);
@@ -112,6 +113,46 @@ export default function HandoverVerificationPage() {
         response?.success
       ) {
         toast.success("Handover verified successfully!");
+
+        // ── Once handover is verified, add the item to the store ──
+        try {
+          const storeId = itemData?.attributes?.storeId;
+
+          if (!storeId) {
+            toast.error(
+              "Store information missing, could not complete stock update",
+            );
+          } else {
+            const handoverRes = await handleSuccessfulHandover({
+              item_id: itemId as string,
+              store_id: storeId,
+            });
+
+            if (
+              handoverRes?.statusCode === 200 ||
+              handoverRes?.status === true ||
+              handoverRes?.success
+            ) {
+              toast.success("Item added to store successfully!");
+            } else {
+              toast.error(
+                handoverRes?.error ||
+                  handoverRes?.message ||
+                  "Failed to add item to store",
+              );
+            }
+          }
+        } catch (handoverErr: any) {
+          const errMsg =
+            typeof handoverErr === "string"
+              ? handoverErr
+              : handoverErr?.response?.data?.message ||
+                handoverErr?.message ||
+                "Failed to add item to store";
+          toast.error(errMsg);
+        }
+
+        // Navigate regardless of the store update result
         router.push(`/inventory/purchase-request/${requestId}`);
       } else {
         const msg =
@@ -147,7 +188,6 @@ export default function HandoverVerificationPage() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-2 md:gap-8 mt-3 md:mt-8">
-        {/* Mobile Toggle Buttons */}
         <div className="block lg:hidden flex gap-2 bg-[#ECECF080] p-1 rounded-lg">
           <button
             onClick={() => setHandoverType("customer")}
@@ -177,7 +217,6 @@ export default function HandoverVerificationPage() {
           </button>
         </div>
 
-        {/* Left: Desktop Selection Cards */}
         <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg h-full lg:w-[35%] bg-white hidden lg:block">
           <div className="mb-3">
             <h2 className="text-[16px] text-[#2F2F2F] font-clash font-semibold mb-2">
@@ -190,7 +229,6 @@ export default function HandoverVerificationPage() {
             />
           </div>
           <div className="hidden lg:block space-y-4">
-            {/* Customer Card */}
             <Label
               onClick={() => setHandoverType("customer")}
               className={`
@@ -232,7 +270,6 @@ export default function HandoverVerificationPage() {
               </div>
             </Label>
 
-            {/* Driver Card */}
             <Label
               onClick={() => setHandoverType("driver")}
               className={`
@@ -293,23 +330,46 @@ export default function HandoverVerificationPage() {
             Here is the details on how to hand-over to {handoverType}
           </p>
 
-          {/* OTP Boxes with Loading State */}
           <div className="flex gap-3 md:gap-4 my-6">
             {otp.map((digit, index) => (
               <div key={index} className="relative h-14 w-14 md:h-16 md:w-16">
-                {loadingOtp ? (
-                  // Loading spinner in each box
+                {loadingOtp && handoverType === "driver" ? (
                   <div className="h-full w-full border-2 border-[#9E9A9A] bg-[#D8D8D866] rounded-xl flex items-center justify-center">
                     <ClipLoader size={20} color="#0A6DC0" />
                   </div>
                 ) : (
-                  // OTP digit input
                   <Input
+                    ref={(el) => {
+                      inputRefs.current[index] = el;
+                    }}
                     type="text"
+                    inputMode="numeric"
                     maxLength={1}
                     value={digit}
-                    readOnly
-                    className="text-center text-[#333333] text-[20px] font-medium h-full w-full border-2 border-[#9E9A9A] bg-[#D8D8D866] rounded-xl cursor-not-allowed"
+                    readOnly={handoverType === "driver"}
+                    onChange={(e) => {
+                      if (handoverType === "driver") return;
+                      const val = e.target.value.replace(/\D/g, "");
+                      if (!val) return;
+                      const newOtp = [...otp];
+                      newOtp[index] = val.slice(-1);
+                      setOtp(newOtp);
+                      if (index < 3) inputRefs.current[index + 1]?.focus();
+                    }}
+                    onKeyDown={(e) => {
+                      if (handoverType === "driver") return;
+                      if (e.key === "Backspace") {
+                        const newOtp = [...otp];
+                        newOtp[index] = "";
+                        setOtp(newOtp);
+                        if (index > 0) inputRefs.current[index - 1]?.focus();
+                      }
+                    }}
+                    className={`text-center text-[#333333] text-[20px] font-medium h-full w-full border-2 border-[#9E9A9A] bg-[#D8D8D866] rounded-xl ${
+                      handoverType === "driver"
+                        ? "cursor-not-allowed"
+                        : "cursor-text"
+                    }`}
                   />
                 )}
               </div>
@@ -320,7 +380,6 @@ export default function HandoverVerificationPage() {
             This code is only for the {handoverType}.
           </p>
 
-          {/* Submit Button */}
           <Button
             onClick={handleSubmit}
             disabled={submitting || otp.join("").length !== 4 || loadingOtp}

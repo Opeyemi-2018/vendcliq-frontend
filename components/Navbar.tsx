@@ -87,7 +87,7 @@ const Navbar = () => {
             <h1>Support</h1>
           </a>
 
-          <Separator orientation="vertical" className="h-4 " />
+          <Separator orientation="vertical" className="h-4 hidden md:inline-block" />
           <h1 className="hidden lg:inline">{mounted ? user?.firstname : ""}</h1>
         </div>
         <DropdownMenu>

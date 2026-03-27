@@ -105,6 +105,7 @@ export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
+
   const isActive = (url: string) => {
     if (!url || url === "#") return false;
     return pathname === url || pathname?.startsWith(url + "/");
