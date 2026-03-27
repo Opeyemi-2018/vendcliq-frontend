@@ -92,7 +92,6 @@ interface Offer {
   updated_at: string;
 }
 
-// Skeleton for Related Products
 const SkeletonCard = () => (
   <div className="rounded-lg overflow-hidden animate-pulse">
     <div className="h-[153px] border border-[#E5E5EA] bg-gray-200"></div>
@@ -107,7 +106,6 @@ const SkeletonCard = () => (
   </div>
 );
 
-// Dedicated Skeleton for Main Product Detail
 const MainProductSkeleton = () => (
   <Card className="flex flex-col gap-3 p-5 rounded-lg animate-pulse">
     <div className="bg-[#FAFAFA] rounded-lg border border-gray-200 overflow-hidden">
@@ -205,15 +203,11 @@ const StockDetailPage = () => {
       return;
     }
 
-    // Safely get store
     const store = isOffer && offer ? offer.store : stock?.store;
-
-    // Guard: if no store → can't add to cart
     if (!store || !store.address || !store.id) {
       toast.error("Store information is missing. Please try again.");
       return;
     }
-
     const itemId = isOffer && offer ? offer.id : stock?.id;
     if (!itemId) {
       toast.error("Product ID is missing");
