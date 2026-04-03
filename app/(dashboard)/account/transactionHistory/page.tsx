@@ -320,12 +320,10 @@ const Table = () => {
     return pages;
   };
 
-  // Helper function to get safe values from transaction data
   const getTransactionValue = (value: any, fallback: string = "N/A") => {
     return value || fallback;
   };
 
-  // Helper to truncate long reference numbers
   const formatReference = (ref: string) => {
     if (!ref) return "";
     if (ref.length <= 20) return ref;
@@ -369,7 +367,6 @@ const Table = () => {
         </Select>
       </div>
 
-      {/* Updated structure to match sales table */}
       <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white mb-3 md:mb-5">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-[#2F2F2F] font-dm-sans text-[16px] font-bold">
