@@ -19,7 +19,7 @@ import {
 import { useUser } from "@/context/userContext";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { handleCreateWallet } from "@/lib/utils/api/apiHelper";
+// import { handleCreateWallet } from "@/lib/utils/api/apiHelper";
 import { useStores } from "@/hooks/useStores";
 import { useWallet } from "@/hooks/useWallet";
 
@@ -35,7 +35,7 @@ const Home = () => {
 
   const [showBalance, setShowBallance] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [mounted, setMounted] = useState(false); 
+  const [mounted, setMounted] = useState(false);
 
   const router = useRouter();
   const { stores } = useStores();
@@ -146,7 +146,8 @@ const Home = () => {
         )
       )}
 
-      <div className="bg-[url(https://opeyemi-2018.github.io/js-project/images/blue.svg)] bg-no-repeat bg-cover bg-center  overflow-hidden h-[218px] mt-6 flex justify-between rounded-2xl">
+      <div className="bg-[url('/blue-frame.webp')] bg-no-repeat bg-cover bg-center overflow-hidden h-[218px] mt-6 flex justify-between rounded-2xl">
+        {" "}
         <div className="max-w-[50rem] justify-between h-full p-6 flex flex-col ">
           <h1 className="text-[16px] lg:text-[25px] xl:text-[31px] md:font-semibold font-clash text-white  md:leading-6 lg:leading-10">
             Need quick cash flow to boost and grow your business? Get up to ₦10M
