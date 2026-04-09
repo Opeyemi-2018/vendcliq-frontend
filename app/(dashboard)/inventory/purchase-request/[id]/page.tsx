@@ -134,7 +134,7 @@ const PurchaseRequestDetailPage = () => {
                     <th className="px-6 py-3 text-left font-medium">
                       Delivery
                     </th>
-                    <th className="px-6 py-3 text-left font-medium">Empties</th>
+                    {/* <th className="px-6 py-3 text-left font-medium">Empties</th> */}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -201,9 +201,9 @@ const PurchaseRequestDetailPage = () => {
                       </td>
 
                       {/* Empties */}
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      {/* <td className="px-6 py-4 whitespace-nowrap">
                         {item.empties != null ? item.empties : "—"}
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>
