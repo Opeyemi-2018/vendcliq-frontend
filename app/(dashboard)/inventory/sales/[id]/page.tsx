@@ -54,6 +54,12 @@ export default function SaleInvoiceDetailPage() {
     fetchInvoice();
   }, [id]);
 
+  const getSubtotal = (quantity?: number, cost?: number) => {
+    const q = typeof quantity === "number" ? quantity : 0;
+    const c = typeof cost === "number" ? cost : 0;
+    return q * c;
+  };
+
   const getStatusBadge = (status: string) => {
     const s = status?.toLowerCase() || "";
     if (s === "completed") {
@@ -175,9 +181,7 @@ export default function SaleInvoiceDetailPage() {
                       key={item.id}
                       className="hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() =>
-                        router.push(
-                          `/inventory/sales/${id}/item/${item.id}`,
-                        )
+                        router.push(`/inventory/sales/${id}/item/${item.id}`)
                       }
                     >
                       <td className="px-6 py-4">
@@ -214,7 +218,9 @@ export default function SaleInvoiceDetailPage() {
                       <td className="px-6 py-4">{item.quantity}</td>
                       <td className="px-6 py-4">{formatCurrency(item.cost)}</td>
                       <td className="px-6 py-4 font-medium">
-                        {formatCurrency(item.sub_total)}
+                        {formatCurrency(
+                          getSubtotal(item.quantity, item.cost),
+                        )}{" "}
                       </td>
                       <td className="px-6 py-4 font-medium">
                         {formatCurrency(item.profit)}

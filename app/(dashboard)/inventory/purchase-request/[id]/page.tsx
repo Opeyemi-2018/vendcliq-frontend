@@ -54,14 +54,44 @@ const PurchaseRequestDetailPage = () => {
     fetchRequest();
   }, [id]);
 
-
-
   const formatCurrency = (amount: number) =>
     amount.toLocaleString("en-NG", {
       style: "currency",
       currency: "NGN",
       minimumFractionDigits: 0,
     });
+
+  const getSubtotal = (qty?: number, cost?: number) => {
+    const q = typeof qty === "number" ? qty : 0;
+    const c = typeof cost === "number" ? cost : 0;
+    return q * c;
+  };
+
+  const getStatusBadge = (status?: string) => {
+    const s = status?.toLowerCase();
+
+    if (s === "paid") {
+      return (
+        <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+          Paid
+        </span>
+      );
+    }
+
+    if (s === "pending") {
+      return (
+        <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+          Pending
+        </span>
+      );
+    }
+
+    return (
+      <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
+        {status || "Unknown"}
+      </span>
+    );
+  };
 
   if (loading) {
     return (
@@ -125,12 +155,18 @@ const PurchaseRequestDetailPage = () => {
             <div className="overflow-x-auto text-[#2F2F2F]">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
-                  <tr>
+                  <tr className="whitespace-nowrap">
                     <th className="px-6 py-3 text-left font-medium">Product</th>
                     <th className="px-6 py-3 text-left font-medium">
                       Quantity
                     </th>
-                    <th className="px-6 py-3 text-left font-medium">Cost</th>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Unit Cost
+                    </th>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Subtotal
+                    </th>
+                    <th className="px-6 py-3 text-left font-medium">Status</th>
                     <th className="px-6 py-3 text-left font-medium">
                       Delivery
                     </th>
@@ -185,6 +221,15 @@ const PurchaseRequestDetailPage = () => {
                       {/* Cost */}
                       <td className="px-6 py-4 whitespace-nowrap font-medium">
                         {formatCurrency(item.cost)}
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap font-medium">
+                        {formatCurrency(getSubtotal(item.quantity, item.cost))}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {getStatusBadge(request.status)}
                       </td>
 
                       {/* Delivery */}
