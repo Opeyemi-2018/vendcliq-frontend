@@ -3,16 +3,14 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { format, subDays } from "date-fns";
-import { getSales, getTotalSales, getPurchaseRequest } from "@/lib/utils/api/apiHelper";
+import {
+  getSales,
+  getTotalSales,
+  getPurchaseRequest,
+} from "@/lib/utils/api/apiHelper";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import {
-  EyeOff,
-  Eye,
-  CalendarIcon,
-  ChevronRight,
-  Loader2,
-} from "lucide-react";
+import { EyeOff, Eye, CalendarIcon, ChevronRight, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 import {
@@ -57,7 +55,9 @@ const Home = () => {
 
   // Sales data
   const [totalSales, setTotalSales] = useState<number>(0);
-  const [mediumBreakdown, setMediumBreakdown] = useState<SupplierSalesMedium>({});
+  const [mediumBreakdown, setMediumBreakdown] = useState<SupplierSalesMedium>(
+    {},
+  );
   const [salesLoading, setSalesLoading] = useState(true);
 
   // Medium modal
@@ -129,8 +129,10 @@ const Home = () => {
     const fetchPurchases = async () => {
       try {
         setPurchasesLoading(true);
-        const purchaseRes = await getPurchaseRequest(); 
-        const recent = Array.isArray(purchaseRes) ? purchaseRes.slice(0, 10) : [];
+        const purchaseRes = await getPurchaseRequest();
+        const recent = Array.isArray(purchaseRes)
+          ? purchaseRes.slice(0, 10)
+          : [];
         setPurchases(recent);
       } catch (err) {
         console.error("Failed to load purchase invoices:", err);
@@ -471,7 +473,59 @@ const Home = () => {
               Loading purchases...
             </p>
           ) : displayedPurchases.length > 0 ? (
-            displayedPurchases.map(renderTransaction)
+            displayedPurchases.map((tx, index) => (
+              <div
+                key={`${tx.id}-${index}`}
+                onClick={() =>
+                  router.push(`/inventory/purchase-request/${tx.id}`)
+                }
+                className="p-1 md:p-3 rounded-xl border border-[#D8D8D866] mb-4 bg-white cursor-pointer hover:bg-gray-50 transition"
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    {tx.status.toLowerCase() === "pending" ? (
+                      <Image
+                        src="/pending.svg"
+                        height={40}
+                        width={40}
+                        alt="pending"
+                      />
+                    ) : (
+                      <Image
+                        src="/invoice-in.svg"
+                        height={40}
+                        width={40}
+                        alt="completed"
+                      />
+                    )}
+                    <div className="space-y-0.5">
+                      <h1 className="text-[13px] md:text-[15px] font-medium text-[#2F2F2F]">
+                        {tx.code}
+                      </h1>
+                      <p className="text-[13px] text-[#9E9A9A]">{tx.date}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[13px] md:text-[15px] font-medium text-[#464343]">
+                      {tx.amount.toLocaleString("en-NG", {
+                        style: "currency",
+                        currency: "NGN",
+                        minimumFractionDigits: 0,
+                      })}
+                    </p>
+                    <p
+                      className={cn(
+                        "text-[12px] font-bold px-2.5 py-0.5 rounded-full inline-block mt-1",
+                        getStatusStyle(tx.status),
+                      )}
+                    >
+                      {tx.status.charAt(0).toUpperCase() +
+                        tx.status.slice(1).toLowerCase()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))
           ) : (
             <p className="text-center text-gray-500 py-6">
               No recent purchases

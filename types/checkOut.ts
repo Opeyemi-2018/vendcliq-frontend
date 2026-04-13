@@ -10,6 +10,7 @@ export interface CheckoutItem {
 export interface CheckoutResponse {
   statusCode: number;
   error: string | null;
+  message: string | null;
   data: {
     id: string; // invoice ID
     total: number;

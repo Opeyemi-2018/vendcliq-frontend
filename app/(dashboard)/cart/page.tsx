@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { getCartData, updateCartItem, deleteCartItem } from "@/actions/cart";
 import { handleCheckoutCart } from "@/lib/utils/api/apiHelper";
 import { Plus, Minus, Trash2, ShoppingCart, ArrowLeft } from "lucide-react";
-import { toast } from "react-hot-toast";
+import { toast } from "sonner";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import {
@@ -41,7 +41,7 @@ const Cart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkingOut, setCheckingOut] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // const [error, setError] = useState<string | null>(null);
 
   const [updatingQuantityId, setUpdatingQuantityId] = useState<string | null>(
     null,
@@ -175,9 +175,9 @@ const Cart = () => {
 
     try {
       setCheckingOut(true);
-      setError(null);
+      // setError(null);
 
-      const response = await handleCheckoutCart();
+      const response = (await handleCheckoutCart()) as any;
 
       if (response.statusCode === 201 && response.data) {
         const { id: invoiceId, total, items } = response.data;
@@ -203,13 +203,18 @@ const Cart = () => {
 
         router.push("/cart/pay");
       } else {
-        setError("Checkout failed. Please try again.");
-        toast.error("Checkout failed");
+        const errorMessage =
+          response?.message ||
+          response?.error 
+        // setError(errorMessage);
+        toast.error(errorMessage);
       }
     } catch (err) {
       console.error("Checkout error:", err);
-      setError("Network error. Please check your connection.");
-      toast.error("Network error during checkout");
+      // const errorMessage =
+      //   err?.message ;
+      // setError(errorMessage);
+      // toast.error(errorMessage);
     } finally {
       setCheckingOut(false);
     }
@@ -376,7 +381,7 @@ const Cart = () => {
           </div>
 
           {/* Error Message */}
-          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+          {/* {error && <p className="text-red-500 text-center mb-4">{error}</p>} */}
 
           {/* Checkout Button */}
           <Button
