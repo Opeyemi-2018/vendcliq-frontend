@@ -143,7 +143,7 @@ const StockDetailPage = () => {
 
             <DropdownMenuItem
               onClick={() => {
-                const shareUrl = `https://vendcliqitemcheckout-six.vercel.app/checkout/${stockId}`;
+                const shareUrl = `https://checkout.vendcliq.com/checkout/${stockId}`;
 
                 const message = `Check out ${stock.product.name} for ₦${parseFloat(
                   stock.selling_price,
