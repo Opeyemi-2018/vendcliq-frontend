@@ -119,7 +119,28 @@ export default function CustomerEmptiesPage() {
       if ([200, 201].includes(res?.statusCode)) {
         toast.success("Empties returned successfully");
         setReturnDialogOpen(false);
-        loadCustomer();
+
+        // ✅ Instantly update the empties in local state
+        setCustomer((prev: any) => ({
+          ...prev,
+          customer_empties: prev.customer_empties.map((empty: EmptyRecord) => {
+            if (empty.id !== selectedEmpty.id) return empty;
+
+            const returned = qty;
+            const prevReturned = getReturnedQty(empty);
+            const prevOriginal = getOriginalQty(empty);
+
+            return {
+              ...empty,
+              attributes: {
+                ...empty.attributes,
+                originalQuantity: prevOriginal,
+                totalQuantityReturned: prevReturned + returned,
+                remainingQuantity: prevOriginal - (prevReturned + returned),
+              },
+            };
+          }),
+        }));
       } else {
         toast.error(res?.error || "Return failed");
       }

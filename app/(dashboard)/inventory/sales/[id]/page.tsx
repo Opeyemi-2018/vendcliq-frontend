@@ -54,11 +54,11 @@ export default function SaleInvoiceDetailPage() {
     fetchInvoice();
   }, [id]);
 
-  const getSubtotal = (quantity?: number, cost?: number) => {
-    const q = typeof quantity === "number" ? quantity : 0;
-    const c = typeof cost === "number" ? cost : 0;
-    return q * c;
-  };
+  // const getSubtotal = (quantity?: number, cost?: number) => {
+  //   const q = typeof quantity === "number" ? quantity : 0;
+  //   const c = typeof cost === "number" ? cost : 0;
+  //   return q * c;
+  // };
 
   const getStatusBadge = (status: string) => {
     const s = status?.toLowerCase() || "";
@@ -216,11 +216,11 @@ export default function SaleInvoiceDetailPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">{item.quantity}</td>
-                      <td className="px-6 py-4">{formatCurrency(item.cost)}</td>
+                      <td className="px-6 py-4">
+                        {formatCurrency(item.stock.price)}
+                      </td>
                       <td className="px-6 py-4 font-medium">
-                        {formatCurrency(
-                          getSubtotal(item.quantity, item.cost),
-                        )}{" "}
+                        {formatCurrency(item.sub_total)}
                       </td>
                       <td className="px-6 py-4 font-medium">
                         {formatCurrency(item.profit)}
@@ -258,7 +258,7 @@ export default function SaleInvoiceDetailPage() {
                 <span>{item.quantity}x</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span>{formatCurrency(item.cost)}</span>
+                <span>{formatCurrency(item.stock.price)}</span>
                 <span>{formatCurrency(item.sub_total)}</span>
               </div>
               <div className="flex justify-between text-xs">
