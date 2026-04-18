@@ -1,29 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import z from "zod";
 
+// ─── Store ────────────────────────────────────────────────────────────────────
 
-// types/store.ts (or wherever you keep types)
+export interface Store {
+  id: string;
+  name: string;
+  address: {
+    lat: number;
+    lng: number;
+    name: string;
+  };
+  phone: string;
+  credit_store: boolean; // ← added
+  attributes: any | null;
+  meta: any | null;
+  createdAt: string;
+  updatedAt: string;
+  stock_value: number;
+  stock_count: number;
+  low_stock_count: number;
+}
 
 export interface StoreResponse {
   statusCode: number;
   error: string | null;
-  data: Array<{
-    id: string;
-    name: string;
-    address: {
-      lat: number;
-      lng: number;
-      name: string;
-    };
-    phone: string;
-    attributes: any | null;
-    meta: any | null;
-    createdAt: string;
-    updatedAt: string;
-    stock_value: number;
-    stock_count: number;
-    low_stock_count: number;
-  }>;
+  data: Store[];
   pagination: {
     totalPages: number;
     currentPage: number;
@@ -36,23 +38,7 @@ export interface StoreResponse {
 export interface StoreDetailResponse {
   statusCode: number;
   error: string | null;
-  data: {
-    id: string;
-    name: string;
-    address: {
-      lat: number;
-      lng: number;
-      name: string;
-    };
-    phone: string;
-    stock_value: number;
-    stock_count: number;
-    low_stock_count: number;
-    attributes?: any | null;
-    meta?: any | null;
-    createdAt: string;
-    updatedAt: string;
-  };
+  data: Store;
 }
 
 export interface CreateStoreResponse {
@@ -78,9 +64,6 @@ export const createStoreSchema = z.object({
 
 export type CreateStoreFormData = z.infer<typeof createStoreSchema>;
 
-
-// types/store.ts (add these to your existing store types)
-
 export interface StoreSettingsPayload {
   is_default: boolean;
   show_on_marketplace: boolean;
@@ -102,11 +85,6 @@ export interface StoreSettingsResponse {
   data: StoreSettings;
 }
 
-
-
-// In lib/utils/api/apiHelper.ts
-
-// Add interface for update store payload
 export interface UpdateStorePayload {
   address: {
     name: string;
@@ -133,6 +111,43 @@ export interface UpdateStoreResponse {
     createdAt: string;
     updatedAt: string;
   };
+}
+
+// ─── Stock ────────────────────────────────────────────────────────────────────
+
+export interface StoreStockItem {
+  id: string;
+  sku: string;
+  cost_price: string;
+  selling_price: string;
+  selling_price_pieces: string;
+  empties_price: string;
+  exp_date: string | null;
+  quantity: string;
+  empties_qty: string;
+  total_qty: string;
+  stock_alert_no: number | null;
+  stock_value: string;
+  status: string;
+  product: {
+    id: string;
+    name: string;
+    items_per_pack: number;
+    image: string | null;
+  };
+  store: {
+    id: string;
+    name: string;
+    address: {
+      lat: number;
+      lng: number;
+      name: string;
+    };
+  };
+  attributes: any | null;
+  created_at: string;
+  updated_at: string;
+  qty_sold?: number;
 }
 
 export interface StoreStockDetail {

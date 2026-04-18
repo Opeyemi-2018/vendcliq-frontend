@@ -1,1568 +1,1518 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CustomerForm, customerSchema } from "@/types/customer";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/Input";
-import {
-  ArrowLeft,
-  ChevronDown,
-  Mail,
-  Trash2,
-  UserRound,
   X,
-  Edit,
+  Search,
+  Store as StoreIcon,
+  Check,
+  ChevronRight,
+  Minus,
+  Plus,
+  User,
+  Tag,
+  Package,
+  ExternalLink,
+  MapPin,
+  Mail,
 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/Input";
+import { ThreeDots } from "react-loader-spinner";
 import { getStores } from "@/actions/stores";
 import { getCustomers } from "@/actions/getcustomers";
 import { getStoreStock } from "@/actions/getUserStocks";
-import Image from "next/image";
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import EditStockPriceModal from "./chunks/EditStockPriceModal";
-
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import PlacesAutocompleteInput from "@/hooks/googleMap";
-import { useEffect, useState } from "react";
-import { Separator } from "@/components/ui/separator";
-import {
-  handleCreateCustomer,
   handleCreateInvoice,
+  handleCreateCustomer,
 } from "@/lib/utils/api/apiHelper";
-import { toast } from "sonner";
-import { ClipLoader } from "react-spinners";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ThreeDots } from "react-loader-spinner";
-import { useRouter } from "next/navigation";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import PlacesAutocompleteInput from "@/hooks/googleMap";
 
-interface StoreType {
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Store {
   id: string;
   name: string;
-  stock_value: string;
-  stock_count: string;
-  address?: {
-    lat: number;
-    lng: number;
-    name: string;
-  };
+  address: { lat: number; lng: number; name: string };
+  phone: string;
+  credit_store: boolean;
+  attributes: any | null;
+  meta: any | null;
+  createdAt: string;
+  updatedAt: string;
+  stock_value: number;
+  stock_count: number;
+  low_stock_count: number;
 }
 
-interface CustomerType {
+interface StockItem {
+  id: string;
+  sku: string;
+  cost_price: string;
+  selling_price: string;
+  selling_price_pieces: string;
+  empties_price: string;
+  quantity: string;
+  empties_qty: string;
+  total_qty: string;
+  status: string;
+  product: {
+    id: string;
+    name: string;
+    items_per_pack: number;
+    image: string | null;
+  };
+  store: { id: string; name: string };
+  qty_sold?: number;
+}
+
+interface Customer {
   id: string;
   name: string;
   email: string;
   phone: string;
-  type: string;
-  address: string;
+  type?: string;
 }
 
-interface StockItem {
-  selling_price_pieces: string;
-  id: string;
-  sku: string;
-  quantity: string;
-  selling_price: string;
-  empties_price: string;
-  product: {
-    name: string;
-    image: string;
-  };
-}
+type SellMode = "PACKS" | "PIECES";
 
-interface InvoiceItem {
-  stock_id: string;
-  product_name: string;
-  sku: string;
-  product_image: string;
+interface CartItem {
+  stock: StockItem;
   quantity: number;
-  mode: "PACKS" | "PIECES";
-  price: number;
-  discounted_amount: number;
-  payable_amount: number;
-  empties?: { type: "CREDIT" | "SELL"; quantity: number };
+  mode: SellMode;
+  discount: number;
+  empties: number;
+  emptiesMode: "SELL" | "CREDIT" | null;
 }
 
-// Helper function to format currency
-const formatCurrency = (value: number): string => {
-  return value.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const fmt = (n: number) =>
+  n.toLocaleString("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 0,
   });
+
+const unitPrice = (item: StockItem, mode: SellMode) =>
+  mode === "PACKS"
+    ? parseFloat(item.selling_price)
+    : parseFloat(item.selling_price_pieces);
+
+const itemSubtotal = (ci: CartItem) => {
+  const base = unitPrice(ci.stock, ci.mode);
+  const discounted = Math.max(0, base - ci.discount);
+  const productTotal = discounted * ci.quantity;
+
+  const emptiesTotal =
+    ci.empties > 0
+      ? Math.max(0, parseFloat(ci.stock.empties_price) - ci.discount) *
+        ci.empties
+      : 0;
+
+  return productTotal + emptiesTotal;
 };
 
-const Sell = () => {
+const imgSrc = (src: string | null) => {
+  if (!src) return null;
+  return src.startsWith("//") ? `https:${src}` : src;
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function SellPage() {
   const router = useRouter();
-  const [isEditPriceModalOpen, setIsEditPriceModalOpen] = useState(false);
-  const [currentStockPrices, setCurrentStockPrices] = useState({
-    selling_price: "",
-    selling_price_pieces: "",
-    empties_price: "",
-  });
 
-  const handleOpenPriceEditModal = () => {
-    if (!selectedStockItem) {
-      toast.error("Please select a product first");
-      return;
-    }
+  // Store
+  const [stores, setStores] = useState<Store[]>([]);
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  const [storesLoading, setStoresLoading] = useState(true);
+  const [changeStoreOpen, setChangeStoreOpen] = useState(false);
+  const [storeSearch, setStoreSearch] = useState("");
+  const [pendingStore, setPendingStore] = useState<Store | null>(null);
 
-    setCurrentStockPrices({
-      selling_price: selectedStockItem.selling_price || "",
-      selling_price_pieces: selectedStockItem.selling_price_pieces || "0",
-      empties_price: selectedStockItem.empties_price || "0",
-    });
-    setIsEditPriceModalOpen(true);
-  };
+  // Stock
+  const [stock, setStock] = useState<StockItem[]>([]);
+  const [stockLoading, setStockLoading] = useState(false);
+  const [stockSearch, setStockSearch] = useState("");
 
-  const handlePriceUpdateSuccess = async () => {
-    // Refresh stock data after successful update
-    if (selectedStore) {
-      try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
-        const result = await getStoreStock(token, selectedStore.id);
-        if (result.success && result.data) {
-          setStoreStock(result.data);
+  // Active item (expanded product card)
+  const [activeStockId, setActiveStockId] = useState<string | null>(null);
+  const [activeMode, setActiveMode] = useState<SellMode>("PACKS");
+  const [activeQty, setActiveQty] = useState<string>("1");
+  const [activeDiscount, setActiveDiscount] = useState<string>("");
+  const [activeEmpties, setActiveEmpties] = useState<string>("");
+  const [activeEmptiesMode, setActiveEmptiesMode] = useState<"SELL" | "CREDIT">(
+    "SELL",
+  );
+  const [showDiscountInput, setShowDiscountInput] = useState(false);
+  const [showEmptiesInput, setShowEmptiesInput] = useState(false);
 
-          // Update the selected stock item with new prices
-          const updatedStock = result.data.find(
-            (s: StockItem) => s.id === selectedStockItem?.id,
-          );
-          if (updatedStock) {
-            setSelectedStockItem(updatedStock);
-            invoiceForm.setValue("price", updatedStock.selling_price);
-          }
-        }
-      } catch (err) {
-        console.error("Error refreshing stock:", err);
-      }
-    }
-  };
+  const [discountModalOpen, setDiscountModalOpen] = useState(false);
+  const [tempDiscount, setTempDiscount] = useState<string>("");
 
-  const [stage, setStage] = useState<
-    "select-store" | "select-customer" | "invoice"
-  >("select-store");
-  const [stores, setStores] = useState<StoreType[]>([]);
-  const [filteredStores, setFilteredStores] = useState<StoreType[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStore, setSelectedStore] = useState<StoreType | null>(null);
-  const [isLoadingStores, setIsLoadingStores] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [customers, setCustomers] = useState<CustomerType[]>([]);
-  const [isLoadingCustomers, setIsLoadingCustomers] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerType | null>(
+  // Empties modal
+  const [emptiesModalOpen, setEmptiesModalOpen] = useState(false);
+  const [tempEmpties, setTempEmpties] = useState<string>("");
+  const [tempEmptiesMode, setTempEmptiesMode] = useState<"SELL" | "CREDIT">(
+    "SELL",
+  );
+  const [mobileView, setMobileView] = useState<"items" | "cart">("items");
+
+  // Cart / Invoice
+  const [cart, setCart] = useState<CartItem[]>([]);
+
+  // Customer
+  const [customerMode, setCustomerMode] = useState<"walkin" | "registered">(
+    "walkin",
+  );
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
   );
-  const [isWalkIn, setIsWalkIn] = useState(false);
-  const [customerOptionSelected, setCustomerOptionSelected] = useState<
-    "list" | "walk-in" | null
-  >(null);
-  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
-  const [isSubmittingInvoice, setIsSubmittingInvoice] = useState(false);
-  const [storeStock, setStoreStock] = useState<StockItem[]>([]);
-  const [isLoadingStock, setIsLoadingStock] = useState(false);
-  const [showEmptiesModal, setShowEmptiesModal] = useState(false);
-  const [selectedStockItem, setSelectedStockItem] = useState<StockItem | null>(
-    null,
-  );
-  const [emptiesQuantityInput, setEmptiesQuantityInput] = useState("");
-  const [isPriceEditable, setIsPriceEditable] = useState(false);
+  const [selectCustomerOpen, setSelectCustomerOpen] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [pendingCustomer, setPendingCustomer] = useState<Customer | null>(null);
 
-  const customerForm = useForm<CustomerForm>({
-    resolver: zodResolver(customerSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      type: undefined,
-      address: { address: "", latitude: 0, longitude: 0 },
-    },
+  // Invoice creation
+  const [creatingInvoice, setCreatingInvoice] = useState(false);
+  // Add new customer - single state object
+  const [addCustomerOpen, setAddCustomerOpen] = useState(false);
+  const [addingCustomer, setAddingCustomer] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    type: "",
+    address: "",
   });
 
-  const invoiceForm = useForm({
-    defaultValues: {
-      stock_id: "",
-      quantity: "1",
-      delivery: false,
-      mode: "PACKS",
-      discounted_amount: "0",
-      empties_type: "",
-      empties_quantity: "",
-      store_address: "",
-      price: "",
-      payable_amount: "",
-    },
-  });
+  // ── Fetch stores ─────────────────────────────────────────────────────────
 
-  // Live calculation for payable_amount display
-  useEffect(() => {
-    const values = invoiceForm.getValues();
-    const price = parseFloat(values.price || "0");
-    const quantity = parseFloat(values.quantity || "0");
-    const discount = parseFloat(values.discounted_amount || "0");
-    const emptiesQty = parseFloat(values.empties_quantity || "0");
-    const emptiesPrice = parseFloat(selectedStockItem?.empties_price || "0");
-
-    const perUnitPayable = price - discount;
-    const totalPayable = perUnitPayable * quantity + emptiesQty * emptiesPrice;
-
-    invoiceForm.setValue("payable_amount", totalPayable.toFixed(2));
-  }, [
-    invoiceForm.watch("price"),
-    invoiceForm.watch("quantity"),
-    invoiceForm.watch("discounted_amount"),
-    invoiceForm.watch("empties_quantity"),
-    selectedStockItem?.empties_price,
-  ]);
-
-  useEffect(() => {
-    const fetchStores = async () => {
-      setIsLoadingStores(true);
-      setError(null);
-      try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          setError("Please log in");
-          return;
-        }
-        const result = await getStores(token);
-        if (result.success && result.data) {
-          const storeNames = result.data.map((store: any) => ({
-            id: store.id,
-            name: store.name,
-            stock_count: store.stock_count,
-            stock_value: store.stock_value?.toLocaleString() || "0",
-            address: store.address,
-          }));
-          setStores(storeNames);
-          setFilteredStores(storeNames);
-        } else {
-          setError(result.error || "Failed to load stores");
-        }
-      } catch (err) {
-        setError("Network error");
-      } finally {
-        setIsLoadingStores(false);
+  const fetchStores = useCallback(async () => {
+    setStoresLoading(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return toast.error("Please log in");
+      const result = await getStores(token);
+      if (result.success && result.data) {
+        const valid: Store[] = (result.data as Store[]).filter(
+          (s) => !s.credit_store,
+        );
+        setStores(valid);
+        if (valid.length > 0) setSelectedStore(valid[0]);
+      } else {
+        toast.error(result.error || "Failed to load stores");
       }
-    };
-    fetchStores();
+    } catch {
+      toast.error("Failed to load stores");
+    } finally {
+      setStoresLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    if (searchTerm === "") {
-      setFilteredStores(stores);
-    } else {
-      setFilteredStores(
-        stores.filter((s) =>
-          s.name.toLowerCase().includes(searchTerm.toLowerCase()),
-        ),
-      );
-    }
-  }, [searchTerm, stores]);
+    fetchStores();
+  }, []);
 
-  useEffect(() => {
-    if (stage === "select-customer" && selectedStore) {
-      const fetchCustomers = async () => {
-        setIsLoadingCustomers(true);
-        try {
-          const token = localStorage.getItem("accessToken");
-          if (!token) return;
-          const result = await getCustomers(token);
-          if (result.success && result.data) {
-            setCustomers(result.data);
-          } else {
-            toast.error("Failed to load customers");
-          }
-        } catch (err) {
-          toast.error("Network error");
-        } finally {
-          setIsLoadingCustomers(false);
-        }
-      };
-      fetchCustomers();
-    }
-  }, [stage, selectedStore]);
+  // ── Fetch stock when store changes ───────────────────────────────────────
 
-  useEffect(() => {
-    if (stage === "invoice" && selectedStore) {
-      const fetchStock = async () => {
-        setIsLoadingStock(true);
-        try {
-          const token = localStorage.getItem("accessToken");
-          if (!token) return;
-          const result = await getStoreStock(token, selectedStore.id);
-          if (result.success && result.data) {
-            setStoreStock(result.data);
-          } else {
-            toast.error("Failed to load store stock");
-          }
-        } catch (err) {
-          toast.error("Network error loading stock");
-        } finally {
-          setIsLoadingStock(false);
-        }
-      };
-      fetchStock();
-    }
-  }, [stage, selectedStore]);
-
-  useEffect(() => {
-    if (stage === "invoice" && selectedStore?.address) {
-      const addr = selectedStore.address;
-      const display = addr.name || `Lat: ${addr.lat}, Lng: ${addr.lng}`;
-      invoiceForm.setValue("store_address", display);
-    }
-  }, [selectedStore, stage, invoiceForm]);
-
-  useEffect(() => {
-    const stockId = invoiceForm.getValues("stock_id");
-    if (stockId) {
-      const stockItem = storeStock.find((s) => s.id === stockId);
-      if (stockItem) {
-        invoiceForm.setValue("price", stockItem.selling_price);
-        setSelectedStockItem(stockItem);
-        setIsPriceEditable(false);
-      }
-    }
-  }, [invoiceForm.watch("stock_id"), storeStock]);
-
-  const handleOpenEmptiesModal = () => {
-    setShowEmptiesModal(true);
-  };
-
-  const addItemToInvoice = () => {
-    const values = invoiceForm.getValues();
-    if (!values.stock_id || !values.quantity) {
-      toast.error("Please select a product and enter quantity");
-      return;
-    }
-
-    const quantity = parseFloat(values.quantity);
-    if (isNaN(quantity) || quantity <= 0) {
-      toast.error("Quantity must be greater than 0");
-      return;
-    }
-
-    const stockItem = storeStock.find((s) => s.id === values.stock_id);
-    if (!stockItem) return;
-
-    const price = parseFloat(values.price || "0");
-    const discount = parseFloat(values.discounted_amount || "0");
-    const emptiesQty = parseFloat(values.empties_quantity || "0");
-    const emptiesPrice = parseFloat(stockItem.empties_price || "0");
-
-    const perUnitPayable = price - discount;
-    const totalPayable = perUnitPayable * quantity + emptiesQty * emptiesPrice;
-
-    const newItem: InvoiceItem = {
-      stock_id: values.stock_id,
-      product_name: stockItem.product.name,
-      sku: stockItem.sku,
-      product_image: stockItem.product.image,
-      quantity: quantity,
-      mode: values.mode as "PACKS" | "PIECES",
-      price: price,
-      discounted_amount: discount,
-      payable_amount: totalPayable,
-      empties: values.empties_type
-        ? {
-            type: values.empties_type as "CREDIT" | "SELL",
-            quantity: emptiesQty,
-          }
-        : undefined,
-    };
-
-    setInvoiceItems((prev) => [...prev, newItem]);
-    toast.success("Item added to invoice");
-
-    invoiceForm.reset({
-      stock_id: "",
-      quantity: "1",
-      delivery: false,
-      mode: "PACKS",
-      discounted_amount: "0",
-      empties_type: "",
-      empties_quantity: "",
-      store_address: invoiceForm.getValues("store_address"),
-      price: "",
-      payable_amount: "",
-    });
-    setSelectedStockItem(null);
-    setIsPriceEditable(false);
-    setEmptiesQuantityInput("");
-  };
-
-  const submitInvoice = async () => {
-    if (invoiceItems.length === 0) {
-      toast.error("Add at least one item");
-      return;
-    }
-
-    setIsSubmittingInvoice(true);
-
-    const storeAddress = selectedStore?.address || null;
-
-    const payload = {
-      customer_id: isWalkIn ? null : selectedCustomer?.id || null,
-      store_id: selectedStore!.id,
-      items: invoiceItems.map((item) => ({
-        stock_id: item.stock_id,
-        quantity: item.quantity,
-        // delivery: false, // Commented out as requested
-        mode: item.mode,
-        discounted_amount: item.discounted_amount,
-        empties: item.empties,
-        attributes: {
-          latitude: storeAddress?.lat || 0,
-          longitude: storeAddress?.lng || 0,
-          address: storeAddress?.name || "",
-        },
-      })),
-    };
-
+  const fetchStock = useCallback(async (storeId: string) => {
+    setStockLoading(true);
     try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+      const result = await getStoreStock(token, storeId);
+      if (result.success && result.data) {
+        setStock(result.data as StockItem[]);
+      } else {
+        setStock([]);
+        toast.error("Failed to load store stock");
+      }
+    } catch {
+      toast.error("Network error loading stock");
+    } finally {
+      setStockLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedStore) fetchStock(selectedStore.id);
+  }, [selectedStore]);
+
+  // ── Fetch customers ──────────────────────────────────────────────────────
+
+  const fetchCustomers = useCallback(async () => {
+    setCustomersLoading(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+      const result = await getCustomers(token);
+      if (result.success && result.data) {
+        setCustomers(result.data as Customer[]);
+      } else {
+        toast.error("Failed to load customers");
+      }
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setCustomersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectCustomerOpen) fetchCustomers();
+  }, [selectCustomerOpen]);
+
+  // ── Active item helpers ──────────────────────────────────────────────────
+
+  const openItem = (item: StockItem) => {
+    setActiveStockId(item.id);
+    setActiveMode("PACKS");
+    setActiveQty("1");
+    setActiveDiscount("");
+    setActiveEmpties("");
+    setActiveEmptiesMode("SELL");
+    setShowDiscountInput(false);
+    setShowEmptiesInput(false);
+  };
+
+  const activeItem = stock.find((s) => s.id === activeStockId) ?? null;
+
+  const activePrice = activeItem ? unitPrice(activeItem, activeMode) : 0;
+
+  const previewSubtotal = (() => {
+    if (!activeItem) return 0;
+    const qty = parseFloat(activeQty) || 0;
+    const disc = parseFloat(activeDiscount) || 0;
+    const empties = parseFloat(activeEmpties) || 0;
+
+    // Calculate product total with discount applied per unit
+    const discountedProductPrice = Math.max(0, activePrice - disc);
+    const productTotal = discountedProductPrice * qty;
+
+    // Calculate empties total with discount applied per unit
+    const emptiesPrice = parseFloat(activeItem.empties_price) || 0;
+    const discountedEmptiesPrice = Math.max(0, emptiesPrice - disc);
+    const emptiesTotal =
+      showEmptiesInput && empties > 0 ? discountedEmptiesPrice * empties : 0;
+
+    return productTotal + emptiesTotal;
+  })();
+
+  const handleAddToCart = () => {
+    if (!activeItem) return;
+    const qty = parseFloat(activeQty);
+    if (!qty || qty <= 0) return toast.error("Enter a valid quantity");
+
+    const empties = showEmptiesInput ? parseFloat(activeEmpties) || 0 : 0;
+    const discount = showDiscountInput ? parseFloat(activeDiscount) || 0 : 0;
+
+    const existing = cart.findIndex(
+      (c) => c.stock.id === activeItem.id && c.mode === activeMode,
+    );
+
+    if (existing >= 0) {
+      const updated = [...cart];
+      updated[existing] = {
+        ...updated[existing],
+        quantity: qty,
+        discount,
+        empties,
+        emptiesMode: empties > 0 ? activeEmptiesMode : null,
+      };
+      setCart(updated);
+    } else {
+      setCart((prev) => [
+        ...prev,
+        {
+          stock: activeItem,
+          quantity: qty,
+          mode: activeMode,
+          discount,
+          empties,
+          emptiesMode: empties > 0 ? activeEmptiesMode : null,
+        },
+      ]);
+    }
+    setActiveStockId(null);
+    toast.success(`${activeItem.product.name} added to cart`);
+  };
+
+  const removeCartItem = (idx: number) => {
+    setCart((prev) => prev.filter((_, i) => i !== idx));
+    toast.success("Item removed");
+  };
+
+  const updateCartQty = (idx: number, delta: number) => {
+    setCart((prev) =>
+      prev.map((ci, i) =>
+        i === idx
+          ? { ...ci, quantity: Math.max(0.5, ci.quantity + delta) }
+          : ci,
+      ),
+    );
+  };
+
+  // ── Invoice totals ───────────────────────────────────────────────────────
+
+  const totalItems = cart.length;
+  const totalAmount = cart.reduce((s, ci) => s + itemSubtotal(ci), 0);
+  const totalDiscount = cart.reduce(
+    (s, ci) => s + ci.discount * (ci.quantity + ci.empties),
+    0,
+  );
+  const totalEmpties = cart.reduce((s, ci) => s + ci.empties, 0);
+
+  const handleAddCustomer = async () => {
+    if (!newCustomer.name.trim() || !newCustomer.phone.trim())
+      return toast.error("Name and phone are required");
+
+    setAddingCustomer(true);
+    try {
+      const response = await handleCreateCustomer({
+        name: newCustomer.name.trim(),
+        phone: newCustomer.phone.trim(),
+        email: newCustomer.email.trim(),
+type: (newCustomer.type || "Retailer") as "Distributor" | "Wholesaler" | "Retailer",
+        address: {
+          address: newCustomer.address,
+          latitude: 0,
+          longitude: 0,
+        },
+      });
+
+      if (response.statusCode === 200 || response.statusCode === 201) {
+        setSelectedCustomer(response.data);
+        setCustomerMode("registered");
+        setAddCustomerOpen(false);
+        setSelectCustomerOpen(false);
+
+        // Reset form
+        setNewCustomer({
+          name: "",
+          email: "",
+          phone: "",
+          type: "",
+          address: "",
+        });
+
+        toast.success("Customer created successfully");
+      } else {
+        toast.error(response.error || "Failed to create customer");
+      }
+    } catch (error) {
+      toast.error("Network error. Please try again.");
+    } finally {
+      setAddingCustomer(false);
+    }
+  };
+
+  // ── Create invoice ───────────────────────────────────────────────────────
+
+  const handleCreateInvoiceSubmit = async () => {
+    if (!selectedStore) return toast.error("Select a store first");
+    if (cart.length === 0) return toast.error("Add at least one item");
+
+    setCreatingInvoice(true);
+    try {
+      const storeAddress = selectedStore.address || null;
+
+      const payload = {
+        customer_id:
+          customerMode === "registered" ? selectedCustomer?.id || null : null,
+        store_id: selectedStore.id,
+        items: cart.map((ci) => ({
+          stock_id: ci.stock.id,
+          quantity: ci.quantity,
+          delivery: false,
+          mode: ci.mode,
+          discounted_amount: ci.discount,
+          empties:
+            ci.empties > 0 && ci.emptiesMode !== null
+              ? { type: ci.emptiesMode, quantity: ci.empties }
+              : undefined,
+          attributes: {
+            latitude: storeAddress?.lat || 0,
+            longitude: storeAddress?.lng || 0,
+            address: storeAddress?.name || "",
+          },
+        })),
+      };
+
       const response = await handleCreateInvoice(payload);
 
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Invoice created successfully!");
-
-        const invoiceData = response.data;
-
-        if (invoiceData?.id) {
-          const previewData = {
-            invoiceId: invoiceData.id,
-            code: invoiceData.code,
-            total: invoiceData.total,
-            status: invoiceData.status,
-            storeAddress:
-              invoiceData.items[0]?.attributes?.address || "No address",
-            items_count: invoiceData.items_count,
-            items: invoiceData.items.map((item: any, index: number) => {
-              const localItem = invoiceItems[index];
-
-              return {
-                id: item.id,
-                stock_id: item.stock_id,
-                product_id: item.product_id,
-                quantity: item.quantity,
-                cost: item.cost,
-                discounted_amount: item.discounted_amount,
-                sub_total: item.sub_total,
-                mode: item.mode,
-                attributes: item.attributes,
-                sku: localItem?.sku || "N/A",
-                product_name: localItem?.product_name || "Unknown Product",
-                product_image: localItem?.product_image || "",
-              };
-            }),
-          };
-
-          localStorage.setItem(
-            `invoice-preview-${invoiceData.id}`,
-            JSON.stringify(previewData),
-          );
-
-          router.push(
-            `/inventory/sell/pay?invoiceId=${invoiceData.id}`,
-          );
-        } else {
-          toast.warning("Invoice created but no ID returned");
-        }
-
-        setInvoiceItems([]);
-        setSelectedStore(null);
-        setSelectedCustomer(null);
-        setIsWalkIn(false);
-        setCustomerOptionSelected(null);
-        invoiceForm.reset();
+        const invoiceId = response.data?.id;
+        router.push(`/inventory/sell/pay?invoiceId=${invoiceId}`);
       } else {
         toast.error(response.error || "Failed to create invoice");
       }
-    } catch (err) {
+    } catch {
       toast.error("Failed to create invoice");
     } finally {
-      setIsSubmittingInvoice(false);
+      setCreatingInvoice(false);
     }
   };
 
-  const onCreateCustomer = async (data: CustomerForm) => {
-    try {
-      const payload = {
-        name: data.name.trim(),
-        email: data.email.toLowerCase().trim(),
-        phone: data.phone,
-        type: data.type,
-        address: {
-          latitude: data.address.latitude,
-          longitude: data.address.longitude,
-          address: data.address.address,
-        },
-      };
+  // ── Filtered lists ───────────────────────────────────────────────────────
 
-      const response = await handleCreateCustomer(payload);
-
-      if (response.statusCode === 200 || response.statusCode === 201) {
-        toast.success(response.msg || "Customer created successfully!");
-
-        const closeButton = document.querySelector("[data-radix-dialog-close]");
-        if (closeButton) (closeButton as HTMLElement).click();
-
-        const token =
-          localStorage.getItem("accessToken") ||
-          localStorage.getItem("authToken");
-        if (token) {
-          const result = await getCustomers(token);
-          if (result.success && result.data) {
-            setCustomers(result.data);
-          }
-        }
-
-        customerForm.reset();
-      } else {
-        toast.error(response.error || "Failed to create customer");
-      }
-    } catch (err: any) {
-      toast.error(err?.error || "Failed to create customer");
-    }
-  };
-
-  const handleProceedFromStore = () => {
-    if (!customerOptionSelected) {
-      toast.error("Please select a customer option");
-      return;
-    }
-
-    if (customerOptionSelected === "list") {
-      setStage("select-customer");
-    } else if (customerOptionSelected === "walk-in") {
-      setIsWalkIn(true);
-      setStage("invoice");
-    }
-  };
-
-  // Calculate total payable amount
-  const totalPayable = invoiceItems.reduce(
-    (sum, item) => sum + item.payable_amount,
-    0,
+  const filteredStock = stock.filter(
+    (s) =>
+      s.product.name.toLowerCase().includes(stockSearch.toLowerCase()) ||
+      s.sku.toLowerCase().includes(stockSearch.toLowerCase()),
   );
 
-  if (stage === "select-store") {
-    return (
-      <div>
-        <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
+  const filteredStores = stores.filter((s) =>
+    s.name.toLowerCase().includes(storeSearch.toLowerCase()),
+  );
+
+  const filteredCustomers = customers.filter(
+    (c) =>
+      c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+      c.phone.includes(customerSearch),
+  );
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────────────────────
+
+  return (
+    <div className="">
+      {/* Page header */}
+      <div className="  pb-4">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#2F2F2F] font-clash">
           Sell
         </h1>
-        <p className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans">
+        <p className="text-[#9E9A9A] text-sm font-medium">
           Sell your stock to a customer
         </p>
+      </div>
 
-        <div className="md:mt-8 flex flex-col lg:flex-row gap-4">
-          <div className="py-3 md:py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg w-full lg:w-[35%] bg-white">
-            <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
-              Select the store you want to sell from
-            </h1>
-            <Separator
-              orientation="horizontal"
-              className="h-[1px] mt-3"
-              style={{ background: "#E0E0E0" }}
+      {/* Mobile toggle */}
+      <div className="flex lg:hidden mb-4 rounded-xl border border-[#E4E4E4] overflow-hidden">
+        <button
+          onClick={() => setMobileView("items")}
+          className={`flex-1 py-2.5 text-sm font-semibold transition-all ${
+            mobileView === "items"
+              ? "bg-[#0A6DC0] text-white"
+              : "bg-white text-[#9E9A9A]"
+          }`}
+        >
+          See Items
+        </button>
+        <button
+          onClick={() => setMobileView("cart")}
+          className={`flex-1 py-2.5 text-sm font-semibold transition-all relative ${
+            mobileView === "cart"
+              ? "bg-[#0A6DC0] text-white"
+              : "bg-white text-[#9E9A9A]"
+          }`}
+        >
+          Cart Details
+          {cart.length > 0 && (
+            <span className="ml-1.5 bg-red-500 text-white text-xs w-4 h-4 rounded-full inline-flex items-center justify-center">
+              {cart.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      <div className="pb-10 flex gap-6">
+        {" "}
+        {/* ═══════════════════════════════════════════════════════════════════
+            LEFT PANEL
+        ═══════════════════════════════════════════════════════════════════ */}
+        <div
+          className={`w-full lg:w-[60%] space-y-3 bg-white rounded-2xl md:border border-[#E6E6E6] md:p-5 ${mobileView === "cart" ? "hidden lg:block" : "block"}`}
+        >
+          {/* Store card */}
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-semibold text-[#2F2F2F]">Store</p>
+            <button
+              onClick={() => {
+                setPendingStore(selectedStore);
+                setChangeStoreOpen(true);
+              }}
+              className="text-[#0A6DC0] text-sm font-semibold hover:underline"
+            >
+              Change Store
+            </button>
+          </div>
+          <div className="bg-white rounded-2xl border border-[#E6E6E6] py-2 px-4">
+            {storesLoading ? (
+              <div>
+                <ThreeDots height="50" width="50" color="#0A6DC0" visible />
+                <p className="text-sm text-[#9E9A9A]">Loading Stores...</p>
+              </div>
+            ) : selectedStore ? (
+              <div className="flex items-center gap-3">
+                <Image src="/store.svg" width={20} height={20} alt="store" />
+                <div>
+                  <p className="font-medium text-[#2F2F2F]">
+                    {selectedStore.name}
+                  </p>
+                  <div className="text-[13px] text-[#2F2F2F] flex items-center gap-2">
+                    <p>Inventory value: </p>
+                    <span className="text-[#9E9A9A]">
+                      {selectedStore.stock_value?.toLocaleString()}{" "}
+                      &nbsp;·&nbsp;
+                    </span>{" "}
+                  </div>
+                  <div className="text-[13px] text-[#2F2F2F] flex items-center gap-2">
+                    <p>Product Count:</p>
+                    <span className="text-[#9E9A9A]">
+                      {selectedStore.stock_count}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">No store selected</p>
+            )}
+          </div>
+
+          {/* Stock search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E9A9A] w-4 h-4" />
+            <Input
+              placeholder="Search SKU"
+              value={stockSearch}
+              onChange={(e) => setStockSearch(e.target.value)}
+              className="pl-9 bg-[#D8D8D866] border-[#F9F9F9] rounded-xl h-12"
             />
+          </div>
 
-            <div className="mt-6">
-              {isLoadingStores ? (
-                <div className="flex items-center gap-2 justify-center py-4">
-                  <p className="text-center text-gray-500">Loading stores...</p>
-                  <ThreeDots
-                    height="40"
-                    width="40"
-                    color="#0A6DC0"
-                    visible={true}
-                  />
-                </div>
-              ) : error ? (
-                <div className="text-center py-4">
-                  <p className="text-red-500">{error}</p>
-                  <button
-                    className="mt-2 bg-[#0A6DC0] hover:bg-[#085a9e] rounded-lg px-4 py-2 text-white"
-                    onClick={() => window.location.reload()}
+          {/* Stock list */}
+          {stockLoading ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <ThreeDots height="50" width="50" color="#0A6DC0" visible />
+              <p className="text-sm text-[#9E9A9A]">Loading products...</p>
+            </div>
+          ) : filteredStock.length === 0 ? (
+            <div className="text-center py-16 text-[#9E9A9A] text-sm">
+              No products found
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredStock.map((item) => {
+                const isActive = activeStockId === item.id;
+                const inCart = cart.some((c) => c.stock.id === item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className={`bg-white rounded-2xl border transition-all overflow-hidden ${
+                      isActive
+                        ? "border-[#0A6DC0] shadow-md"
+                        : "border-[#E4E4E4]"
+                    }`}
                   >
-                    Retry
-                  </button>
-                </div>
-              ) : filteredStores.length === 0 ? (
-                <p className="text-center py-4 text-gray-500">
-                  No stores found
-                </p>
-              ) : (
-                <>
-                  <div className="hidden lg:block space-y-2 max-h-[400px] overflow-y-auto">
-                    {filteredStores.map((store) => (
-                      <div
-                        key={store.id}
-                        onClick={() => setSelectedStore(store)}
-                        className={`flex justify-between border rounded-lg px-3 py-4 cursor-pointer transition-colors ${
-                          selectedStore?.id === store.id
-                            ? "bg-[#0A6DC012] border border-[#0A6DC0]"
-                            : "bg-gray-50 hover:bg-gray-100 border-[#D8D8D866]"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Image
-                            src="/store.svg"
-                            width={20}
-                            height={20}
-                            alt="store"
-                          />
-                          <p className="font-medium text-[16px] font-dm-sans text-[#2F2F2F]">
-                            {store.name}
+                    {/* Product row */}
+                    <div
+                      className="flex items-center justify-between p-4 cursor-pointer"
+                      onClick={() =>
+                        isActive ? setActiveStockId(null) : openItem(item)
+                      }
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-lg border border-[#E4E4E4] overflow-hidden bg-gray-50 shrink-0 flex items-center justify-center">
+                          {imgSrc(item.product.image) ? (
+                            <Image
+                              src={imgSrc(item.product.image)!}
+                              alt={item.product.name}
+                              width={48}
+                              height={48}
+                              className="object-contain w-full h-full"
+                              onError={(e) =>
+                                (e.currentTarget.style.display = "none")
+                              }
+                            />
+                          ) : (
+                            <Package className="w-5 h-5 text-gray-300" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-bold text-[12px] md:text-[16px] text-[#2F2F2F]  leading-tight">
+                            {item.product.name}
+                            {inCart && (
+                              <span className="ml-2 text-xs text-white bg-[#0A6DC0] px-1.5 py-0.5 rounded-full">
+                                In cart
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-[#9E9A9A] text-[8px] md:text-[13px]">
+                            SKU: {item.sku}
                           </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                  <div className="lg:hidden">
-                    <Select
-                      value={selectedStore?.id?.toString() || ""}
-                      onValueChange={(value) => {
-                        const store = filteredStores.find(
-                          (s) => s.id === value,
-                        );
-                        if (store) setSelectedStore(store);
-                      }}
-                      disabled={isLoadingStores || !!error}
-                    >
-                      <SelectTrigger className="w-full h-12 border rounded px-3">
-                        <SelectValue placeholder="Select a store" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filteredStores.map((store) => (
-                          <SelectItem key={store.id} value={store.id}>
-                            {store.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs">
+                          {item.status === "in_stock" ? (
+                            <span className="text-[#9E9A9A] font-medium">
+                              In Stock
+                            </span>
+                          ) : (
+                            <span className="text-red-500 font-medium">
+                              Out of Stock
+                            </span>
+                          )}
+                        </p>
+                        <p className="font-bold text-[12px] md:text-[16px] text-[#2F2F2F] ">
+                          {parseFloat(item.total_qty).toFixed(0)} packs
+                        </p>
+                      </div>
+                    </div>
 
-          <div className="md:py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg w-full lg:w-[65%] bg-white">
-            <h1 className="text-[16px] font-semibold text-[#2F2F2F] font-clash">
-              {selectedStore ? selectedStore.name : "Select a store"}
-            </h1>
-            <p className="text-[#9E9A9A] font-dm-sans">
-              Select or create the customer you want to sell to
-            </p>
-            <Separator
-              orientation="horizontal"
-              className="h-[1px] mt-3"
-              style={{ background: "#E0E0E0" }}
-            />
+                    {/* Expanded controls */}
+                    {isActive && (
+                      <div className="px-4 pb-4   space-y-4">
+                        {/* Price */}
+                        <p className="text-[#2F2F2F] text-[12px] md:text-[16px] font-bold ">
+                          {fmt(activePrice)}
+                          <span className="text-xs text-[#9E9A9A] font-normal">
+                            /{activeMode === "PACKS" ? "pack" : "piece"}
+                          </span>
+                        </p>
 
-            <div className="mt-5 space-y-4">
-              <button
-                onClick={() => setCustomerOptionSelected("list")}
-                disabled={!selectedStore}
-                className={`w-full h-14 border rounded-lg flex items-center gap-3 px-4 transition-colors ${
-                  customerOptionSelected === "list"
-                    ? "border-[#0A6DC0] bg-[#0A6DC0]/10"
-                    : "border-[#D8D8D866] hover:bg-gray-50"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <UserRound className="w-5 h-5" />
-                <p>Select from customer list</p>
-              </button>
+                        {/* Mode toggle */}
+                        <div className="grid grid-cols-2 gap-2">
+                          {(["PACKS", "PIECES"] as SellMode[]).map((m) => (
+                            <button
+                              key={m}
+                              onClick={() => setActiveMode(m)}
+                              className={`py-2 rounded-lg text-sm font-medium border transition-all ${
+                                activeMode === m
+                                  ? "bg-[#0A6DC00D] border-[#0A6DC0] text-[#0A6DC0]"
+                                  : "bg-[#F5F6FA] border-transparent text-[#9E9A9A]"
+                              }`}
+                            >
+                              {m === "PACKS"
+                                ? "Packs/Crates"
+                                : "Pieces/Bottles"}
+                            </button>
+                          ))}
+                        </div>
 
-              <button
-                onClick={() => setCustomerOptionSelected("walk-in")}
-                disabled={!selectedStore}
-                className={`w-full h-14 border rounded-lg flex items-center gap-3 px-4 transition-colors ${
-                  customerOptionSelected === "walk-in"
-                    ? "border-[#0A6DC0] bg-[#0A6DC0]/10"
-                    : "border-[#D8D8D866] hover:bg-gray-50"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <UserRound className="w-5 h-5" />
-                <p>Walk-in Customer</p>
-              </button>
-
-              <Button
-                onClick={handleProceedFromStore}
-                disabled={!selectedStore || !customerOptionSelected}
-                className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] h-12"
-              >
-                Proceed
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (stage === "select-customer") {
-    return (
-      <div>
-        <button
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2"
-          onClick={() => setStage("select-store")}
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
-          Customer
-        </h1>
-        <p className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans">
-          Sell to the customer you want to sell to
-        </p>
-
-        <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg mt-8 bg-white">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-[18px] font-semibold text-[#2F2F2F] font-clash">
-              Select Customer
-            </h2>
-            <button
-              onClick={() => setStage("select-store")}
-              className="text-[#0A6DC0]"
-            >
-              Change Store
-            </button>
-          </div>
-
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <button className="font-bold font-dm-sans text-[#0A6DC0] border-b mb-5 border-[#0A6DC0]">
-                + Add a new Customer
-              </button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="max-w-[95vw] md:max-w-[600px] max-h-[90vh] overflow-y-auto">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="flex font-clash justify-between items-center">
-                  Create New Customer
-                  <AlertDialogCancel className="border-0 bg-transparent p-0">
-                    <X className="w-5 h-5" />
-                  </AlertDialogCancel>
-                </AlertDialogTitle>
-                <AlertDialogDescription className="text-left">
-                  Fill in the necessary details to create a new customer
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-
-              <Form {...customerForm}>
-                <form
-                  onSubmit={customerForm.handleSubmit(onCreateCustomer)}
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={customerForm.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Customer Name</FormLabel>
-                        <FormControl>
+                        {/* Quantity */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() =>
+                              setActiveQty((v) =>
+                                String(Math.max(0.5, parseFloat(v) - 1)),
+                              )
+                            }
+                            className="w-16 h-10 rounded-lg border border-[#E4E4E4] flex items-center justify-center text-[#2F2F2F] hover:bg-gray-50"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
                           <Input
-                            placeholder="Enter name"
-                            {...field}
-                            className="bg-[#D8D8D866] h-12"
+                            type="number"
+                            value={activeQty}
+                            onChange={(e) => setActiveQty(e.target.value)}
+                            className="w-full bg-white text-center font-semibold border-[#D8D8D866]"
+                            min={0.5}
+                            step={0.5}
                           />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={customerForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
-                            <Input
-                              type="email"
-                              placeholder="Enter email"
-                              {...field}
-                              className="pl-10 bg-[#D8D8D866] h-12"
-                            />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={customerForm.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <PhoneInput
-                            country="ng"
-                            value={field.value}
-                            onChange={field.onChange}
-                            inputStyle={{
-                              width: "100%",
-                              height: "48px",
-                              backgroundColor: "#D8D8D866",
-                              border: "none",
-                            }}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={customerForm.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Customer Type</FormLabel>
-                        <select
-                          {...field}
-                          className="w-full h-12 border rounded px-3 bg-[#D8D8D866]"
-                        >
-                          <option value="">Select type</option>
-                          <option value="Distributor">Distributor</option>
-                          <option value="Wholesaler">Wholesaler</option>
-                          <option value="Retailer">Retailer</option>
-                        </select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={customerForm.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Address</FormLabel>
-                        <FormControl>
-                          <PlacesAutocompleteInput
-                            placeholder="Enter full business address"
-                            value={field.value?.address || ""}
-                            onChange={(addressData) => {
-                              if (typeof addressData === "string") {
-                                field.onChange({
-                                  address: addressData,
-                                  latitude: field.value?.latitude || 0,
-                                  longitude: field.value?.longitude || 0,
-                                });
-                              } else {
-                                field.onChange({
-                                  address: addressData.name,
-                                  latitude: addressData.lat,
-                                  longitude: addressData.lng,
-                                });
-                              }
-                            }}
-                            className="bg-[#D8D8D866] h-12 border-0"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <AlertDialogFooter className="mt-6">
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <Button
-                      type="submit"
-                      disabled={customerForm.formState.isSubmitting}
-                      className="bg-[#0A6DC0] hover:bg-[#09599a]"
-                    >
-                      {customerForm.formState.isSubmitting ? (
-                        <>
-                          Creating...{" "}
-                          <ClipLoader
-                            size={18}
-                            color="white"
-                            className="ml-2"
-                          />
-                        </>
-                      ) : (
-                        "Create Customer"
-                      )}
-                    </Button>
-                  </AlertDialogFooter>
-                </form>
-              </Form>
-            </AlertDialogContent>
-          </AlertDialog>
+                          <button
+                            onClick={() =>
+                              setActiveQty((v) => String(parseFloat(v) + 1))
+                            }
+                            className="w-16 h-10 rounded-lg border border-[#E4E4E4] flex items-center justify-center text-[#2F2F2F] hover:bg-gray-50"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                          {/* <span className="text-sm text-[#9E9A9A]">Packs</span> */}
+                        </div>
 
-          {isLoadingCustomers ? (
-            <div className="flex items-center gap-2 justify-center">
-              <p className="text-center py-4 text-gray-500">
-                Loading Customers...
-              </p>
-              <ThreeDots
-                height="40"
-                width="40"
-                color="#0A6DC0"
-                visible={true}
-              />
-            </div>
-          ) : (
-            <div className="space-y-3 mb-8">
-              {customers.map((customer) => (
-                <div
-                  key={customer.id}
-                  onClick={() => {
-                    setSelectedCustomer(customer);
-                    setStage("invoice");
-                  }}
-                  className={`flex items-center gap-3 border rounded-lg p-4 cursor-pointer transition-colors ${
-                    selectedCustomer?.id === customer.id
-                      ? "border-[#0A6DC0] bg-[#0A6DC0]/10"
-                      : "border-[#D8D8D866]"
-                  }`}
-                >
-                  <UserRound />
-                  <div>
-                    <p className="font-medium font-dm-sans text-[#2F2F2F]">
-                      {customer.name}
-                    </p>
-                    <p className="text-sm text-[#2F2F2F] font-regular text-[13px]">
-                      {customer.phone} • {customer.email}
-                    </p>
+                        {/* Action buttons */}
+                        {/* Action buttons */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => {
+                              setTempDiscount(activeDiscount);
+                              setDiscountModalOpen(true);
+                            }}
+                            className="py-2 px-3 rounded-xl text-sm font-medium border transition-all flex items-center justify-center gap-1.5 bg-[#F9F9F9] border-[#D8D8D866] text-[#2F2F2F]"
+                          >
+                            Add Discount
+                          </button>
+                          <button
+                            onClick={() => {
+                              setTempEmpties(activeEmpties);
+                              setTempEmptiesMode(activeEmptiesMode);
+                              setEmptiesModalOpen(true);
+                            }}
+                            className="py-2 px-3 rounded-xl text-sm font-medium border transition-all flex items-center justify-center gap-1.5 bg-[#F9F9F9] border-[#D8D8D866] text-[#2F2F2F]"
+                          >
+                            Sell with Empties
+                          </button>
+                        </div>
+
+                        {/* Show badges if discount or empties are added */}
+                        <div className="space-y-2">
+                          {activeDiscount && parseFloat(activeDiscount) > 0 && (
+                            <div className="flex items-center justify-between bg-[#FFF8EC] p-2 rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-[#E89500]">
+                                  Discount: {fmt(parseFloat(activeDiscount))}
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => setActiveDiscount("")}
+                                className="text-[#E89500] hover:text-red-500"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+
+                          {activeEmpties && parseFloat(activeEmpties) > 0 && (
+                            <div className="flex items-center justify-between bg-[#EEF5FB] p-2 rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <Package className="w-3.5 h-3.5 text-[#0A6DC0]" />
+                                <span className="text-sm text-[#0A6DC0]">
+                                  {activeEmpties} empties (
+                                  {activeEmptiesMode === "CREDIT"
+                                    ? "On Credit"
+                                    : "Sold"}
+                                  )
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setActiveEmpties("");
+                                  setActiveEmptiesMode("SELL");
+                                }}
+                                className="text-[#0A6DC0] hover:text-red-500"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Discount Modal */}
+                        {discountModalOpen && (
+                          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                            <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+                              <div className="flex items-center justify-between p-4 border-b border-[#F0F0F0]">
+                                <p className="font-bold text-[#2F2F2F]">
+                                  Add Discount
+                                </p>
+                                <button
+                                  onClick={() => setDiscountModalOpen(false)}
+                                >
+                                  <X className="w-5 h-5 text-[#9E9A9A]" />
+                                </button>
+                              </div>
+
+                              <div className="p-4 space-y-4">
+                                <div className="space-y-1.5">
+                                  <p className="text-sm font-medium text-[#2F2F2F]">
+                                    Discount
+                                  </p>
+                                  <Input
+                                    type="number"
+                                    placeholder="Enter discount amount"
+                                    value={tempDiscount}
+                                    onChange={(e) =>
+                                      setTempDiscount(e.target.value)
+                                    }
+                                    className="border-[#E4E4E4]"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="p-4 border-t border-[#F0F0F0] flex gap-2">
+                                <Button
+                                  onClick={() => setDiscountModalOpen(false)}
+                                  variant="outline"
+                                  className="flex-1"
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  onClick={() => {
+                                    setActiveDiscount(tempDiscount);
+                                    setDiscountModalOpen(false);
+                                    setShowDiscountInput(true); // Add this line
+                                    setDiscountModalOpen(false);
+                                  }}
+                                  className="flex-1 bg-[#0A6DC0] hover:bg-[#09599a] text-white"
+                                >
+                                  Add Discount
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Empties input */}
+                        {/* Empties Modal */}
+                        {emptiesModalOpen && (
+                          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                            <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+                              <div className="flex items-center justify-between p-4 border-b border-[#F0F0F0]">
+                                <p className="font-bold text-[#2F2F2F]">
+                                  Selling with Empties?
+                                </p>
+                                <button
+                                  onClick={() => setEmptiesModalOpen(false)}
+                                >
+                                  <X className="w-5 h-5 text-[#9E9A9A]" />
+                                </button>
+                              </div>
+
+                              <div className="p-4 space-y-4">
+                                <div className="space-y-1">
+                                  <p className="text-xs text-[#9E9A9A]">
+                                    Empties Qty
+                                  </p>
+                                  <Input
+                                    type="number"
+                                    placeholder="Enter empties Qty"
+                                    value={tempEmpties}
+                                    onChange={(e) =>
+                                      setTempEmpties(e.target.value)
+                                    }
+                                    className="border-[#E4E4E4]"
+                                  />
+                                </div>
+
+                                <div className="space-y-1">
+                                  <p className="text-xs text-[#9E9A9A]">
+                                    Empties Price
+                                  </p>
+                                  <p className="font-semibold text-[#2F2F2F]">
+                                    {fmt(
+                                      parseFloat(
+                                        activeItem?.empties_price || "0",
+                                      ),
+                                    )}
+                                  </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <p className="text-xs text-[#9E9A9A]">
+                                    Sales Mode
+                                  </p>
+                                  {(["SELL", "CREDIT"] as const).map((em) => (
+                                    <label
+                                      key={em}
+                                      className="flex items-start gap-2 cursor-pointer"
+                                    >
+                                      <div
+                                        className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                          tempEmptiesMode === em
+                                            ? "border-[#0A6DC0] bg-[#0A6DC0]"
+                                            : "border-gray-300"
+                                        }`}
+                                        onClick={() => setTempEmptiesMode(em)}
+                                      >
+                                        {tempEmptiesMode === em && (
+                                          <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                        )}
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-medium text-[#2F2F2F]">
+                                          {em === "SELL"
+                                            ? "Sell Empties"
+                                            : "Empties On Credit"}
+                                        </p>
+                                        <p className="text-xs text-[#9E9A9A]">
+                                          {em === "SELL"
+                                            ? "Sell both drinks and empties to the customer. i.e Drink price + Empties Price"
+                                            : "Get drinks for empties and pay later"}
+                                        </p>
+                                      </div>
+                                    </label>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="p-4 border-t border-[#F0F0F0] flex gap-2">
+                                <Button
+                                  onClick={() => setEmptiesModalOpen(false)}
+                                  variant="outline"
+                                  className="flex-1"
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  onClick={() => {
+                                    setActiveEmpties(tempEmpties);
+                                    setActiveEmptiesMode(tempEmptiesMode);
+                                    setShowEmptiesInput(true); // Add this line
+                                    setEmptiesModalOpen(false);
+                                  }}
+                                  className="flex-1 bg-[#0A6DC0] hover:bg-[#09599a] text-white"
+                                >
+                                  Add Empties
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Preview subtotal */}
+                        <div className="flex items-center justify-between py-2 border-t border-[#F0F0F0]">
+                          <span className="text-sm text-[#9E9A9A]">
+                            Subtotal
+                          </span>
+                          <span className="font-bold text-[#2F2F2F]">
+                            {fmt(previewSubtotal)}
+                          </span>
+                        </div>
+
+                        <Button
+                          onClick={handleAddToCart}
+                          className="w-full bg-[#0A6DC0] hover:bg-[#09599a] text-white rounded-xl h-11 font-semibold"
+                        >
+                          Add to Cart
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
-      </div>
-    );
-  }
+        {/* ═══════════════════════════════════════════════════════════════════
+            RIGHT PANEL — Invoice
+        ═══════════════════════════════════════════════════════════════════ */}
+        <div
+          className={`w-full lg:w-[40%] space-y-4 ${mobileView === "items" ? "hidden lg:block" : "block"}`}
+        >
+          <div className="bg-white rounded-2xl md:border border-[#E4E4E4] md:p-6 sticky top-6">
+            <p className="font-bold text-[#2F2F2F] text-lg mb-4">
+              Invoice Details
+            </p>
 
-  if (stage === "invoice") {
-    return (
-      <div>
-        <div className="flex gap-4 mb-6">
-          <button
-            className="flex items-center  text-gray-600 hover:text-gray-900 font-medium"
-            onClick={() => setStage("select-store")}
-          >
-            <ArrowLeft size={20} />
-            Change Store
-          </button>
-
-          <button
-            className="flex items-center  text-gray-600 hover:text-gray-900 font-medium"
-            onClick={() => setStage("select-customer")}
-          >
-            <ArrowLeft size={20} />
-            Change Customer
-          </button>
-        </div>
-        <h1 className="text-[20px] md:text-[25px] text-[#2F2F2F] font-bold font-clash">
-          Create Invoice
-        </h1>
-        <p className="text-[16px] font-medium text-[#9E9A9A] font-dm-sans">
-          Kindly fill the details below to create invoice
-        </p>
-
-        <div className="py-6 md:p-6 lg:border border-[#E4E4E4] rounded-lg md:mt-8 bg-white">
-          <div className="mb-2 flex items-center justify-between font-dm-sans font-medium">
-            <p className="text-[16px] text-[#000000] ">Store</p>
-            <button
-              onClick={() => {
-                setStage("select-store");
-                setCustomerOptionSelected(null);
-                setIsWalkIn(false);
-              }}
-              className="text-[#0A6DC0]"
-            >
-              Change Store
-            </button>
-          </div>
-          <div className="py-3 mb-4 px-5 flex items-center gap-2 font-dm-sans border border-[#0A6DC0] bg-[#0A6DC012] rounded-lg">
-            <Image src={"/store.svg"} alt="store" width={30} height={30} />
-            <div>
-              <p className="text-[#2F2F2F] font-medium">
-                {selectedStore?.name}
-              </p>
-              <div className="flex items-center gap-2 text-[13px]">
-                <p className="text-[#2F2F2F] font-medium">
-                  Inventory value: ₦{" "}
-                </p>
-                <p className="text-[#9E9A9A]">{selectedStore?.stock_value}</p>
-              </div>
-              <div className="flex items-center gap-2 text-[13px]">
-                <p className="text-[#2F2F2F] font-medium">Product Count:</p>
-                <p className="text-[#9E9A9A]">{selectedStore?.stock_count}</p>
-              </div>
-            </div>
-          </div>
-
-          <Form {...invoiceForm}>
-            <form className="space-y-6 mb-2">
-              <div className="grid md:grid-cols-2 gap-5">
-                <FormField
-                  control={invoiceForm.control}
-                  name="stock_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SKU </FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className="w-full justify-between h-12 bg-[#F9F9F9] border border-[#D8D8D866]"
-                            disabled={isLoadingStock || storeStock.length === 0}
-                          >
-                            {field.value ? (
-                              (() => {
-                                const selected = storeStock.find(
-                                  (s) => s.id === field.value,
-                                );
-                                return selected ? (
-                                  <div className="flex items-center gap-3 truncate">
-                                    {selected.product.image && (
-                                      <div className="w-8 h-8 rounded bg-gray-100 flex-shrink-0 overflow-hidden">
-                                        <Image
-                                          src={selected.product.image}
-                                          alt={selected.sku}
-                                          width={32}
-                                          height={32}
-                                          className="w-full h-full object-contain"
-                                        />
-                                      </div>
-                                    )}
-                                    <div className="flex items-start flex-col truncate">
-                                      <span className="font-medium">
-                                        {selected.sku}
-                                      </span>
-                                      <span className="text-xs text-gray-500 truncate">
-                                        {selected.product.name}
-                                      </span>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  "Select product..."
-                                );
-                              })()
-                            ) : isLoadingStock ? (
-                              <span className="text-gray-400">
-                                Loading stock...
-                              </span>
-                            ) : storeStock.length === 0 ? (
-                              <span className="text-gray-400">
-                                No stock available
-                              </span>
-                            ) : (
-                              "Select product / SKU..."
-                            )}
-                            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-
-                        <PopoverContent
-                          className="w-full p-0 max-h-[320px]"
-                          align="start"
-                        >
-                          <Command>
-                            <CommandInput
-                              placeholder="Search by SKU or product name..."
-                              className="h-9"
-                            />
-                            <CommandList>
-                              <CommandEmpty>
-                                {isLoadingStock ? (
-                                  <ClipLoader size={24} color="#0A6DC0" />
-                                ) : (
-                                  "No product found."
-                                )}
-                              </CommandEmpty>
-                              <CommandGroup>
-                                {storeStock.map((stock) => (
-                                  <CommandItem
-                                    key={stock.id}
-                                    value={`${stock.sku} ${stock.product.name}`.toLowerCase()}
-                                    onSelect={() => {
-                                      field.onChange(stock.id);
-                                      document.dispatchEvent(
-                                        new KeyboardEvent("keydown", {
-                                          key: "Escape",
-                                        }),
-                                      );
-                                    }}
-                                    className="cursor-pointer py-3 px-4 hover:bg-gray-50"
-                                  >
-                                    <div className="flex items-center justify-between w-full gap-4">
-                                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        {stock.product.image ? (
-                                          <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
-                                            <Image
-                                              src={stock.product.image}
-                                              alt={stock.sku}
-                                              width={40}
-                                              height={40}
-                                              className="w-full h-full object-contain"
-                                            />
-                                          </div>
-                                        ) : (
-                                          <div className="w-10 h-10 rounded bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 text-xs">
-                                            No img
-                                          </div>
-                                        )}
-
-                                        <div className="flex flex-col min-w-0">
-                                          <span className="font-medium text-sm">
-                                            {stock.sku}
-                                          </span>
-                                          <span className="text-xs text-gray-500 truncate">
-                                            {stock.product.name}
-                                          </span>
-                                          <span className="text-xs text-gray-500 truncate">
-                                            ₦ {stock.selling_price}
-                                          </span>
-                                        </div>
-                                      </div>
-
-                                      <div className="text-right whitespace-nowrap">
-                                        <span className="text-sm font-medium text-[#0A6DC0]">
-                                          {stock.quantity}
-                                        </span>
-                                        <span className="text-xs text-gray-400 ml-1">
-                                          left
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={invoiceForm.control}
-                  name="mode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Sales Mode</FormLabel>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <div className="flex gap-6">
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="PACKS" id="packs" />
-                            <label htmlFor="packs" className="cursor-pointer">
-                              Packs/Crates
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="PIECES" id="pieces" />
-                            <label htmlFor="pieces" className="cursor-pointer">
-                              Pieces/Bottles
-                            </label>
-                          </div>
-                        </div>
-                      </RadioGroup>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={invoiceForm.control}
-                  name="quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Quantity</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g. 1 or 0.5"
-                          {...field}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            // Allow numbers with decimals, but prevent just "0" or "0."
-                            if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                              field.onChange(value);
-                            }
-                          }}
-                          className="bg-[#F9F9F9] h-12 border border-[#D8D8D866]"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={invoiceForm.control}
-                  name="empties_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Empties Type</FormLabel>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <div className="flex flex-wrap gap-6 items-center">
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="CREDIT" id="credit" />
-                            <label htmlFor="credit" className="cursor-pointer">
-                              Credit
-                            </label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="SELL" id="sell" />
-                            <label htmlFor="sell" className="cursor-pointer">
-                              Sell
-                            </label>
-                          </div>
-                        </div>
-                      </RadioGroup>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={invoiceForm.control}
-                  name="discounted_amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Discount per Unit</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <span className="absolute left-3 top-3.5 text-gray-500">
-                            ₦
-                          </span>
-                          <Input
-                            placeholder="e.g. 20"
-                            {...field}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                                field.onChange(value);
-                              }
-                            }}
-                            className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] pl-8"
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="space-y-2">
-                  <Label>Price</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-3.5 text-gray-500">
-                      ₦
-                    </span>
-                    <Input
-                      value={invoiceForm.getValues("price")}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                          invoiceForm.setValue("price", value);
-                        }
-                      }}
-                      readOnly={true}
-                      className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] pl-8 pr-10 cursor-not-allowed"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleOpenPriceEditModal}
-                      className="absolute right-3 top-3 text-[#0A6DC0] hover:text-[#085a9e]"
-                    >
-                      <Edit className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* <FormField
-                  control={invoiceForm.control}
-                  name="store_address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Store Address</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          readOnly
-                          className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] cursor-not-allowed"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                /> */}
-
-                <div className="space-y-2">
-                  <Label>Empties Quantity</Label>
-                  <Input
-                    placeholder="e.g. 3 or 2.5"
-                    value={invoiceForm.getValues("empties_quantity")}
-                    onClick={handleOpenEmptiesModal}
-                    readOnly
-                    className="bg-[#F9F9F9] h-12 border border-[#D8D8D866] cursor-pointer"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Amount Payable</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-3.5 text-gray-500">
-                    ₦
-                  </span>
-                  <Input
-                    type="text"
-                    value={formatCurrency(
-                      parseFloat(
-                        invoiceForm.getValues("payable_amount") || "0",
-                      ),
-                    )}
-                    readOnly
-                    className="bg-[#F9F9F9] h-12 w-full border border-[#D8D8D866] cursor-not-allowed pl-8"
-                  />
-                </div>
-              </div>
-
-              <Button
-                onClick={addItemToInvoice}
-                type="button"
-                className="bg-[#0A6DC0] py-5 md:py-6 hover:bg-[#09599a] mt-3 w-full"
+            {/* Customer selector */}
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <button
+                onClick={() => {
+                  setCustomerMode("walkin");
+                  setSelectedCustomer(null);
+                }}
+                className={`py-2 rounded-xl text-sm font-medium border transition-all ${
+                  customerMode === "walkin"
+                    ? "border-[#0A6DC0] text-[#0A6DC0] bg-[#EEF5FB]"
+                    : "border-[#E4E4E4] text-[#9E9A9A]"
+                }`}
               >
-                Add to Invoice
-              </Button>
-            </form>
-          </Form>
-        </div>
+                Walk-In
+              </button>
+              <button
+                onClick={() => {
+                  setCustomerMode("registered");
+                  setSelectCustomerOpen(true);
+                }}
+                className={`py-2 rounded-xl text-sm font-medium border transition-all ${
+                  customerMode === "registered"
+                    ? "border-[#0A6DC0] text-[#0A6DC0] bg-[#EEF5FB]"
+                    : "border-[#E4E4E4] text-[#9E9A9A]"
+                }`}
+              >
+                Registered
+              </button>
+            </div>
 
-        <Card className="mt-5 md:px-6 pb-6">
-          {invoiceItems.length > 0 && (
-            <div className="mt-8">
-              <h3 className="font-semibold mb-4">
-                Invoice Items ({invoiceItems.length})
-              </h3>
-              <div className="overflow-x-auto mt-6 border-[#E4E4E4] border-2 bg-white rounded-2xl">
-                <table className="w-full my-6">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left px-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                        SKU
-                      </th>
-                      <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                        Qty
-                      </th>
-                      <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                        Mode
-                      </th>
-                      <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                        Discount
-                      </th>
-                      <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                        Payable
-                      </th>
-                      <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {invoiceItems.map((item, i) => (
-                      <tr
-                        key={i}
-                        className="border-[#E4E4E4] border-b hover:bg-gray-50 transition-colors"
-                      >
-                        <td className="lowercase text-left p-4 py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                          {item.sku}
-                        </td>
-                        <td className="py-4">{item.quantity}</td>
-                        <td className="py-4 lowercase">{item.mode}</td>
-                        <td className="py-4">
-                          ₦{formatCurrency(item.discounted_amount)}
-                        </td>
-                        <td className="py-4 font-semibold text-[#0A6DC0]">
-                          ₦{formatCurrency(item.payable_amount)}
-                        </td>
-                        <td className="py-4">
+            {/* Customer details */}
+            {selectedCustomer && (
+              <div className="mb-3 p-3 rounded-xl border border-[#E4E4E4] bg-[#F9F9F9] flex items-center gap-2">
+                <User className="w-6 h-6 " />
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[13px] md:text-[16px] text-[#2F2F2F] truncate">
+                    {selectedCustomer.name}
+                  </p>
+                  <p className="text-[13px] text-[#2F2F2F]">
+                    {selectedCustomer.phone}
+                  </p>
+                  {selectedCustomer.email && (
+                    <p className="text-[13px] text-[#2F2F2F] truncate">
+                      {selectedCustomer.email}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setSelectCustomerOpen(true)}
+                  className="text-[#9E9A9A] hover:text-[#0A6DC0]"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            <div className="border-t border-[#F0F0F0] my-3" />
+
+            {/* Cart items */}
+            {cart.length === 0 ? (
+              <p className="text-center text-sm text-[#9E9A9A] py-6">
+                No items added yet
+              </p>
+            ) : (
+              <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-1">
+                {cart.map((ci, idx) => (
+                  <div
+                    key={idx}
+                    className="space-y-1 bg-white border border-[#D8D8D866] p-3 rounded-lg "
+                  >
+                    <div className="flex items-start justify-between gap-4 mb-5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#2F2F2F] truncate">
+                          {ci.stock.product.name}
+                        </p>
+                        <p className="text-xs text-[#9E9A9A]">
+                          SKU: {ci.stock.sku}
+                        </p>
+                      </div>
+
+                      <div className="">
+                        <div className="flex items-center justify-between shrink-0">
+                          <p className="font-bold text-[#2F2F2F] text-sm">
+                            {fmt(unitPrice(ci.stock, ci.mode))}
+                          </p>
                           <button
-                            onClick={() => {
-                              setInvoiceItems((prev) =>
-                                prev.filter((_, index) => index !== i),
-                              );
-                              toast.success("Item removed from invoice");
-                            }}
-                            className="text-red-600 hover:text-red-800 transition-colors"
+                            onClick={() => removeCartItem(idx)}
+                            className="text-red-500 ml-1"
                           >
-                            <Trash2 className="w-5 h-5" />
+                            <X className="w-4 h-4" />
                           </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </div>
+                        <p className="text-xs text-[#9E9A9A]">
+                          Price per {ci.mode.toLowerCase()}
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="px-4 pb-4 flex justify-end">
-                  <div className="bg-[#0A6DC012] rounded-lg p-4 min-w-[250px]">
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold text-[16px] text-[#2F2F2F]">
-                        Total Payable:
-                      </span>
-                      <span className="font-bold text-[20px] text-[#0A6DC0]">
-                        ₦{formatCurrency(totalPayable)}
+                      <p className="text-[#2F2F2F] text-[13px]">Quantity</p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => updateCartQty(idx, -1)}
+                          className="w-7 h-7 rounded-md border border-[#E4E4E4] flex items-center justify-center"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="text-sm font-semibold w-8 text-center">
+                          {ci.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateCartQty(idx, 1)}
+                          className="w-7 h-7 rounded-md border border-[#E4E4E4] flex items-center justify-center"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {ci.discount > 0 && (
+                      <p className="text-xs text-[#E89500]">
+                        {fmt(ci.discount)} Discount Added
+                      </p>
+                    )}
+                    {ci.empties > 0 && (
+                      <p className="text-xs text-[#0A6DC0]">
+                        {ci.empties} Empties (
+                        {ci.emptiesMode === "CREDIT" ? "On Credit" : "Sold"})
+                      </p>
+                    )}
+                    <div className="border-t border-[#D8D8D866] pt-2"></div>
+                    <div className="flex justify-between text-xs font-medium">
+                      <span className="text-[#9E9A9A] ">Subtotal</span>
+                      <span className="text-[#2F2F2F] font-bold text-[13px] md:text-[16px]">
+                        {fmt(itemSubtotal(ci))}
                       </span>
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
+
+            {/* Totals */}
+            {cart.length > 0 && (
+              <div className="mt-3 space-y-1.5 text-sm">
+                <div className="flex justify-between text-[#9E9A9A]">
+                  <span>Total Items</span>
+                  <span className="font-medium text-[#2F2F2F]">
+                    {totalItems}
+                  </span>
+                </div>
+                <div className="flex justify-between text-[#9E9A9A]">
+                  <span>Total Amount</span>
+                  <span className="font-medium text-[#2F2F2F]">
+                    {fmt(totalAmount)}
+                  </span>
+                </div>
+                {totalDiscount > 0 && (
+                  <div className="flex justify-between text-[#9E9A9A]">
+                    <span>Total Discount</span>
+                    <span className="font-medium text-[#E89500]">
+                      {fmt(totalDiscount)}
+                    </span>
+                  </div>
+                )}
+                {totalEmpties > 0 && (
+                  <div className="flex justify-between text-[#9E9A9A]">
+                    <span>Empties Owed</span>
+                    <span className="font-medium text-[#2F2F2F]">
+                      {totalEmpties}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-[#2F2F2F] pt-2 border-t border-[#F0F0F0]">
+                  <span>Amount Payable</span>
+                  <span>{fmt(totalAmount)}</span>
+                </div>
+              </div>
+            )}
+
+            <Button
+              onClick={handleCreateInvoiceSubmit}
+              disabled={creatingInvoice || cart.length === 0}
+              className="w-full mt-4 bg-[#0A6DC0] hover:bg-[#09599a] text-white rounded-xl h-12 font-semibold text-base"
+            >
+              {creatingInvoice ? "Creating..." : "Select Payment Method"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          CHANGE STORE MODAL
+      ═══════════════════════════════════════════════════════════════════ */}
+      {changeStoreOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-[#F0F0F0]">
+              <p className="font-bold text-[#2F2F2F]">Change Store</p>
+              <button onClick={() => setChangeStoreOpen(false)}>
+                <X className="w-5 h-5 text-[#9E9A9A]" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E9A9A] w-4 h-4" />
+                <Input
+                  placeholder="Search"
+                  value={storeSearch}
+                  onChange={(e) => setStoreSearch(e.target.value)}
+                  className="pl-9 bg-[#F5F6FA] border-transparent"
+                />
+              </div>
+
+              <p className="text-xs text-[#9E9A9A]">
+                Select the store you want to sell from
+              </p>
+
+              <div className="space-y-2 max-h-72 overflow-y-auto">
+                {filteredStores.map((s) => (
+                  <div
+                    key={s.id}
+                    onClick={() => setPendingStore(s)}
+                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                      pendingStore?.id === s.id
+                        ? "border-[#0A6DC0] bg-[#EEF5FB]"
+                        : "border-[#E4E4E4] hover:bg-gray-50"
+                    }`}
+                  >
+                    <Image
+                      src="/store.svg"
+                      width={20}
+                      height={20}
+                      alt="store"
+                    />
+
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-[#2F2F2F] text-sm">
+                        {s.name}
+                      </p>
+                      <p className="text-xs text-[#9E9A9A]">
+                        Inventory value: {s.stock_value?.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-[#9E9A9A]">
+                        Product Count: {s.stock_count}
+                      </p>
+                    </div>
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        pendingStore?.id === s.id
+                          ? "border-[#0A6DC0] bg-[#0A6DC0]"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      {pendingStore?.id === s.id && (
+                        <Check className="w-3 h-3 text-white" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-[#F0F0F0]">
+              <Button
+                onClick={() => {
+                  if (pendingStore) {
+                    setSelectedStore(pendingStore);
+                    setCart([]);
+                  }
+                  setChangeStoreOpen(false);
+                }}
+                disabled={!pendingStore}
+                className="w-full bg-[#0A6DC0] hover:bg-[#09599a] text-white rounded-xl h-11 font-semibold"
+              >
+                Select Store
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          SELECT CUSTOMER MODAL
+      ═══════════════════════════════════════════════════════════════════ */}
+      {selectCustomerOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-[#F0F0F0]">
+              <p className="font-bold text-[#2F2F2F]">Select Customer</p>
+              <button onClick={() => setSelectCustomerOpen(false)}>
+                <X className="w-5 h-5 text-[#9E9A9A]" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E9A9A] w-4 h-4" />
+                <Input
+                  placeholder="Search"
+                  value={customerSearch}
+                  onChange={(e) => setCustomerSearch(e.target.value)}
+                  className="pl-9 bg-[#F5F6FA] border-transparent"
+                />
+              </div>
+
+              <button
+                onClick={() => {
+                  setSelectCustomerOpen(false);
+                  setAddCustomerOpen(true);
+                }}
+                className="text-[#0A6DC0] text-sm font-semibold flex items-center gap-1 hover:underline"
+              >
+                + Add New Customer
+              </button>
+
+              {customersLoading ? (
+                <div className="flex justify-center py-8">
+                  <ThreeDots height="40" width="40" color="#0A6DC0" visible />
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-72 overflow-y-auto">
+                  {filteredCustomers.map((c) => (
+                    <div
+                      key={c.id}
+                      onClick={() => setPendingCustomer(c)}
+                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                        pendingCustomer?.id === c.id
+                          ? "border-[#0A6DC0] bg-[#EEF5FB]"
+                          : "border-[#E4E4E4] hover:bg-gray-50"
+                      }`}
+                    >
+                      <User className="w-4 h-4 " />
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#2F2F2F] truncate">
+                          {c.name}
+                        </p>
+                        <p className="text-xs text-[#9E9A9A]">{c.phone}</p>
+                        {c.email && (
+                          <p className="text-xs text-[#9E9A9A] truncate">
+                            {c.email}
+                          </p>
+                        )}
+                      </div>
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          pendingCustomer?.id === c.id
+                            ? "border-[#0A6DC0] bg-[#0A6DC0]"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {pendingCustomer?.id === c.id && (
+                          <Check className="w-3 h-3 text-white" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-[#F0F0F0]">
+              <Button
+                onClick={() => {
+                  if (pendingCustomer) setSelectedCustomer(pendingCustomer);
+                  setSelectCustomerOpen(false);
+                }}
+                disabled={!pendingCustomer}
+                className="w-full bg-[#0A6DC0] hover:bg-[#09599a] text-white rounded-xl h-11 font-semibold"
+              >
+                Select Customer
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADD NEW CUSTOMER MODAL */}
+      {addCustomerOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-[#F0F0F0] sticky top-0 bg-white z-10">
+              <p className="font-bold text-[#2F2F2F] text-lg">
+                Create New Customer
+              </p>
+              <button onClick={() => setAddCustomerOpen(false)} className="p-1">
+                <X className="w-5 h-5 text-[#9E9A9A]" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* Customer Name */}
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium text-[#2F2F2F]">
+                  Customer Name <span className="text-red-500">*</span>
+                </p>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E9A9A] w-4 h-4" />
+                  <Input
+                    placeholder="Enter customer name"
+                    value={newCustomer.name}
+                    onChange={(e) =>
+                      setNewCustomer({ ...newCustomer, name: e.target.value })
+                    }
+                    className="pl-9 bg-[#F5F6FA] border-transparent h-12"
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium text-[#2F2F2F]">
+                  Email Address
+                </p>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E9A9A] w-4 h-4" />
+                  <Input
+                    type="email"
+                    placeholder="Enter email address"
+                    value={newCustomer.email}
+                    onChange={(e) =>
+                      setNewCustomer({ ...newCustomer, email: e.target.value })
+                    }
+                    className="pl-9 bg-[#F5F6FA] border-transparent h-12"
+                  />
+                </div>
+              </div>
+
+              {/* Phone Number */}
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium text-[#2F2F2F]">
+                  Phone Number <span className="text-red-500">*</span>
+                </p>
+                <Input
+                  placeholder="Enter phone number"
+                  value={newCustomer.phone}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, phone: e.target.value })
+                  }
+                  className="bg-[#F5F6FA] border-transparent h-12"
+                />
+              </div>
+
+              {/* Customer Type */}
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium text-[#2F2F2F]">
+                  Customer Type
+                </p>
+                <select
+                  value={newCustomer.type}
+                  onChange={(e) =>
+                    setNewCustomer({ ...newCustomer, type: e.target.value })
+                  }
+                  className="w-full h-12 rounded-lg bg-[#F5F6FA] border-transparent px-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#0A6DC0]"
+                >
+                  <option value="">Select customer type</option>
+                  <option value="Distributor">Distributor</option>
+                  <option value="Wholesaler">Wholesaler</option>
+                  <option value="Retailer">Retailer</option>
+                </select>
+              </div>
+
+              {/* Address */}
+              {/* Address with Autocomplete */}
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium text-[#2F2F2F]">
+                  Business Address
+                </p>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E9A9A] w-4 h-4 z-10" />
+                  <PlacesAutocompleteInput
+                    placeholder="Enter full business address"
+                    value={newCustomer.address}
+                    onChange={(addressData) => {
+                      if (typeof addressData === "string") {
+                        setNewCustomer({
+                          ...newCustomer,
+                          address: addressData,
+                        });
+                      } else {
+                        setNewCustomer({
+                          ...newCustomer,
+                          address: addressData.name,
+                        });
+                      }
+                    }}
+                    className="pl-9 bg-[#F5F6FA] border-transparent h-12 w-full"
+                  />
                 </div>
               </div>
             </div>
-          )}
 
-          <Button
-            onClick={submitInvoice}
-            disabled={isSubmittingInvoice || invoiceItems.length === 0}
-            className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] mt-8 h-12"
-          >
-            {isSubmittingInvoice ? (
-              <>
-                Creating Invoice...{" "}
-                <ClipLoader size={20} color="white" className="ml-2" />
-              </>
-            ) : (
-              "Create Invoice"
-            )}
-          </Button>
-        </Card>
-
-        <Dialog open={showEmptiesModal} onOpenChange={setShowEmptiesModal}>
-          <DialogContent className="sm:max-w-[425px] bg-white">
-            <DialogHeader>
-              <DialogTitle className="font-clash">
-                How are you selling?
-              </DialogTitle>
-              <DialogDescription>
-                How would you like to sell your empties?
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="empties-quantity">Empties Quantity</Label>
-                <Input
-                  id="empties-quantity"
-                  placeholder="Enter quantity (e.g. 3 or 2.5)"
-                  value={emptiesQuantityInput}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                      setEmptiesQuantityInput(value);
-                    }
-                  }}
-                  className="h-12 bg-[#FAFAFA]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="empties-price">Empties Price</Label>
-                <Input
-                  id="empties-price"
-                  value={
-                    selectedStockItem?.empties_price
-                      ? `₦${selectedStockItem.empties_price}`
-                      : "No empties price available"
-                  }
-                  readOnly
-                  className="bg-[#FAFAFA] cursor-not-allowed h-12"
-                />
-              </div>
-            </div>
-            <DialogFooter className="gap-3">
+            <div className="p-4 border-t border-[#F0F0F0] flex gap-3 sticky bottom-0 bg-white">
               <Button
-                type="button"
+                onClick={() => setAddCustomerOpen(false)}
                 variant="outline"
-                onClick={() => setShowEmptiesModal(false)}
+                className="flex-1 h-11"
               >
                 Cancel
               </Button>
               <Button
-                type="button"
-                onClick={() => {
-                  invoiceForm.setValue(
-                    "empties_quantity",
-                    emptiesQuantityInput,
-                  );
-                  setShowEmptiesModal(false);
-                }}
-                className="bg-[#0A6DC0] hover:bg-[#085a9e]"
+                onClick={handleAddCustomer}
+                disabled={
+                  addingCustomer ||
+                  !newCustomer.name.trim() ||
+                  !newCustomer.phone.trim()
+                }
+                className="flex-1 bg-[#0A6DC0] hover:bg-[#09599a] text-white h-11 font-semibold"
               >
-                Save
+                {addingCustomer ? "Creating..." : "Create Customer"}
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <EditStockPriceModal
-          isOpen={isEditPriceModalOpen}
-          onClose={() => setIsEditPriceModalOpen(false)}
-          stockId={selectedStockItem?.id || ""}
-          currentPrices={currentStockPrices}
-          onSuccess={handlePriceUpdateSuccess}
-        />
-      </div>
-    );
-  }
-
-  return null;
-};
-
-export default Sell;
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
