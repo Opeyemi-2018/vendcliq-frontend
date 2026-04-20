@@ -647,7 +647,7 @@ export default function SellPage() {
         }, 0);
 
         // TOTAL AMOUNT = subTotal - totalDiscountAmount (this is what customer pays)
-const totalAmountPayable = subTotal;
+        const totalAmountPayable = subTotal;
         // Store the additional data for pay page
         const invoicePreviewData = {
           invoiceId,
