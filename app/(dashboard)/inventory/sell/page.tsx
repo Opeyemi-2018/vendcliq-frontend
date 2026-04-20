@@ -607,12 +607,12 @@ export default function SellPage() {
       };
 
       const response = await handleCreateInvoice(payload);
-      // ... rest of the code remains the same
 
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Invoice created successfully!");
         const invoiceId = response.data?.id;
 
+        // Calculate additional data for the pay page
         // Calculate additional data for the pay page
         const totalQuantity = cart.reduce((sum, ci) => {
           if (ci.mode === "PACKS") {
@@ -627,11 +627,10 @@ export default function SellPage() {
           0,
         );
 
-        const subTotal = cart.reduce((sum, ci) => {
-          const basePrice = unitPrice(ci.stock, ci.mode);
-          return sum + basePrice * ci.quantity;
-        }, 0);
+        // SUBTOTAL = sum of all item subtotals (which already have discount applied to products)
+        const subTotal = cart.reduce((sum, ci) => sum + itemSubtotal(ci), 0);
 
+        // Empties Value - only when Empties sales mode is "SELL"
         const emptiesValue = cart.reduce((sum, ci) => {
           if (ci.empties > 0 && ci.emptiesMode === "SELL") {
             return sum + parseFloat(ci.stock.empties_price) * ci.empties;
@@ -639,6 +638,7 @@ export default function SellPage() {
           return sum;
         }, 0);
 
+        // Empties Owed - sum of all Empties sold on credit
         const emptiesOwed = cart.reduce((sum, ci) => {
           if (ci.empties > 0 && ci.emptiesMode === "CREDIT") {
             return sum + ci.empties;
@@ -646,11 +646,13 @@ export default function SellPage() {
           return sum;
         }, 0);
 
+        // TOTAL AMOUNT = subTotal - totalDiscountAmount (this is what customer pays)
+const totalAmountPayable = subTotal;
         // Store the additional data for pay page
         const invoicePreviewData = {
           invoiceId,
           code: response.data?.code || "",
-          total: response.data?.total || 0,
+          total: totalAmountPayable, // Use calculated total, not response.data?.total
           items_count: response.data?.items_count || 0,
           storeAddress: storeAddress?.name || selectedStore.name || "",
           items: cart.map((ci, idx) => ({
@@ -660,7 +662,7 @@ export default function SellPage() {
             quantity: ci.quantity,
             cost: unitPrice(ci.stock, ci.mode),
             discounted_amount: ci.discount,
-            sub_total: itemSubtotal(ci),
+            sub_total: itemSubtotal(ci), // This already has discount applied to product only
             mode: ci.mode,
             sku: ci.stock.sku,
             product_name: ci.stock.product.name,
@@ -672,7 +674,7 @@ export default function SellPage() {
           })),
           totalQuantity,
           totalDiscountAmount,
-          subTotal,
+          subTotal, // This is the subtotal BEFORE discount
           emptiesValue,
           emptiesOwed,
           customerName: selectedCustomer?.name || null,

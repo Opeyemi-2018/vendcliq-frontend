@@ -227,7 +227,7 @@ function PayInvoiceContent() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Left Panel - Payment Methods */}
         <div className="lg:w-[35%] space-y-6">
-          <Card className="p-6 bg-white">
+          <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg">
             <h2 className="font-semibold font-clash text-lg mb-4">
               Mode of Payment
             </h2>
@@ -274,7 +274,7 @@ function PayInvoiceContent() {
                 <p className="text-xs text-gray-500 mt-1">Card payment</p>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Right Panel - Invoice Summary */}
@@ -380,6 +380,7 @@ function PayInvoiceContent() {
               </div>
             </div>
 
+            {/* Totals Section */}
             {/* Totals Section */}
             <div className="space-y-3 text-sm border-t pt-4">
               <div className="flex justify-between">
