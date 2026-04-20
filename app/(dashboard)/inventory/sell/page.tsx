@@ -82,11 +82,13 @@ type SellMode = "PACKS" | "PIECES";
 
 interface CartItem {
   stock: StockItem;
-  quantity: number;
+  quantity: number; // This stores the original quantity (packs OR pieces based on mode)
   mode: SellMode;
   discount: number;
   empties: number;
   emptiesMode: "SELL" | "CREDIT" | null;
+  // Add this to store the packs equivalent for API
+  packsQuantity: number;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -106,13 +108,12 @@ const unitPrice = (item: StockItem, mode: SellMode) =>
 const itemSubtotal = (ci: CartItem) => {
   const base = unitPrice(ci.stock, ci.mode);
   const discounted = Math.max(0, base - ci.discount);
+  // Product total with discount applied using the original quantity
   const productTotal = discounted * ci.quantity;
 
+  // Empties total WITHOUT discount (full price)
   const emptiesTotal =
-    ci.empties > 0
-      ? Math.max(0, parseFloat(ci.stock.empties_price) - ci.discount) *
-        ci.empties
-      : 0;
+    ci.empties > 0 ? parseFloat(ci.stock.empties_price) * ci.empties : 0;
 
   return productTotal + emptiesTotal;
 };
@@ -161,6 +162,10 @@ export default function SellPage() {
   const [tempEmptiesMode, setTempEmptiesMode] = useState<"SELL" | "CREDIT">(
     "SELL",
   );
+  const [itemDisplayModes, setItemDisplayModes] = useState<
+    Record<string, "PACKS" | "PIECES">
+  >({});
+
   const [mobileView, setMobileView] = useState<"items" | "cart">("items");
 
   // Cart / Invoice
@@ -280,6 +285,11 @@ export default function SellPage() {
     setActiveEmptiesMode("SELL");
     setShowDiscountInput(false);
     setShowEmptiesInput(false);
+    // Set the display mode for this item when opened (optional)
+    setItemDisplayModes((prev) => ({
+      ...prev,
+      [item.id]: "PACKS",
+    }));
   };
 
   const activeItem = stock.find((s) => s.id === activeStockId) ?? null;
@@ -292,15 +302,14 @@ export default function SellPage() {
     const disc = parseFloat(activeDiscount) || 0;
     const empties = parseFloat(activeEmpties) || 0;
 
-    // Calculate product total with discount applied per unit
+    // Product total with discount applied per unit
     const discountedProductPrice = Math.max(0, activePrice - disc);
     const productTotal = discountedProductPrice * qty;
 
-    // Calculate empties total with discount applied per unit
+    // Empties total WITHOUT discount (full price)
     const emptiesPrice = parseFloat(activeItem.empties_price) || 0;
-    const discountedEmptiesPrice = Math.max(0, emptiesPrice - disc);
     const emptiesTotal =
-      showEmptiesInput && empties > 0 ? discountedEmptiesPrice * empties : 0;
+      showEmptiesInput && empties > 0 ? emptiesPrice * empties : 0;
 
     return productTotal + emptiesTotal;
   })();
@@ -310,21 +319,91 @@ export default function SellPage() {
     const qty = parseFloat(activeQty);
     if (!qty || qty <= 0) return toast.error("Enter a valid quantity");
 
+    // Validate pieces are in multiples of items_per_pack
+    // Validate pieces are in whole numbers and multiples of items_per_pack
+    // Validate pieces are in whole numbers only (no decimals)
+    if (activeMode === "PIECES") {
+      // First check if it's a whole number
+      if (!Number.isInteger(qty)) {
+        return toast.error(
+          `Pieces quantity cannot be decimal. Please enter a whole number. Example: 1, 2, 3, etc.`,
+        );
+      }
+    }
+
+    // Get available stock
+    const availablePacks = parseFloat(activeItem.quantity);
+    const availablePieces = availablePacks * activeItem.product.items_per_pack;
+
+    // Validate based on mode
+    if (activeMode === "PACKS") {
+      if (qty > availablePacks) {
+        return toast.error(`Only ${availablePacks} packs available in stock`);
+      }
+    } else {
+      // PIECES mode
+      if (qty > availablePieces) {
+        return toast.error(
+          `Only ${availablePieces} pieces available in stock (${availablePacks} packs)`,
+        );
+      }
+    }
+
     const empties = showEmptiesInput ? parseFloat(activeEmpties) || 0 : 0;
     const discount = showDiscountInput ? parseFloat(activeDiscount) || 0 : 0;
 
-    const existing = cart.findIndex(
+    // Check empties availability
+    const availableEmpties = parseFloat(activeItem.empties_qty);
+    if (empties > availableEmpties) {
+      return toast.error(`Only ${availableEmpties} empties available in stock`);
+    }
+
+    // Calculate packs quantity for stock validation
+    let packsQuantity =
+      activeMode === "PACKS" ? qty : qty / activeItem.product.items_per_pack;
+
+    // Check if adding to cart would exceed available stock
+    const existingIndex = cart.findIndex(
       (c) => c.stock.id === activeItem.id && c.mode === activeMode,
     );
 
-    if (existing >= 0) {
+    let newTotalPacks = 0;
+    if (existingIndex >= 0) {
+      const existingItem = cart[existingIndex];
+      newTotalPacks = existingItem.packsQuantity + packsQuantity;
+    } else {
+      newTotalPacks = packsQuantity;
+    }
+
+    if (newTotalPacks > availablePacks) {
+      const availablePiecesMsg =
+        availablePacks * activeItem.product.items_per_pack;
+      return toast.error(
+        `Cannot add more. Only ${availablePacks} packs (${availablePiecesMsg} pieces) available in total`,
+      );
+    }
+
+    // Check if adding empties would exceed available
+    if (existingIndex >= 0) {
+      const existingItem = cart[existingIndex];
+      const newTotalEmpties = existingItem.empties + empties;
+      if (newTotalEmpties > availableEmpties) {
+        return toast.error(
+          `Cannot add more empties. Only ${availableEmpties} empties available in total`,
+        );
+      }
+    }
+
+    if (existingIndex >= 0) {
       const updated = [...cart];
-      updated[existing] = {
-        ...updated[existing],
-        quantity: qty,
+      updated[existingIndex] = {
+        ...updated[existingIndex],
+        quantity: updated[existingIndex].quantity + qty,
+        packsQuantity: updated[existingIndex].packsQuantity + packsQuantity,
         discount,
-        empties,
-        emptiesMode: empties > 0 ? activeEmptiesMode : null,
+        empties: updated[existingIndex].empties + empties,
+        emptiesMode:
+          empties > 0 ? activeEmptiesMode : updated[existingIndex].emptiesMode,
       };
       setCart(updated);
     } else {
@@ -332,15 +411,21 @@ export default function SellPage() {
         ...prev,
         {
           stock: activeItem,
-          quantity: qty,
+          quantity: qty, // Store original quantity
           mode: activeMode,
           discount,
           empties,
           emptiesMode: empties > 0 ? activeEmptiesMode : null,
+          packsQuantity: packsQuantity, // Store packs equivalent for stock validation
         },
       ]);
     }
     setActiveStockId(null);
+    setActiveQty("1");
+    setActiveDiscount("");
+    setActiveEmpties("");
+    setShowDiscountInput(false);
+    setShowEmptiesInput(false);
     toast.success(`${activeItem.product.name} added to cart`);
   };
 
@@ -351,11 +436,71 @@ export default function SellPage() {
 
   const updateCartQty = (idx: number, delta: number) => {
     setCart((prev) =>
-      prev.map((ci, i) =>
-        i === idx
-          ? { ...ci, quantity: Math.max(0.5, ci.quantity + delta) }
-          : ci,
-      ),
+      prev.map((ci, i) => {
+        if (i === idx) {
+          const availablePacks = parseFloat(ci.stock.quantity);
+          const availablePieces =
+            availablePacks * ci.stock.product.items_per_pack;
+
+          let newQuantity = ci.quantity;
+          let newPacksQuantity = ci.packsQuantity;
+
+          if (ci.mode === "PACKS") {
+            // Packs mode - allow decimals, increment by 0.5
+            newQuantity = Math.max(0.5, ci.quantity + delta);
+            newPacksQuantity = newQuantity;
+            if (newPacksQuantity > availablePacks) {
+              toast.error(`Only ${availablePacks} packs available`);
+              return ci;
+            }
+          } else {
+            // PIECES mode - must be whole numbers, increment by items_per_pack (12)
+            const currentPieces = ci.quantity;
+            // Ensure we only add/subtract in multiples of items_per_pack
+            let newPieces;
+            if (delta > 0) {
+              // Adding: round up to next multiple of items_per_pack
+              newPieces =
+                Math.ceil(currentPieces / ci.stock.product.items_per_pack) *
+                ci.stock.product.items_per_pack;
+              if (newPieces === currentPieces) {
+                newPieces = currentPieces + ci.stock.product.items_per_pack;
+              }
+            } else {
+              // Subtracting: round down to previous multiple of items_per_pack
+              newPieces =
+                Math.floor(currentPieces / ci.stock.product.items_per_pack) *
+                ci.stock.product.items_per_pack;
+              if (
+                newPieces === currentPieces &&
+                newPieces > ci.stock.product.items_per_pack
+              ) {
+                newPieces = currentPieces - ci.stock.product.items_per_pack;
+              } else if (newPieces === 0) {
+                newPieces = ci.stock.product.items_per_pack;
+              }
+            }
+
+            // Ensure minimum is items_per_pack (cannot have less than 1 pack worth of pieces)
+            newPieces = Math.max(ci.stock.product.items_per_pack, newPieces);
+
+            if (newPieces > availablePieces) {
+              toast.error(`Only ${availablePieces} pieces available`);
+              return ci;
+            }
+
+            newQuantity = newPieces;
+            newPacksQuantity = newPieces / ci.stock.product.items_per_pack;
+          }
+
+          return {
+            ...ci,
+            quantity: newQuantity,
+            packsQuantity: newPacksQuantity,
+          };
+        }
+        return ci;
+      }),
     );
   };
 
@@ -364,7 +509,7 @@ export default function SellPage() {
   const totalItems = cart.length;
   const totalAmount = cart.reduce((s, ci) => s + itemSubtotal(ci), 0);
   const totalDiscount = cart.reduce(
-    (s, ci) => s + ci.discount * (ci.quantity + ci.empties),
+    (s, ci) => s + ci.discount * ci.quantity, // Remove the + ci.empties part
     0,
   );
   const totalEmpties = cart.reduce((s, ci) => s + ci.empties, 0);
@@ -379,7 +524,10 @@ export default function SellPage() {
         name: newCustomer.name.trim(),
         phone: newCustomer.phone.trim(),
         email: newCustomer.email.trim(),
-type: (newCustomer.type || "Retailer") as "Distributor" | "Wholesaler" | "Retailer",
+        type: (newCustomer.type || "Retailer") as
+          | "Distributor"
+          | "Wholesaler"
+          | "Retailer",
         address: {
           address: newCustomer.address,
           latitude: 0,
@@ -415,6 +563,8 @@ type: (newCustomer.type || "Retailer") as "Distributor" | "Wholesaler" | "Retail
 
   // ── Create invoice ───────────────────────────────────────────────────────
 
+  // ── Create invoice ───────────────────────────────────────────────────────
+
   const handleCreateInvoiceSubmit = async () => {
     if (!selectedStore) return toast.error("Select a store first");
     if (cart.length === 0) return toast.error("Add at least one item");
@@ -427,29 +577,114 @@ type: (newCustomer.type || "Retailer") as "Distributor" | "Wholesaler" | "Retail
         customer_id:
           customerMode === "registered" ? selectedCustomer?.id || null : null,
         store_id: selectedStore.id,
-        items: cart.map((ci) => ({
-          stock_id: ci.stock.id,
-          quantity: ci.quantity,
-          delivery: false,
-          mode: ci.mode,
-          discounted_amount: ci.discount,
-          empties:
-            ci.empties > 0 && ci.emptiesMode !== null
-              ? { type: ci.emptiesMode, quantity: ci.empties }
-              : undefined,
-          attributes: {
-            latitude: storeAddress?.lat || 0,
-            longitude: storeAddress?.lng || 0,
-            address: storeAddress?.name || "",
-          },
-        })),
+        items: cart.map((ci) => {
+          // Send quantity in PACKS (not pieces) - use packsQuantity
+          let quantityToSend;
+          if (ci.mode === "PACKS") {
+            quantityToSend = ci.quantity; // Already in packs
+          } else {
+            // For pieces mode, convert pieces to packs
+            quantityToSend = ci.quantity / ci.stock.product.items_per_pack;
+          }
+
+          return {
+            stock_id: ci.stock.id,
+            quantity: quantityToSend, // Send packs to API
+            delivery: false,
+            mode: ci.mode,
+            discounted_amount: ci.discount,
+            empties:
+              ci.empties > 0 && ci.emptiesMode !== null
+                ? { type: ci.emptiesMode, quantity: ci.empties }
+                : undefined,
+            attributes: {
+              latitude: storeAddress?.lat || 0,
+              longitude: storeAddress?.lng || 0,
+              address: storeAddress?.name || "",
+            },
+          };
+        }),
       };
 
       const response = await handleCreateInvoice(payload);
+      // ... rest of the code remains the same
 
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Invoice created successfully!");
         const invoiceId = response.data?.id;
+
+        // Calculate additional data for the pay page
+        const totalQuantity = cart.reduce((sum, ci) => {
+          if (ci.mode === "PACKS") {
+            return sum + ci.quantity;
+          } else {
+            return sum + ci.quantity / ci.stock.product.items_per_pack;
+          }
+        }, 0);
+
+        const totalDiscountAmount = cart.reduce(
+          (sum, ci) => sum + ci.discount * ci.quantity,
+          0,
+        );
+
+        const subTotal = cart.reduce((sum, ci) => {
+          const basePrice = unitPrice(ci.stock, ci.mode);
+          return sum + basePrice * ci.quantity;
+        }, 0);
+
+        const emptiesValue = cart.reduce((sum, ci) => {
+          if (ci.empties > 0 && ci.emptiesMode === "SELL") {
+            return sum + parseFloat(ci.stock.empties_price) * ci.empties;
+          }
+          return sum;
+        }, 0);
+
+        const emptiesOwed = cart.reduce((sum, ci) => {
+          if (ci.empties > 0 && ci.emptiesMode === "CREDIT") {
+            return sum + ci.empties;
+          }
+          return sum;
+        }, 0);
+
+        // Store the additional data for pay page
+        const invoicePreviewData = {
+          invoiceId,
+          code: response.data?.code || "",
+          total: response.data?.total || 0,
+          items_count: response.data?.items_count || 0,
+          storeAddress: storeAddress?.name || selectedStore.name || "",
+          items: cart.map((ci, idx) => ({
+            id: idx.toString(),
+            stock_id: ci.stock.id,
+            product_id: idx,
+            quantity: ci.quantity,
+            cost: unitPrice(ci.stock, ci.mode),
+            discounted_amount: ci.discount,
+            sub_total: itemSubtotal(ci),
+            mode: ci.mode,
+            sku: ci.stock.sku,
+            product_name: ci.stock.product.name,
+            product_image: ci.stock.product.image || "",
+            items_per_pack: ci.stock.product.items_per_pack,
+            empties: ci.empties,
+            emptiesMode: ci.emptiesMode,
+            empties_price: parseFloat(ci.stock.empties_price),
+          })),
+          totalQuantity,
+          totalDiscountAmount,
+          subTotal,
+          emptiesValue,
+          emptiesOwed,
+          customerName: selectedCustomer?.name || null,
+          storeName: selectedStore.name,
+          storePhone: selectedStore.phone || "",
+        };
+
+        localStorage.setItem(
+          `invoice-preview-${invoiceId}`,
+          JSON.stringify(invoicePreviewData),
+        );
+
         router.push(`/inventory/sell/pay?invoiceId=${invoiceId}`);
       } else {
         toast.error(response.error || "Failed to create invoice");
@@ -664,7 +899,13 @@ type: (newCustomer.type || "Retailer") as "Distributor" | "Wholesaler" | "Retail
                           )}
                         </p>
                         <p className="font-bold text-[12px] md:text-[16px] text-[#2F2F2F] ">
-                          {parseFloat(item.total_qty).toFixed(0)} packs
+                          {(itemDisplayModes[item.id] || "PACKS") === "PACKS"
+                            ? `${parseFloat(item.quantity).toFixed(0)} packs`
+                            : `${(parseFloat(item.quantity) * item.product.items_per_pack).toFixed(0)} pieces`}
+                        </p>
+                        {/* Show items_per_pack value here */}
+                        <p className="text-[10px] text-[#2F2F2F] mt-0.5">
+                          1 pack = {item.product.items_per_pack} pieces
                         </p>
                       </div>
                     </div>
@@ -681,11 +922,19 @@ type: (newCustomer.type || "Retailer") as "Distributor" | "Wholesaler" | "Retail
                         </p>
 
                         {/* Mode toggle */}
+                        {/* Mode toggle */}
                         <div className="grid grid-cols-2 gap-2">
                           {(["PACKS", "PIECES"] as SellMode[]).map((m) => (
                             <button
                               key={m}
-                              onClick={() => setActiveMode(m)}
+                              onClick={() => {
+                                setActiveMode(m);
+                                // Update display mode for this specific item only
+                                setItemDisplayModes((prev) => ({
+                                  ...prev,
+                                  [item.id]: m,
+                                }));
+                              }}
                               className={`py-2 rounded-lg text-sm font-medium border transition-all ${
                                 activeMode === m
                                   ? "bg-[#0A6DC00D] border-[#0A6DC0] text-[#0A6DC0]"
@@ -779,7 +1028,7 @@ type: (newCustomer.type || "Retailer") as "Distributor" | "Wholesaler" | "Retail
                                 <span className="text-sm text-[#0A6DC0]">
                                   {activeEmpties} empties (
                                   {activeEmptiesMode === "CREDIT"
-                                    ? "On Credit"
+                                    ? "Credit"
                                     : "Sold"}
                                   )
                                 </span>
@@ -868,9 +1117,20 @@ type: (newCustomer.type || "Retailer") as "Distributor" | "Wholesaler" | "Retail
                                   <X className="w-5 h-5 text-[#9E9A9A]" />
                                 </button>
                               </div>
-
+                              <div className="space-y-1 bg-[#EEF5FB] p-3 rounded-lg">
+                                <p className="text-xs text-[#0A6DC0] font-medium">
+                                  Available Empties in Store
+                                </p>
+                                <p className="font-bold text-[#2F2F2F] text-lg">
+                                  {parseFloat(
+                                    activeItem?.empties_qty || "0",
+                                  ).toFixed(0)}{" "}
+                                  units
+                                </p>
+                              </div>
                               <div className="p-4 space-y-4">
                                 <div className="space-y-1">
+                                  <p></p>
                                   <p className="text-xs text-[#9E9A9A]">
                                     Empties Qty
                                   </p>
@@ -946,9 +1206,21 @@ type: (newCustomer.type || "Retailer") as "Distributor" | "Wholesaler" | "Retail
                                 </Button>
                                 <Button
                                   onClick={() => {
+                                    const emptiesQty = parseFloat(tempEmpties);
+                                    const availableEmpties = parseFloat(
+                                      activeItem?.empties_qty || "0",
+                                    );
+
+                                    if (emptiesQty > availableEmpties) {
+                                      toast.error(
+                                        `Only ${availableEmpties} empties available in stock`,
+                                      );
+                                      return;
+                                    }
+
                                     setActiveEmpties(tempEmpties);
                                     setActiveEmptiesMode(tempEmptiesMode);
-                                    setShowEmptiesInput(true); // Add this line
+                                    setShowEmptiesInput(true);
                                     setEmptiesModalOpen(false);
                                   }}
                                   className="flex-1 bg-[#0A6DC0] hover:bg-[#09599a] text-white"
@@ -1095,19 +1367,35 @@ type: (newCustomer.type || "Retailer") as "Distributor" | "Wholesaler" | "Retail
                     </div>
 
                     <div className="flex justify-between items-center">
-                      <p className="text-[#2F2F2F] text-[13px]">Quantity</p>
+                      <p className="text-[#2F2F2F] text-[13px]">
+                        Quantity ({ci.mode === "PACKS" ? "packs" : "pieces"})
+                      </p>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => updateCartQty(idx, -1)}
+                          onClick={() =>
+                            updateCartQty(
+                              idx,
+                              ci.mode === "PACKS"
+                                ? -0.5
+                                : -ci.stock.product.items_per_pack,
+                            )
+                          }
                           className="w-7 h-7 rounded-md border border-[#E4E4E4] flex items-center justify-center"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
-                        <span className="text-sm font-semibold w-8 text-center">
+                        <span className="text-sm font-semibold w-12 text-center">
                           {ci.quantity}
                         </span>
                         <button
-                          onClick={() => updateCartQty(idx, 1)}
+                          onClick={() =>
+                            updateCartQty(
+                              idx,
+                              ci.mode === "PACKS"
+                                ? 0.5
+                                : ci.stock.product.items_per_pack,
+                            )
+                          }
                           className="w-7 h-7 rounded-md border border-[#E4E4E4] flex items-center justify-center"
                         >
                           <Plus className="w-3 h-3" />
@@ -1116,7 +1404,7 @@ type: (newCustomer.type || "Retailer") as "Distributor" | "Wholesaler" | "Retail
                     </div>
 
                     {ci.discount > 0 && (
-                      <p className="text-xs text-[#E89500]">
+                      <p className="text-xs">
                         {fmt(ci.discount)} Discount Added
                       </p>
                     )}
@@ -1156,9 +1444,7 @@ type: (newCustomer.type || "Retailer") as "Distributor" | "Wholesaler" | "Retail
                 {totalDiscount > 0 && (
                   <div className="flex justify-between text-[#9E9A9A]">
                     <span>Total Discount</span>
-                    <span className="font-medium text-[#E89500]">
-                      {fmt(totalDiscount)}
-                    </span>
+                    <span className="font-medium ">{fmt(totalDiscount)}</span>
                   </div>
                 )}
                 {totalEmpties > 0 && (

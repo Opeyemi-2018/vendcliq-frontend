@@ -61,6 +61,10 @@ interface InvoicePreviewItem {
   sku: string;
   product_name: string;
   product_image: string;
+  items_per_pack: number;
+  empties: number;
+  emptiesMode: "SELL" | "CREDIT" | null;
+  empties_price: number;
 }
 
 interface InvoicePreview {
@@ -71,7 +75,15 @@ interface InvoicePreview {
   empties_value?: number;
   status: string;
   storeAddress: string;
+  storeName: string;
+  storePhone: string;
   items: InvoicePreviewItem[];
+  totalQuantity: number;
+  totalDiscountAmount: number;
+  subTotal: number;
+  emptiesValue: number;
+  emptiesOwed: number;
+  customerName: string | null;
 }
 
 function PayInvoiceContent() {
@@ -95,11 +107,14 @@ function PayInvoiceContent() {
     terminal_id: "",
   });
 
-  const [transferDetails, setTransferDetails] = useState<TransferDetails | null>(null);
+  const [transferDetails, setTransferDetails] =
+    useState<TransferDetails | null>(null);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(null);
+  const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(
+    null,
+  );
 
   // Initialize payment socket
   const { subscribeToInvoice, isConnected } = usePaymentSocket();
@@ -150,100 +165,53 @@ function PayInvoiceContent() {
     );
   }
 
-  const totalQuantity = invoicePreview.items_count;
-  const grandTotal = invoicePreview.total;
-
-  const handlePayment = async () => {
-    setLoading(true);
-
-    const payload: any = {
-      paymentType,
-      narration: formData.narration.trim(),
-    };
-
-    if (paymentType === "POS") {
-      if (!formData.terminal_id.trim()) {
-        toast.error("Terminal ID is required for POS");
-        setLoading(false);
-        return;
-      }
-      payload.terminal_id = formData.terminal_id.trim();
-    }
-
-    try {
-      const response = await handlePayInvoice(invoiceId, payload);
-
-      if (response.statusCode === 200 || response.statusCode === 201) {
-        if (paymentType === "TRANSFER") {
-          const payLoad = response.data?.paymentPayload;
-          if (payLoad) {
-            setTransferDetails({
-              accountNumber: payLoad.accountNumber,
-              accountName: payLoad.accountName,
-              bankName: payLoad.bankName,
-              expectedAmount: payLoad.expectedAmount,
-              paymentReference: payLoad.paymentReference,
-              expiresAt: payLoad.expiresAt,
-            });
-            setShowTransferModal(true);
-            
-            // ✅ Subscribe to this invoice for real-time payment updates
-            subscribeToInvoice(invoiceId);
-            
-          } else {
-            toast.info(
-              "Transfer initialized! Check payment history for bank details.",
-            );
-            cleanupPreview();
-            setShowSuccessModal(true);
-          }
-        } else {
-          cleanupPreview();
-          setShowSuccessModal(true);
-        }
-      } else {
-        toast.error(response.error || "Payment failed");
-      }
-    } catch (err: any) {
-      toast.error(err?.message || "Error processing payment");
-    } finally {
-      setLoading(false);
+  const formatItemQuantity = (item: InvoicePreviewItem) => {
+    if (item.mode === "PACKS") {
+      return `${item.quantity} packs`;
+    } else {
+      // PIECES mode - show the exact pieces quantity, not converted to packs
+      return `${item.quantity} pieces`;
     }
   };
 
-  const handleTransferSent = () => {
-    cleanupPreview();
-    setShowTransferModal(false);
-    toast.success("Thank you! We'll confirm your payment shortly.");
-    router.push("/inventory/overview");
-  };
-
-  const handleTransferNotSent = () => {
-    setShowTransferModal(false);
-    toast.info("You can come back anytime to complete the payment.");
-  };
-
-  const handleSuccessClose = () => {
-    cleanupPreview();
-    setShowSuccessModal(false);
-    router.push("/inventory/overview");
+  const formatItemPrice = (item: InvoicePreviewItem) => {
+    const unitPrice = item.cost;
+    const discountedPrice = unitPrice - item.discounted_amount;
+    if (item.discounted_amount > 0) {
+      return (
+        <div className="text-right">
+          <span className="line-through text-gray-400 text-xs block">
+            ₦{(unitPrice * item.quantity).toLocaleString()}
+          </span>
+          <span className="font-medium text-[#2F2F2F]">
+            ₦{(discountedPrice * item.quantity).toLocaleString()}
+          </span>
+        </div>
+      );
+    }
+    return (
+      <span className="font-medium text-[#2F2F2F]">
+        ₦{(unitPrice * item.quantity).toLocaleString()}
+      </span>
+    );
   };
 
   return (
-    <div className="">
+    <div className="max-w-7xl mx-auto px-4 py-6">
       <button
         onClick={() => router.back()}
         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
       >
         <ArrowLeft size={20} />
+        <span>Back</span>
       </button>
 
-      <div>
-        <h1 className="font-semibold font-clash text-[20px] md:text-[25px]">
+      <div className="mb-6">
+        <h1 className="font-semibold font-clash text-[20px] md:text-[28px]">
           Mode of Payment
         </h1>
         <p className="font-dm-sans text-[#9E9A9A] font-medium">
-          How would you like to pay for invoice {invoicePreview.code}?
+          How would you like to get paid for this product?
         </p>
         {isConnected && (
           <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
@@ -256,244 +224,328 @@ function PayInvoiceContent() {
         )}
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 md:gap-8 mt-4 md:mt-8">
-        <Card className="md:p-6 lg:w-[35%] bg-white">
-          <h1 className="font-semibold font-clash mb-4">Mode of Payment</h1>
-          <Separator className="mb-6 hidden md:block" />
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left Panel - Payment Methods */}
+        <div className="lg:w-[35%] space-y-6">
+          <Card className="p-6 bg-white">
+            <h2 className="font-semibold font-clash text-lg mb-4">
+              Mode of Payment
+            </h2>
+            <Separator className="mb-6" />
 
-          <div className="lg:hidden flex gap-2 bg-[#ECECF080] p-1 rounded-lg">
-            <button
-              onClick={() => setPaymentType("TRANSFER")}
-              className={`flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all ${
-                paymentType === "TRANSFER"
-                  ? "bg-[#0A6DC0] text-white"
-                  : "text-[#9E9A9A]"
-              }`}
-            >
-              Transfer
-            </button>
-            <button
-              onClick={() => setPaymentType("CASH")}
-              className={`flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all ${
-                paymentType === "CASH"
-                  ? "bg-[#0A6DC0] text-white"
-                  : "text-[#9E9A9A]"
-              }`}
-            >
-              Cash
-            </button>
-            <button
-              onClick={() => setPaymentType("POS")}
-              className={`flex-1 py-3 rounded-lg font-dm-sans font-medium text-[14px] transition-all ${
-                paymentType === "POS"
-                  ? "bg-[#0A6DC0] text-white"
-                  : "text-[#9E9A9A]"
-              }`}
-            >
-              POS
-            </button>
-          </div>
+            <div className="space-y-3">
+              <div
+                onClick={() => setPaymentType("CASH")}
+                className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                  paymentType === "CASH"
+                    ? "border-[#0A6DC0] bg-[#0A6DC008] shadow-sm"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <h3 className="font-medium font-dm-sans">Cash</h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Receive cash payment
+                </p>
+              </div>
 
-          <div className="hidden lg:block space-y-4">
-            <div
-              onClick={() => setPaymentType("TRANSFER")}
-              className={`p-4 rounded-lg border cursor-pointer transition mb-4 ${
-                paymentType === "TRANSFER"
-                  ? "border-[#0A6DC0] bg-[#0A6DC012]"
-                  : "border-gray-200"
-              }`}
-            >
-              <h3 className="font-medium font-dm-sans">Bank Transfer</h3>
+              <div
+                onClick={() => setPaymentType("TRANSFER")}
+                className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                  paymentType === "TRANSFER"
+                    ? "border-[#0A6DC0] bg-[#0A6DC008] shadow-sm"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <h3 className="font-medium font-dm-sans">Transfer</h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  Bank transfer payment
+                </p>
+              </div>
+
+              <div
+                onClick={() => setPaymentType("POS")}
+                className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                  paymentType === "POS"
+                    ? "border-[#0A6DC0] bg-[#0A6DC008] shadow-sm"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <h3 className="font-medium font-dm-sans">POS</h3>
+                <p className="text-xs text-gray-500 mt-1">Card payment</p>
+              </div>
             </div>
+          </Card>
+        </div>
 
-            <div
-              onClick={() => setPaymentType("CASH")}
-              className={`p-4 rounded-lg border cursor-pointer transition mb-4 ${
-                paymentType === "CASH"
-                  ? "border-[#0A6DC0] bg-[#0A6DC012]"
-                  : "border-gray-200"
-              }`}
-            >
-              <h3 className="font-medium font-dm-sans">Cash Payment</h3>
-            </div>
-
-            <div
-              onClick={() => setPaymentType("POS")}
-              className={`p-4 rounded-lg border cursor-pointer transition ${
-                paymentType === "POS"
-                  ? "border-[#0A6DC0] bg-[#0A6DC012]"
-                  : "border-gray-200"
-              }`}
-            >
-              <h3 className="font-medium font-dm-sans">POS</h3>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-3 md:p-6 lg:w-[65%] bg-white">
-          <h1 className="font-semibold font-clash mb-2">Invoice Summary</h1>
-          <Separator className="" />
-          <p className="text-[#9E9A9A] font-medium font-dm-sans">
-            Here is all about the products you want to sell
-          </p>
-
-          <div className="mt-3">
-            <Label className="font-bold font-dm-sans text-[#2F2F2F]">
-              Store Address
-            </Label>
-            <p className="font-regular font-dm-sans">
-              {invoicePreview.storeAddress}
+        {/* Right Panel - Invoice Summary */}
+        <div className="lg:w-[65%]">
+          <Card className="p-6 bg-white">
+            <h2 className="font-semibold font-clash text-lg mb-2">Summary</h2>
+            <p className="text-[#9E9A9A] font-medium font-dm-sans text-sm mb-4">
+              Here is all about the products you want to sell
             </p>
-          </div>
+            <Separator className="mb-4" />
 
-          {invoicePreview.items.length > 0 ? (
-            <div className="space-y-4 mb-6 mt-4">
-              <div>
-                <h1 className="font-dm-sans font-bold text-[13px] mb-2 md:text-[16px]">
-                  Product
-                </h1>
+            {/* Customer Name */}
+            <div className="mb-4">
+              <Label className="font-bold font-dm-sans text-[#2F2F2F]">
+                Customer Name
+              </Label>
+              <p className="font-regular font-dm-sans">
+                {invoicePreview.customerName || "Walk-in Customer"}
+              </p>
+            </div>
+
+            {/* Supplier Info */}
+            <div className="mb-6">
+              <Label className="font-bold font-dm-sans text-[#2F2F2F]">
+                Supplier Info
+              </Label>
+              <div className="mt-1">
+                <p className="font-medium">{invoicePreview.storeName}</p>
+                <p className="text-sm text-gray-600">
+                  {invoicePreview.storeAddress}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {invoicePreview.storePhone}
+                </p>
+              </div>
+            </div>
+
+            {/* Products Table */}
+            <div className="mb-6">
+              <h3 className="font-bold font-dm-sans mb-3">Products</h3>
+              <div className="space-y-3">
                 {invoicePreview.items.map((item, idx) => (
                   <div
                     key={item.id || idx}
-                    className="flex justify-between items-center border-b pb-3 last:border-b-0 last:pb-0"
+                    className="flex justify-between items-start py-2 border-b last:border-b-0"
                   >
-                    <div className="flex items-center gap-1">
-                      {item.product_image ? (
-                        <div className="w-16 h-16 rounded flex-shrink-0 ">
-                          <Image
-                            src={item.product_image}
-                            alt={item.sku}
-                            width={64}
-                            height={64}
-                            className="w-full h-full object-contain"
-                          />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        {item.product_image ? (
+                          <div className="w-12 h-12 rounded border border-gray-200 overflow-hidden flex-shrink-0">
+                            <Image
+                              src={item.product_image}
+                              alt={item.sku}
+                              width={48}
+                              height={48}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 rounded bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 text-xs border border-gray-200">
+                            No img
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium text-[#2F2F2F]">
+                            {item.product_name}
+                          </p>
+                          {/* <p className="text-xs text-gray-500">
+                            SKU: {item.sku}
+                          </p> */}
+                          <p className="text-xs text-gray-500 mt-1">
+                            {formatItemQuantity(item)}
+                          </p>
+                          {item.discounted_amount > 0 && (
+                            <p className="text-xs text-green-600 mt-1">
+                              Discount: ₦
+                              {item.discounted_amount.toLocaleString()}/unit
+                            </p>
+                          )}
+                          {item.empties > 0 && (
+                            <p className="text-xs text-blue-600 mt-1">
+                              Empties: {item.empties} (
+                              {item.emptiesMode === "SELL"
+                                ? "Sold"
+                                : "On Credit"}
+                              )
+                            </p>
+                          )}
                         </div>
-                      ) : (
-                        <div className="w-16 h-16 rounded bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 text-xs border border-gray-200">
-                          No Image
-                        </div>
-                      )}
-
-                      <div className="flex-1 min-w-0 text-[#2F2F2F]">
-                        <p className="font-medium text-[16px] font-dm-sans">
-                          {item.sku}
-                        </p>
-
-                        <p className="font-medium text-[16px] font-dm-sans">
-                          {item.quantity}{" "}
-                          <span className="uppercase">
-                            {item.mode.toLowerCase()}
-                          </span>{" "}
-                          X ₦{item.cost.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-500"></p>
                       </div>
                     </div>
-
-                    <p className="font-medium text-[16px] font-dm-sans">
-                      ₦{(Number(item.cost) * item.quantity).toLocaleString()}
-                    </p>
+                    <div className="text-right">
+                      <p className="font-medium">
+                        ₦{(item.cost * item.quantity).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        @ ₦{item.cost.toLocaleString()}/
+                        {item.mode === "PACKS" ? "pack" : "piece"}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
-          ) : (
-            <p className="text-sm text-gray-500 mb-6">
-              No items in this invoice
-            </p>
-          )}
 
-          <div className="space-y-3 text-sm border-t pt-4 text-[#2F2F2F]">
-            <div className="flex justify-between font-medium">
-              <span className="font-dm-sans font-bold">Total Quantity:</span>
-              <span className="font-regular">{totalQuantity} Qty</span>
+            {/* Totals Section */}
+            <div className="space-y-3 text-sm border-t pt-4">
+              <div className="flex justify-between">
+                <span className="font-dm-sans text-gray-600">
+                  Total Quantity
+                </span>
+                <span className="font-medium">
+                  {invoicePreview.totalQuantity.toFixed(1)}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="font-dm-sans text-gray-600">
+                  Total Discount
+                </span>
+                <span className="font-medium text-green-600">
+                  ₦{invoicePreview.totalDiscountAmount.toLocaleString()}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="font-dm-sans text-gray-600">Sub Total</span>
+                <span className="font-medium">
+                  ₦{invoicePreview.subTotal.toLocaleString()}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="font-dm-sans text-gray-600">
+                  Empties Value
+                </span>
+                <span className="font-medium">
+                  ₦{invoicePreview.emptiesValue.toLocaleString()}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="font-dm-sans text-gray-600">Empties Owed</span>
+                <span className="font-medium">
+                  {invoicePreview.emptiesOwed} units
+                </span>
+              </div>
+
+              <Separator className="my-2" />
+
+              <div className="flex justify-between font-bold text-base">
+                <span className="font-dm-sans">Amount Payable</span>
+                <span className="text-[#0A6DC0]">
+                  ₦{invoicePreview.total.toLocaleString()}
+                </span>
+              </div>
             </div>
 
-            <div className="flex justify-between ">
-              <span className="font-dm-sans font-bold">Total Discount:</span>
-              <span className="font-dm-sans font-bold">
-                {invoicePreview.items.reduce(
-                  (sum, item) => sum + Number(item.discounted_amount || 0),
-                  0,
-                ) > 0
-                  ? `₦${invoicePreview.items
-                      .reduce(
-                        (sum, item) =>
-                          sum + Number(item.discounted_amount || 0),
-                        0,
-                      )
-                      .toLocaleString()}`
-                  : "₦0"}
-              </span>
-            </div>
-
-            <div className="flex justify-between font-medium">
-              <span className="font-dm-sans font-bold">Empty Values:</span>
-              <span className={`font-regular `}>
-                ₦{(invoicePreview.empties_value ?? 0).toLocaleString()}
-              </span>
-            </div>
-
-            <div className="flex justify-between font-bold ">
-              <span className="font-dm-sans font-bold">Total Amount:</span>
-              <span className="font-dm-sans font-bold">
-                ₦{grandTotal.toLocaleString()}
-              </span>
-            </div>
-          </div>
-
-          {paymentType === "POS" && (
-            <div className="mb-2 mt-6">
-              <Label>Terminal ID</Label>
-              <Input
-                placeholder="Enter POS terminal ID"
-                value={formData.terminal_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, terminal_id: e.target.value })
-                }
-                className="mt-2"
-              />
-            </div>
-          )}
-
-          <Button
-            onClick={handlePayment}
-            disabled={loading}
-            className="w-full mt-6 py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#085a9e] disabled:opacity-70"
-          >
-            {loading ? (
-              <>
-                Processing...{" "}
-                <ClipLoader size={20} color="white" className="ml-3" />
-              </>
-            ) : (
-              `Pay with ${
-                paymentType === "TRANSFER"
-                  ? "Transfer"
-                  : paymentType === "CASH"
-                    ? "Cash"
-                    : "POS"
-              }`
+            {/* POS Terminal ID Input */}
+            {paymentType === "POS" && (
+              <div className="mt-6">
+                <Label>Terminal ID</Label>
+                <Input
+                  placeholder="Enter POS terminal ID"
+                  value={formData.terminal_id}
+                  onChange={(e) =>
+                    setFormData({ ...formData, terminal_id: e.target.value })
+                  }
+                  className="mt-2"
+                />
+              </div>
             )}
-          </Button>
-        </Card>
+
+            {/* Payment Button */}
+            <Button
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  const payload: any = {
+                    paymentType,
+                    narration: formData.narration.trim(),
+                  };
+                  if (paymentType === "POS") {
+                    if (!formData.terminal_id.trim()) {
+                      toast.error("Terminal ID is required for POS");
+                      setLoading(false);
+                      return;
+                    }
+                    payload.terminal_id = formData.terminal_id.trim();
+                  }
+
+                  const response = await handlePayInvoice(invoiceId, payload);
+
+                  if (
+                    response.statusCode === 200 ||
+                    response.statusCode === 201
+                  ) {
+                    if (paymentType === "TRANSFER") {
+                      const payLoad = response.data?.paymentPayload;
+                      if (payLoad) {
+                        setTransferDetails({
+                          accountNumber: payLoad.accountNumber,
+                          accountName: payLoad.accountName,
+                          bankName: payLoad.bankName,
+                          expectedAmount: payLoad.expectedAmount,
+                          paymentReference: payLoad.paymentReference,
+                          expiresAt: payLoad.expiresAt,
+                        });
+                        setShowTransferModal(true);
+                        subscribeToInvoice(invoiceId);
+                      } else {
+                        toast.info("Transfer initialized!");
+                        cleanupPreview();
+                        setShowSuccessModal(true);
+                      }
+                    } else {
+                      cleanupPreview();
+                      setShowSuccessModal(true);
+                    }
+                  } else {
+                    toast.error(response.error || "Payment failed");
+                  }
+                } catch (err: any) {
+                  toast.error(err?.message || "Error processing payment");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+              className="w-full mt-6 py-3 bg-[#0A6DC0] hover:bg-[#085a9e] text-white rounded-xl font-semibold"
+            >
+              {loading ? (
+                <>
+                  Processing...{" "}
+                  <ClipLoader size={20} color="white" className="ml-2" />
+                </>
+              ) : (
+                `Pay with ${paymentType === "TRANSFER" ? "Transfer" : paymentType === "CASH" ? "Cash" : "POS"}`
+              )}
+            </Button>
+
+            <p className="text-xs text-center text-gray-500 mt-4">
+              Please make sure to receive the amount above from the customer
+              before giving out product
+            </p>
+          </Card>
+        </div>
       </div>
 
       {/* Transfer Details Modal */}
       <AlertDialog open={showTransferModal} onOpenChange={setShowTransferModal}>
-        <AlertDialogContent className="bg-white">
+        <AlertDialogContent className="bg-white max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-[20px] font-clash">
               Bank Transfer Details
             </AlertDialogTitle>
-            <AlertDialogDescription className="font-dm-sans text-base">
+            <AlertDialogDescription className="font-dm-sans">
               Please transfer the exact amount to the account below
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           {transferDetails && (
             <div className="space-y-3 mt-2">
-              <div className="bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg p-2 flex justify-between items-start">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-gray-600 text-sm">Amount to Pay</p>
+                <p className="font-bold text-2xl text-[#0A6DC0]">
+                  ₦{transferDetails.expectedAmount?.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-3 flex justify-between items-center">
                 <div>
                   <p className="text-gray-600 text-sm">Account Number</p>
                   <p className="font-medium">
@@ -509,7 +561,7 @@ function PayInvoiceContent() {
                       "accountNumber",
                     )
                   }
-                  className="text-[#0A6DC0] hover:text-blue-700 hover:bg-blue-50"
+                  className="text-[#0A6DC0]"
                 >
                   {copiedField === "accountNumber" ? (
                     <Check className="w-4 h-4" />
@@ -519,7 +571,7 @@ function PayInvoiceContent() {
                 </Button>
               </div>
 
-              <div className="bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg p-2 flex justify-between items-start">
+              <div className="bg-gray-50 rounded-lg p-3 flex justify-between items-center">
                 <div>
                   <p className="text-gray-600 text-sm">Account Name</p>
                   <p className="font-medium">
@@ -535,7 +587,7 @@ function PayInvoiceContent() {
                       "accountName",
                     )
                   }
-                  className="text-[#0A6DC0] hover:text-blue-700 hover:bg-blue-50"
+                  className="text-[#0A6DC0]"
                 >
                   {copiedField === "accountName" ? (
                     <Check className="w-4 h-4" />
@@ -545,67 +597,44 @@ function PayInvoiceContent() {
                 </Button>
               </div>
 
-              <div className="bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg p-2">
+              <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-gray-600 text-sm">Bank</p>
                 <p className="font-medium">
                   {transferDetails.bankName || "N/A"}
                 </p>
               </div>
 
-              {transferDetails.expectedAmount && (
-                <div className="bg-[#F7FAFF] border border-[#0A6DC0] rounded-lg p-2 text-center">
-                  <p className="text-gray-600 text-sm">Amount</p>
-                  <p className="font-bold text-[#0A6DC0]">
-                    ₦{transferDetails.expectedAmount.toLocaleString()}
+              {transferDetails.paymentReference && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-gray-600 text-sm">Reference</p>
+                  <p className="font-mono text-xs break-all">
+                    {transferDetails.paymentReference}
                   </p>
                 </div>
               )}
 
               {transferDetails.expiresAt && (
-                <div className="bg-[#FFF4E6] border-[#FFB020] border rounded-lg p-2 text-[#FFB020] text-sm pt-2">
-                  Expires:{" "}
-                  {new Date(transferDetails.expiresAt).toLocaleString()}
-                </div>
-              )}
-
-              {transferDetails.paymentReference && (
-                <div className="bg-[#F9F9F9] border border-[#E0E0E0] rounded-lg p-4 flex justify-between items-start">
-                  <div className="flex-1">
-                    <p className="text-xs text-[#6B7280] mb-1">
-                      Payment Reference
-                    </p>
-                    <p className="text-[10px] font-mono text-[#191D23] break-all">
-                      {transferDetails.paymentReference}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      copyToClipboard(
-                        transferDetails.paymentReference || "",
-                        "paymentReference",
-                      )
-                    }
-                    className="text-[#0A6DC0] hover:text-blue-700 hover:bg-blue-50"
-                  >
-                    {copiedField === "paymentReference" ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </Button>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-yellow-700 text-sm">
+                    Expires:{" "}
+                    {new Date(transferDetails.expiresAt).toLocaleString()}
+                  </p>
                 </div>
               )}
             </div>
           )}
 
           <AlertDialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
-            <AlertDialogCancel onClick={handleTransferNotSent}>
-              I haven&apos;t sent it yet
+            <AlertDialogCancel onClick={() => setShowTransferModal(false)}>
+              Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleTransferSent}
+              onClick={() => {
+                cleanupPreview();
+                setShowTransferModal(false);
+                toast.success("Payment recorded! We'll confirm shortly.");
+                router.push("/inventory/overview");
+              }}
               className="bg-[#0A6DC0] hover:bg-[#085a9e]"
             >
               I have sent the money
@@ -614,6 +643,7 @@ function PayInvoiceContent() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Success Modal */}
       <AlertDialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -628,7 +658,11 @@ function PayInvoiceContent() {
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-6">
             <AlertDialogAction
-              onClick={handleSuccessClose}
+              onClick={() => {
+                cleanupPreview();
+                setShowSuccessModal(false);
+                router.push("/inventory/overview");
+              }}
               className="bg-[#0A6DC0] hover:bg-[#085a9e] w-full"
             >
               Continue Shopping
