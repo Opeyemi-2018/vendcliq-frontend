@@ -18,6 +18,7 @@ import {
   ExternalLink,
   MapPin,
   Mail,
+  Edit,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import {
   handleCreateCustomer,
 } from "@/lib/utils/api/apiHelper";
 import PlacesAutocompleteInput from "@/hooks/googleMap";
+import EditStockPriceModal from "./chunks/EditStockPriceModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -128,7 +130,12 @@ const imgSrc = (src: string | null) => {
 export default function SellPage() {
   const router = useRouter();
 
-  // Store
+  const [editingDiscountIndex, setEditingDiscountIndex] = useState<
+    number | null
+  >(null);
+  const [priceModalOpen, setPriceModalOpen] = useState(false);
+  const [selectedStockForPrice, setSelectedStockForPrice] =
+    useState<StockItem | null>(null);
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [storesLoading, setStoresLoading] = useState(true);
@@ -578,18 +585,18 @@ export default function SellPage() {
           customerMode === "registered" ? selectedCustomer?.id || null : null,
         store_id: selectedStore.id,
         items: cart.map((ci) => {
-          // Send quantity in PACKS (not pieces) - use packsQuantity
+          // Send quantity as-is based on mode
           let quantityToSend;
           if (ci.mode === "PACKS") {
-            quantityToSend = ci.quantity; // Already in packs
+            quantityToSend = ci.quantity; // Send packs (can be decimal like 3.5)
           } else {
-            // For pieces mode, convert pieces to packs
-            quantityToSend = ci.quantity / ci.stock.product.items_per_pack;
+            // PIECES mode - send pieces directly, no conversion
+            quantityToSend = ci.quantity; // Send pieces as whole number
           }
 
           return {
             stock_id: ci.stock.id,
-            quantity: quantityToSend, // Send packs to API
+            quantity: quantityToSend, // Send packs for PACKS mode, pieces for PIECES mode
             delivery: false,
             mode: ci.mode,
             discounted_amount: ci.discount,
@@ -607,6 +614,7 @@ export default function SellPage() {
       };
 
       const response = await handleCreateInvoice(payload);
+      // ... rest of the code remains the same
 
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Invoice created successfully!");
@@ -1048,62 +1056,6 @@ export default function SellPage() {
                           )}
                         </div>
 
-                        {/* Discount Modal */}
-                        {discountModalOpen && (
-                          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                            <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
-                              <div className="flex items-center justify-between p-4 border-b border-[#F0F0F0]">
-                                <p className="font-bold text-[#2F2F2F]">
-                                  Add Discount
-                                </p>
-                                <button
-                                  onClick={() => setDiscountModalOpen(false)}
-                                >
-                                  <X className="w-5 h-5 text-[#9E9A9A]" />
-                                </button>
-                              </div>
-
-                              <div className="p-4 space-y-4">
-                                <div className="space-y-1.5">
-                                  <p className="text-sm font-medium text-[#2F2F2F]">
-                                    Discount
-                                  </p>
-                                  <Input
-                                    type="number"
-                                    placeholder="Enter discount amount"
-                                    value={tempDiscount}
-                                    onChange={(e) =>
-                                      setTempDiscount(e.target.value)
-                                    }
-                                    className="border-[#E4E4E4]"
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="p-4 border-t border-[#F0F0F0] flex gap-2">
-                                <Button
-                                  onClick={() => setDiscountModalOpen(false)}
-                                  variant="outline"
-                                  className="flex-1"
-                                >
-                                  Cancel
-                                </Button>
-                                <Button
-                                  onClick={() => {
-                                    setActiveDiscount(tempDiscount);
-                                    setDiscountModalOpen(false);
-                                    setShowDiscountInput(true); // Add this line
-                                    setDiscountModalOpen(false);
-                                  }}
-                                  className="flex-1 bg-[#0A6DC0] hover:bg-[#09599a] text-white"
-                                >
-                                  Add Discount
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
                         {/* Empties input */}
                         {/* Empties Modal */}
                         {emptiesModalOpen && (
@@ -1114,12 +1066,17 @@ export default function SellPage() {
                                   Selling with Empties?
                                 </p>
                                 <button
-                                  onClick={() => setEmptiesModalOpen(false)}
+                                  onClick={() => {
+                                    setEmptiesModalOpen(false);
+                                    setTempEmpties("");
+                                    setTempEmptiesMode("SELL");
+                                  }}
                                 >
                                   <X className="w-5 h-5 text-[#9E9A9A]" />
                                 </button>
                               </div>
-                              <div className="space-y-1 bg-[#EEF5FB] p-3 rounded-lg">
+
+                              <div className="space-y-1 bg-[#EEF5FB] p-3 rounded-lg mx-4 mt-4">
                                 <p className="text-xs text-[#0A6DC0] font-medium">
                                   Available Empties in Store
                                 </p>
@@ -1130,9 +1087,9 @@ export default function SellPage() {
                                   units
                                 </p>
                               </div>
+
                               <div className="p-4 space-y-4">
                                 <div className="space-y-1">
-                                  <p></p>
                                   <p className="text-xs text-[#9E9A9A]">
                                     Empties Qty
                                   </p>
@@ -1200,7 +1157,11 @@ export default function SellPage() {
 
                               <div className="p-4 border-t border-[#F0F0F0] flex gap-2">
                                 <Button
-                                  onClick={() => setEmptiesModalOpen(false)}
+                                  onClick={() => {
+                                    setEmptiesModalOpen(false);
+                                    setTempEmpties("");
+                                    setTempEmptiesMode("SELL");
+                                  }}
                                   variant="outline"
                                   className="flex-1"
                                 >
@@ -1224,6 +1185,7 @@ export default function SellPage() {
                                     setActiveEmptiesMode(tempEmptiesMode);
                                     setShowEmptiesInput(true);
                                     setEmptiesModalOpen(false);
+                                    setTempEmpties("");
                                   }}
                                   className="flex-1 bg-[#0A6DC0] hover:bg-[#09599a] text-white"
                                 >
@@ -1351,13 +1313,28 @@ export default function SellPage() {
                       </div>
 
                       <div className="">
-                        <div className="flex items-center justify-between shrink-0">
+                        <div className="flex items-center justify-between shrink-0 gap-4">
                           <p className="font-bold text-[#2F2F2F] text-sm">
                             {fmt(unitPrice(ci.stock, ci.mode))}
                           </p>
+                          {/* Edit Button */}
+                          <button
+                            onClick={() => {
+                              setSelectedStockForPrice(ci.stock);
+                              setPriceModalOpen(true);
+                            }}
+                            className="text-[#0A6DC0] hover:text-[#09599a]"
+                            title="Edit Prices"
+                          >
+                            <Edit
+                              size={16}
+                              className="text-[#C7C7CC] hover:text-[#09599a]"
+                            />
+                          </button>
+                          {/* Cancel/Remove Button */}
                           <button
                             onClick={() => removeCartItem(idx)}
-                            className="text-red-500 ml-1"
+                            className="text-red-500 hover:text-red-700"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -1406,9 +1383,28 @@ export default function SellPage() {
                     </div>
 
                     {ci.discount > 0 && (
-                      <p className="text-xs">
-                        {fmt(ci.discount)} Discount Added
-                      </p>
+                      <div className="">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-[#2F2F2F]">
+                            {fmt(ci.discount)}
+                          </p>
+                          <button
+                            onClick={() => {
+                              // Open discount edit modal for this cart item
+                              setEditingDiscountIndex(idx);
+                              setTempDiscount(ci.discount.toString());
+                              setDiscountModalOpen(true);
+                            }}
+                            className="text-[#C7C7CC] hover:text-[#09599a]"
+                            title="Edit Discount"
+                          >
+                            <Edit size={16} />
+                          </button>
+                        </div>
+                        <p className="text-[#9E9A9A] text-[13px]">
+                          Discount Added:{" "}
+                        </p>
+                      </div>
                     )}
                     {ci.empties > 0 && (
                       <p className="text-xs text-[#0A6DC0]">
@@ -1561,6 +1557,76 @@ export default function SellPage() {
                 className="w-full bg-[#0A6DC0] hover:bg-[#09599a] text-white rounded-xl h-11 font-semibold"
               >
                 Select Store
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Discount Modal */}
+      {discountModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-[#F0F0F0]">
+              <p className="font-bold text-[#2F2F2F]">Add Discount</p>
+              <button onClick={() => setDiscountModalOpen(false)}>
+                <X className="w-5 h-5 text-[#9E9A9A]" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium text-[#2F2F2F]">Discount</p>
+                <Input
+                  type="number"
+                  placeholder="Enter discount amount"
+                  value={tempDiscount}
+                  onChange={(e) => setTempDiscount(e.target.value)}
+                  className="border-[#E4E4E4]"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-[#F0F0F0] flex gap-2">
+              <Button
+                onClick={() => {
+                  setDiscountModalOpen(false);
+                  setEditingDiscountIndex(null);
+                  setTempDiscount("");
+                }}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  const discountValue = parseFloat(tempDiscount) || 0;
+
+                  if (editingDiscountIndex !== null) {
+                    // Update existing cart item discount
+                    const updated = [...cart];
+                    updated[editingDiscountIndex] = {
+                      ...updated[editingDiscountIndex],
+                      discount: discountValue,
+                    };
+                    setCart(updated);
+                    setEditingDiscountIndex(null);
+                    toast.success("Discount updated!");
+                  } else if (activeItem) {
+                    // Add new discount to active item
+                    setActiveDiscount(tempDiscount);
+                    setShowDiscountInput(true);
+                  }
+
+                  setDiscountModalOpen(false);
+                  setTempDiscount("");
+                }}
+                className="flex-1 bg-[#0A6DC0] hover:bg-[#09599a] text-white"
+              >
+                {editingDiscountIndex !== null
+                  ? "Update Discount"
+                  : "Add Discount"}
               </Button>
             </div>
           </div>
@@ -1800,6 +1866,29 @@ export default function SellPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Price Modal */}
+      {selectedStockForPrice && (
+        <EditStockPriceModal
+          isOpen={priceModalOpen}
+          onClose={() => {
+            setPriceModalOpen(false);
+            setSelectedStockForPrice(null);
+          }}
+          stockId={selectedStockForPrice.id}
+          currentPrices={{
+            selling_price: selectedStockForPrice.selling_price,
+            selling_price_pieces: selectedStockForPrice.selling_price_pieces,
+            empties_price: selectedStockForPrice.empties_price,
+          }}
+          onSuccess={async () => {
+            // Refresh stock data to get updated prices
+            if (selectedStore) {
+              await fetchStock(selectedStore.id);
+            }
+          }}
+        />
       )}
     </div>
   );

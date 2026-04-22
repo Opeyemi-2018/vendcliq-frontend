@@ -103,16 +103,16 @@ export default function SaleInvoiceDetailPage() {
           <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
             {invoice?.code || "Loading..."}
           </h1>
-          <p className="font-medium font-dm-sans text-[#9E9A9A]">
+          <p className="font-medium text-[13px] md:text-[16px] font-dm-sans text-[#9E9A9A]">
             View all items sold in this invoice
           </p>
         </div>
 
-        <div className="flex items-center gap-10">
+        <div className="flex items-center gap-10 flex-col md:flex-row">
           {invoice?.status?.toLowerCase() === "pending" && (
-            <div className="flex items-center gap-2 text-[#0A2540] hover:text-[#0A6DC0] print:hidden">
+            <div className="flex cursor-pointer items-center gap-2 text-[#0A2540] hover:text-[#0A6DC0] print:hidden">
               <Edit
-                className="cursor-pointer"
+                className=""
                 onClick={() =>
                   router.push(`/inventory/sales/edit/${invoice.id}`)
                 }
@@ -155,7 +155,7 @@ export default function SaleInvoiceDetailPage() {
         ) : (
           <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto text-[#2F2F2F]">
-              <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-full whitespace-nowrap divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left font-medium">Product</th>

@@ -222,7 +222,9 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
                           )}
 
                           <p className="truncate lowercase">
-                            {stock.product.name}
+                            {stock.product.name.length > 20
+                              ? `${stock.product.name.slice(0, 20)}...`
+                              : stock.product.name}
                           </p>
                         </div>
                       </td>
@@ -237,7 +239,7 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
                       <td className="w-1/5 py-4">
                         <button
                           onClick={() => handleViewInMarket(stock.id)}
-                          className="text-[#0A6DC0] hover:text-[#085a9e] font-bold transition-colors"
+                          className="text-[#0A6DC0] whitespace-nowrap hover:text-[#085a9e] font-bold transition-colors"
                         >
                           View In Market
                         </button>
