@@ -646,11 +646,8 @@ export default function EditInvoicePage() {
           customerMode === "registered" ? selectedCustomer?.id || null : null,
         store_id: selectedStore.id,
         items: cart.map((ci) => ({
-          stock_id: ci.stock.id, // This is already the UUID string from the stock object
-          quantity:
-            ci.mode === "PACKS"
-              ? ci.quantity
-              : ci.quantity / ci.stock.product.items_per_pack,
+          stock_id: ci.stock.id, 
+          quantity: ci.quantity,
           delivery: false,
           mode: ci.mode,
           discounted_amount: ci.discount,

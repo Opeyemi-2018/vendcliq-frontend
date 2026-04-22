@@ -246,16 +246,16 @@ export default function Suppliers() {
                         <th className="text-left py-3 pl-4 font-medium font-dm-sans">
                           Name
                         </th>
-                        <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
+                        <th className=" text-left py-3 font-medium font-dm-sans">
                           Address
                         </th>
-                        <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
+                        <th className=" text-left py-3 font-medium font-dm-sans">
                           Email
                         </th>
-                        <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
+                        <th className=" text-left py-3 font-medium font-dm-sans">
                           Phone
                         </th>
-                        <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">
+                        <th className=" text-left py-3 font-medium font-dm-sans">
                           Type
                         </th>
                         <th className="text-left py-3 font-medium font-dm-sans">
@@ -270,20 +270,20 @@ export default function Suppliers() {
                           onClick={() => handleSupplierClick(supplier)}
                           className="hover:bg-gray-50 cursor-pointer transition-colors font-dm-sans"
                         >
-                          <td className="py-4 pl-2 md:pl-4 font-medium whitespace-nowrap">
+                          <td className="py-4 text-[13px] md:text-[16px] pl-2 md:pl-4 font-medium whitespace-nowrap">
                             {supplier.name?.substring(0, 10) ?? "—"}...
                           </td>
-                          <td className="hidden md:table-cell py-4">
+                          <td className="text-[13px] md:text-[16px] py-4">
                             {(supplier.address ?? "").substring(0, 10)}...
                             {supplier.state && `, ${supplier.state}`}
                           </td>
-                          <td className="hidden md:table-cell py-4">
+                          <td className="text-[13px] md:text-[16px] py-4">
                             {supplier.email?.substring(0, 12) ?? "—"}...
                           </td>
-                          <td className="hidden md:table-cell py-4">
+                          <td className="text-[13px] md:text-[16px] py-4">
                             {supplier.phone || "—"}
                           </td>
-                          <td className="hidden md:table-cell py-4">
+                          <td className="text-[13px] md:text-[16px] py-4">
                             {supplier.type || "—"}
                           </td>
                           <td className="py-4">
