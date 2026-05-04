@@ -300,7 +300,11 @@ export default function EditInvoicePage() {
             const store: Store = {
               id: invoiceStore.id,
               name: invoiceStore.name,
-              address: invoiceStore.address || { lat: 0, lng: 0, name: "" },
+              address: {
+                lat: invoiceStore.address?.lat ?? 0,
+                lng: invoiceStore.address?.lng ?? 0,
+                name: invoiceStore.address?.name || "",
+              },
               phone: invoiceStore.phone,
               credit_store: invoiceStore.credit_store || false,
               attributes: invoiceStore.attributes || null,
@@ -366,7 +370,7 @@ export default function EditInvoicePage() {
             id: invoice.customer.id,
             name: invoice.customer.name,
             email: invoice.customer.email || "",
-            phone: invoice.customer.phone,
+            phone: invoice.customer.phone || "",
             type: invoice.customer.type,
           });
         } else {
@@ -646,7 +650,7 @@ export default function EditInvoicePage() {
           customerMode === "registered" ? selectedCustomer?.id || null : null,
         store_id: selectedStore.id,
         items: cart.map((ci) => ({
-          stock_id: ci.stock.id, 
+          stock_id: ci.stock.id,
           quantity: ci.quantity,
           delivery: false,
           mode: ci.mode,
