@@ -446,14 +446,10 @@ export default function SellPage() {
       prev.map((ci, i) => {
         if (i === idx) {
           const availablePacks = parseFloat(ci.stock.quantity);
-          const availablePieces =
-            availablePacks * ci.stock.product.items_per_pack;
-
           let newQuantity = ci.quantity;
           let newPacksQuantity = ci.packsQuantity;
 
           if (ci.mode === "PACKS") {
-            // Packs mode - allow decimals, increment by 0.5
             newQuantity = Math.max(0.5, ci.quantity + delta);
             newPacksQuantity = newQuantity;
             if (newPacksQuantity > availablePacks) {
@@ -461,41 +457,13 @@ export default function SellPage() {
               return ci;
             }
           } else {
-            // PIECES mode - must be whole numbers, increment by items_per_pack (12)
-            const currentPieces = ci.quantity;
-            // Ensure we only add/subtract in multiples of items_per_pack
-            let newPieces;
-            if (delta > 0) {
-              // Adding: round up to next multiple of items_per_pack
-              newPieces =
-                Math.ceil(currentPieces / ci.stock.product.items_per_pack) *
-                ci.stock.product.items_per_pack;
-              if (newPieces === currentPieces) {
-                newPieces = currentPieces + ci.stock.product.items_per_pack;
-              }
-            } else {
-              // Subtracting: round down to previous multiple of items_per_pack
-              newPieces =
-                Math.floor(currentPieces / ci.stock.product.items_per_pack) *
-                ci.stock.product.items_per_pack;
-              if (
-                newPieces === currentPieces &&
-                newPieces > ci.stock.product.items_per_pack
-              ) {
-                newPieces = currentPieces - ci.stock.product.items_per_pack;
-              } else if (newPieces === 0) {
-                newPieces = ci.stock.product.items_per_pack;
-              }
-            }
-
-            // Ensure minimum is items_per_pack (cannot have less than 1 pack worth of pieces)
-            newPieces = Math.max(ci.stock.product.items_per_pack, newPieces);
-
+            const availablePieces =
+              availablePacks * ci.stock.product.items_per_pack;
+            const newPieces = Math.max(1, ci.quantity + delta);
             if (newPieces > availablePieces) {
               toast.error(`Only ${availablePieces} pieces available`);
               return ci;
             }
-
             newQuantity = newPieces;
             newPacksQuantity = newPieces / ci.stock.product.items_per_pack;
           }
@@ -1296,7 +1264,7 @@ export default function SellPage() {
                 No items added yet
               </p>
             ) : (
-              <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-1">
+              <div className="space-y-4  pr-1">
                 {cart.map((ci, idx) => (
                   <div
                     key={idx}
@@ -1352,12 +1320,7 @@ export default function SellPage() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() =>
-                            updateCartQty(
-                              idx,
-                              ci.mode === "PACKS"
-                                ? -0.5
-                                : -ci.stock.product.items_per_pack,
-                            )
+                            updateCartQty(idx, ci.mode === "PACKS" ? -0.5 : -1)
                           }
                           className="w-7 h-7 rounded-md border border-[#E4E4E4] flex items-center justify-center"
                         >
@@ -1368,12 +1331,7 @@ export default function SellPage() {
                         </span>
                         <button
                           onClick={() =>
-                            updateCartQty(
-                              idx,
-                              ci.mode === "PACKS"
-                                ? 0.5
-                                : ci.stock.product.items_per_pack,
-                            )
+                            updateCartQty(idx, ci.mode === "PACKS" ? 0.5 : 1)
                           }
                           className="w-7 h-7 rounded-md border border-[#E4E4E4] flex items-center justify-center"
                         >
