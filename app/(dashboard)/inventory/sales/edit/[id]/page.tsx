@@ -59,6 +59,7 @@ interface StockItem {
   empties_qty: string;
   total_qty: string;
   status: string;
+  sub_total?: number; // ADD THIS
   product: {
     id: string;
     name: string;
@@ -87,6 +88,7 @@ interface CartItem {
   empties: number;
   emptiesMode: "SELL" | "CREDIT" | null;
   packsQuantity: number;
+  serverSubTotal?: number; // ADD THIS
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -257,7 +259,6 @@ export default function EditInvoicePage() {
 
               // Map invoice items to cart items
               const cartItems: CartItem[] = invoice.items.map((item: any) => {
-                // Create a StockItem from the nested stock data
                 const stockItem: StockItem = {
                   id: item.stock.id,
                   sku: item.stock.sku,
@@ -271,6 +272,7 @@ export default function EditInvoicePage() {
                   empties_qty: "0",
                   total_qty: item.stock.qty.toString(),
                   status: "in_stock",
+                  sub_total: item.sub_total, // ADD THIS
                   product: {
                     id: item.product.id,
                     name: item.product.name,
@@ -283,12 +285,13 @@ export default function EditInvoicePage() {
 
                 return {
                   stock: stockItem,
-                  quantity: item.quantity,
+                  quantity: parseFloat(item.quantity),
                   mode: item.mode as SellMode,
                   discount: item.discounted_amount || 0,
                   empties: item.empties?.quantity || 0,
                   emptiesMode: item.empties?.type || null,
-                  packsQuantity: item.quantity,
+                  packsQuantity: parseFloat(item.quantity),
+                  serverSubTotal: item.sub_total, // store for reference only, not used in calc
                 };
               });
 
@@ -1104,7 +1107,7 @@ export default function EditInvoicePage() {
                 No items added yet
               </p>
             ) : (
-              <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-1">
+              <div className="space-y-4 pr-1">
                 {cart.map((ci, idx) => (
                   <div
                     key={idx}
