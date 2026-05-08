@@ -265,14 +265,13 @@ export default function SaleInvoiceDetailPage() {
 
         <div className="flex items-center gap-10 flex-col md:flex-row">
           {invoice?.status?.toLowerCase() === "pending" && (
-            <div className="flex cursor-pointer items-center gap-2 text-[#0A2540] hover:text-[#0A6DC0]">
-              <Edit
-                onClick={() =>
-                  router.push(`/inventory/sales/edit/${invoice.id}`)
-                }
-              />
+            <button
+              onClick={() => router.push(`/inventory/sales/edit/${invoice.id}`)}
+              className="flex cursor-pointer items-center gap-2 text-[#0A2540] hover:text-[#0A6DC0]"
+            >
+              <Edit />
               Edit
-            </div>
+            </button>
           )}
 
           <div
