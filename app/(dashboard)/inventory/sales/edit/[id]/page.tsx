@@ -13,8 +13,6 @@ import {
   User,
   Package,
   ExternalLink,
-  MapPin,
-  Mail,
   ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -211,7 +209,6 @@ export default function EditInvoicePage() {
   }, []);
 
   const fetchInvoice = useCallback(async () => {
-    // Don't run if stores are still loading or empty
     if (storesLoading || stores.length === 0) {
       return;
     }
