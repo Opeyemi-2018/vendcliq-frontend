@@ -774,14 +774,14 @@ export default function SellPage() {
                   <div className="text-[13px] text-[#2F2F2F] flex items-center gap-2">
                     <p>Inventory value: </p>
                     <span className="text-[#9E9A9A]">
-                      {selectedStore.stock_value?.toLocaleString()}{" "}
+                     ₦{selectedStore.stock_value?.toLocaleString()}{" "}
                       &nbsp;·&nbsp;
                     </span>{" "}
                   </div>
                   <div className="text-[13px] text-[#2F2F2F] flex items-center gap-2">
                     <p>Product Count:</p>
                     <span className="text-[#9E9A9A]">
-                      {selectedStore.stock_count}
+                      ₦{selectedStore.stock_count}
                     </span>
                   </div>
                 </div>
