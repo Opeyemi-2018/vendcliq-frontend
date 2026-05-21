@@ -9,8 +9,11 @@ import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { ClipLoader } from "react-spinners";
-import { handlePayInvoice } from "@/lib/utils/api/apiHelper";
-import { ArrowLeft, Check, Copy } from "lucide-react";
+import {
+  handlePayInvoice,
+  handlePayInvoiceCreditOtp,
+} from "@/lib/utils/api/apiHelper";
+import { ArrowLeft, Check, Copy, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
@@ -26,7 +29,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePaymentSocket } from "@/hooks/invoiceSocket";
 
-type PaymentType = "TRANSFER" | "CASH" | "POS";
+type PaymentType = "TRANSFER" | "CASH" | "CREDIT";
 
 interface PayFormData {
   paymentType: PaymentType;
@@ -86,10 +89,38 @@ interface InvoicePreview {
   customerName: string | null;
 }
 
+const PAYMENT_OPTIONS: {
+  type: PaymentType;
+  title: string;
+  description: string;
+}[] = [
+  { type: "CASH", title: "Cash", description: "Receive cash payment" },
+  { type: "TRANSFER", title: "Transfer", description: "Bank transfer payment" },
+  {
+    type: "CREDIT",
+    title: "Sell on Credit",
+    description: "Authorized credit sale, payment due later",
+  },
+];
+
 function PayInvoiceContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [showCreditOtpModal, setShowCreditOtpModal] = useState(false);
+  const [otpValues, setOtpValues] = useState<string[]>([
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  ]);
+  const [otpDueDate, setOtpDueDate] = useState<string>("");
+  const [otpLoading, setOtpLoading] = useState(false);
+
+  // Mobile step: "select" | "details"
+  const [mobileStep, setMobileStep] = useState<"select" | "details">("select");
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -111,12 +142,11 @@ function PayInvoiceContent() {
     useState<TransferDetails | null>(null);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-
   const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(
     null,
   );
+  const [dueDate, setDueDate] = useState<string>("");
 
-  // Initialize payment socket
   const { subscribeToInvoice, isConnected } = usePaymentSocket();
 
   useEffect(() => {
@@ -139,6 +169,129 @@ function PayInvoiceContent() {
   const cleanupPreview = () => {
     if (invoiceId) {
       localStorage.removeItem(`invoice-preview-${invoiceId}`);
+    }
+  };
+
+  const handleSelectPaymentType = (type: PaymentType) => {
+    setPaymentType(type);
+    setMobileStep("details");
+  };
+
+  // AFTER (correct):
+  const handlePayment = async () => {
+    if (paymentType === "CREDIT" && !dueDate) {
+      toast.error("Please select a due date for credit sale");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload: any = {
+        paymentType,
+        narration: formData.narration.trim() || "Credit Sale",
+      };
+
+      if (paymentType === "CREDIT" && dueDate) {
+        payload.due_date = dueDate;
+      }
+
+      const response = await handlePayInvoice(invoiceId!, payload);
+
+      if (response.statusCode === 200 || response.statusCode === 201) {
+        if (paymentType === "TRANSFER") {
+          const payLoad = response.data?.paymentPayload;
+          if (payLoad) {
+            setTransferDetails({
+              accountNumber: payLoad.accountNumber,
+              accountName: payLoad.accountName,
+              bankName: payLoad.bankName,
+              expectedAmount: payLoad.expectedAmount,
+              paymentReference: payLoad.paymentReference,
+              expiresAt: payLoad.expiresAt,
+            });
+            setShowTransferModal(true);
+            subscribeToInvoice(invoiceId!);
+          } else {
+            toast.info("Transfer initialized!");
+            cleanupPreview();
+            setShowSuccessModal(true);
+          }
+        } else {
+          if (
+            paymentType === "CREDIT" &&
+            (response.data as any)?.otp_required
+          ) {
+            toast.info(response.data.message);
+            setOtpDueDate(dueDate);
+            setShowCreditOtpModal(true);
+          } else {
+            cleanupPreview();
+            setShowSuccessModal(true);
+            toast.success(
+              response.data?.message || "Payment recorded successfully!",
+            );
+          }
+        }
+      } else {
+        toast.error(response.error || "Payment failed");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Error processing payment");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return; // digits only
+    const updated = [...otpValues];
+    updated[index] = value.slice(-1); // one char per box
+    setOtpValues(updated);
+    // auto-focus next box
+    if (value && index < 5) {
+      const next = document.getElementById(`otp-box-${index + 1}`);
+      (next as HTMLInputElement)?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (e.key === "Backspace" && !otpValues[index] && index > 0) {
+      const prev = document.getElementById(`otp-box-${index - 1}`);
+      (prev as HTMLInputElement)?.focus();
+    }
+  };
+
+  const handleCreditOtpSubmit = async () => {
+    const otp = otpValues.join("");
+    if (otp.length !== 6) {
+      toast.error("Please enter the full 6-digit OTP");
+      return;
+    }
+    if (!otpDueDate) {
+      toast.error("Please select a due date");
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const response = await handlePayInvoiceCreditOtp(invoiceId!, {
+        otp,
+        due_date: new Date(otpDueDate).toISOString(),
+      });
+      if (response.statusCode === 200 || response.statusCode === 201) {
+        toast.success(response.data?.message || "Credit sale completed!");
+        cleanupPreview();
+        setShowCreditOtpModal(false);
+        router.push("/credit-ledger");
+      } else {
+        toast.error(response.error || "OTP verification failed");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Error verifying OTP");
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -166,52 +319,215 @@ function PayInvoiceContent() {
   }
 
   const formatItemQuantity = (item: InvoicePreviewItem) => {
-    if (item.mode === "PACKS") {
-      return `${item.quantity} packs`;
-    } else {
-      // PIECES mode - show the exact pieces quantity, not converted to packs
-      return `${item.quantity} pieces`;
-    }
+    return item.mode === "PACKS"
+      ? `${item.quantity} packs`
+      : `${item.quantity} pieces`;
   };
 
-  const formatItemPrice = (item: InvoicePreviewItem) => {
-    const unitPrice = item.cost;
-    const discountedPrice = unitPrice - item.discounted_amount;
-    if (item.discounted_amount > 0) {
-      return (
-        <div className="text-right">
-          <span className="line-through text-gray-400 text-xs block">
-            ₦{(unitPrice * item.quantity).toLocaleString()}
-          </span>
-          <span className="font-medium text-[#2F2F2F]">
-            ₦{(discountedPrice * item.quantity).toLocaleString()}
+  // ── Invoice summary panel (shared between mobile details & desktop right) ──
+  const InvoiceSummary = () => (
+    <div className="md:p-6 h-full lg:border border-[#E4E4E4] rounded-lg bg-white">
+      <h2 className="font-semibold font-clash text-lg mb-2">Summary</h2>
+      <p className="text-[#9E9A9A] font-medium font-dm-sans text-sm mb-4">
+        Here is all about the products you want to sell
+      </p>
+      <Separator className="mb-4" />
+
+      <div className="mb-4">
+        <Label className="font-bold font-dm-sans text-[#2F2F2F]">
+          Customer Name
+        </Label>
+        <p className="font-regular font-dm-sans">
+          {invoicePreview.customerName || "Walk-in Customer"}
+        </p>
+      </div>
+
+      <div className="mb-6">
+        <Label className="font-bold font-dm-sans text-[#2F2F2F]">
+          Supplier Info
+        </Label>
+        <div className="mt-1">
+          <p className="font-medium">{invoicePreview.storeName}</p>
+          <p className="text-sm text-gray-600">{invoicePreview.storeAddress}</p>
+          <p className="text-sm text-gray-600">{invoicePreview.storePhone}</p>
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <h3 className="font-bold font-dm-sans mb-3">Products</h3>
+        <div className="space-y-3">
+          {invoicePreview.items.map((item, idx) => (
+            <div
+              key={item.id || idx}
+              className="flex justify-between items-start py-2 border-b last:border-b-0"
+            >
+              <div className="flex-1">
+                <div className="flex items-center gap-3">
+                  {item.product_image ? (
+                    <div className="w-12 h-12 rounded border border-gray-200 overflow-hidden flex-shrink-0">
+                      <Image
+                        src={item.product_image}
+                        alt={item.sku}
+                        width={48}
+                        height={48}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 rounded bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 text-xs border border-gray-200">
+                      No img
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-medium text-[#2F2F2F]">
+                      {item.product_name}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formatItemQuantity(item)}
+                    </p>
+                    {item.discounted_amount > 0 && (
+                      <p className="text-xs text-green-600 mt-1">
+                        Discount: ₦{item.discounted_amount.toLocaleString()}
+                        /unit
+                      </p>
+                    )}
+                    {item.empties > 0 && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        Empties: {item.empties} (
+                        {item.emptiesMode === "SELL" ? "Sold" : "On Credit"})
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-medium">
+                  ₦{(item.cost * item.quantity).toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-500">
+                  @ ₦{item.cost.toLocaleString()}/
+                  {item.mode === "PACKS" ? "pack" : "piece"}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-1 text-sm border-t pt-3">
+        <div className="flex justify-between">
+          <span className="font-dm-sans text-gray-600">Total Quantity</span>
+          <span className="font-medium">
+            {invoicePreview.totalQuantity.toFixed(1)}
           </span>
         </div>
-      );
-    }
-    return (
-      <span className="font-medium text-[#2F2F2F]">
-        ₦{(unitPrice * item.quantity).toLocaleString()}
-      </span>
-    );
-  };
+        <div className="flex justify-between">
+          <span className="font-dm-sans text-gray-600">Total Discount</span>
+          <span className="font-medium text-green-600">
+            ₦{invoicePreview.totalDiscountAmount.toLocaleString()}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-dm-sans text-gray-600">Sub Total</span>
+          <span className="font-medium">
+            ₦{invoicePreview.subTotal.toLocaleString()}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-dm-sans text-gray-600">Empties Value</span>
+          <span className="font-medium">
+            ₦{invoicePreview.emptiesValue.toLocaleString()}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="font-dm-sans text-gray-600">Empties Owed</span>
+          <span className="font-medium">
+            {invoicePreview.emptiesOwed} units
+          </span>
+        </div>
+        <Separator className="my-2" />
+        <div className="flex justify-between font-bold text-base">
+          <span className="font-dm-sans">Amount Payable</span>
+          <span className="text-[#0A6DC0]">
+            ₦{invoicePreview.total.toLocaleString()}
+          </span>
+        </div>
+      </div>
+
+      {/* Credit due date + pay button */}
+      <div className="mt-6">
+        {paymentType === "CREDIT" && (
+          <div className="mb-6">
+            <Label className="font-medium text-[#2F2F2F] mb-2 block">
+              Due Date <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              type="datetime-local"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="bg-white border border-gray-300 focus:border-[#0A6DC0]"
+              min={new Date().toISOString().slice(0, 16)}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              When should this credit be due?
+            </p>
+          </div>
+        )}
+
+        <Button
+          onClick={handlePayment}
+          disabled={loading || (paymentType === "CREDIT" && !dueDate)}
+          className="w-full py-3 bg-[#0A6DC0] hover:bg-[#085a9e] text-white rounded-xl font-semibold"
+        >
+          {loading ? (
+            <>
+              Processing...{" "}
+              <ClipLoader size={20} color="white" className="ml-2" />
+            </>
+          ) : paymentType === "CREDIT" ? (
+            "Request Credit Authorization"
+          ) : paymentType === "TRANSFER" ? (
+            "Pay with Transfer"
+          ) : (
+            "Confirm Cash Payment"
+          )}
+        </Button>
+      </div>
+
+      <p className="text-xs text-center text-gray-500 mt-4">
+        Please make sure to receive the amount above from the customer before
+        giving out product
+      </p>
+    </div>
+  );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className=" py-6">
+      {/* Header */}
       <button
-        onClick={() => router.back()}
+        onClick={() => {
+          if (mobileStep === "details") {
+            setMobileStep("select");
+          } else {
+            router.back();
+          }
+        }}
         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
       >
         <ArrowLeft size={20} />
-        <span>Back</span>
+        <span>
+          {mobileStep === "details" ? "Change Payment Method" : "Back"}
+        </span>
       </button>
 
       <div className="mb-6">
         <h1 className="font-semibold font-clash text-[20px] md:text-[28px]">
-          Mode of Payment
+          {mobileStep === "select" ? "Mode of Payment" : "Order Summary"}
         </h1>
         <p className="font-dm-sans text-[#9E9A9A] font-medium">
-          How would you like to get paid for this product?
+          {mobileStep === "select"
+            ? "How would you like to get paid for this product?"
+            : `Paying via ${PAYMENT_OPTIONS.find((o) => o.type === paymentType)?.title}`}
         </p>
         {isConnected && (
           <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
@@ -224,304 +540,67 @@ function PayInvoiceContent() {
         )}
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left Panel - Payment Methods */}
-        <div className="lg:w-[35%] space-y-6">
-          <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg">
+      {/* ── MOBILE: step-based ── */}
+      <div className="lg:hidden">
+        {mobileStep === "select" && (
+          <div className="space-y-3">
+            {PAYMENT_OPTIONS.map((option) => (
+              <button
+                key={option.type}
+                onClick={() => handleSelectPaymentType(option.type)}
+                className="w-full flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-[#0A6DC0] hover:bg-[#0A6DC008] transition-all text-left"
+              >
+                <div>
+                  <h3 className="font-medium font-dm-sans">{option.title}</h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {option.description}
+                  </p>
+                </div>
+                <ChevronRight
+                  size={20}
+                  className="text-gray-400 flex-shrink-0"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {mobileStep === "details" && <InvoiceSummary />}
+      </div>
+
+      {/* ── DESKTOP: side by side ── */}
+      <div className="hidden lg:flex gap-6">
+        {/* Left: payment selector */}
+        <div className="w-[35%] space-y-6">
+          <div className="p-6 border border-[#E4E4E4] rounded-lg">
             <h2 className="font-semibold font-clash text-lg mb-4">
               Mode of Payment
             </h2>
             <Separator className="mb-6" />
-
             <div className="space-y-3">
-              <div
-                onClick={() => setPaymentType("CASH")}
-                className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                  paymentType === "CASH"
-                    ? "border-[#0A6DC0] bg-[#0A6DC008] shadow-sm"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <h3 className="font-medium font-dm-sans">Cash</h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  Receive cash payment
-                </p>
-              </div>
-
-              <div
-                onClick={() => setPaymentType("TRANSFER")}
-                className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                  paymentType === "TRANSFER"
-                    ? "border-[#0A6DC0] bg-[#0A6DC008] shadow-sm"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <h3 className="font-medium font-dm-sans">Transfer</h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  Bank transfer payment
-                </p>
-              </div>
-
-              <div
-                onClick={() => setPaymentType("POS")}
-                className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                  paymentType === "POS"
-                    ? "border-[#0A6DC0] bg-[#0A6DC008] shadow-sm"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <h3 className="font-medium font-dm-sans">POS</h3>
-                <p className="text-xs text-gray-500 mt-1">Card payment</p>
-              </div>
+              {PAYMENT_OPTIONS.map((option) => (
+                <div
+                  key={option.type}
+                  onClick={() => setPaymentType(option.type)}
+                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                    paymentType === option.type
+                      ? "border-[#0A6DC0] bg-[#0A6DC008] shadow-sm"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <h3 className="font-medium font-dm-sans">{option.title}</h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {option.description}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Right Panel - Invoice Summary */}
-        <div className="lg:w-[65%]">
-          <Card className="p-6 bg-white">
-            <h2 className="font-semibold font-clash text-lg mb-2">Summary</h2>
-            <p className="text-[#9E9A9A] font-medium font-dm-sans text-sm mb-4">
-              Here is all about the products you want to sell
-            </p>
-            <Separator className="mb-4" />
-
-            {/* Customer Name */}
-            <div className="mb-4">
-              <Label className="font-bold font-dm-sans text-[#2F2F2F]">
-                Customer Name
-              </Label>
-              <p className="font-regular font-dm-sans">
-                {invoicePreview.customerName || "Walk-in Customer"}
-              </p>
-            </div>
-
-            {/* Supplier Info */}
-            <div className="mb-6">
-              <Label className="font-bold font-dm-sans text-[#2F2F2F]">
-                Supplier Info
-              </Label>
-              <div className="mt-1">
-                <p className="font-medium">{invoicePreview.storeName}</p>
-                <p className="text-sm text-gray-600">
-                  {invoicePreview.storeAddress}
-                </p>
-                <p className="text-sm text-gray-600">
-                  {invoicePreview.storePhone}
-                </p>
-              </div>
-            </div>
-
-            {/* Products Table */}
-            <div className="mb-6">
-              <h3 className="font-bold font-dm-sans mb-3">Products</h3>
-              <div className="space-y-3">
-                {invoicePreview.items.map((item, idx) => (
-                  <div
-                    key={item.id || idx}
-                    className="flex justify-between items-start py-2 border-b last:border-b-0"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        {item.product_image ? (
-                          <div className="w-12 h-12 rounded border border-gray-200 overflow-hidden flex-shrink-0">
-                            <Image
-                              src={item.product_image}
-                              alt={item.sku}
-                              width={48}
-                              height={48}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-12 h-12 rounded bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 text-xs border border-gray-200">
-                            No img
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-[#2F2F2F]">
-                            {item.product_name}
-                          </p>
-                          {/* <p className="text-xs text-gray-500">
-                            SKU: {item.sku}
-                          </p> */}
-                          <p className="text-xs text-gray-500 mt-1">
-                            {formatItemQuantity(item)}
-                          </p>
-                          {item.discounted_amount > 0 && (
-                            <p className="text-xs text-green-600 mt-1">
-                              Discount: ₦
-                              {item.discounted_amount.toLocaleString()}/unit
-                            </p>
-                          )}
-                          {item.empties > 0 && (
-                            <p className="text-xs text-blue-600 mt-1">
-                              Empties: {item.empties} (
-                              {item.emptiesMode === "SELL"
-                                ? "Sold"
-                                : "On Credit"}
-                              )
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">
-                        ₦{(item.cost * item.quantity).toLocaleString()}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        @ ₦{item.cost.toLocaleString()}/
-                        {item.mode === "PACKS" ? "pack" : "piece"}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Totals Section */}
-            {/* Totals Section */}
-            <div className="space-y-3 text-sm border-t pt-4">
-              <div className="flex justify-between">
-                <span className="font-dm-sans text-gray-600">
-                  Total Quantity
-                </span>
-                <span className="font-medium">
-                  {invoicePreview.totalQuantity.toFixed(1)}
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="font-dm-sans text-gray-600">
-                  Total Discount
-                </span>
-                <span className="font-medium text-green-600">
-                  ₦{invoicePreview.totalDiscountAmount.toLocaleString()}
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="font-dm-sans text-gray-600">Sub Total</span>
-                <span className="font-medium">
-                  ₦{invoicePreview.subTotal.toLocaleString()}
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="font-dm-sans text-gray-600">
-                  Empties Value
-                </span>
-                <span className="font-medium">
-                  ₦{invoicePreview.emptiesValue.toLocaleString()}
-                </span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="font-dm-sans text-gray-600">Empties Owed</span>
-                <span className="font-medium">
-                  {invoicePreview.emptiesOwed} units
-                </span>
-              </div>
-
-              <Separator className="my-2" />
-
-              <div className="flex justify-between font-bold text-base">
-                <span className="font-dm-sans">Amount Payable</span>
-                <span className="text-[#0A6DC0]">
-                  ₦{invoicePreview.total.toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-            {/* POS Terminal ID Input */}
-            {paymentType === "POS" && (
-              <div className="mt-6">
-                <Label>Terminal ID</Label>
-                <Input
-                  placeholder="Enter POS terminal ID"
-                  value={formData.terminal_id}
-                  onChange={(e) =>
-                    setFormData({ ...formData, terminal_id: e.target.value })
-                  }
-                  className="mt-2"
-                />
-              </div>
-            )}
-
-            {/* Payment Button */}
-            <Button
-              onClick={async () => {
-                setLoading(true);
-                try {
-                  const payload: any = {
-                    paymentType,
-                    narration: formData.narration.trim(),
-                  };
-                  if (paymentType === "POS") {
-                    if (!formData.terminal_id.trim()) {
-                      toast.error("Terminal ID is required for POS");
-                      setLoading(false);
-                      return;
-                    }
-                    payload.terminal_id = formData.terminal_id.trim();
-                  }
-
-                  const response = await handlePayInvoice(invoiceId, payload);
-
-                  if (
-                    response.statusCode === 200 ||
-                    response.statusCode === 201
-                  ) {
-                    if (paymentType === "TRANSFER") {
-                      const payLoad = response.data?.paymentPayload;
-                      if (payLoad) {
-                        setTransferDetails({
-                          accountNumber: payLoad.accountNumber,
-                          accountName: payLoad.accountName,
-                          bankName: payLoad.bankName,
-                          expectedAmount: payLoad.expectedAmount,
-                          paymentReference: payLoad.paymentReference,
-                          expiresAt: payLoad.expiresAt,
-                        });
-                        setShowTransferModal(true);
-                        subscribeToInvoice(invoiceId);
-                      } else {
-                        toast.info("Transfer initialized!");
-                        cleanupPreview();
-                        setShowSuccessModal(true);
-                      }
-                    } else {
-                      cleanupPreview();
-                      setShowSuccessModal(true);
-                    }
-                  } else {
-                    toast.error(response.error || "Payment failed");
-                  }
-                } catch (err: any) {
-                  toast.error(err?.message || "Error processing payment");
-                } finally {
-                  setLoading(false);
-                }
-              }}
-              disabled={loading}
-              className="w-full mt-6 py-3 bg-[#0A6DC0] hover:bg-[#085a9e] text-white rounded-xl font-semibold"
-            >
-              {loading ? (
-                <>
-                  Processing...{" "}
-                  <ClipLoader size={20} color="white" className="ml-2" />
-                </>
-              ) : (
-                `Pay with ${paymentType === "TRANSFER" ? "Transfer" : paymentType === "CASH" ? "Cash" : "POS"}`
-              )}
-            </Button>
-
-            <p className="text-xs text-center text-gray-500 mt-4">
-              Please make sure to receive the amount above from the customer
-              before giving out product
-            </p>
-          </Card>
+        {/* Right: invoice summary */}
+        <div className="w-[65%]">
+          <InvoiceSummary />
         </div>
       </div>
 
@@ -546,57 +625,36 @@ function PayInvoiceContent() {
                 </p>
               </div>
 
-              <div className="bg-gray-50 rounded-lg p-3 flex justify-between items-center">
-                <div>
-                  <p className="text-gray-600 text-sm">Account Number</p>
-                  <p className="font-medium">
-                    {transferDetails.accountNumber || "N/A"}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    copyToClipboard(
-                      transferDetails.accountNumber || "",
-                      "accountNumber",
-                    )
-                  }
-                  className="text-[#0A6DC0]"
+              {[
+                { label: "Account Number", key: "accountNumber" as const },
+                { label: "Account Name", key: "accountName" as const },
+              ].map(({ label, key }) => (
+                <div
+                  key={key}
+                  className="bg-gray-50 rounded-lg p-3 flex justify-between items-center"
                 >
-                  {copiedField === "accountNumber" ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
-
-              <div className="bg-gray-50 rounded-lg p-3 flex justify-between items-center">
-                <div>
-                  <p className="text-gray-600 text-sm">Account Name</p>
-                  <p className="font-medium">
-                    {transferDetails.accountName || "N/A"}
-                  </p>
+                  <div>
+                    <p className="text-gray-600 text-sm">{label}</p>
+                    <p className="font-medium">
+                      {transferDetails[key] || "N/A"}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      copyToClipboard(transferDetails[key] || "", key)
+                    }
+                    className="text-[#0A6DC0]"
+                  >
+                    {copiedField === key ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    copyToClipboard(
-                      transferDetails.accountName || "",
-                      "accountName",
-                    )
-                  }
-                  className="text-[#0A6DC0]"
-                >
-                  {copiedField === "accountName" ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </Button>
-              </div>
+              ))}
 
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-gray-600 text-sm">Bank</p>
@@ -662,12 +720,99 @@ function PayInvoiceContent() {
               onClick={() => {
                 cleanupPreview();
                 setShowSuccessModal(false);
-                router.push("/inventory/overview");
+                router.push("/inventory/sell");
               }}
               className="bg-[#0A6DC0] hover:bg-[#085a9e] w-full"
             >
               Continue Shopping
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Credit OTP Modal */}
+      <AlertDialog
+        open={showCreditOtpModal}
+        onOpenChange={setShowCreditOtpModal}
+      >
+        <AlertDialogContent className="bg-white max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[20px] font-clash">
+              Credit Sale Authorization
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-dm-sans">
+              Enter the 6-digit OTP sent to the store authorizer and set a due
+              date.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-5 mt-2">
+            {/* OTP boxes */}
+            <div>
+              <Label className="font-medium text-[#2F2F2F] mb-3 block">
+                OTP Code
+              </Label>
+              <div className="flex gap-2 justify-between">
+                {otpValues.map((val, i) => (
+                  <input
+                    key={i}
+                    id={`otp-box-${i}`}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={val}
+                    onChange={(e) => handleOtpChange(i, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                    className="w-11 h-12 text-center text-lg font-bold border border-gray-300 rounded-lg focus:border-[#0A6DC0] focus:outline-none focus:ring-2 focus:ring-[#0A6DC020]"
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Due date */}
+            <div>
+              <Label className="font-medium text-[#2F2F2F] mb-2 block">
+                Due Date <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                type="datetime-local"
+                value={otpDueDate}
+                onChange={(e) => setOtpDueDate(e.target.value)}
+                className="bg-white border border-gray-300 focus:border-[#0A6DC0]"
+                min={new Date().toISOString().slice(0, 16)}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                When should this credit be due?
+              </p>
+            </div>
+          </div>
+
+          <AlertDialogFooter className="flex flex-col sm:flex-row gap-3 mt-6">
+            <AlertDialogCancel
+              onClick={() => {
+                setShowCreditOtpModal(false);
+                setOtpValues(["", "", "", "", "", ""]);
+                setOtpDueDate("");
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              onClick={handleCreditOtpSubmit}
+              disabled={
+                otpLoading || otpValues.join("").length !== 6 || !otpDueDate
+              }
+              className="bg-[#0A6DC0] hover:bg-[#085a9e] text-white"
+            >
+              {otpLoading ? (
+                <>
+                  Verifying...{" "}
+                  <ClipLoader size={16} color="white" className="ml-2" />
+                </>
+              ) : (
+                "Confirm Credit Sale"
+              )}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

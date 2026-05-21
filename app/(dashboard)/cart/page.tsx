@@ -203,9 +203,7 @@ const Cart = () => {
 
         router.push("/cart/pay");
       } else {
-        const errorMessage =
-          response?.message ||
-          response?.error 
+        const errorMessage = response?.message || response?.error;
         // setError(errorMessage);
         toast.error(errorMessage);
       }
@@ -247,7 +245,7 @@ const Cart = () => {
         </div>
       ) : (
         <>
-          <div className="space-y-4 mb-8">
+          <div className="space-y-4  mb-8">
             {cartItems.map((item) => (
               <Card
                 key={item.id}
@@ -313,21 +311,27 @@ const Cart = () => {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 min-h-[40px]">
                       <span className="text-[10px] uppercase font-bold text-gray-400">
                         Delivery ({item.delivery ? "Yes" : "No"})
                       </span>
-                      {updatingDeliveryId === item.id ? (
-                        <ClipLoader size={16} color="#0A6DC0" />
-                      ) : (
+
+                      <div className="flex items-center gap-2 h-6">
                         <Switch
                           checked={item.delivery}
+                          disabled={updatingDeliveryId === item.id}
                           onCheckedChange={() =>
                             handleToggleDelivery(item.id, item.delivery)
                           }
                           className="data-[state=checked]:bg-[#0A6DC0]"
                         />
-                      )}
+
+                        <div className="w-4 h-4 flex items-center justify-center">
+                          {updatingDeliveryId === item.id && (
+                            <ClipLoader size={14} color="#0A6DC0" />
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Delete with Dialog */}

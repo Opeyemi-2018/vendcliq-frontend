@@ -154,6 +154,9 @@ import {
   GET_SUPPLIER_STORES,
   GET_STORE_STOCKS,
   SUCCESSFUL_HANDOVER,
+  PAY_CART_CREDIT_OTP,
+  RECORD_CREDIT_PAYMENT,
+  GET_CREDIT_LEDGER,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -245,6 +248,7 @@ import {
   SaleInvoice,
   SupplierSalesResponse,
 } from "@/types/sales";
+import { CreditLedgerResponse, CreditOtpPayload, CreditOtpResponse, RecordCreditPaymentPayload, RecordCreditPaymentResponse } from "@/types/creditLedger";
 
 interface UserProfile {
   data: {
@@ -766,6 +770,16 @@ export const handlePayInvoice = async (
   );
 };
 
+export const handlePayInvoiceCreditOtp = async (
+  invoiceId: string,
+  payload: CreditOtpPayload,
+): Promise<CreditOtpResponse> => {
+  return await putter<CreditOtpResponse, CreditOtpPayload>(
+    PAY_CART_CREDIT_OTP(invoiceId),
+    payload,
+  );
+};
+
 export const handleCreateExpense = async (
   payload: CreateExpensePayload,
 ): Promise<CreateExpenseResponse> => {
@@ -1005,4 +1019,19 @@ export const handleGetSupplierStores = async (userId: number): Promise<any> => {
 
 export const handleGetStoreStocks = async (storeId: string): Promise<any> => {
   return await fetcher<any>(GET_STORE_STOCKS(storeId));
+};
+
+
+export const getCreditLedger = async (): Promise<CreditLedgerResponse> => {
+  return await fetcher<CreditLedgerResponse>(GET_CREDIT_LEDGER());
+};
+
+export const recordCreditPayment = async (
+  uuid: string,
+  payload: RecordCreditPaymentPayload,
+): Promise<RecordCreditPaymentResponse> => {
+  return await poster<RecordCreditPaymentResponse, RecordCreditPaymentPayload>(
+    RECORD_CREDIT_PAYMENT(uuid),
+    payload,
+  );
 };

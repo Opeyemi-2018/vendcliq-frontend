@@ -90,6 +90,9 @@ const RETURN_CUSTOMER_EMPTIES = (customerId: string, emptiesId: string) =>
 const CREATE_CART = "inventory/carts";
 const CHECKOUT_CART = "inventory/carts/checkout";
 const PAY_CART = (invoiceId: string) => `inventory/invoices/${invoiceId}/pay`;
+ const PAY_CART_CREDIT_OTP = (invoiceId: string) => `inventory/invoices/${invoiceId}/verify-credit-otp`;
+ const GET_CREDIT_LEDGER = () => `inventory/credit-ledger`;
+ const RECORD_CREDIT_PAYMENT = (uuid: string) => `inventory/credit-ledger/${uuid}/payments`;
 const ASSIGN_ATTENDANT_PERMISSIONS = "inventory/attendant-permissions";
 const UPDATE_ATTENDANT_PERMISSIONS = (attendantId: string) =>
   `inventory/attendant-permissions/attendant/${attendantId}`;
@@ -201,6 +204,9 @@ export {
   GET_STORE_ITEMS_SALES,
   CREATE_OFFER,
   UPDATE_STOCK_PRICES,
+  PAY_CART_CREDIT_OTP,
+  GET_CREDIT_LEDGER,
+  RECORD_CREDIT_PAYMENT,
 
   // v1 endpoint
   // GET_PROFILE,
