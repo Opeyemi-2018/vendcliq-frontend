@@ -316,7 +316,7 @@ export default function CreditLedger() {
   };
 
   return (
-    <div className="py-6 px-0">
+    <div className=" px-0">
       {/* Page title */}
       <div className="mb-6">
         <h1 className="font-clash font-semibold text-[28px] text-[#1A1A1A]">
