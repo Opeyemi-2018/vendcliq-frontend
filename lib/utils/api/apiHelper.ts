@@ -157,6 +157,8 @@ import {
   PAY_CART_CREDIT_OTP,
   RECORD_CREDIT_PAYMENT,
   GET_CREDIT_LEDGER,
+  GET_CREDIT_LEDGER_SUMMARY,
+  GET_INVOICE_BY_ID,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -248,7 +250,7 @@ import {
   SaleInvoice,
   SupplierSalesResponse,
 } from "@/types/sales";
-import { CreditLedgerResponse, CreditOtpPayload, CreditOtpResponse, RecordCreditPaymentPayload, RecordCreditPaymentResponse } from "@/types/creditLedger";
+import { CreditLedgerResponse, CreditLedgerSummaryResponse, CreditOtpPayload, CreditOtpResponse, RecordCreditPaymentPayload, RecordCreditPaymentResponse } from "@/types/creditLedger";
 
 interface UserProfile {
   data: {
@@ -1034,4 +1036,12 @@ export const recordCreditPayment = async (
     RECORD_CREDIT_PAYMENT(uuid),
     payload,
   );
+};
+
+export const getCreditLedgerSummary = async (): Promise<CreditLedgerSummaryResponse> => {
+  return await fetcher<CreditLedgerSummaryResponse>(GET_CREDIT_LEDGER_SUMMARY());
+};
+
+export const getInvoiceById = async (id: string) => {
+  return await fetcher<any>(GET_INVOICE_BY_ID(id));
 };

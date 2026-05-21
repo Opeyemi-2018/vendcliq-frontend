@@ -42,3 +42,18 @@ export interface RecordCreditPaymentResponse {
     };
   };
 }
+
+export interface CreditLedgerSummaryResponse {
+  statusCode: number;
+  error: string | null;
+  data: {
+    total_outstanding: number;
+    active_credits: number;
+    overdue: number;
+    overdue_customers: number;
+    due_this_week: number;
+    due_this_week_reminders: number;
+    recovered_this_month: number;
+    recovered_this_month_count: number;
+  };
+}
