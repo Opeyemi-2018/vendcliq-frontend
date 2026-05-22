@@ -17,14 +17,33 @@ export interface RecordCreditPaymentPayload {
   paymentType: "CASH" | "TRANSFER";
   narration?: string;
 }
+export interface LedgerItem {
+  uuid: string;
+  invoice: { uuid: string; code: string; total: number };
+  customer: { uuid: string; name: string; email: string; phone: string };
+  store: { uuid: string; name: string };
+  total_amount: number;
+  amount_paid: number;
+  outstanding: number;
+  due_date: string;
+  status: string;
+  payment_history: any[];
+  created_at: string;
+  updated_at: string;
+}
 
 export interface CreditLedgerResponse {
   statusCode: number;
   error: string | null;
-  data: any[];
-  pagination: any;
+  data: LedgerItem[];
+  pagination: {
+    totalPages: number;
+    currentPage: number;
+    totalCount: number;
+    limit: number;
+    nextPage: number | null;
+  };
 }
-
 export interface RecordCreditPaymentResponse {
   statusCode: number;
   error: string | null;

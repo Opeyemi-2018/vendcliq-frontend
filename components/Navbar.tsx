@@ -63,7 +63,7 @@ const Navbar = () => {
   `}
     >
       {" "}
-      <SidebarTrigger style={{ background: "#0A2540", color: "white" }} />
+      <SidebarTrigger style={{ background: "#0A2540", color: "white" }} className="md:-ml-8" />
       <div style={{ gap: "30px" }} className="flex items-center">
         <div
           style={{ gap: "30px" }}

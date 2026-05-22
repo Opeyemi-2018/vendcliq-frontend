@@ -6,7 +6,8 @@ import {
   Percent,
   LogOut,
   ChevronDown,
-  Building2 , Store
+  Building2,
+  Store,
 } from "lucide-react";
 import {
   Sidebar,
@@ -83,7 +84,7 @@ const items = [
     icon: Store,
   },
 
-   {
+  {
     title: "Enterprise",
     url: "/credit-ledger",
     icon: Building2,
@@ -110,12 +111,11 @@ const items = [
 ];
 
 export function AppSidebar() {
-  const { state, isMobile, setOpenMobile } = useSidebar();
+  const { state, isMobile, setOpenMobile, setOpen } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [openItems, setOpenItems] = useState<string[]>([]);
   const pathname = usePathname();
   const router = useRouter();
-
 
   const isActive = (url: string) => {
     if (!url || url === "#") return false;
@@ -137,6 +137,8 @@ export function AppSidebar() {
   const handleLinkClick = () => {
     if (isMobile) {
       setOpenMobile(false);
+    } else {
+      setOpen(true);
     }
   };
 
@@ -190,6 +192,11 @@ export function AppSidebar() {
                             tooltip={item.title}
                             isActive={parentActive}
                             className="menuButton mb-3 text-white hover:bg-white/10"
+                            onClick={() => {
+                              if (!isMobile) {
+                                setOpen(true);
+                              }
+                            }}
                           >
                             <item.icon
                               style={{ width: "30px", height: "30px" }}

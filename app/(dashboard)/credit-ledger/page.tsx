@@ -17,6 +17,8 @@ import {
   ChevronDown,
   ChevronUp,
   Package,
+  MoveLeft,
+  MoveRightIcon,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -78,6 +80,8 @@ interface TransferDetails {
   expiresAt: string;
   expectedAmount: number;
 }
+
+
 
 type PaymentModalStep = "select" | "transfer-details";
 type FilterTab = "All" | "Overdue" | "Due Soon" | "Pending" | "Completed";
@@ -161,6 +165,12 @@ export default function CreditLedger() {
   const [filterTab, setFilterTab] = useState<FilterTab>("All");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const itemsPerPage = 5;
+
   const [invoiceItems, setInvoiceItems] = useState<
     Record<string, InvoiceItem[]>
   >({});
@@ -192,20 +202,29 @@ export default function CreditLedger() {
     useState<TransferDetails | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
+  // Reset page when search or filter changes
   useEffect(() => {
-    fetchAll();
-  }, []);
+    setCurrentPage(1);
+  }, [searchQuery, filterTab]);
 
-  const fetchAll = async () => {
+  const fetchLedgers = async () => {
     setLoading(true);
     try {
-      const [ledgerRes, summaryRes] = await Promise.all([
-        getCreditLedger(),
-        getCreditLedgerSummary(),
-      ]);
-      if (ledgerRes.statusCode === 200) setLedgers(ledgerRes.data);
-      else toast.error("Failed to load credit ledger");
-      if (summaryRes.statusCode === 200) setSummary(summaryRes.data);
+      let statusParam = "";
+      if (filterTab === "Overdue") statusParam = "OVERDUE";
+      else if (filterTab === "Pending") statusParam = "PENDING";
+      else if (filterTab === "Completed") statusParam = "COMPLETED";
+      // Due Soon is handled client-side or you can add server support
+      
+      const res = await getCreditLedger(currentPage, itemsPerPage, searchQuery, statusParam);
+      
+      if (res.statusCode === 200) {
+        setLedgers(res.data);
+        setTotalPages(res.pagination.totalPages);
+        setTotalCount(res.pagination.totalCount);
+      } else {
+        toast.error("Failed to load credit ledger");
+      }
     } catch {
       toast.error("Error loading credit ledger");
     } finally {
@@ -213,11 +232,24 @@ export default function CreditLedger() {
     }
   };
 
+  const fetchSummary = async () => {
+    try {
+      const summaryRes = await getCreditLedgerSummary();
+      if (summaryRes.statusCode === 200) setSummary(summaryRes.data);
+    } catch {
+      // silently fail
+    }
+  };
+
+  useEffect(() => {
+    fetchLedgers();
+    fetchSummary();
+  }, [currentPage, searchQuery, filterTab]);
+
   const handleRowExpand = async (item: LedgerItem) => {
     const isExpanded = expandedRow === item.uuid;
     setExpandedRow(isExpanded ? null : item.uuid);
 
-    // Fetch invoice items if not already loaded
     if (!isExpanded && !invoiceItems[item.uuid]) {
       setInvoiceItemsLoading((prev) => ({ ...prev, [item.uuid]: true }));
       try {
@@ -226,7 +258,7 @@ export default function CreditLedger() {
           setInvoiceItems((prev) => ({ ...prev, [item.uuid]: res.data.items }));
         }
       } catch {
-        // silently fail — table will show empty state
+        // silently fail
       } finally {
         setInvoiceItemsLoading((prev) => ({ ...prev, [item.uuid]: false }));
       }
@@ -267,7 +299,8 @@ export default function CreditLedger() {
         } else {
           toast.success(res.data?.message || "Payment recorded successfully!");
           setShowPayModal(false);
-          fetchAll();
+          fetchLedgers();
+          fetchSummary();
         }
       } else {
         toast.error(res.error || "Payment failed");
@@ -279,44 +312,58 @@ export default function CreditLedger() {
     }
   };
 
-  // ── Filter logic ──
-  const filtered = ledgers.filter((l) => {
-    const diffDays = Math.ceil(
-      (new Date(l.due_date).getTime() - new Date().getTime()) /
-        (1000 * 60 * 60 * 24),
-    );
-    const matchSearch =
-      l.customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      l.invoice.code.toLowerCase().includes(searchQuery.toLowerCase());
-    if (!matchSearch) return false;
-    if (filterTab === "All") return true;
-    if (filterTab === "Overdue")
-      return diffDays < 0 && l.status !== "COMPLETED";
-    if (filterTab === "Due Soon")
-      return diffDays >= 0 && diffDays <= 7 && l.status !== "COMPLETED";
-    if (filterTab === "Pending") return l.status === "PENDING";
-    if (filterTab === "Completed") return l.status === "COMPLETED";
-    return true;
-  });
-
-  const countByTab = (tab: FilterTab) => {
-    if (tab === "All") return ledgers.length;
-    return ledgers.filter((l) => {
-      const diffDays = Math.ceil(
-        (new Date(l.due_date).getTime() - new Date().getTime()) /
-          (1000 * 60 * 60 * 24),
-      );
-      if (tab === "Overdue") return diffDays < 0 && l.status !== "COMPLETED";
-      if (tab === "Due Soon")
-        return diffDays >= 0 && diffDays <= 7 && l.status !== "COMPLETED";
-      if (tab === "Pending") return l.status === "PENDING";
-      if (tab === "Completed") return l.status === "COMPLETED";
-      return false;
-    }).length;
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
 
+  const renderPagination = () => {
+    const pages = [];
+    const maxVisible = 5;
+
+    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    const end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start + 1 < maxVisible) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(
+        <Button
+          key={i}
+          variant={currentPage === i ? "default" : "outline"}
+          size="sm"
+          className={`h-8 w-8 ${
+            currentPage === i
+              ? "bg-[#0A6DC0] text-white hover:bg-[#0A6DC0]"
+              : ""
+          }`}
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </Button>,
+      );
+    }
+
+    return pages;
+  };
+
+  // Filter "Due Soon" client-side since server might not support it
+  const displayLedgers = filterTab === "Due Soon" 
+    ? ledgers.filter(l => {
+        const diffDays = Math.ceil(
+          (new Date(l.due_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+        );
+        return diffDays >= 0 && diffDays <= 7 && l.status !== "COMPLETED";
+      })
+    : ledgers;
+
+  const displayTotalCount = filterTab === "Due Soon" ? displayLedgers.length : totalCount;
+
   return (
-    <div className=" px-0">
+    <div className="px-0">
       {/* Page title */}
       <div className="mb-6">
         <h1 className="font-clash font-semibold text-[28px] text-[#1A1A1A]">
@@ -387,12 +434,6 @@ export default function CreditLedger() {
             >
               <Download size={13} /> Export
             </Button>
-            {/* <Button
-              size="sm"
-              className="gap-1.5 bg-[#0A6DC0] hover:bg-[#085a9e] text-white font-dm-sans text-xs"
-            >
-              <Plus size={13} /> Record Payment
-            </Button> */}
           </div>
         </div>
 
@@ -407,7 +448,6 @@ export default function CreditLedger() {
               "Completed",
             ] as FilterTab[]
           ).map((tab) => {
-            const count = countByTab(tab);
             const dotColor =
               tab === "Overdue"
                 ? "bg-red-500"
@@ -432,12 +472,7 @@ export default function CreditLedger() {
                 {dotColor && (
                   <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
                 )}
-                {tab}{" "}
-                <span
-                  className={`${active ? "text-[#0A6DC0]" : "text-gray-400"}`}
-                >
-                  {count}
-                </span>
+                {tab}
               </button>
             );
           })}
@@ -468,12 +503,12 @@ export default function CreditLedger() {
           <div className="flex items-center justify-center py-16">
             <ClipLoader color="#0A6DC0" size={32} />
           </div>
-        ) : filtered.length === 0 ? (
+        ) : displayLedgers.length === 0 ? (
           <div className="text-center py-16 text-gray-400 font-dm-sans text-sm">
             No credit records found.
           </div>
         ) : (
-          filtered.map((item) => {
+          displayLedgers.map((item) => {
             const status = getStatusStyle(item.status, item.due_date);
             const dueLabel = getDueLabel(item.due_date);
             const isExpanded = expandedRow === item.uuid;
@@ -658,7 +693,6 @@ export default function CreditLedger() {
                           </p>
                         ) : (
                           <>
-                            {/* Header */}
                             <div className="grid grid-cols-[minmax(0,1fr)_48px_72px_72px] gap-2 px-2 py-1.5 bg-gray-50 rounded-lg mb-2">
                               <span className="text-[10px] font-semibold text-gray-500 tracking-wide font-dm-sans">
                                 PRODUCT / SKU
@@ -681,7 +715,9 @@ export default function CreditLedger() {
                                 >
                                   <div className="flex items-center gap-2 min-w-0">
                                     {inv.product?.image ? (
-                                      <Image height={32} width={32}
+                                      <Image
+                                        height={32}
+                                        width={32}
                                         src={inv.product.image}
                                         alt={inv.stock.sku}
                                         className="w-8 h-8 rounded-md object-contain border border-gray-100 flex-shrink-0"
@@ -703,14 +739,14 @@ export default function CreditLedger() {
                                       </p>
                                     </div>
                                   </div>
-                                  <span className="text-xs font-medium font-dm-sans text-center w-10">
+                                  <span className="text-xs font-medium font-dm-sans text-center">
                                     {parseFloat(inv.quantity).toFixed(0)}{" "}
                                     {inv.mode === "PACKS" ? "pk" : "pc"}
                                   </span>
-                                  <span className="text-xs text-gray-600 font-dm-sans text-right w-16">
+                                  <span className="text-xs text-gray-600 font-dm-sans text-right">
                                     {fmt(inv.cost)}
                                   </span>
-                                  <span className="text-xs font-semibold text-[#1A1A1A] font-dm-sans text-right w-16">
+                                  <span className="text-xs font-semibold text-[#1A1A1A] font-dm-sans text-right">
                                     {fmt(inv.sub_total)}
                                   </span>
                                 </div>
@@ -752,16 +788,13 @@ export default function CreditLedger() {
                                   className="flex items-center gap-2.5 bg-[#0A6DC01A] rounded-lg px-3 py-2"
                                 >
                                   <div className="w-5 h-5 rounded-full bg-[#0A6DC0] flex items-center justify-center flex-shrink-0">
-                                    <Check
-                                      size={10}
-                                      className="text-white"
-                                    />
+                                    <Check size={10} className="text-white" />
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-[#1A1A1A] font-dm-sans">
                                       {fmt(ph.amount)}
                                     </p>
-                                    <p className="text-xs  font-dm-sans">
+                                    <p className="text-xs font-dm-sans">
                                       {new Date(ph.paid_at).toLocaleDateString(
                                         "en-GB",
                                         { day: "numeric", month: "short" },
@@ -775,7 +808,6 @@ export default function CreditLedger() {
                           </div>
                         )}
 
-                        {/* Summary line */}
                         <div className="mt-3 pt-3 border-t border-gray-200 space-y-1">
                           <div className="flex justify-between text-xs font-dm-sans">
                             <span className="text-gray-400">Total Paid</span>
@@ -791,7 +823,6 @@ export default function CreditLedger() {
                           </div>
                         </div>
 
-                        {/* Buttons */}
                         {item.status !== "COMPLETED" && (
                           <div className="flex gap-2 mt-4">
                             <Button
@@ -804,13 +835,6 @@ export default function CreditLedger() {
                             >
                               <Plus size={12} /> Log Payment
                             </Button>
-                            {/* <Button
-                              size="sm"
-                              variant="outline"
-                              className="flex-1 font-dm-sans text-xs text-gray-600"
-                            >
-                              Remind
-                            </Button> */}
                           </div>
                         )}
                       </div>
@@ -820,6 +844,38 @@ export default function CreditLedger() {
               </div>
             );
           })
+        )}
+
+        {/* Pagination */}
+        {!loading && displayTotalCount > itemsPerPage && (
+          <div className="flex flex-row justify-between items-center mt-6 gap-4 px-4 py-4 border-t border-[#E4E4E4]">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+              className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24 disabled:opacity-50"
+            >
+              <MoveLeft /> Previous
+            </button>
+
+            <div className="hidden lg:flex items-center gap-2 flex-wrap justify-center">
+              {renderPagination()}
+            </div>
+
+            <div className="flex items-center gap-10">
+              <button
+                disabled={currentPage >= totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+                className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24 disabled:opacity-50"
+              >
+                Next <MoveRightIcon />
+              </button>
+
+              <div className="hidden lg:block text-sm text-gray-600">
+                Showing {Math.min((currentPage - 1) * itemsPerPage + 1, displayTotalCount)} -{" "}
+                {Math.min(currentPage * itemsPerPage, displayTotalCount)} of {displayTotalCount}
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
@@ -887,7 +943,7 @@ export default function CreditLedger() {
                   onClick={() => handleRecordPayment("TRANSFER")}
                   disabled={payLoadingType !== null}
                   variant="outline"
-                  className="w-full font-dm-sans bg-[#0A6DC01A]  hover:bg-[#0A2540] hover:text-white"
+                  className="w-full font-dm-sans bg-[#0A6DC01A] hover:bg-[#0A2540] hover:text-white"
                 >
                   {payLoadingType === "TRANSFER" ? (
                     <>
@@ -1000,7 +1056,8 @@ export default function CreditLedger() {
                   onClick={() => {
                     setShowPayModal(false);
                     toast.success("Payment recorded! We'll confirm shortly.");
-                    fetchAll();
+                    fetchLedgers();
+                    fetchSummary();
                   }}
                   className="bg-[#0A6DC0] hover:bg-[#085a9e] text-white font-dm-sans"
                 >

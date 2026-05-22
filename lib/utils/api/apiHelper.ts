@@ -1037,8 +1037,20 @@ export const handleGetStoreStocks = async (storeId: string): Promise<any> => {
   return await fetcher<any>(GET_STORE_STOCKS(storeId));
 };
 
-export const getCreditLedger = async (): Promise<CreditLedgerResponse> => {
-  return await fetcher<CreditLedgerResponse>(GET_CREDIT_LEDGER());
+export const getCreditLedger = async (
+  page: number = 1,
+  limit: number = 5,
+  search: string = "",
+  status: string = "",
+): Promise<CreditLedgerResponse> => {
+  const params: Record<string, string> = {
+    page: page.toString(),
+    limit: limit.toString(),
+  };
+  if (search) params.search = search;
+  if (status) params.status = status;
+
+  return await fetcher<CreditLedgerResponse>(GET_CREDIT_LEDGER(), params);
 };
 
 export const recordCreditPayment = async (
