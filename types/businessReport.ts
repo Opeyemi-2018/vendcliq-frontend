@@ -10,6 +10,7 @@ export interface BusinessReportSummary {
 
 export interface StockComparisonItem {
   stock_id: string;
+  stock_uuid: string; 
   product_name: string;
   product_image: string;
   store_name: string;

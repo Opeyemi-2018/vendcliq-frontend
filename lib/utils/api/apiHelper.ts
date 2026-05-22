@@ -159,6 +159,7 @@ import {
   GET_CREDIT_LEDGER,
   GET_CREDIT_LEDGER_SUMMARY,
   GET_INVOICE_BY_ID,
+  GET_MANUFACTURERS,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -250,7 +251,14 @@ import {
   SaleInvoice,
   SupplierSalesResponse,
 } from "@/types/sales";
-import { CreditLedgerResponse, CreditLedgerSummaryResponse, CreditOtpPayload, CreditOtpResponse, RecordCreditPaymentPayload, RecordCreditPaymentResponse } from "@/types/creditLedger";
+import {
+  CreditLedgerResponse,
+  CreditLedgerSummaryResponse,
+  CreditOtpPayload,
+  CreditOtpResponse,
+  RecordCreditPaymentPayload,
+  RecordCreditPaymentResponse,
+} from "@/types/creditLedger";
 
 interface UserProfile {
   data: {
@@ -727,14 +735,14 @@ export const handleCreateCustomer = async (
 
 export const handleUpdateCustomer = async (
   customerId: string,
-  payload: Omit<CreateCustomerPayload, "email">,   
+  payload: Omit<CreateCustomerPayload, "email">,
 ): Promise<CreateCustomerResponse> => {
-  const url = UPDATE_CUSTOMER(customerId);         
+  const url = UPDATE_CUSTOMER(customerId);
   return await putter<CreateCustomerResponse, typeof payload>(url, payload);
 };
 
 export const handleGetCustomerById = async (
-  customerId: string
+  customerId: string,
 ): Promise<any> => {
   const url = GET_CUSTOMER_BY_ID(customerId);
   return await fetcher<any>(url);
@@ -743,7 +751,7 @@ export const handleGetCustomerById = async (
 export const handleReturnCustomerEmpties = async (
   customerId: string,
   emptiesId: string,
-  payload: { quantityReturned: number; notes?: string }
+  payload: { quantityReturned: number; notes?: string },
 ): Promise<any> => {
   const url = RETURN_CUSTOMER_EMPTIES(customerId, emptiesId);
   return await poster<any, typeof payload>(url, payload);
@@ -895,13 +903,17 @@ export const handleGetMySubscription =
   };
 
 export const handleGetBusinessReportComparison = async (
-  startDate?: string, // YYYY-MM-DD
-  endDate?: string, // YYYY-MM-DD
+  startDate?: string,
+  endDate?: string,
+  manufacturer?: string,
+  sku?: string,
 ): Promise<BusinessReportResponse> => {
   const params: Record<string, string> = {};
 
   if (startDate) params.startDate = startDate;
   if (endDate) params.endDate = endDate;
+  if (manufacturer) params.manufacturer = manufacturer;
+  if (sku) params.sku = sku;
 
   return await fetcher<BusinessReportResponse>(
     GET_BUSINESS_REPORT_COMPARISON,
@@ -1023,7 +1035,6 @@ export const handleGetStoreStocks = async (storeId: string): Promise<any> => {
   return await fetcher<any>(GET_STORE_STOCKS(storeId));
 };
 
-
 export const getCreditLedger = async (): Promise<CreditLedgerResponse> => {
   return await fetcher<CreditLedgerResponse>(GET_CREDIT_LEDGER());
 };
@@ -1038,10 +1049,17 @@ export const recordCreditPayment = async (
   );
 };
 
-export const getCreditLedgerSummary = async (): Promise<CreditLedgerSummaryResponse> => {
-  return await fetcher<CreditLedgerSummaryResponse>(GET_CREDIT_LEDGER_SUMMARY());
-};
+export const getCreditLedgerSummary =
+  async (): Promise<CreditLedgerSummaryResponse> => {
+    return await fetcher<CreditLedgerSummaryResponse>(
+      GET_CREDIT_LEDGER_SUMMARY(),
+    );
+  };
 
 export const getInvoiceById = async (id: string) => {
   return await fetcher<any>(GET_INVOICE_BY_ID(id));
+};
+
+export const getManufacturers = async (): Promise<any> => {
+  return await fetcher<any>(GET_MANUFACTURERS);
 };

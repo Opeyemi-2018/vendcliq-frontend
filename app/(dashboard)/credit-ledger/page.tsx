@@ -333,7 +333,7 @@ export default function CreditLedger() {
           label="Total Outstanding"
           value={fmt(summary.total_outstanding)}
           sub={`${summary.active_credits} active credits`}
-          borderColor="border-t-blue-500"
+          borderColor="border-t-[#0A6DC0]"
         />
         <StatCard
           label="Overdue"
@@ -351,7 +351,7 @@ export default function CreditLedger() {
           label="Recovered (This Month)"
           value={fmt(summary.recovered_this_month)}
           sub={`${summary.recovered_this_month_count} credits cleared`}
-          borderColor="border-t-green-500"
+          borderColor="border-t-[#31A078]"
         />
       </div>
 

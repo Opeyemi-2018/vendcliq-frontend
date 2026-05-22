@@ -93,7 +93,7 @@ const PAY_CART = (invoiceId: string) => `inventory/invoices/${invoiceId}/pay`;
  const PAY_CART_CREDIT_OTP = (invoiceId: string) => `inventory/invoices/${invoiceId}/verify-credit-otp`;
  const GET_CREDIT_LEDGER = () => `inventory/credit-ledger`;
   const GET_CREDIT_LEDGER_SUMMARY = () => `inventory/credit-ledger/summary`;
-
+const GET_MANUFACTURERS = "inventory/manufacturers";
  const RECORD_CREDIT_PAYMENT = (uuid: string) => `inventory/credit-ledger/${uuid}/payments`;
 const ASSIGN_ATTENDANT_PERMISSIONS = "inventory/attendant-permissions";
 const UPDATE_ATTENDANT_PERMISSIONS = (attendantId: string) =>
@@ -215,6 +215,7 @@ export {
   RECORD_CREDIT_PAYMENT,
   GET_CREDIT_LEDGER_SUMMARY,
   GET_INVOICE_BY_ID,
+  GET_MANUFACTURERS,
 
   // v1 endpoint
   // GET_PROFILE,
