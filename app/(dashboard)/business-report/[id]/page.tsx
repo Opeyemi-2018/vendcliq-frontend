@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { MoveLeft, TrendingUp, Package, ShoppingCart, BarChart2, RefreshCw } from "lucide-react";
+import { MoveLeft, TrendingUp, Package, ShoppingCart,  RefreshCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

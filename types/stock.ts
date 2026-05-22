@@ -157,3 +157,71 @@ export interface UpdateStockPricesResponse {
   error?: string;
   data?: any;
 }
+
+// users stocks response
+// Add this to your types file
+
+export interface UserStock {
+  id: string;
+  sku: string;
+  product: {
+    id: string;
+    name: string;
+    items_per_pack: number;
+    image: string;
+  };
+  store: {
+    id: string;
+    name: string;
+    address: {
+      lat: number;
+      lng: number;
+      name: string;
+    };
+  };
+  // Optional: add other fields if needed for filtering/display
+  cost_price?: string;
+  selling_price?: string;
+  quantity?: string;
+}
+
+export interface GetUserStocksResponse {
+  statusCode: number;
+  error: string | null;
+  data: UserStock[];
+  pagination: {
+    totalPages: number;
+    currentPage: number;
+    totalCount: number;
+    limit: number;
+    nextPage: number | null;
+  };
+}
+
+
+
+// manufacturers response
+
+export interface Manufacturer {
+  id: string;
+  name: string;
+  attributes: string | null;
+  meta: {
+    prodCount: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GetManufacturersResponse {
+  statusCode: number;
+  error: string | null;
+  data: Manufacturer[];
+  pagination: {
+    totalPages: number;
+    currentPage: number;
+    totalCount: number;
+    limit: number;
+    nextPage: number | null;
+  };
+}

@@ -132,6 +132,7 @@ const CREATE_OFFER = "inventory/offers";
 const UPDATE_STOCK_PRICES = (stockId: string) => `inventory/stocks/${stockId}`;
 // get credit ledger items
  const GET_INVOICE_BY_ID = (id: string) => `inventory/invoices/${id}`;
+ const GET_USER_STOCKS = "inventory/stocks/user/stocks";
 
 
 
@@ -216,6 +217,7 @@ export {
   GET_CREDIT_LEDGER_SUMMARY,
   GET_INVOICE_BY_ID,
   GET_MANUFACTURERS,
+  GET_USER_STOCKS,
 
   // v1 endpoint
   // GET_PROFILE,

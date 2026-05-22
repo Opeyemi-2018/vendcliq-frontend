@@ -6,7 +6,7 @@ import {
   Percent,
   LogOut,
   ChevronDown,
-  Building2 
+  Building2 , Store
 } from "lucide-react";
 import {
   Sidebar,
@@ -80,7 +80,7 @@ const items = [
   {
     title: "Market Place",
     url: "/market-place",
-    icon: Percent,
+    icon: Store,
   },
 
    {

@@ -160,6 +160,7 @@ import {
   GET_CREDIT_LEDGER_SUMMARY,
   GET_INVOICE_BY_ID,
   GET_MANUFACTURERS,
+  GET_USER_STOCKS,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -173,6 +174,7 @@ import {
 } from "@/types/store";
 import {
   CreateStockResponse,
+  GetManufacturersResponse,
   ProductsResponse,
   StockMovementsResponse,
   UpdateStockPricesPayload,
@@ -1060,6 +1062,32 @@ export const getInvoiceById = async (id: string) => {
   return await fetcher<any>(GET_INVOICE_BY_ID(id));
 };
 
-export const getManufacturers = async (): Promise<any> => {
-  return await fetcher<any>(GET_MANUFACTURERS);
+export const getManufacturers = async (
+  page: number = 1,
+  limit: number = 10,
+  search: string = "",
+): Promise<GetManufacturersResponse> => {
+  const params: Record<string, string> = {
+    page: page.toString(),
+    limit: limit.toString(),
+  };
+  if (search && search.trim()) {
+    params.search = search.trim();
+  }
+
+  return await fetcher<GetManufacturersResponse>(GET_MANUFACTURERS, params);
+};
+
+export const getUserStocks = async (
+  page: number = 1,
+  limit: number = 10,
+  search: string = "",
+): Promise<any> => {
+  const params: Record<string, string> = {
+    page: page.toString(),
+    limit: limit.toString(),
+  };
+  if (search) params.search = search;
+
+  return await fetcher<any>(GET_USER_STOCKS, params);
 };
