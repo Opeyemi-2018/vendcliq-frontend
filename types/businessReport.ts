@@ -20,6 +20,7 @@ export interface StockComparisonItem {
   closing_value: number;
   qty_change: number;
   value_change: number;
+  qty_sold: number;
 }
 
 export interface BusinessReportResponse {

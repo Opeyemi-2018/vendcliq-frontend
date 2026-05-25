@@ -9,6 +9,7 @@ import {
   MoveRight,
   Check,
   ChevronDown,
+  Download,
 } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Card } from "@/components/ui/card";
@@ -27,6 +28,7 @@ import {
 } from "@/lib/utils/api/apiHelper";
 import { ThreeDots } from "react-loader-spinner";
 import { useRouter } from "next/navigation";
+import * as XLSX from "xlsx";
 
 import {
   Dialog,
@@ -69,6 +71,8 @@ interface TableReportItem {
   closingEmptyQty: number;
   totalQtyDiff: number;
   openingStockValue: string;
+  closingStockValue: string;
+  qty_sold: number;
 }
 
 interface Manufacturer {
@@ -102,6 +106,9 @@ const ReportSkeleton = () => (
     <td className="py-4">
       <div className="h-4 bg-gray-200 rounded w-24"></div>
     </td>
+    <td className="py-4">
+      <div className="h-4 bg-gray-200 rounded w-24"></div>
+    </td>
   </tr>
 );
 
@@ -126,6 +133,7 @@ const BusinessReports = () => {
   const [loading, setLoading] = useState(false);
   const [manufacturersLoading, setManufacturersLoading] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -149,6 +157,10 @@ const BusinessReports = () => {
   // Manufacturer states
   const [manufacturerOpen, setManufacturerOpen] = useState(false);
   const [manufacturerSearch, setManufacturerSearch] = useState("");
+  // Mobile modal specific states (separate from desktop)
+  const [mobileManufacturerOpen, setMobileManufacturerOpen] = useState(false);
+  const [mobileStoreOpenModal, setMobileStoreOpenModal] = useState(false);
+  const [mobileSkuOpenModal, setMobileSkuOpenModal] = useState(false);
 
   // Store states
   const [storeOpen, setStoreOpen] = useState(false);
@@ -197,11 +209,14 @@ const BusinessReports = () => {
 
   // Load stocks when popover opens
   useEffect(() => {
-    if ((desktopSkuOpen || mobileSkuOpen) && !stockInitializedRef.current) {
+    if (
+      (desktopSkuOpen || mobileSkuOpen || mobileSkuOpenModal) &&
+      !stockInitializedRef.current
+    ) {
       stockInitializedRef.current = true;
       fetchStocks(1, "");
     }
-  }, [desktopSkuOpen, mobileSkuOpen]);
+  }, [desktopSkuOpen, mobileSkuOpen, mobileSkuOpenModal]);
 
   // Fetch manufacturers on component mount
   const fetchManufacturers = async () => {
@@ -209,11 +224,8 @@ const BusinessReports = () => {
     setManufacturersLoading(true);
     try {
       const res = await getManufacturers(1, 1000, "");
-      console.log("Manufacturers count:", res?.data?.length); // 👈 THIS ONE LINE
-
       const items = res?.data ?? [];
       setManufacturers(items);
-      console.log("Manufacturers loaded:", items.length);
     } catch (err) {
       console.error("Failed to load manufacturers:", err);
       toast.error("Failed to load manufacturers");
@@ -251,10 +263,12 @@ const BusinessReports = () => {
             openingQty: item.opening_qty,
             closingQty: item.closing_qty,
             value_change: item.value_change,
+            qty_sold: item.qty_sold,
             openingEmptyQty: 0,
             closingEmptyQty: 0,
             totalQtyDiff: item.qty_change,
             openingStockValue: `₦${Math.round(item.opening_value).toLocaleString()}`,
+            closingStockValue: `₦${Math.round(item.closing_value).toLocaleString()}`,
           }),
         );
 
@@ -273,6 +287,101 @@ const BusinessReports = () => {
       toast.error("Error fetching business report");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!summary || reports.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+
+    setExportLoading(true);
+    try {
+      const start = startDate
+        ? format(parseISO(startDate), "yyyy-MM-dd")
+        : "start";
+      const end = endDate ? format(parseISO(endDate), "yyyy-MM-dd") : "end";
+      const fileName = `Business_Report_${start}_to_${end}.xlsx`;
+
+      const summaryRows = [
+        [
+          "Opening Stock Value",
+          `₦ ${summary.opening_stock_value.toLocaleString()}`,
+        ],
+        [
+          "Closing Stock Value",
+          `₦ ${summary.closing_stock_value.toLocaleString()}`,
+        ],
+        [
+          "Total Invoice Value",
+          `₦ ${summary.total_invoice_value.toLocaleString()}`,
+        ],
+        ["Invoice Count", summary.invoice_count],
+        ["Profit Generated", `₦ ${summary.profit_generated.toLocaleString()}`],
+        [
+          "Stock Value Change",
+          `₦ ${summary.stock_value_change.toLocaleString()}`,
+        ],
+        [],
+        [],
+        [],
+      ];
+
+      // IMPORTANT: This must match EXACTLY the order of columns in your table
+      const headers = [
+        "Store Name",
+        "Item Name",
+        "Opening Qty",
+        "Closing Qty",
+        "Qty Sold",
+        "Total Diff",
+        "Opening Value",
+        "Closing Value",
+        "Value Change",
+        "Opening Empties",
+        "Closing Empties",
+      ];
+
+      const tableData = reports.map((report) => [
+        report.storeName,
+        report.itemName,
+        report.openingQty,
+        report.closingQty,
+        report.qty_sold,
+        report.totalQtyDiff,
+        report.openingStockValue,
+        report.closingStockValue,
+        report.value_change,
+        report.openingEmptyQty,
+        report.closingEmptyQty,
+      ]);
+
+      const worksheetData = [...summaryRows, headers, ...tableData];
+      const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+      ws["!cols"] = [
+        { wch: 25 }, // Store Name
+        { wch: 40 }, // Item Name
+        { wch: 15 }, // Opening Qty
+        { wch: 15 }, // Closing Qty
+        { wch: 12 }, // Qty Sold
+        { wch: 12 }, // Total Diff
+        { wch: 18 }, // Opening Value
+        { wch: 18 }, // Closing Value
+        { wch: 15 }, // Value Change
+        { wch: 18 }, // Opening Empties
+        { wch: 18 }, // Closing Empties
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Business Report");
+      XLSX.writeFile(wb, fileName);
+      toast.success("Report exported successfully");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export report");
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -324,6 +433,7 @@ const BusinessReports = () => {
     setEndDate(tempEndDate);
     fetchReport(tempStartDate, tempEndDate);
     setDateModalOpen(false);
+    setFilterModalOpen(false);
   };
 
   // SKU Search Handler
@@ -350,6 +460,7 @@ const BusinessReports = () => {
   const handleSkuSelect = (name: string) => {
     setSelectedSku(name);
     setMobileSkuOpen(false);
+    setMobileSkuOpenModal(false);
     setDesktopSkuOpen(false);
     setSkuSearch("");
   };
@@ -357,6 +468,7 @@ const BusinessReports = () => {
   const handleManufacturerSelect = (name: string) => {
     setSelectedManufacturer(name);
     setManufacturerOpen(false);
+    setMobileManufacturerOpen(false);
     setManufacturerSearch("");
   };
 
@@ -508,10 +620,205 @@ const BusinessReports = () => {
                   </div>
                 </div>
 
-                {/* Note: Manufacturer, SKU, and Store filters are in the main toolbar above */}
-                <div className="text-center text-sm text-gray-500 py-2">
-                  Use the filters above to search by Manufacturer, Product, or
-                  Store
+                {/* Manufacturer - Mobile (using separate state) */}
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">
+                    Manufacturer
+                  </Label>
+                  <Popover
+                    open={mobileManufacturerOpen}
+                    onOpenChange={setMobileManufacturerOpen}
+                    modal
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full h-11 justify-between overflow-hidden"
+                      >
+                        <span className="truncate text-left flex-1">
+                          {selectedManufacturer || "All Manufacturers"}
+                        </span>
+                        <ChevronDown className="h-4 w-4 opacity-50 flex-shrink-0" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-[90vw] max-w-[320px] p-0"
+                      align="start"
+                    >
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Search manufacturers..."
+                          value={manufacturerSearch}
+                          onValueChange={setManufacturerSearch}
+                        />
+                        <CommandList>
+                          <CommandEmpty>
+                            {manufacturersLoading ? (
+                              <div className="flex justify-center py-6">
+                                <ClipLoader size={24} color="#0A6DC0" />
+                              </div>
+                            ) : (
+                              "No manufacturer found."
+                            )}
+                          </CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              onSelect={() => {
+                                handleManufacturerSelect("");
+                                setMobileManufacturerOpen(false);
+                              }}
+                              className="cursor-pointer py-3 px-4"
+                            >
+                              <div className="flex items-center gap-3 w-full">
+                                <span className="font-medium">
+                                  All Manufacturers
+                                </span>
+                                {selectedManufacturer === "" && (
+                                  <Check className="ml-auto h-4 w-4 text-[#0A6DC0]" />
+                                )}
+                              </div>
+                            </CommandItem>
+                            {filteredManufacturers.map((manufacturer) => (
+                              <CommandItem
+                                key={manufacturer.id}
+                                onSelect={() => {
+                                  handleManufacturerSelect(manufacturer.name);
+                                  setMobileManufacturerOpen(false);
+                                }}
+                                className="cursor-pointer py-3 px-4"
+                              >
+                                <div className="flex items-center gap-3 w-full">
+                                  <span className="font-medium">
+                                    {manufacturer.name}
+                                  </span>
+                                  {selectedManufacturer ===
+                                    manufacturer.name && (
+                                    <Check className="ml-auto h-4 w-4 text-[#0A6DC0]" />
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* SKU - Mobile (using separate state) */}
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">
+                    Product / SKU
+                  </Label>
+                  <Popover
+                    open={mobileSkuOpenModal}
+                    onOpenChange={setMobileSkuOpenModal}
+                    modal
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full h-11 justify-between overflow-hidden"
+                      >
+                        {selectedSku ? selectedSku : "All Products / SKU"}
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-[90vw] max-w-[320px] p-0"
+                      align="start"
+                    >
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Search by name, store..."
+                          value={skuSearch}
+                          onValueChange={handleSkuSearch}
+                        />
+                        <SkuCommandList />
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Store - Mobile (using separate state) */}
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">
+                    Store
+                  </Label>
+                  <Popover
+                    open={mobileStoreOpenModal}
+                    onOpenChange={setMobileStoreOpenModal}
+                    modal
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full h-11 justify-between overflow-hidden"
+                      >
+                        <span className="truncate text-left flex-1">
+                          {selectedStore === "all"
+                            ? "All Stores"
+                            : selectedStore}
+                        </span>
+                        <ChevronDown className="h-4 w-4 opacity-50 flex-shrink-0" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-[90vw] max-w-[320px] p-0"
+                      align="start"
+                    >
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Search stores..."
+                          value={storeSearch}
+                          onValueChange={setStoreSearch}
+                        />
+                        <CommandList>
+                          <CommandEmpty>No store found.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              onSelect={() => {
+                                setSelectedStore("all");
+                                setMobileStoreOpenModal(false);
+                                setStoreSearch("");
+                              }}
+                              className="cursor-pointer py-3 px-4"
+                            >
+                              <div className="flex items-center gap-3 w-full">
+                                <span className="font-medium">All Stores</span>
+                                {selectedStore === "all" && (
+                                  <Check className="ml-auto h-4 w-4 text-[#0A6DC0]" />
+                                )}
+                              </div>
+                            </CommandItem>
+                            {filteredStores.map(
+                              (store) =>
+                                store !== "all" && (
+                                  <CommandItem
+                                    key={store}
+                                    onSelect={() => {
+                                      setSelectedStore(store);
+                                      setMobileStoreOpenModal(false);
+                                      setStoreSearch("");
+                                    }}
+                                    className="cursor-pointer py-3 px-4"
+                                  >
+                                    <div className="flex items-center gap-3 w-full">
+                                      <span className="font-medium">
+                                        {store}
+                                      </span>
+                                      {selectedStore === store && (
+                                        <Check className="ml-auto h-4 w-4 text-[#0A6DC0]" />
+                                      )}
+                                    </div>
+                                  </CommandItem>
+                                ),
+                            )}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 
@@ -539,7 +846,6 @@ const BusinessReports = () => {
 
         {/* ==================== DESKTOP FILTERS ==================== */}
         <div className="hidden lg:flex flex-wrap gap-3 pt-6">
-          {/* Date Filter */}
           <Dialog open={dateModalOpen} onOpenChange={setDateModalOpen}>
             <DialogTrigger asChild>
               <Button
@@ -565,7 +871,6 @@ const BusinessReports = () => {
                     type="date"
                     value={tempStartDate}
                     onChange={(e) => setTempStartDate(e.target.value)}
-                    className="bg-[#FAFAFA]"
                   />
                 </div>
                 <div>
@@ -575,7 +880,6 @@ const BusinessReports = () => {
                     type="date"
                     value={tempEndDate}
                     onChange={(e) => setTempEndDate(e.target.value)}
-                    className="bg-[#FAFAFA]"
                   />
                 </div>
               </div>
@@ -590,7 +894,6 @@ const BusinessReports = () => {
             </DialogContent>
           </Dialog>
 
-          {/* Manufacturer - Desktop */}
           <Popover
             open={manufacturerOpen}
             onOpenChange={setManufacturerOpen}
@@ -617,18 +920,13 @@ const BusinessReports = () => {
                 <CommandList>
                   <CommandEmpty>
                     {manufacturersLoading ? (
-                      <div className="flex justify-center py-6">
-                        <ClipLoader size={24} color="#0A6DC0" />
-                      </div>
+                      <ClipLoader size={24} color="#0A6DC0" />
                     ) : (
                       "No manufacturer found."
                     )}
                   </CommandEmpty>
                   <CommandGroup>
-                    <CommandItem
-                      onSelect={() => handleManufacturerSelect("")}
-                      className="cursor-pointer py-3 px-4"
-                    >
+                    <CommandItem onSelect={() => handleManufacturerSelect("")}>
                       <div className="flex items-center gap-3 w-full">
                         <span className="font-medium">All Manufacturers</span>
                         {selectedManufacturer === "" && (
@@ -642,7 +940,6 @@ const BusinessReports = () => {
                         onSelect={() =>
                           handleManufacturerSelect(manufacturer.name)
                         }
-                        className="cursor-pointer py-3 px-4"
                       >
                         <div className="flex items-center gap-3 w-full">
                           <span className="font-medium">
@@ -660,7 +957,6 @@ const BusinessReports = () => {
             </PopoverContent>
           </Popover>
 
-          {/* SKU Combobox - Desktop */}
           <Popover open={desktopSkuOpen} onOpenChange={setDesktopSkuOpen} modal>
             <PopoverTrigger asChild>
               <Button
@@ -668,7 +964,7 @@ const BusinessReports = () => {
                 className="w-[260px] h-10 justify-between overflow-hidden"
               >
                 <span className="truncate text-left flex-1">
-                  {selectedSku ? selectedSku : "SKU"}
+                  {selectedSku || "All Products / SKU"}
                 </span>
                 <ChevronDown className="h-4 w-4 opacity-50 flex-shrink-0" />
               </Button>
@@ -685,7 +981,6 @@ const BusinessReports = () => {
             </PopoverContent>
           </Popover>
 
-          {/* Store - Desktop */}
           <Popover open={storeOpen} onOpenChange={setStoreOpen} modal>
             <PopoverTrigger asChild>
               <Button
@@ -715,7 +1010,6 @@ const BusinessReports = () => {
                         setStoreOpen(false);
                         setStoreSearch("");
                       }}
-                      className="cursor-pointer py-3 px-4"
                     >
                       <div className="flex items-center gap-3 w-full">
                         <span className="font-medium">All Stores</span>
@@ -734,7 +1028,6 @@ const BusinessReports = () => {
                               setStoreOpen(false);
                               setStoreSearch("");
                             }}
-                            className="cursor-pointer py-3 px-4"
                           >
                             <div className="flex items-center gap-3 w-full">
                               <span className="font-medium">{store}</span>
@@ -752,11 +1045,23 @@ const BusinessReports = () => {
           </Popover>
 
           <Button
+            onClick={handleExport}
+            disabled={exportLoading || reports.length === 0}
+            className="h-10 bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+          >
+            {exportLoading ? (
+              <ClipLoader size={16} color="white" />
+            ) : (
+              <Download size={16} />
+            )}
+            Export
+          </Button>
+
+          <Button
             onClick={clearFilters}
             className="h-10 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 flex items-center gap-2"
           >
-            <RotateCcw size={10} />
-            Reset Filters
+            <RotateCcw size={10} /> Reset Filters
           </Button>
         </div>
       </div>
@@ -777,7 +1082,6 @@ const BusinessReports = () => {
             )}
           </h2>
         </div>
-
         <div className="bg-[url('/balance-bg.svg')] text-white bg-cover bg-no-repeat bg-center min-w-[260px] w-[280px] flex-shrink-0 h-[117px] rounded-2xl p-6 flex flex-col justify-center">
           <p className="font-regular font-dm-sans text-[13px] md:text-[16px]">
             Closing Stock Value
@@ -792,7 +1096,6 @@ const BusinessReports = () => {
             )}
           </h2>
         </div>
-
         <div className="bg-[url('/balance-bg.svg')] text-white bg-cover bg-no-repeat bg-center min-w-[260px] w-[280px] flex-shrink-0 h-[117px] rounded-2xl p-6 flex flex-col justify-center">
           <p className="font-regular font-dm-sans text-[13px] md:text-[16px]">
             Total Invoice Value{" "}
@@ -808,7 +1111,6 @@ const BusinessReports = () => {
             )}
           </h2>
         </div>
-
         <div className="bg-[url('/balance-bg.svg')] text-white bg-cover bg-no-repeat bg-center min-w-[260px] w-[280px] flex-shrink-0 h-[117px] rounded-2xl p-6 flex flex-col justify-center">
           <p className="font-regular font-dm-sans text-[13px] md:text-[16px]">
             Profit Generated
@@ -848,29 +1150,35 @@ const BusinessReports = () => {
                     Item Name
                   </th>
                   <th className="text-left pr-8 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                    Opening Quantity
+                    Opening Qty
                   </th>
                   <th className="text-left pr-8 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                    Closing Quantity
+                    Closing Qty
                   </th>
                   <th className="text-left pr-8 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                    Total Quantity Difference
+                    Qty Sold
                   </th>
                   <th className="text-left pr-8 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                    Opening Stock Value
+                    Total Diff
+                  </th>
+                  <th className="text-left pr-8 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                    Opening Value
+                  </th>
+                  <th className="text-left pr-8 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                    Closing Value
                   </th>
                   <th className="text-left pr-8 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     Value Change
                   </th>
+
                   <th className="text-left pr-8 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                    Opening Empty Quantity
+                    Opening Empties
                   </th>
                   <th className="text-left pr-8 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                    Closing Empty Quantity
+                    Closing Empties
                   </th>
                 </tr>
               </thead>
-
               <tbody className="divide-y whitespace-nowrap">
                 {loading ? (
                   Array(5)
@@ -878,7 +1186,7 @@ const BusinessReports = () => {
                     .map((_, i) => <ReportSkeleton key={i} />)
                 ) : filteredReports.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="py-20 px-4 text-center">
+                    <td colSpan={11} className="py-20 px-4 text-center">
                       <div className="flex flex-col items-center justify-center space-y-4">
                         <UserPen size={40} className="text-gray-400 mx-auto" />
                         <p className="font-bold font-dm-sans text-[16px] text-[#2F2F2F]">
@@ -897,11 +1205,11 @@ const BusinessReports = () => {
                       className={cn(
                         "hover:bg-gray-50 transition-colors text-[13px] cursor-pointer",
                       )}
-                      onClick={() => {
+                      onClick={() =>
                         router.push(
                           `/business-report/${report.stockUuid}?startDate=${startDate}&endDate=${endDate}`,
-                        );
-                      }}
+                        )
+                      }
                     >
                       <td className="py-4 pl-4 pr-8 font-medium">
                         {report.storeName}
@@ -913,8 +1221,10 @@ const BusinessReports = () => {
                       </td>
                       <td className="py-4 pr-8">{report.openingQty}</td>
                       <td className="py-4 pr-8">{report.closingQty}</td>
+                      <td className="py-4 pr-8">{report.qty_sold}</td>
                       <td className="py-4 pr-8">{report.totalQtyDiff}</td>
                       <td className="py-4 pr-8">{report.openingStockValue}</td>
+                      <td className="py-4 pr-8">{report.closingStockValue}</td>
                       <td className="py-4 pr-8">{report.value_change}</td>
                       <td className="py-4 pr-8">{report.openingEmptyQty}</td>
                       <td className="py-4 pr-8">{report.closingEmptyQty}</td>
@@ -936,9 +1246,6 @@ const BusinessReports = () => {
             >
               <MoveLeft /> Previous
             </button>
-
-            <div className="hidden lg:flex items-center gap-2 flex-wrap justify-center"></div>
-
             <button
               disabled={currentPage >= totalPages}
               onClick={() => handlePageChange(currentPage + 1)}
@@ -946,7 +1253,6 @@ const BusinessReports = () => {
             >
               Next <MoveRight />
             </button>
-
             <div className="hidden lg:block text-sm text-gray-600">
               Showing {(currentPage - 1) * itemsPerPage + 1} -{" "}
               {Math.min(currentPage * itemsPerPage, filteredReports.length)} of{" "}

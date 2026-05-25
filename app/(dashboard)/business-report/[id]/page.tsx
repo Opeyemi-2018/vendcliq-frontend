@@ -205,16 +205,16 @@ const SkuReportDetailPage = () => {
       </div>
 
       {/* ─── Nav Bar ─────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between md:mb-3">
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.back()}
-            className="flex items-center gap-1 text-[#2F2F2F] font-dm-sans"
+            className=" text-[#2F2F2F] font-dm-sans"
           >
             <MoveLeft className="h-4 w-4" />
-            Back to Reports
+           
           </Button>
 
           <Badge
@@ -225,13 +225,13 @@ const SkuReportDetailPage = () => {
           </Badge>
         </div>
 
-        <Button
+        {/* <Button
           variant="outline"
           className="flex items-center gap-2 text-sm font-dm-sans"
           disabled={loading}
         >
           Export Report
-        </Button>
+        </Button> */}
       </div>
 
       {/* ─── Product Identity Card ───────────────────────────────────────────── */}
