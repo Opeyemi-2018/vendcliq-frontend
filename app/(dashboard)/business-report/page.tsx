@@ -10,6 +10,9 @@ import {
   Check,
   ChevronDown,
   Download,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Card } from "@/components/ui/card";
@@ -80,6 +83,16 @@ interface Manufacturer {
   name: string;
 }
 
+type SortOption =
+  | "name-asc"
+  | "name-desc"
+  | "quantity-asc"
+  | "quantity-desc"
+  | "top-selling"
+  | "bottom-selling";
+
+const STORAGE_KEY = "businessReportState";
+
 const ReportSkeleton = () => (
   <tr className="animate-pulse">
     <td className="py-4 pl-4">
@@ -134,6 +147,8 @@ const BusinessReports = () => {
   const [manufacturersLoading, setManufacturersLoading] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>("name-asc");
+  const [sortOpen, setSortOpen] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -157,7 +172,6 @@ const BusinessReports = () => {
   // Manufacturer states
   const [manufacturerOpen, setManufacturerOpen] = useState(false);
   const [manufacturerSearch, setManufacturerSearch] = useState("");
-  // Mobile modal specific states (separate from desktop)
   const [mobileManufacturerOpen, setMobileManufacturerOpen] = useState(false);
   const [mobileStoreOpenModal, setMobileStoreOpenModal] = useState(false);
   const [mobileSkuOpenModal, setMobileSkuOpenModal] = useState(false);
@@ -166,12 +180,108 @@ const BusinessReports = () => {
   const [storeOpen, setStoreOpen] = useState(false);
   const [storeSearch, setStoreSearch] = useState("");
 
+  // Track if state has been restored from localStorage
+  const restoredRef = useRef(false);
+
+  // ─── RESTORE STATE FROM LOCALSTORAGE ON MOUNT ────────────────────────────
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+
+        // Restore filter controls
+        if (saved.startDate) {
+          setStartDate(saved.startDate);
+          setTempStartDate(saved.startDate);
+        }
+        if (saved.endDate) {
+          setEndDate(saved.endDate);
+          setTempEndDate(saved.endDate);
+        }
+        if (saved.selectedStore) setSelectedStore(saved.selectedStore);
+        if (saved.selectedManufacturer)
+          setSelectedManufacturer(saved.selectedManufacturer);
+        if (saved.selectedSku) setSelectedSku(saved.selectedSku);
+        if (saved.sortOption) setSortOption(saved.sortOption);
+        if (saved.currentPage) setCurrentPage(saved.currentPage);
+
+        // Restore summary
+        if (saved.summary) setSummary(saved.summary);
+
+        // Restore the full reports array AND the filtered slice
+        if (saved.reports && Array.isArray(saved.reports)) {
+          setReports(saved.reports);
+
+          // Re-apply store filter on the restored data
+          const store = saved.selectedStore ?? "all";
+          const filtered =
+            store === "all"
+              ? saved.reports
+              : saved.reports.filter(
+                  (r: TableReportItem) => r.storeName === store,
+                );
+          setFilteredReports(filtered);
+          setHasFetched(true);
+          return; // Skip default-date fetch — we already have data
+        }
+      }
+    } catch (e) {
+      console.error("Failed to restore business report state:", e);
+    }
+
+    // No saved state → default to last 3 days
+    const today = new Date();
+    const threeDaysAgo = subDays(today, 3);
+    const defaultDate = format(threeDaysAgo, "yyyy-MM-dd");
+    setStartDate(defaultDate);
+    setEndDate(defaultDate);
+    setTempStartDate(defaultDate);
+    setTempEndDate(defaultDate);
+    fetchReport(defaultDate, defaultDate);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── PERSIST FULL STATE WHENEVER IT CHANGES ──────────────────────────────
+  // We gate on hasFetched so we don't overwrite good saved data with empty arrays
+  useEffect(() => {
+    if (!hasFetched) return;
+    try {
+      const state = {
+        startDate,
+        endDate,
+        selectedStore,
+        selectedManufacturer,
+        selectedSku,
+        sortOption,
+        currentPage,
+        summary,
+        reports, // ← full unfiltered data, so we can re-filter on restore
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error("Failed to save business report state:", e);
+    }
+  }, [
+    startDate,
+    endDate,
+    selectedStore,
+    selectedManufacturer,
+    selectedSku,
+    sortOption,
+    currentPage,
+    summary,
+    reports,
+    hasFetched,
+  ]);
+
   const uniqueStores = useMemo(() => {
     const stores = new Set(reports.map((r) => r.storeName));
     return ["all", ...Array.from(stores).sort()];
   }, [reports]);
 
-  // Filter stores based on search (client-side)
   const filteredStores = useMemo(() => {
     if (!storeSearch) return uniqueStores;
     return uniqueStores.filter((store) =>
@@ -181,7 +291,6 @@ const BusinessReports = () => {
     );
   }, [uniqueStores, storeSearch]);
 
-  // Filter manufacturers based on search (client-side)
   const filteredManufacturers = useMemo(() => {
     if (!manufacturerSearch.trim()) return manufacturers;
     return manufacturers.filter((manufacturer) =>
@@ -190,6 +299,30 @@ const BusinessReports = () => {
         .includes(manufacturerSearch.toLowerCase()),
     );
   }, [manufacturers, manufacturerSearch]);
+
+  const sortedReports = useMemo(() => {
+    const reportsToSort = [...filteredReports];
+    switch (sortOption) {
+      case "name-asc":
+        return reportsToSort.sort((a, b) =>
+          a.itemName.localeCompare(b.itemName),
+        );
+      case "name-desc":
+        return reportsToSort.sort((a, b) =>
+          b.itemName.localeCompare(a.itemName),
+        );
+      case "quantity-asc":
+        return reportsToSort.sort((a, b) => a.closingQty - b.closingQty);
+      case "quantity-desc":
+        return reportsToSort.sort((a, b) => b.closingQty - a.closingQty);
+      case "top-selling":
+        return reportsToSort.sort((a, b) => b.qty_sold - a.qty_sold);
+      case "bottom-selling":
+        return reportsToSort.sort((a, b) => a.qty_sold - b.qty_sold);
+      default:
+        return reportsToSort;
+    }
+  }, [filteredReports, sortOption]);
 
   const fetchStocks = async (page: number, search: string, replace = false) => {
     if (stockLoading) return;
@@ -207,7 +340,6 @@ const BusinessReports = () => {
     }
   };
 
-  // Load stocks when popover opens
   useEffect(() => {
     if (
       (desktopSkuOpen || mobileSkuOpen || mobileSkuOpenModal) &&
@@ -218,7 +350,6 @@ const BusinessReports = () => {
     }
   }, [desktopSkuOpen, mobileSkuOpen, mobileSkuOpenModal]);
 
-  // Fetch manufacturers on component mount
   const fetchManufacturers = async () => {
     if (manufacturersLoading) return;
     setManufacturersLoading(true);
@@ -234,10 +365,9 @@ const BusinessReports = () => {
     }
   };
 
-  // Load manufacturers when component mounts
   useEffect(() => {
     fetchManufacturers();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchReport = async (sDate?: string, eDate?: string) => {
     setLoading(true);
@@ -273,7 +403,12 @@ const BusinessReports = () => {
         );
 
         setReports(mapped);
-        setFilteredReports(mapped);
+        // Re-apply current store filter to fresh data
+        const filtered =
+          selectedStore === "all"
+            ? mapped
+            : mapped.filter((r) => r.storeName === selectedStore);
+        setFilteredReports(filtered);
         setCurrentPage(1);
         setHasFetched(true);
 
@@ -328,7 +463,6 @@ const BusinessReports = () => {
         [],
       ];
 
-      // IMPORTANT: This must match EXACTLY the order of columns in your table
       const headers = [
         "Store Name",
         "Item Name",
@@ -360,17 +494,17 @@ const BusinessReports = () => {
       const worksheetData = [...summaryRows, headers, ...tableData];
       const ws = XLSX.utils.aoa_to_sheet(worksheetData);
       ws["!cols"] = [
-        { wch: 25 }, // Store Name
-        { wch: 40 }, // Item Name
-        { wch: 15 }, // Opening Qty
-        { wch: 15 }, // Closing Qty
-        { wch: 12 }, // Qty Sold
-        { wch: 12 }, // Total Diff
-        { wch: 18 }, // Opening Value
-        { wch: 18 }, // Closing Value
-        { wch: 15 }, // Value Change
-        { wch: 18 }, // Opening Empties
-        { wch: 18 }, // Closing Empties
+        { wch: 25 },
+        { wch: 40 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 15 },
+        { wch: 18 },
+        { wch: 18 },
       ];
 
       const wb = XLSX.utils.book_new();
@@ -385,39 +519,28 @@ const BusinessReports = () => {
     }
   };
 
-  // Initial fetch - Last 3 days
+  // Store filter — runs when selectedStore or reports change
   useEffect(() => {
-    if (hasFetched) return;
-
-    const today = new Date();
-    const threeDaysAgo = subDays(today, 3);
-    const defaultDate = format(threeDaysAgo, "yyyy-MM-dd");
-
-    setStartDate(defaultDate);
-    setEndDate(defaultDate);
-    setTempStartDate(defaultDate);
-    setTempEndDate(defaultDate);
-
-    fetchReport(defaultDate, defaultDate);
-  }, [hasFetched]);
-
-  // Store filter
-  useEffect(() => {
+    if (!hasFetched) return;
     const filtered =
       selectedStore === "all"
         ? reports
         : reports.filter((r) => r.storeName === selectedStore);
-
     setFilteredReports(filtered);
     setCurrentPage(1);
-  }, [reports, selectedStore]);
+  }, [reports, selectedStore, hasFetched]);
 
-  // Refetch when manufacturer or SKU changes
+  // Refetch when manufacturer or SKU filter changes (after initial load)
+  const isFirstManufacturerSkuRender = useRef(true);
   useEffect(() => {
+    if (isFirstManufacturerSkuRender.current) {
+      isFirstManufacturerSkuRender.current = false;
+      return;
+    }
     if (hasFetched) {
       fetchReport(startDate, endDate);
     }
-  }, [selectedManufacturer, selectedSku]);
+  }, [selectedManufacturer, selectedSku]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleApplyDateFilter = () => {
     if (!tempStartDate || !tempEndDate) {
@@ -436,19 +559,15 @@ const BusinessReports = () => {
     setFilterModalOpen(false);
   };
 
-  // SKU Search Handler
   const handleSkuSearch = (query: string) => {
     setSkuSearch(query);
     setStockSearch(query);
-
     if (stockSearchRef.current) clearTimeout(stockSearchRef.current);
-
     stockSearchRef.current = setTimeout(() => {
       fetchStocks(1, query, true);
     }, 300);
   };
 
-  // Infinite scroll handler for SKU
   const handleStockScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
@@ -473,18 +592,33 @@ const BusinessReports = () => {
   };
 
   const clearFilters = () => {
+    const today = new Date();
+    const threeDaysAgo = subDays(today, 3);
+    const defaultDate = format(threeDaysAgo, "yyyy-MM-dd");
+
     setSelectedStore("all");
     setSelectedManufacturer("");
     setSelectedSku("");
     setSkuSearch("");
     setStoreSearch("");
     setManufacturerSearch("");
+    setSortOption("name-asc");
+    setStartDate(defaultDate);
+    setEndDate(defaultDate);
+    setTempStartDate(defaultDate);
+    setTempEndDate(defaultDate);
+    setCurrentPage(1);
+
+    // Clear all persisted state
+    localStorage.removeItem(STORAGE_KEY);
+
+    fetchReport(defaultDate, defaultDate);
   };
 
-  const totalItems = filteredReports.length;
+  const totalItems = sortedReports.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
 
-  const paginatedReports = filteredReports.slice(
+  const paginatedReports = sortedReports.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
@@ -502,6 +636,25 @@ const BusinessReports = () => {
     const e = parseISO(endDate);
     if (startDate === endDate) return format(s, "MMM dd, yyyy");
     return `${format(s, "MMM dd, yyyy")} – ${format(e, "MMM dd, yyyy")}`;
+  };
+
+  const getSortLabel = () => {
+    switch (sortOption) {
+      case "name-asc":
+        return "Stock Name (A-Z)";
+      case "name-desc":
+        return "Stock Name (Z-A)";
+      case "quantity-asc":
+        return "Stock Quantity (Low to High)";
+      case "quantity-desc":
+        return "Stock Quantity (High to Low)";
+      case "top-selling":
+        return "Top Selling";
+      case "bottom-selling":
+        return "Bottom Selling";
+      default:
+        return "Sort by";
+    }
   };
 
   const SkuCommandList = () => (
@@ -620,7 +773,7 @@ const BusinessReports = () => {
                   </div>
                 </div>
 
-                {/* Manufacturer - Mobile (using separate state) */}
+                {/* Manufacturer - Mobile */}
                 <div>
                   <Label className="text-sm font-medium mb-2 block">
                     Manufacturer
@@ -705,7 +858,7 @@ const BusinessReports = () => {
                   </Popover>
                 </div>
 
-                {/* SKU - Mobile (using separate state) */}
+                {/* SKU - Mobile */}
                 <div>
                   <Label className="text-sm font-medium mb-2 block">
                     Product / SKU
@@ -740,7 +893,7 @@ const BusinessReports = () => {
                   </Popover>
                 </div>
 
-                {/* Store - Mobile (using separate state) */}
+                {/* Store - Mobile */}
                 <div>
                   <Label className="text-sm font-medium mb-2 block">
                     Store
@@ -1044,6 +1197,120 @@ const BusinessReports = () => {
             </PopoverContent>
           </Popover>
 
+          {/* Sort Dropdown */}
+          <Popover open={sortOpen} onOpenChange={setSortOpen} modal>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-[200px] h-10 justify-between overflow-hidden"
+              >
+                <span className="flex items-center gap-2 truncate">
+                  <ArrowUpDown size={14} />
+                  <span className="truncate">{getSortLabel()}</span>
+                </span>
+                <ChevronDown className="h-4 w-4 opacity-50 flex-shrink-0" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[250px] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Search sort options..." />
+                <CommandList>
+                  <CommandEmpty>No options found.</CommandEmpty>
+                  <CommandGroup heading="Sort by Name">
+                    <CommandItem
+                      onSelect={() => {
+                        setSortOption("name-asc");
+                        setSortOpen(false);
+                      }}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <ArrowUp size={14} />
+                        <span>Stock Name (A-Z)</span>
+                        {sortOption === "name-asc" && (
+                          <Check className="ml-auto h-4 w-4" />
+                        )}
+                      </div>
+                    </CommandItem>
+                    <CommandItem
+                      onSelect={() => {
+                        setSortOption("name-desc");
+                        setSortOpen(false);
+                      }}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <ArrowDown size={14} />
+                        <span>Stock Name (Z-A)</span>
+                        {sortOption === "name-desc" && (
+                          <Check className="ml-auto h-4 w-4" />
+                        )}
+                      </div>
+                    </CommandItem>
+                  </CommandGroup>
+                  <CommandGroup heading="Sort by Quantity">
+                    <CommandItem
+                      onSelect={() => {
+                        setSortOption("quantity-asc");
+                        setSortOpen(false);
+                      }}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <ArrowUp size={14} />
+                        <span>Stock Quantity (Low to High)</span>
+                        {sortOption === "quantity-asc" && (
+                          <Check className="ml-auto h-4 w-4" />
+                        )}
+                      </div>
+                    </CommandItem>
+                    <CommandItem
+                      onSelect={() => {
+                        setSortOption("quantity-desc");
+                        setSortOpen(false);
+                      }}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <ArrowDown size={14} />
+                        <span>Stock Quantity (High to Low)</span>
+                        {sortOption === "quantity-desc" && (
+                          <Check className="ml-auto h-4 w-4" />
+                        )}
+                      </div>
+                    </CommandItem>
+                  </CommandGroup>
+                  <CommandGroup heading="Sort by Sales">
+                    <CommandItem
+                      onSelect={() => {
+                        setSortOption("top-selling");
+                        setSortOpen(false);
+                      }}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <ArrowDown size={14} />
+                        <span>Top Selling</span>
+                        {sortOption === "top-selling" && (
+                          <Check className="ml-auto h-4 w-4" />
+                        )}
+                      </div>
+                    </CommandItem>
+                    <CommandItem
+                      onSelect={() => {
+                        setSortOption("bottom-selling");
+                        setSortOpen(false);
+                      }}
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <ArrowUp size={14} />
+                        <span>Bottom Selling</span>
+                        {sortOption === "bottom-selling" && (
+                          <Check className="ml-auto h-4 w-4" />
+                        )}
+                      </div>
+                    </CommandItem>
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
           <Button
             onClick={handleExport}
             disabled={exportLoading || reports.length === 0}
@@ -1134,7 +1401,7 @@ const BusinessReports = () => {
           {loading ? (
             <ThreeDots height="20" width="20" color="#0A6DC0" />
           ) : (
-            `(${filteredReports.length})`
+            `(${sortedReports.length})`
           )}
         </h1>
 
@@ -1170,7 +1437,6 @@ const BusinessReports = () => {
                   <th className="text-left pr-8 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     Value Change
                   </th>
-
                   <th className="text-left pr-8 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     Opening Empties
                   </th>
@@ -1184,7 +1450,7 @@ const BusinessReports = () => {
                   Array(5)
                     .fill(null)
                     .map((_, i) => <ReportSkeleton key={i} />)
-                ) : filteredReports.length === 0 ? (
+                ) : sortedReports.length === 0 ? (
                   <tr>
                     <td colSpan={11} className="py-20 px-4 text-center">
                       <div className="flex flex-col items-center justify-center space-y-4">
@@ -1237,7 +1503,7 @@ const BusinessReports = () => {
         </Card>
 
         {/* Pagination */}
-        {!loading && filteredReports.length > itemsPerPage && (
+        {!loading && sortedReports.length > itemsPerPage && (
           <div className="flex flex-row justify-between items-center mt-6 gap-4">
             <button
               disabled={currentPage === 1}
@@ -1254,9 +1520,9 @@ const BusinessReports = () => {
               Next <MoveRight />
             </button>
             <div className="hidden lg:block text-sm text-gray-600">
-              Showing {(currentPage - 1) * itemsPerPage + 1} -{" "}
-              {Math.min(currentPage * itemsPerPage, filteredReports.length)} of{" "}
-              {filteredReports.length}
+              Showing {(currentPage - 1) * itemsPerPage + 1} –{" "}
+              {Math.min(currentPage * itemsPerPage, sortedReports.length)} of{" "}
+              {sortedReports.length}
             </div>
           </div>
         )}

@@ -3,7 +3,14 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { MoveLeft, TrendingUp, Package, ShoppingCart,  RefreshCw } from "lucide-react";
+import {
+  MoveLeft,
+  TrendingUp,
+  Package,
+  ShoppingCart,
+  RefreshCw,
+  MoveRight,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -78,8 +85,17 @@ const chartConfig = {
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-const SkeletonBlock = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
-  <div className={`animate-pulse bg-gray-200 rounded ${className}`} style={style} />
+const SkeletonBlock = ({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+}) => (
+  <div
+    className={`animate-pulse bg-gray-200 rounded ${className}`}
+    style={style}
+  />
 );
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
@@ -92,16 +108,26 @@ interface StatCardProps {
   iconBg?: string;
 }
 
-const StatCard = ({ icon, label, value, sub, iconBg = "bg-blue-50" }: StatCardProps) => (
+const StatCard = ({
+  icon,
+  label,
+  value,
+  sub,
+  iconBg = "bg-blue-50",
+}: StatCardProps) => (
   <Card className="p-5 flex flex-col gap-3">
     <div className="flex items-center justify-between">
       <span className="text-sm text-[#9E9A9A] font-dm-sans">{label}</span>
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconBg}`}>
+      <div
+        className={`w-8 h-8 rounded-lg flex items-center justify-center ${iconBg}`}
+      >
         {icon}
       </div>
     </div>
     <div>
-      <p className="font-clash font-semibold text-[22px] text-[#2F2F2F]">{value}</p>
+      <p className="font-clash font-semibold text-[22px] text-[#2F2F2F]">
+        {value}
+      </p>
       {sub && <p className="text-xs text-[#9E9A9A] mt-1 font-dm-sans">{sub}</p>}
     </div>
   </Card>
@@ -122,6 +148,9 @@ const SkuReportDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [txnCurrentPage, setTxnCurrentPage] = useState(1);
+  const txnsPerPage = 5;
+
   useEffect(() => {
     if (!stockId) return;
 
@@ -135,7 +164,7 @@ const SkuReportDetailPage = () => {
 
         const query = new URLSearchParams(params).toString();
         const res = await fetcher<{ statusCode: number; data: SkuReportData }>(
-          `inventory/dashboard/sku-report?${query}`
+          `inventory/dashboard/sku-report?${query}`,
         );
 
         if (res.statusCode === 200 && res.data) {
@@ -174,6 +203,16 @@ const SkuReportDetailPage = () => {
     return `${format(s, "MMM dd, yyyy")} – ${format(e, "MMM dd, yyyy")}`;
   };
 
+  // Get paginated transactions
+  const getPaginatedTransactions = () => {
+    const transactions = data?.recent_transactions ?? [];
+    const startIndex = (txnCurrentPage - 1) * txnsPerPage;
+    const endIndex = startIndex + txnsPerPage;
+    return {
+      transactions: transactions.slice(startIndex, endIndex),
+      totalPages: Math.ceil(transactions.length / txnsPerPage),
+    };
+  };
   // ─── Error State ───────────────────────────────────────────────────────────
   if (error) {
     return (
@@ -214,7 +253,6 @@ const SkuReportDetailPage = () => {
             className=" text-[#2F2F2F] font-dm-sans"
           >
             <MoveLeft className="h-4 w-4" />
-           
           </Button>
 
           <Badge
@@ -355,14 +393,21 @@ const SkuReportDetailPage = () => {
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-[260px] w-full">
-            <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <AreaChart
+              data={chartData}
+              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+            >
               <defs>
                 <linearGradient id="colorQty" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#0A6DC0" stopOpacity={0.18} />
                   <stop offset="95%" stopColor="#0A6DC0" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" vertical={false} />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#F0F0F0"
+                vertical={false}
+              />
               <XAxis
                 dataKey="date"
                 tick={{ fontSize: 11, fill: "#9E9A9A" }}
@@ -397,11 +442,6 @@ const SkuReportDetailPage = () => {
             Recent Transactions
             {loading && <ThreeDots height="16" width="24" color="#0A6DC0" />}
           </h3>
-          {!loading && (data?.recent_transactions?.length ?? 0) > 0 && (
-            <button className="text-[#0A6DC0] text-sm font-dm-sans font-medium flex items-center gap-1 hover:underline">
-              View all →
-            </button>
-          )}
         </div>
 
         <div className="overflow-x-auto">
@@ -428,7 +468,7 @@ const SkuReportDetailPage = () => {
                         .fill(null)
                         .map((__, j) => (
                           <td key={j} className="py-4">
-                            <SkeletonBlock className="h-4 w-20" />
+                            <div className="h-4 bg-gray-200 rounded w-20"></div>
                           </td>
                         ))}
                     </tr>
@@ -442,7 +482,7 @@ const SkuReportDetailPage = () => {
                   </td>
                 </tr>
               ) : (
-                data?.recent_transactions.map((txn) => (
+                getPaginatedTransactions().transactions.map((txn) => (
                   <tr
                     key={txn.invoice_id}
                     className="hover:bg-gray-50 transition-colors"
@@ -470,6 +510,35 @@ const SkuReportDetailPage = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination for Transactions */}
+        {!loading && (data?.recent_transactions?.length ?? 0) > txnsPerPage && (
+          <div className="flex flex-row justify-between items-center mt-6 gap-4 pt-4 border-t border-[#E6E6E6]">
+            <button
+              disabled={txnCurrentPage === 1}
+              onClick={() => setTxnCurrentPage((prev) => Math.max(1, prev - 1))}
+              className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <MoveLeft className="h-3 w-3" /> Previous
+            </button>
+
+            <div className="text-sm text-gray-500 font-dm-sans">
+              Page {txnCurrentPage} of {getPaginatedTransactions().totalPages}
+            </div>
+
+            <button
+              disabled={txnCurrentPage >= getPaginatedTransactions().totalPages}
+              onClick={() =>
+                setTxnCurrentPage((prev) =>
+                  Math.min(getPaginatedTransactions().totalPages, prev + 1),
+                )
+              }
+              className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next <MoveRight className="h-3 w-3" />
+            </button>
+          </div>
+        )}
       </Card>
     </div>
   );
