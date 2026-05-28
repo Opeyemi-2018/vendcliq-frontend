@@ -328,7 +328,7 @@ const PayPage = () => {
           </div>
 
           {/* Narration */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <Label htmlFor="narration">Narration (optional)</Label>
             <Input
               id="narration"
@@ -337,7 +337,7 @@ const PayPage = () => {
               placeholder="e.g. Payment for inventory"
               className="mt-2 py-6"
             />
-          </div>
+          </div> */}
 
           {/* Proceed Button */}
           <Button

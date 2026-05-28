@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { ClipLoader } from "react-spinners";
@@ -149,9 +150,7 @@ const Cart = () => {
 
   const handleDelete = async (itemId: string) => {
     try {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
+      const token = localStorage.getItem("accessToken");
       if (!token) return toast.error("Please log in");
 
       setDeletingId(itemId);
@@ -353,9 +352,11 @@ const Cart = () => {
                           </DialogDescription>
                         </DialogHeader>
                         <DialogFooter>
-                          <Button variant="outline" onClick={() => {}}>
-                            Cancel
-                          </Button>
+                          <DialogClose asChild>
+                            <Button variant="outline">
+                              Cancel
+                            </Button>
+                          </DialogClose>
                           <Button
                             variant="destructive"
                             onClick={() => handleDelete(item.id)}

@@ -118,6 +118,7 @@ function PayInvoiceContent() {
   ]);
   const [otpDueDate, setOtpDueDate] = useState<string>("");
   const [otpLoading, setOtpLoading] = useState(false);
+  const isEdit = searchParams.get("edit") === "true";
 
   // Mobile step: "select" | "details"
   const [mobileStep, setMobileStep] = useState<"select" | "details">("select");
@@ -703,6 +704,7 @@ function PayInvoiceContent() {
       </AlertDialog>
 
       {/* Success Modal */}
+      {/* Success Modal */}
       <AlertDialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -716,16 +718,21 @@ function PayInvoiceContent() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-6">
-            <AlertDialogAction
+            <Button
               onClick={() => {
                 cleanupPreview();
                 setShowSuccessModal(false);
-                router.push("/inventory/sell");
+
+                if (isEdit) {
+                  router.push(`/inventory/sales/${invoiceId}`);
+                } else {
+                  router.push("/inventory/sell");
+                }
               }}
               className="bg-[#0A6DC0] hover:bg-[#085a9e] w-full"
             >
-              Continue Shopping
-            </AlertDialogAction>
+              {isEdit ? "View Updated Invoice" : "Continue Shopping"}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
