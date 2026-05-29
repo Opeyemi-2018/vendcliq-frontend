@@ -31,6 +31,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const Navbar = () => {
+    const { isAttendant, canAccessMarketplace } = useUser();
+
   const { user } = useUser();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
@@ -69,7 +71,7 @@ const Navbar = () => {
           style={{ gap: "30px" }}
           className="flex items-center text-[13px] md:text-[16px] font-medium"
         >
-          {mounted && user && isUserWalletNull && (
+          {mounted && user && isUserWalletNull && !isAttendant && (
             <Link
               href="/business-account"
               className="font-inter font-dm-sans cursor-pointer whitespace-nowrap text-[14px] lg:text-[16px] font-medium text-[#0A6DC0] hover:text-[#09599a] border-b-2 border-[#0A6DC0]"

@@ -26,6 +26,7 @@ import {
 } from "@/lib/utils/api/apiHelper";
 import { toast } from "sonner";
 import PlacesAutocompleteInput from "@/hooks/googleMap";
+import { useUser } from "@/context/userContext";
 
 interface Store {
   id: string;
@@ -72,6 +73,8 @@ interface StockResponse {
 const ITEMS_PER_PAGE = 5;
 
 const StoreDetailPage = () => {
+  const { canMoveStock, canAddStock } = useUser();
+
   const router = useRouter();
   const params = useParams();
   const storeId = params.id as string;
@@ -406,13 +409,14 @@ const StoreDetailPage = () => {
             Here are all the details about this store
           </p>
         </div>
-
-        <Button
-          onClick={() => setIsAddStockOpen(true)}
-          className="bg-[#0A6DC0] hover:bg-[#09599a] py-5 md:py-6"
-        >
-          + Add Stock
-        </Button>
+        {canAddStock() && (
+          <Button
+            onClick={() => setIsAddStockOpen(true)}
+            className="bg-[#0A6DC0] hover:bg-[#09599a] py-5 md:py-6"
+          >
+            + Add Stock
+          </Button>
+        )}
       </div>
 
       <div className="bg-[url('/balance-bg.svg')] my-6 bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6">
@@ -521,13 +525,15 @@ const StoreDetailPage = () => {
           <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
             Products in Store ({totalCount ?? stocks.length})
           </h2>
-          <Button
-            className="bg-[#0A2540] hover:bg-[#304c6a] py-5 md:py-6"
-            disabled={selectedStocks.size === 0}
-            onClick={handleMoveSelected}
-          >
-            Move Selected ({selectedStocks.size})
-          </Button>
+          {canMoveStock() && (
+            <Button
+              className="bg-[#0A2540] hover:bg-[#304c6a] py-5 md:py-6"
+              disabled={selectedStocks.size === 0}
+              onClick={handleMoveSelected}
+            >
+              Move Selected ({selectedStocks.size})
+            </Button>
+          )}
         </div>
 
         <div className="relative mb-6">
@@ -557,12 +563,14 @@ const StoreDetailPage = () => {
                 ? "Try a different search"
                 : "Add stock to see items here"}
             </p>
-            <Button
-              onClick={() => setIsAddStockOpen(true)}
-              className="bg-[#0A6DC0] hover:bg-[#09599a] mt-2"
-            >
-              + Add Stock
-            </Button>
+            {canAddStock() && (
+              <Button
+                onClick={() => setIsAddStockOpen(true)}
+                className="bg-[#0A6DC0] hover:bg-[#09599a] mt-2"
+              >
+                + Add Stock
+              </Button>
+            )}
           </div>
         ) : (
           <>

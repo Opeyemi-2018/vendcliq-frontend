@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
 import { SupplierSalesMedium, SupplierSalesResponse } from "@/types/sales";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@/context/userContext";
 
 type InvoiceItem = {
   id: string;
@@ -43,6 +44,7 @@ type DisplayTransaction = {
 
 const Home = () => {
   const router = useRouter();
+  const { canBuy, canSell } = useUser();
 
   const [showBalance, setShowBalance] = useState(true);
 
@@ -410,18 +412,24 @@ const Home = () => {
           Quick Actions
         </h1>
         <div className="mt-4 flex items-center gap-4">
-          <Button
-            onClick={() => router.push("/inventory/sell")}
-            className="bg-[#0A6DC0] hover:bg-[#09599a] w-full text-[16px] flex gap-2 px-6 py-5 md:py-6 text-white"
-          >
-            <Image src="/sell.svg" height={20} width={20} alt="sell" /> Sell
-          </Button>
-          <Button
-            onClick={() => router.push("/inventory/buy")}
-            className="bg-[#0A2540] hover:bg-[#304c6a] w-full text-[16px] flex gap-2 px-6 py-5 md:py-6 text-white"
-          >
-            <Image src="/buy.svg" height={20} width={20} alt="buy" /> Buy
-          </Button>
+          {canSell() && (
+            <Button
+              onClick={() => router.push("/inventory/sell")}
+              className="bg-[#0A6DC0] hover:bg-[#09599a] w-full text-[16px] flex gap-2 px-6 py-5 md:py-6 text-white"
+            >
+              <Image src="/sell.svg" height={20} width={20} alt="sell" /> Sell
+            </Button>
+          )}
+
+          {canBuy() && (
+            <Button
+              onClick={() => router.push("/inventory/buy")}
+              className="bg-[#0A2540] hover:bg-[#304c6a] w-full text-[16px] flex gap-2 px-6 py-5 md:py-6 text-white"
+            >
+              <Image src="/buy.svg" height={20} width={20} alt="buy" /> Buy
+            </Button>
+          )}
+
           <Button
             onClick={() => router.push("/inventory/my-store")}
             variant="outline"

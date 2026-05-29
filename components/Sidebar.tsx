@@ -1,9 +1,10 @@
+"use client";
+
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
   Home,
   RectangleEllipsis,
-  Percent,
   LogOut,
   ChevronDown,
   Building2,
@@ -45,70 +46,7 @@ import {
 } from "@/components/ui/collapsible";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-const items = [
-  {
-    title: "Account",
-    url: "/account/overview",
-    icon: Home,
-    children: [
-      { title: "Overview", url: "/account/overview" },
-      { title: "Send Money", url: "/account/send-money" },
-      { title: "Pay Utility Bill", url: "/account/pay-utility" },
-      {
-        title: "Transaction History",
-        url: "/account/transactionHistory",
-      },
-      {
-        title: "Payment & Subscription",
-        url: "/payment-subscription",
-      },
-    ],
-  },
-  {
-    title: "Inventory",
-    url: "/inventory/overview",
-    icon: BookOpen,
-    children: [
-      { title: "Overview", url: "/inventory/overview" },
-      { title: "Sell", url: "/inventory/sell" },
-      { title: "Buy", url: "/inventory/buy" },
-      { title: "My Store", url: "/inventory/my-store" },
-      { title: "My Purchase", url: "/my-purchase" },
-    ],
-  },
-  // { title: "Loans", url: "/loan", icon: BriefcaseBusiness },
-  {
-    title: "Market Place",
-    url: "/market-place",
-    icon: Store,
-  },
-
-  {
-    title: "Enterprise",
-    url: "/credit-ledger",
-    icon: Building2,
-    children: [
-      { title: "Credit Ledger", url: "/credit-ledger" },
-      { title: "Delivery", url: "/delivery" },
-    ],
-  },
-
-  {
-    title: "More",
-    url: "#",
-    icon: RectangleEllipsis,
-    children: [
-      { title: "Business Report", url: "/business-report" },
-      { title: "Supplier List", url: "/suppliers" },
-      { title: "Customer List", url: "/customer" },
-      { title: "Expenses", url: "/expenses" },
-      { title: "Profile Settings", url: "/profile-settings" },
-      { title: "Referral", url: "/referral" },
-      { title: "Account Deletion", url: "/request-account-deletion" },
-    ],
-  },
-];
+import { useUser } from "@/context/userContext";
 
 export function AppSidebar() {
   const { state, isMobile, setOpenMobile, setOpen } = useSidebar();
@@ -116,6 +54,99 @@ export function AppSidebar() {
   const [openItems, setOpenItems] = useState<string[]>([]);
   const pathname = usePathname();
   const router = useRouter();
+  const {
+    isAttendant,
+    canReporting,
+    canBuy,
+    canExpenses,
+    canSell,
+    canAccessMarketplace,
+  } = useUser();
+
+  const allItems = [
+    ...(!isAttendant
+      ? [
+          {
+            title: "Account",
+            url: "/account/overview",
+            icon: Home,
+            children: [
+              { title: "Overview", url: "/account/overview" },
+              { title: "Send Money", url: "/account/send-money" },
+              { title: "Pay Utility Bill", url: "/account/pay-utility" },
+              {
+                title: "Transaction History",
+                url: "/account/transactionHistory",
+              },
+              { title: "Payment & Subscription", url: "/payment-subscription" },
+            ],
+          },
+        ]
+      : []),
+    {
+      title: "Inventory",
+      url: "/inventory/overview",
+      icon: BookOpen,
+      children: [
+        { title: "Overview", url: "/inventory/overview" },
+        ...(canSell() ? [{ title: "Sell", url: "/inventory/sell" }] : []),
+        ...(canBuy() ? [{ title: "Buy", url: "/inventory/buy" }] : []),
+        { title: "My Store", url: "/inventory/my-store" },
+        ...(!isAttendant
+          ? [{ title: "My Purchase", url: "/my-purchase" }]
+          : []),
+      ],
+    },
+    ...(canAccessMarketplace()
+      ? [
+          {
+            title: "Market Place",
+            url: "/market-place",
+            icon: Store,
+          },
+        ]
+      : []),
+    ...(!isAttendant
+      ? [
+          {
+            title: "Enterprise",
+            url: "/credit-ledger",
+            icon: Building2,
+            children: [
+              { title: "Credit Ledger", url: "/credit-ledger" },
+              { title: "Delivery", url: "/delivery" },
+            ],
+          },
+        ]
+      : []),
+    {
+      title: "More",
+      url: "#",
+      icon: RectangleEllipsis,
+      children: [
+        ...(canReporting()
+          ? [{ title: "Business Report", url: "/business-report" }]
+          : []),
+
+        { title: "Supplier List", url: "/suppliers" },
+        { title: "Customer List", url: "/customer" },
+
+        ...(canExpenses() ? [{ title: "Expenses", url: "/expenses" }] : []),
+
+        { title: "Profile Settings", url: "/profile-settings" },
+        { title: "Referral", url: "/referral" },
+
+        ...(!isAttendant
+          ? [
+              {
+                title: "Account Deletion",
+                url: "/request-account-deletion",
+              },
+            ]
+          : []),
+      ],
+    },
+  ];
 
   const isActive = (url: string) => {
     if (!url || url === "#") return false;
@@ -128,9 +159,8 @@ export function AppSidebar() {
   };
 
   const toggleItem = (title: string) => {
-    setOpenItems(
-      (prev) =>
-        prev.includes(title) ? prev.filter((item) => item !== title) : [title], // Only keep the newly opened item
+    setOpenItems((prev) =>
+      prev.includes(title) ? prev.filter((item) => item !== title) : [title],
     );
   };
 
@@ -143,7 +173,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="">
+    <Sidebar collapsible="icon">
       <SidebarContent
         style={{
           backgroundColor: "#0A2540",
@@ -158,7 +188,6 @@ export function AppSidebar() {
               <Image src={"/vl.avif"} width={150} height={150} alt="logo" />
             </div>
           )}
-
           {isCollapsed && (
             <div className="flex justify-center py-4">
               <Image
@@ -176,7 +205,7 @@ export function AppSidebar() {
 
           <SidebarGroupContent>
             <SidebarMenu className="mt-4">
-              {items.map((item) => {
+              {allItems.map((item) => {
                 const parentActive =
                   hasActiveChild(item.children) || isActive(item.url);
 
@@ -193,9 +222,7 @@ export function AppSidebar() {
                             isActive={parentActive}
                             className="menuButton mb-3 text-white hover:bg-white/10"
                             onClick={() => {
-                              if (!isMobile) {
-                                setOpen(true);
-                              }
+                              if (!isMobile) setOpen(true);
                             }}
                           >
                             <item.icon
@@ -218,27 +245,24 @@ export function AppSidebar() {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <SidebarMenuSub className="border-l-0 ml-0 pl-0">
-                            {item.children.map((child) => {
-                              const childActive = isActive(child.url);
-                              return (
-                                <SidebarMenuSubItem key={child.title}>
-                                  <SidebarMenuSubButton
-                                    asChild
-                                    isActive={childActive}
-                                    className="menuButton text-white hover:bg-white/10 ml-8"
+                            {item.children.map((child) => (
+                              <SidebarMenuSubItem key={child.title}>
+                                <SidebarMenuSubButton
+                                  asChild
+                                  isActive={isActive(child.url)}
+                                  className="menuButton text-white hover:bg-white/10 ml-8"
+                                >
+                                  <Link
+                                    href={child.url}
+                                    onClick={handleLinkClick}
                                   >
-                                    <Link
-                                      href={child.url}
-                                      onClick={handleLinkClick}
-                                    >
-                                      <span className="text-white font-dm-sans text-[14px]">
-                                        {child.title}
-                                      </span>
-                                    </Link>
-                                  </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                              );
-                            })}
+                                    <span className="text-white font-dm-sans text-[14px]">
+                                      {child.title}
+                                    </span>
+                                  </Link>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            ))}
                           </SidebarMenuSub>
                         </CollapsibleContent>
                       </Collapsible>
@@ -251,12 +275,12 @@ export function AppSidebar() {
                       >
                         <Link
                           href={item.url}
-                          className="flex "
+                          className="flex"
                           onClick={handleLinkClick}
                         >
                           <item.icon
                             style={{ width: "30px", height: "30px" }}
-                            className="text-white pr-2 "
+                            className="text-white pr-2"
                             strokeWidth={2}
                           />
                           <span className="text-white font-dm-sans text-[16px]">
@@ -275,49 +299,51 @@ export function AppSidebar() {
         {/* Bottom section */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent className="space-y-3">
-            <SidebarMenu className="mt-4">
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="">
-                  <div
-                    style={{
-                      backgroundImage: "url('/mech.avif')",
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                      height: "127px",
-                    }}
-                    className="h-[127px] w-[217px]"
-                  >
-                    {!isCollapsed && (
-                      <div className="space-y-3">
-                        <h1 className="text-white font-clash text-[14px] font-semibold">
-                          Payment Subscriptions
-                        </h1>
-                        <p className="text-[13px] font-dm-sans font-medium text-white leading-none ">
-                          View subscription, manage your plan and upgrade.
-                        </p>
-                        <Button
-                          onClick={() => router.push("/plans")}
-                          className="bg-white text-[#0A2540] hover:bg-[#0A2540] hover:text-white"
-                        >
-                          Upgrade Plan
-                        </Button>
-                      </div>
-                    )}
-                    {isCollapsed && (
-                      <div className="flex justify-center py-4">
-                        <Image
-                          onClick={() => router.push("/plans")}
-                          src="/sub.svg"
-                          width={32}
-                          height={32}
-                          alt="logo"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+            {!isAttendant && (
+              <SidebarMenu className="mt-4">
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <div
+                      style={{
+                        backgroundImage: "url('/mech.avif')",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        height: "127px",
+                      }}
+                      className="h-[127px] w-[217px]"
+                    >
+                      {!isCollapsed && (
+                        <div className="space-y-3">
+                          <h1 className="text-white font-clash text-[14px] font-semibold">
+                            Payment Subscriptions
+                          </h1>
+                          <p className="text-[13px] font-dm-sans font-medium text-white leading-none">
+                            View subscription, manage your plan and upgrade.
+                          </p>
+                          <Button
+                            onClick={() => router.push("/plans")}
+                            className="bg-white text-[#0A2540] hover:bg-[#0A2540] hover:text-white"
+                          >
+                            Upgrade Plan
+                          </Button>
+                        </div>
+                      )}
+                      {isCollapsed && (
+                        <div className="flex justify-center py-4">
+                          <Image
+                            onClick={() => router.push("/plans")}
+                            src="/sub.svg"
+                            width={32}
+                            height={32}
+                            alt="logo"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            )}
 
             <SidebarMenu>
               <SidebarMenuItem>
@@ -337,14 +363,14 @@ export function AppSidebar() {
                       </span>
                     </SidebarMenuButton>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className=" ">
+                  <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle className="font-clash font-semibold text-[25px]">
-                        Log Out{" "}
+                        Log Out
                       </AlertDialogTitle>
-                      <AlertDialogDescription className="font-dm-sans text-[#464343] ">
+                      <AlertDialogDescription className="font-dm-sans text-[#464343]">
                         Are you sure you want to Log Out of your Vendcliq
-                        Account?{" "}
+                        Account?
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex items-center flex-col gap-3 sm:flex-row justify-center">

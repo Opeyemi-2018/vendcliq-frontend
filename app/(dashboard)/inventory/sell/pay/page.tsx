@@ -28,6 +28,7 @@ import {
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePaymentSocket } from "@/hooks/invoiceSocket";
+import { useUser } from "@/context/userContext";
 
 type PaymentType = "TRANSFER" | "CASH" | "CREDIT";
 
@@ -104,6 +105,12 @@ const PAYMENT_OPTIONS: {
 ];
 
 function PayInvoiceContent() {
+  const { canSellOnCredit } = useUser();
+  const filteredPaymentOptions = PAYMENT_OPTIONS.filter((option) => {
+    if (option.type === "CREDIT") return canSellOnCredit();
+    return true;
+  });
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -579,7 +586,7 @@ function PayInvoiceContent() {
             </h2>
             <Separator className="mb-6" />
             <div className="space-y-3">
-              {PAYMENT_OPTIONS.map((option) => (
+              {filteredPaymentOptions.map((option) => (
                 <div
                   key={option.type}
                   onClick={() => setPaymentType(option.type)}

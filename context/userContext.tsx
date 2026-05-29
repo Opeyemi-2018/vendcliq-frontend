@@ -9,6 +9,8 @@ export interface UserData {
   firstname: string;
   lastname: string;
   email: string;
+  accountRole?: "CUSTOMER" | "ATTENDANTS";
+
   userId?: number;
   phone?: {
     number: string;
@@ -65,10 +67,26 @@ export interface VerificationStatus {
     value: string | null;
   };
 }
-
+export interface AttendantPermissions {
+  can_buy: boolean;
+  can_sell: boolean;
+  can_sell_on_credit: boolean;
+  can_update_stock: boolean;
+  can_move_stock: boolean;
+  can_add_stock: boolean;
+  can_market_place: boolean;
+  can_push_to_market: boolean;
+  can_view_store_info: boolean;
+  can_reporting: boolean;
+  can_expenses: boolean;
+}
 interface UserContextType {
   user: UserData | null;
   verificationStatus: VerificationStatus | null;
+  attendantPermissions: AttendantPermissions | null;
+  isAttendant: boolean;
+  setAttendantPermissions: (p: AttendantPermissions | null) => void;
+
   hasPin: boolean;
   setUser: (user: UserData | null) => void;
   setVerificationStatus: (status: VerificationStatus | null) => void;
@@ -86,6 +104,17 @@ interface UserContextType {
   getReferralCode: () => string;
   getReferralCount: () => number;
   clearUserData: () => void;
+  canBuy: () => boolean;
+  canSell: () => boolean;
+  canUpdateStock: () => boolean;
+  canMoveStock: () => boolean;
+  canAddStock: () => boolean;
+  canSellOnCredit: () => boolean;
+  canAccessMarketplace: () => boolean;
+  canPushToMarket: () => boolean;
+  canViewStoreInfo: () => boolean;
+  canReporting: () => boolean;
+  canExpenses: () => boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -97,8 +126,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (storedUser) {
         try {
           return JSON.parse(storedUser);
-        } catch (error) {
-          console.error("Error parsing user data:", error);
+        } catch {
+          /* ignore */
         }
       }
     }
@@ -108,12 +137,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [verificationStatus, setVerificationStatusState] =
     useState<VerificationStatus | null>(() => {
       if (typeof window !== "undefined") {
-        const storedVerification = localStorage.getItem("verificationStatus");
-        if (storedVerification) {
+        const stored = localStorage.getItem("verificationStatus");
+        if (stored) {
           try {
-            return JSON.parse(storedVerification);
-          } catch (error) {
-            console.error("Error parsing verification data:", error);
+            return JSON.parse(stored);
+          } catch {
+            /* ignore */
           }
         }
       }
@@ -122,11 +151,26 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const [hasPin, setHasPin] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("hasPin");
-      return stored ? stored === "true" : false;
+      return localStorage.getItem("hasPin") === "true";
     }
     return false;
   });
+
+  // 👇 new: attendant permissions state
+  const [attendantPermissions, setAttendantPermissionsState] =
+    useState<AttendantPermissions | null>(() => {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("attendantPermissions");
+        if (stored) {
+          try {
+            return JSON.parse(stored);
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+      return null;
+    });
 
   const setUser = (userData: UserData | null) => {
     setUserState(userData);
@@ -150,6 +194,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // 👇 new setter
+  const setAttendantPermissions = (p: AttendantPermissions | null) => {
+    setAttendantPermissionsState(p);
+    if (p) {
+      localStorage.setItem("attendantPermissions", JSON.stringify(p));
+    } else {
+      localStorage.removeItem("attendantPermissions");
+    }
+  };
+
   const setAllUserData = (
     userData: UserData | null,
     verification: VerificationStatus | null,
@@ -159,57 +213,78 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const isUserWalletNull = user?.wallet === null;
+  const isAttendant = user?.accountRole === "ATTENDANTS"; // 👈
+
   const getUserFullName = () => {
     if (!user) return "";
     return `${user.firstname} ${user.lastname}`;
   };
 
   const getVerificationProgress = () => {
-    if (!verificationStatus) {
-      return { completed: 0, total: 2, percentage: 0 };
-    }
-
+    if (!verificationStatus) return { completed: 0, total: 2, percentage: 0 };
     let completed = 0;
     const total = 2;
-
     if (verificationStatus.bvn.isVerified) completed++;
     if (verificationStatus.documents.hasAnyDocument) completed++;
-
-    const percentage = Math.round((completed / total) * 100);
-
-    return { completed, total, percentage };
+    return {
+      completed,
+      total,
+      percentage: Math.round((completed / total) * 100),
+    };
   };
 
-  const getReferralCode = () => {
-    if (!user?.referral) return "";
-    return user.referral.code;
-  };
-
-  const getReferralCount = () => {
-    if (!user?.referral) return 0;
-    return user.referral.referralCount;
-  };
+  const getReferralCode = () => user?.referral?.code ?? "";
+  const getReferralCount = () => user?.referral?.referralCount ?? 0;
 
   const clearUserData = () => {
     setUserState(null);
     setVerificationStatusState(null);
+    setAttendantPermissionsState(null); // 👈
     setHasPin(false);
     localStorage.removeItem("user");
     localStorage.removeItem("verificationStatus");
     localStorage.removeItem("hasPin");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("authToken");
-    localStorage.removeItem("wallet"); 
+    localStorage.removeItem("wallet");
+    localStorage.removeItem("attendantPermissions"); // 👈
   };
+
+  // 👇 permission helpers — non-attendants get full access (true) by default
+  //    so CUSTOMER users are never blocked by these checks
+  const canBuy = () => !isAttendant || (attendantPermissions?.can_buy ?? false);
+  const canSell = () =>
+    !isAttendant || (attendantPermissions?.can_sell ?? false);
+  const canUpdateStock = () =>
+    !isAttendant || (attendantPermissions?.can_update_stock ?? false);
+  const canSellOnCredit = () =>
+    !isAttendant || (attendantPermissions?.can_sell_on_credit ?? false);
+  const canMoveStock = () =>
+    !isAttendant || (attendantPermissions?.can_move_stock ?? false);
+  const canAddStock = () =>
+    !isAttendant || (attendantPermissions?.can_add_stock ?? false);
+  const canAccessMarketplace = () =>
+    !isAttendant || (attendantPermissions?.can_market_place ?? false);
+  const canPushToMarket = () =>
+    !isAttendant || (attendantPermissions?.can_push_to_market ?? false);
+  const canViewStoreInfo = () =>
+    !isAttendant || (attendantPermissions?.can_view_store_info ?? false);
+  const canReporting = () =>
+    !isAttendant || (attendantPermissions?.can_reporting ?? false);
+  const canExpenses = () =>
+    !isAttendant || (attendantPermissions?.can_expenses ?? false);
 
   return (
     <UserContext.Provider
       value={{
         user,
         verificationStatus,
+        attendantPermissions,
         hasPin,
+        isAttendant,
         setUser,
         setVerificationStatus,
+        setAttendantPermissions,
         setAllUserData,
         isUserWalletNull,
         getUserFullName,
@@ -217,6 +292,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
         getReferralCode,
         getReferralCount,
         clearUserData,
+        canBuy,
+        canSell,
+        canSellOnCredit,
+        canUpdateStock,
+        canMoveStock,
+        canAddStock,
+        canAccessMarketplace,
+        canPushToMarket,
+        canViewStoreInfo,
+        canReporting,
+        canExpenses,
       }}
     >
       {children}
