@@ -63,7 +63,7 @@ api.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 /**
@@ -93,7 +93,7 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 /**
@@ -112,17 +112,18 @@ export const clearAuthTokens = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("wallet");
     localStorage.removeItem("verificationStatus");
-    
+    localStorage.removeItem("attendantPermissions"); // ✅ ADD THIS
+
     // Also clear sessionStorage
     sessionStorage.clear();
-    
+
     // Clear any cookies
     document.cookie.split(";").forEach((cookie) => {
       const eqPos = cookie.indexOf("=");
       const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
       document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
     });
-    
+
     // Force redirect to signin
     window.location.href = "/signin";
   }
@@ -149,5 +150,3 @@ export const startOtpTimer = (callback: (timeLeft: number) => void) => {
 
   return () => clearInterval(timer);
 };
-
-

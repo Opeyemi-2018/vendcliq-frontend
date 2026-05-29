@@ -1,4 +1,4 @@
-// In middleware.ts
+// middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -7,69 +7,103 @@ export function middleware(request: NextRequest) {
     "/",
     "/signin",
     "/signup",
+    "/forgot-password",
     "/forget-password/otp",
     "/forget-password/reset",
   ];
 
-  // Allow public routes
-  if (publicRoutes.includes(request.nextUrl.pathname)) {
+  const pathname = request.nextUrl.pathname;
+
+  if (publicRoutes.includes(pathname)) {
     return NextResponse.next();
   }
 
-  // Check for valid token in BOTH sources
-  let hasValidAuth = false;
-
-  // 1. Check cookie (for server-side auth)
+  // === AUTH CHECK ===
   const cookieToken = request.cookies.get("authToken")?.value;
-  if (cookieToken) {
-    hasValidAuth = true;
-  }
-
-  // 2. Check for Authorization header (for client-side auth)
+  const accessTokenCookie = request.cookies.get("accessToken")?.value;
   const authHeader = request.headers.get("authorization");
-  if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.substring(7);
-    if (token) {
-      hasValidAuth = true;
-    }
-  }
+  const hasValidAuth =
+    !!(cookieToken || accessTokenCookie || authHeader?.startsWith("Bearer "));
 
-  // 3. **CRITICAL FIX**: Check request headers for client-side token indicator
-  // When user clicks back button or manually enters URL, the browser
-  // might still have localStorage token. We need to detect this.
-  const clientTokenIndicator = request.headers.get("x-client-token-check");
-  if (clientTokenIndicator === "true") {
-    // This indicates the client-side axios interceptor added a token
-    // We'll rely on API calls to fail if token is invalid
-    hasValidAuth = true;
-  }
-
-  // If no valid auth found → redirect to signin with force-clear flag
   if (!hasValidAuth) {
     const url = new URL("/signin", request.url);
-    url.searchParams.set("callbackUrl", request.nextUrl.pathname);
-    url.searchParams.set("forceClear", "true"); // Add flag for client-side cleanup
-
+    url.searchParams.set("callbackUrl", pathname);
+    url.searchParams.set("forceClear", "true");
     const response = NextResponse.redirect(url);
-
-    // Add headers to prevent caching
     response.headers.set("Cache-Control", "no-store, max-age=0");
-
     return response;
   }
 
-  // Add cache control to prevent browser from caching protected pages
-  const response = NextResponse.next();
-  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  const userRole = request.cookies.get("userRole")?.value;
+  const isAttendant = userRole === "ATTENDANTS";
 
+  // === ATTENDANT: hard-blocked routes (regardless of permissions) ===
+  const attendantBlockedPrefixes = [
+    "/account",
+    "/credit-ledger",
+    "/delivery",
+    "/my-purchase",
+    "/payment-subscription",
+    "/plans",
+    // "/referral",
+    "/request-account-deletion",
+  ];
+
+  if (isAttendant) {
+    const isHardBlocked = attendantBlockedPrefixes.some(
+      (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
+    );
+    if (isHardBlocked) {
+      return NextResponse.redirect(new URL("/inventory/overview", request.url));
+    }
+  }
+
+  // === PERMISSION-BASED ROUTE GUARDS ===
+  // Store permissions as a comma-separated cookie on login, e.g.:
+  // "canSell,canBuy,canReporting"
+  const permsCookie = request.cookies.get("userPermissions")?.value ?? "";
+  const permissions = new Set(permsCookie.split(",").filter(Boolean));
+
+  const permissionRoutes: Array<{ prefix: string; perm: string }> = [
+    { prefix: "/inventory/sell", perm: "canSell" },
+    { prefix: "/inventory/buy",  perm: "canBuy" },
+    { prefix: "/expenses",        perm: "canExpenses" },
+    { prefix: "/business-report", perm: "canReporting" },
+    { prefix: "/market-place",    perm: "canAccessMarketplace" },
+  ];
+
+  for (const { prefix, perm } of permissionRoutes) {
+    const matches = pathname === prefix || pathname.startsWith(prefix + "/");
+    if (matches && !permissions.has(perm)) {
+      return NextResponse.redirect(new URL("/inventory/overview", request.url));
+    }
+  }
+
+  // === PASS THROUGH ===
+  const response = NextResponse.next();
+  response.headers.set(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  );
   return response;
 }
 
 export const config = {
   matcher: [
-    "/dashboard/:path*",
-    "/profile/:path*",
-    "/settings/:path*",
-    "/request/:path*",
+    "/account/:path*",
+    "/credit-ledger/:path*",
+    "/delivery/:path*",
+    "/my-purchase/:path*",
+    "/payment-subscription/:path*",
+    "/plans/:path*",
+    "/referral/:path*",
+    "/request-account-deletion/:path*",
+    "/inventory/:path*",
+    "/expenses/:path*",
+    "/business-report/:path*",
+    "/market-place/:path*",
+    "/suppliers/:path*",
+    "/customer/:path*",
+    "/profile-settings/:path*",
   ],
 };

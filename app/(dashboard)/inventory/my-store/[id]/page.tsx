@@ -26,6 +26,7 @@ import {
 } from "@/lib/utils/api/apiHelper";
 import { toast } from "sonner";
 import PlacesAutocompleteInput from "@/hooks/googleMap";
+import { useUser } from "@/context/userContext";
 
 interface Store {
   id: string;
@@ -38,6 +39,9 @@ interface Store {
   is_default?: boolean;
   show_on_marketplace?: boolean;
   is_archived?: boolean;
+  allow_credit_sales?: boolean;
+  credit_sale_auth_required?: boolean;
+  credit_sale_auth_emails?: string[];
 }
 
 interface StockItem {
@@ -69,6 +73,8 @@ interface StockResponse {
 const ITEMS_PER_PAGE = 5;
 
 const StoreDetailPage = () => {
+  const { canMoveStock, canAddStock } = useUser();
+
   const router = useRouter();
   const params = useParams();
   const storeId = params.id as string;
@@ -83,6 +89,9 @@ const StoreDetailPage = () => {
     is_default: false,
     show_on_marketplace: false,
     is_archived: false,
+    allow_credit_sales: false,
+    credit_sale_auth_required: false,
+    credit_sale_auth_emails: [] as string[],
   });
 
   const [store, setStore] = useState<Store | null>(null);
@@ -174,6 +183,9 @@ const StoreDetailPage = () => {
         is_default: store.is_default || false,
         show_on_marketplace: store.show_on_marketplace || false,
         is_archived: store.is_archived || false,
+        allow_credit_sales: store.allow_credit_sales || false,
+        credit_sale_auth_required: store.credit_sale_auth_required || false,
+        credit_sale_auth_emails: store.credit_sale_auth_emails || [],
       });
       setEditForm({
         address: {
@@ -231,24 +243,26 @@ const StoreDetailPage = () => {
   const handleSaveSettings = async () => {
     try {
       setIsUpdatingSettings(true);
-      const response = await handleUpdateStoreSettings(storeId, storeSettings);
+
+      const payload = {
+        is_default: storeSettings.is_default,
+        show_on_marketplace: storeSettings.show_on_marketplace,
+        is_archived: storeSettings.is_archived,
+        allow_credit_sales: storeSettings.allow_credit_sales,
+        credit_sale_auth_required: storeSettings.credit_sale_auth_required,
+        credit_sale_auth_emails: storeSettings.credit_sale_auth_emails,
+      };
+
+      const response = await handleUpdateStoreSettings(storeId, payload);
 
       if (response.statusCode === 200) {
         toast.success("Store settings updated successfully");
-        setStore((prev) =>
-          prev
-            ? {
-                ...prev,
-                ...response.data,
-              }
-            : null,
-        );
+        setStore((prev) => (prev ? { ...prev, ...response.data } : null));
         setIsSettingsOpen(false);
       } else {
         toast.error(response.error || "Failed to update settings");
       }
     } catch (error: any) {
-      console.error("Update settings error:", error);
       toast.error(error?.message || "Failed to update settings");
     } finally {
       setIsUpdatingSettings(false);
@@ -395,13 +409,14 @@ const StoreDetailPage = () => {
             Here are all the details about this store
           </p>
         </div>
-
-        <Button
-          onClick={() => setIsAddStockOpen(true)}
-          className="bg-[#0A6DC0] hover:bg-[#09599a] py-5 md:py-6"
-        >
-          + Add Stock
-        </Button>
+        {canAddStock() && (
+          <Button
+            onClick={() => setIsAddStockOpen(true)}
+            className="bg-[#0A6DC0] hover:bg-[#09599a] py-5 md:py-6"
+          >
+            + Add Stock
+          </Button>
+        )}
       </div>
 
       <div className="bg-[url('/balance-bg.svg')] my-6 bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6">
@@ -510,13 +525,15 @@ const StoreDetailPage = () => {
           <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
             Products in Store ({totalCount ?? stocks.length})
           </h2>
-          <Button
-            className="bg-[#0A2540] hover:bg-[#304c6a] py-5 md:py-6"
-            disabled={selectedStocks.size === 0}
-            onClick={handleMoveSelected}
-          >
-            Move Selected ({selectedStocks.size})
-          </Button>
+          {canMoveStock() && (
+            <Button
+              className="bg-[#0A2540] hover:bg-[#304c6a] py-5 md:py-6"
+              disabled={selectedStocks.size === 0}
+              onClick={handleMoveSelected}
+            >
+              Move Selected ({selectedStocks.size})
+            </Button>
+          )}
         </div>
 
         <div className="relative mb-6">
@@ -546,12 +563,14 @@ const StoreDetailPage = () => {
                 ? "Try a different search"
                 : "Add stock to see items here"}
             </p>
-            <Button
-              onClick={() => setIsAddStockOpen(true)}
-              className="bg-[#0A6DC0] hover:bg-[#09599a] mt-2"
-            >
-              + Add Stock
-            </Button>
+            {canAddStock() && (
+              <Button
+                onClick={() => setIsAddStockOpen(true)}
+                className="bg-[#0A6DC0] hover:bg-[#09599a] mt-2"
+              >
+                + Add Stock
+              </Button>
+            )}
           </div>
         ) : (
           <>
@@ -721,28 +740,26 @@ const StoreDetailPage = () => {
       </Dialog>
 
       {/* Store Settings Modal */}
+      {/* Store Settings Modal - Updated with Credit Sales */}
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent className="sm:max-w-[425px] bg-white font-dm-sans">
+        <DialogContent className="sm:max-w-[480px] bg-white font-dm-sans">
           <DialogHeader>
-            <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] ">
+            <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F]">
               Store Settings
             </DialogTitle>
-            <p className="text-[#9E9A9A]">Manage your settings here</p>
+            <p className="text-[#9E9A9A]">Manage your store preferences</p>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
+            {/* Existing Settings */}
             <div className="flex items-center justify-between space-x-2">
               <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
                 Make Default Store
               </p>
               <Switch
-                id="is_default"
                 checked={storeSettings.is_default}
                 onCheckedChange={(checked) =>
-                  setStoreSettings((prev) => ({
-                    ...prev,
-                    is_default: checked,
-                  }))
+                  setStoreSettings((prev) => ({ ...prev, is_default: checked }))
                 }
               />
             </div>
@@ -752,7 +769,6 @@ const StoreDetailPage = () => {
                 Show Store Contents on Marketplace
               </p>
               <Switch
-                id="show_on_marketplace"
                 checked={storeSettings.show_on_marketplace}
                 onCheckedChange={(checked) =>
                   setStoreSettings((prev) => ({
@@ -765,10 +781,9 @@ const StoreDetailPage = () => {
 
             <div className="flex items-center justify-between space-x-2">
               <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
-                Temporary Archive Store{" "}
+                Temporary Archive Store
               </p>
               <Switch
-                id="is_archived"
                 checked={storeSettings.is_archived}
                 onCheckedChange={(checked) =>
                   setStoreSettings((prev) => ({
@@ -777,6 +792,80 @@ const StoreDetailPage = () => {
                   }))
                 }
               />
+            </div>
+
+            {/* ── New Credit Sales Settings ── */}
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm font-semibold text-[#2F2F2F] mb-4">
+                Credit Sales Settings
+              </p>
+
+              <div className="flex items-center justify-between space-x-2 mb-4">
+                <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
+                  Allow Credit Sales
+                </p>
+                <Switch
+                  checked={storeSettings.allow_credit_sales}
+                  onCheckedChange={(checked) =>
+                    setStoreSettings((prev) => ({
+                      ...prev,
+                      allow_credit_sales: checked,
+                      // Auto disable auth if credit sales is off
+                      credit_sale_auth_required: checked
+                        ? prev.credit_sale_auth_required
+                        : false,
+                    }))
+                  }
+                />
+              </div>
+
+              {storeSettings.allow_credit_sales && (
+                <>
+                  <div className="flex items-center justify-between space-x-2 mb-4">
+                    <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
+                      Credit Sale Authorization Required
+                    </p>
+                    <Switch
+                      checked={storeSettings.credit_sale_auth_required}
+                      onCheckedChange={(checked) =>
+                        setStoreSettings((prev) => ({
+                          ...prev,
+                          credit_sale_auth_required: checked,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  {storeSettings.credit_sale_auth_required && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-[#2F2F2F]">
+                        Authorization Email(s)
+                      </Label>
+                      <Input
+                        placeholder="Enter email (comma separated)"
+                        value={
+                          storeSettings.credit_sale_auth_emails?.join(", ") ||
+                          ""
+                        }
+                        onChange={(e) => {
+                          const emails = e.target.value
+                            .split(",")
+                            .map((em) => em.trim())
+                            .filter(Boolean);
+                          setStoreSettings((prev) => ({
+                            ...prev,
+                            credit_sale_auth_emails: emails,
+                          }));
+                        }}
+                        className="bg-[#F3F4F6]"
+                      />
+                      <p className="text-xs text-gray-500">
+                        Enter multiple emails separated by commas
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
 

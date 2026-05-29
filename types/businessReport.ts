@@ -10,6 +10,7 @@ export interface BusinessReportSummary {
 
 export interface StockComparisonItem {
   stock_id: string;
+  stock_uuid: string; 
   product_name: string;
   product_image: string;
   store_name: string;
@@ -19,6 +20,7 @@ export interface StockComparisonItem {
   closing_value: number;
   qty_change: number;
   value_change: number;
+  qty_sold: number;
 }
 
 export interface BusinessReportResponse {

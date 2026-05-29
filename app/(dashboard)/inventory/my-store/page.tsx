@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useStores } from "@/hooks/useStores";
 import { useState, useEffect, useMemo } from "react";
 import { getAttendants } from "@/actions/getAttendant";
+import { useUser } from "@/context/userContext";
 
 interface Attendant {
   id: number;
@@ -33,6 +34,7 @@ const MyStore = () => {
     refetch: refetchStores,
   } = useStores();
   const router = useRouter();
+  const { canViewStoreInfo, isAttendant, canAddStock } = useUser();
 
   const [attendants, setAttendants] = useState<Attendant[]>([]);
   const [attendantsLoading, setAttendantsLoading] = useState(true);
@@ -196,18 +198,23 @@ const MyStore = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            onClick={() => router.push("/inventory/create-store")}
-            className="bg-[#0A6DC0] hover:bg-[#09599a] w-[50%] md:w-full text-[13px] md:text-[16px] flex gap-2 lg:gap-10 px-6 py-5 md:py-6 text-white"
-          >
-            + Add New Store
-          </Button>
-          <Button
-            onClick={() => router.push("/inventory/add-attendant")}
-            className="bg-[#0A2540] hover:bg-[#304c6a] w-[50%] md:w-full text-[13px] md:text-[16px] flex gap-2 lg:gap-10 px-6 py-5 md:py-6 text-white"
-          >
-            + Add New Attendant
-          </Button>
+          {canAddStock() && (
+            <Button
+              onClick={() => router.push("/inventory/create-store")}
+              className="bg-[#0A6DC0] hover:bg-[#09599a] w-[50%] md:w-full text-[13px] md:text-[16px] flex gap-2 lg:gap-10 px-6 py-5 md:py-6 text-white"
+            >
+              + Add New Store
+            </Button>
+          )}
+
+          {!isAttendant && (
+            <Button
+              onClick={() => router.push("/inventory/add-attendant")}
+              className="bg-[#0A2540] hover:bg-[#304c6a] w-[50%] md:w-full text-[13px] md:text-[16px] flex gap-2 lg:gap-10 px-6 py-5 md:py-6 text-white"
+            >
+              + Add New Attendant
+            </Button>
+          )}
         </div>
       </div>
 
@@ -280,9 +287,10 @@ const MyStore = () => {
                       <tr
                         key={store.id}
                         className="hover:bg-gray-50 cursor-pointer ..."
-                        onClick={() =>
-                          router.push(`/inventory/my-store/${store.id}`)
-                        }
+                        onClick={() => {
+                          if (!canViewStoreInfo()) return;
+                          router.push(`/inventory/my-store/${store.id}`);
+                        }}
                       >
                         <td className="py-4 md:pl-4 font-medium">
                           {store.name}
@@ -312,104 +320,106 @@ const MyStore = () => {
         </div>
       </div>
 
-      <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
-        <h1 className="font-dm-sans text-[#2F2F2F] dark:text-white font-bold">
-          My Attendants ({attendants.length})
-        </h1>
+      {!isAttendant && (
+        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
+          <h1 className="font-dm-sans text-[#2F2F2F] dark:text-white font-bold">
+            My Attendants ({attendants.length})
+          </h1>
 
-        <div className="py-3 relative min-h-[300px]">
-          {attendantsLoading ? (
-            /* loading */
-            <div className="py-20 px-4 flex flex-col items-center justify-center">
-              <Loader2 className="h-10 w-10 animate-spin text-[#0A6DC0]" />
-              <p className="mt-4 text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
-                Loading attendants...
-              </p>
-            </div>
-          ) : attendantsError ? (
-            /* error */
-            <div className="py-20 px-4 flex flex-col items-center justify-center gap-4">
-              <p className="text-red-600 dark:text-red-400 text-center">
-                {attendantsError}
-              </p>
-              <Button
-                onClick={() => window.location.reload()}
-                className="bg-[#0A6DC0] hover:bg-[#085a9e]"
-              >
-                Retry
-              </Button>
-            </div>
-          ) : attendants.length === 0 ? (
-            /* empty */
-            <div className="py-20 px-4 flex flex-col items-center justify-center space-y-4">
-              <UserPen size={40} />
-              <p className="font-bold font-dm-sans text-[16px] text-[#2F2F2F] dark:text-white">
-                No attendants found
-              </p>
-              <p className="text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
-                Your attendants will appear here
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="overflow-x-auto lg:border border-[#E4E4E4] md:rounded-[20px] bg-white">
-                <table className="w-full">
-                  <thead className="border-b border-[#E6E6E6]">
-                    <tr>
-                      <th className="text-left py-3 md:pl-4 ... font-medium">
-                        Full Name
-                      </th>
-                      <th className="hidden md:table-cell ... font-medium">
-                        Email
-                      </th>
-                      <th className="hidden md:table-cell ... font-medium">
-                        Phone Number
-                      </th>
-                      <th className="hidden md:table-cell ... font-medium">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {paginatedAttendants.map((attendant) => (
-                      <tr
-                        key={attendant.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800/50 ..."
-                      >
-                        <td className="py-4 md:pl-4 font-medium">
-                          {attendant.fullname}
-                        </td>
-                        <td className="hidden md:table-cell py-4">
-                          {attendant.email}
-                        </td>
-                        <td className="hidden md:table-cell py-4">
-                          {attendant.phone}
-                        </td>
-                        <td className="hidden md:table-cell py-4">
-                          <span
-                            className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                              attendant.accountStatus,
-                            )}`}
-                          >
-                            {attendant.accountStatus}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          <div className="py-3 relative min-h-[300px]">
+            {attendantsLoading ? (
+              /* loading */
+              <div className="py-20 px-4 flex flex-col items-center justify-center">
+                <Loader2 className="h-10 w-10 animate-spin text-[#0A6DC0]" />
+                <p className="mt-4 text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
+                  Loading attendants...
+                </p>
               </div>
+            ) : attendantsError ? (
+              /* error */
+              <div className="py-20 px-4 flex flex-col items-center justify-center gap-4">
+                <p className="text-red-600 dark:text-red-400 text-center">
+                  {attendantsError}
+                </p>
+                <Button
+                  onClick={() => window.location.reload()}
+                  className="bg-[#0A6DC0] hover:bg-[#085a9e]"
+                >
+                  Retry
+                </Button>
+              </div>
+            ) : attendants.length === 0 ? (
+              /* empty */
+              <div className="py-20 px-4 flex flex-col items-center justify-center space-y-4">
+                <UserPen size={40} />
+                <p className="font-bold font-dm-sans text-[16px] text-[#2F2F2F] dark:text-white">
+                  No attendants found
+                </p>
+                <p className="text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
+                  Your attendants will appear here
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="overflow-x-auto lg:border border-[#E4E4E4] md:rounded-[20px] bg-white">
+                  <table className="w-full">
+                    <thead className="border-b border-[#E6E6E6]">
+                      <tr>
+                        <th className="text-left py-3 md:pl-4 ... font-medium">
+                          Full Name
+                        </th>
+                        <th className="hidden md:table-cell ... font-medium">
+                          Email
+                        </th>
+                        <th className="hidden md:table-cell ... font-medium">
+                          Phone Number
+                        </th>
+                        <th className="hidden md:table-cell ... font-medium">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {paginatedAttendants.map((attendant) => (
+                        <tr
+                          key={attendant.id}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-800/50 ..."
+                        >
+                          <td className="py-4 md:pl-4 font-medium">
+                            {attendant.fullname}
+                          </td>
+                          <td className="hidden md:table-cell py-4">
+                            {attendant.email}
+                          </td>
+                          <td className="hidden md:table-cell py-4">
+                            {attendant.phone}
+                          </td>
+                          <td className="hidden md:table-cell py-4">
+                            <span
+                              className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                                attendant.accountStatus,
+                              )}`}
+                            >
+                              {attendant.accountStatus}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-              {/* Attendants Pagination */}
-              {renderPagination(
-                attendantsPage,
-                attendantsTotalPages,
-                setAttendantsPage,
-              )}
-            </>
-          )}
+                {/* Attendants Pagination */}
+                {renderPagination(
+                  attendantsPage,
+                  attendantsTotalPages,
+                  setAttendantsPage,
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

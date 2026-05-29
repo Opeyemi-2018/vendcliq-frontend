@@ -18,11 +18,9 @@ export default function Home() {
       return;
     }
 
-    // Check if user is fully authenticated (has token AND user data)
     if (accessToken && user) {
       try {
         const userData = JSON.parse(user);
-        // Check if user account is fully set up
         if (userData.status === "ACTIVE") {
           router.push("/dashboard/account/overview");
           return;
@@ -32,13 +30,11 @@ export default function Home() {
       }
     }
 
-    // If user has token but signup is incomplete, redirect to signup
     if (accessToken && signupProgress) {
       router.push("/signup");
       return;
     }
 
-    // Default: redirect to signin
     router.push("/signin");
   }, [router]);
 

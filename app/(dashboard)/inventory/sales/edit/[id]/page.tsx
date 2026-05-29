@@ -104,6 +104,7 @@ const unitPrice = (item: StockItem, mode: SellMode) =>
     : parseFloat(item.selling_price_pieces);
 
 const itemSubtotal = (ci: CartItem) => {
+  if (ci.serverSubTotal !== undefined) return ci.serverSubTotal;
   const base = unitPrice(ci.stock, ci.mode);
   const discounted = Math.max(0, base - ci.discount);
   const productTotal = discounted * ci.quantity;
@@ -121,6 +122,9 @@ export default function EditInvoicePage() {
   const router = useRouter();
   const params = useParams();
   const invoiceId = params.id as string;
+  const [serverAmountPayable, setServerAmountPayable] = useState<number | null>(
+    null,
+  );
 
   // Store
   const [stores, setStores] = useState<Store[]>([]);
@@ -222,6 +226,9 @@ export default function EditInvoicePage() {
       const result = await getSaleById(invoiceId);
       if (result.statusCode === 200 && result.data) {
         const invoice = result.data;
+        setServerAmountPayable(
+          invoice.attributes?.amount_payable ?? invoice.total ?? null,
+        );
 
         // Add a null check for invoice.store
         const invoiceStore = invoice.store;
@@ -260,9 +267,10 @@ export default function EditInvoicePage() {
                   id: item.stock.id,
                   sku: item.stock.sku,
                   cost_price: "0",
-                  selling_price: item.cost.toString(),
+
+                  selling_price: item.stock.price.toString(),
                   selling_price_pieces: (
-                    item.cost / (item.product?.items_per_pack || 1)
+                    item.stock.price / (item.product?.items_per_pack || 1)
                   ).toString(),
                   empties_price: "0",
                   quantity: item.stock.qty.toString(),
@@ -542,15 +550,19 @@ export default function EditInvoicePage() {
     setActiveEmpties("");
     setShowDiscountInput(false);
     setShowEmptiesInput(false);
+    setServerAmountPayable(null);
     toast.success(`${activeItem.product.name} added to cart`);
   };
 
   const removeCartItem = (idx: number) => {
     setCart((prev) => prev.filter((_, i) => i !== idx));
+    setServerAmountPayable(null);
     toast.success("Item removed");
   };
 
   const updateCartQty = (idx: number, delta: number) => {
+    setServerAmountPayable(null);
+
     setCart((prev) =>
       prev.map((ci, i) => {
         if (i === idx) {
@@ -583,6 +595,7 @@ export default function EditInvoicePage() {
             ...ci,
             quantity: newQuantity,
             packsQuantity: newPacksQuantity,
+            serverSubTotal: undefined, // clear so local calc takes over
           };
         }
         return ci;
@@ -667,13 +680,71 @@ export default function EditInvoicePage() {
         })),
       };
 
-      console.log("Update payload:", JSON.stringify(payload, null, 2));
-
       const response = await handleUpdateInvoice(invoiceId, payload);
 
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Invoice updated successfully!");
-        router.push(`/inventory/sales/${invoiceId}`);
+
+        // Use LOCAL calculations as source of truth for preview
+        const calculatedTotal = cart.reduce((s, ci) => s + itemSubtotal(ci), 0);
+        const calculatedSubTotal = calculatedTotal; // since discounts are already applied in itemSubtotal
+
+        const invoicePreviewData = {
+          invoiceId,
+          code: response.data?.code || "",
+          total: calculatedTotal, // ← Use local calc
+          items_count: cart.length,
+          storeAddress: storeAddress?.name || selectedStore.name || "",
+          items: cart.map((ci, idx) => ({
+            id: idx.toString(),
+            stock_id: ci.stock.id,
+            product_id: idx,
+            quantity: ci.quantity,
+            cost: unitPrice(ci.stock, ci.mode),
+            discounted_amount: ci.discount,
+            sub_total: itemSubtotal(ci),
+            mode: ci.mode,
+            sku: ci.stock.sku,
+            product_name: ci.stock.product.name,
+            product_image: ci.stock.product.image || "",
+            items_per_pack: ci.stock.product.items_per_pack,
+            empties: ci.empties,
+            emptiesMode: ci.emptiesMode,
+            empties_price: parseFloat(ci.stock.empties_price || "0"),
+          })),
+          totalQuantity: cart.reduce((sum, ci) => {
+            if (ci.mode === "PACKS") return sum + ci.quantity;
+            return sum + ci.quantity / (ci.stock.product.items_per_pack || 1);
+          }, 0),
+          totalDiscountAmount: cart.reduce(
+            (sum, ci) => sum + ci.discount * ci.quantity,
+            0,
+          ),
+          subTotal: calculatedSubTotal,
+          emptiesValue: cart.reduce((sum, ci) => {
+            if (ci.empties > 0 && ci.emptiesMode === "SELL") {
+              return (
+                sum + parseFloat(ci.stock.empties_price || "0") * ci.empties
+              );
+            }
+            return sum;
+          }, 0),
+          emptiesOwed: cart.reduce((sum, ci) => {
+            if (ci.empties > 0 && ci.emptiesMode === "CREDIT")
+              return sum + ci.empties;
+            return sum;
+          }, 0),
+          customerName: selectedCustomer?.name || null,
+          storeName: selectedStore.name,
+          storePhone: selectedStore.phone || "",
+        };
+
+        localStorage.setItem(
+          `invoice-preview-${invoiceId}`,
+          JSON.stringify(invoicePreviewData),
+        );
+
+        router.push(`/inventory/sell/pay?invoiceId=${invoiceId}&edit=true`);
       } else {
         toast.error(response.error || "Failed to update invoice");
       }
@@ -1211,7 +1282,7 @@ export default function EditInvoicePage() {
                 )}
                 <div className="flex justify-between font-bold pt-2 border-t border-[#F0F0F0]">
                   <span>Amount Payable</span>
-                  <span>{fmt(totalAmount)}</span>
+                  <span>{fmt(serverAmountPayable ?? totalAmount)}</span>
                 </div>
               </div>
             )}

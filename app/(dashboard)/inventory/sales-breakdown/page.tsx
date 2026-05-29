@@ -15,12 +15,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
-import { CalendarIcon, ArrowLeft } from "lucide-react";
+import { CalendarIcon, ArrowLeft, MoveLeft } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useStores } from "@/hooks/useStores";
 import { getStoreStockSales } from "@/lib/utils/api/apiHelper";
+import { useRouter } from "next/navigation";
 
 type StoreSales = {
   id: string;
@@ -40,7 +41,7 @@ type ProductSale = {
 
 const SalesBreakdown = () => {
   const { stores } = useStores();
-
+const router = useRouter()
   // Date filter
   const [dateModalOpen, setDateModalOpen] = useState(false);
   const [tempStartDate, setTempStartDate] = useState("");
@@ -189,6 +190,12 @@ const SalesBreakdown = () => {
 
   return (
     <div className="text-[#2F2F2F] font-dm-sans">
+       <button
+              onClick={() => router.back()}
+              className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors mb-4 print-hidden"
+            >
+              <MoveLeft className="w-5 h-5" />
+            </button>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 md:mb-6 gap-3">
         <div>
           <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">

@@ -20,8 +20,11 @@ import {
 import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { CreatePromoModal } from "./chunks/OfferModal";
+import { useUser } from "@/context/userContext";
 
 const StockDetailPage = () => {
+  const { canUpdateStock } = useUser();
+
   const router = useRouter();
   const params = useParams();
   const storeId = params.id as string;
@@ -304,22 +307,23 @@ const StockDetailPage = () => {
             onSuccess={handlePromoSuccess}
           />
 
-          {/* Existing Update Modal */}
-          <UpdateStockModal
-            stockId={stock.id}
-            productName={stock.product.name}
-            initialData={{
-              cost_price: parseFloat(stock.cost_price) || 0,
-              selling_price: parseFloat(stock.selling_price) || 0,
-              selling_price_pieces:
-                parseFloat(stock.selling_price_pieces || "0") || 0,
-              empties_price: parseFloat(stock.empties_price || "0") || 0,
-              exp_date: stock.exp_date || "",
-              stock_alert_no: stock.stock_alert_no || 0,
-              sku: stock.sku || "",
-            }}
-            onSuccess={handleUpdateSuccess}
-          />
+          {canUpdateStock() && (
+            <UpdateStockModal
+              stockId={stock.id}
+              productName={stock.product.name}
+              initialData={{
+                cost_price: parseFloat(stock.cost_price) || 0,
+                selling_price: parseFloat(stock.selling_price) || 0,
+                selling_price_pieces:
+                  parseFloat(stock.selling_price_pieces || "0") || 0,
+                empties_price: parseFloat(stock.empties_price || "0") || 0,
+                exp_date: stock.exp_date || "",
+                stock_alert_no: stock.stock_alert_no || 0,
+                sku: stock.sku || "",
+              }}
+              onSuccess={handleUpdateSuccess}
+            />
+          )}
         </div>
       </Card>
     </div>

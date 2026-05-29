@@ -21,23 +21,34 @@ import TermsOfService from "./chunks/TermsOfService";
 
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useUser } from "@/context/userContext";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("changePassword");
+  const { isAttendant } = useUser();
 
   const menuItems = [
     { id: "changePassword", label: "Change Password", icon: Lock },
-    {
-      id: "changeTransactionPin",
-      label: "Change Transaction Pin",
-      icon: CreditCard,
-    },
-    { id: "attendantPermission", label: "Attendant Permission", icon: User },
-    {
-      id: "businessVerification",
-      label: "Business Verification",
-      icon: FileText,
-    },
+
+    ...(isAttendant
+      ? []
+      : [
+          {
+            id: "changeTransactionPin",
+            label: "Change Transaction Pin",
+            icon: CreditCard,
+          },
+          {
+            id: "attendantPermission",
+            label: "Attendant Permission",
+            icon: User,
+          },
+          {
+            id: "businessVerification",
+            label: "Business Verification",
+            icon: FileText,
+          },
+        ]),
     { id: "customerSupport", label: "Customer Support", icon: Headphones },
     { id: "termsOfService", label: "Terms of Service", icon: FileCheck },
   ];
@@ -46,16 +57,22 @@ const Settings = () => {
     switch (activeTab) {
       case "changePassword":
         return <ChangePassword />;
+
       case "changeTransactionPin":
         return <ChangeTransactionPin />;
+
       case "attendantPermission":
         return <AttendantPermission />;
+
       case "businessVerification":
         return <BusinessVerification />;
+
       case "customerSupport":
         return <CustomerSupport />;
+
       case "termsOfService":
         return <TermsOfService />;
+
       default:
         return <ChangePassword />;
     }

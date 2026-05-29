@@ -154,6 +154,13 @@ import {
   GET_SUPPLIER_STORES,
   GET_STORE_STOCKS,
   SUCCESSFUL_HANDOVER,
+  PAY_CART_CREDIT_OTP,
+  RECORD_CREDIT_PAYMENT,
+  GET_CREDIT_LEDGER,
+  GET_CREDIT_LEDGER_SUMMARY,
+  GET_INVOICE_BY_ID,
+  GET_MANUFACTURERS,
+  GET_USER_STOCKS,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -167,6 +174,7 @@ import {
 } from "@/types/store";
 import {
   CreateStockResponse,
+  GetManufacturersResponse,
   ProductsResponse,
   StockMovementsResponse,
   UpdateStockPricesPayload,
@@ -245,6 +253,14 @@ import {
   SaleInvoice,
   SupplierSalesResponse,
 } from "@/types/sales";
+import {
+  CreditLedgerResponse,
+  CreditLedgerSummaryResponse,
+  CreditOtpPayload,
+  CreditOtpResponse,
+  RecordCreditPaymentPayload,
+  RecordCreditPaymentResponse,
+} from "@/types/creditLedger";
 
 interface UserProfile {
   data: {
@@ -721,14 +737,14 @@ export const handleCreateCustomer = async (
 
 export const handleUpdateCustomer = async (
   customerId: string,
-  payload: Omit<CreateCustomerPayload, "email">,   
+  payload: Omit<CreateCustomerPayload, "email">,
 ): Promise<CreateCustomerResponse> => {
-  const url = UPDATE_CUSTOMER(customerId);         
+  const url = UPDATE_CUSTOMER(customerId);
   return await putter<CreateCustomerResponse, typeof payload>(url, payload);
 };
 
 export const handleGetCustomerById = async (
-  customerId: string
+  customerId: string,
 ): Promise<any> => {
   const url = GET_CUSTOMER_BY_ID(customerId);
   return await fetcher<any>(url);
@@ -737,7 +753,7 @@ export const handleGetCustomerById = async (
 export const handleReturnCustomerEmpties = async (
   customerId: string,
   emptiesId: string,
-  payload: { quantityReturned: number; notes?: string }
+  payload: { quantityReturned: number; notes?: string },
 ): Promise<any> => {
   const url = RETURN_CUSTOMER_EMPTIES(customerId, emptiesId);
   return await poster<any, typeof payload>(url, payload);
@@ -762,6 +778,16 @@ export const handlePayInvoice = async (
 ): Promise<PayInvoiceResponse> => {
   return await putter<PayInvoiceResponse, PayInvoicePayload>(
     PAY_CART(invoiceId),
+    payload,
+  );
+};
+
+export const handlePayInvoiceCreditOtp = async (
+  invoiceId: string,
+  payload: CreditOtpPayload,
+): Promise<CreditOtpResponse> => {
+  return await putter<CreditOtpResponse, CreditOtpPayload>(
+    PAY_CART_CREDIT_OTP(invoiceId),
     payload,
   );
 };
@@ -879,13 +905,17 @@ export const handleGetMySubscription =
   };
 
 export const handleGetBusinessReportComparison = async (
-  startDate?: string, // YYYY-MM-DD
-  endDate?: string, // YYYY-MM-DD
+  startDate?: string,
+  endDate?: string,
+  manufacturer?: string,
+  sku?: string,
 ): Promise<BusinessReportResponse> => {
   const params: Record<string, string> = {};
 
   if (startDate) params.startDate = startDate;
   if (endDate) params.endDate = endDate;
+  if (manufacturer) params.manufacturer = manufacturer;
+  if (sku) params.sku = sku;
 
   return await fetcher<BusinessReportResponse>(
     GET_BUSINESS_REPORT_COMPARISON,
@@ -1005,4 +1035,71 @@ export const handleGetSupplierStores = async (userId: number): Promise<any> => {
 
 export const handleGetStoreStocks = async (storeId: string): Promise<any> => {
   return await fetcher<any>(GET_STORE_STOCKS(storeId));
+};
+
+export const getCreditLedger = async (
+  page: number = 1,
+  limit: number = 5,
+  search: string = "",
+  status: string = "",
+): Promise<CreditLedgerResponse> => {
+  const params: Record<string, string> = {
+    page: page.toString(),
+    limit: limit.toString(),
+  };
+  if (search) params.search = search;
+  if (status) params.status = status;
+
+  return await fetcher<CreditLedgerResponse>(GET_CREDIT_LEDGER(), params);
+};
+
+export const recordCreditPayment = async (
+  uuid: string,
+  payload: RecordCreditPaymentPayload,
+): Promise<RecordCreditPaymentResponse> => {
+  return await poster<RecordCreditPaymentResponse, RecordCreditPaymentPayload>(
+    RECORD_CREDIT_PAYMENT(uuid),
+    payload,
+  );
+};
+
+export const getCreditLedgerSummary =
+  async (): Promise<CreditLedgerSummaryResponse> => {
+    return await fetcher<CreditLedgerSummaryResponse>(
+      GET_CREDIT_LEDGER_SUMMARY(),
+    );
+  };
+
+export const getInvoiceById = async (id: string) => {
+  return await fetcher<any>(GET_INVOICE_BY_ID(id));
+};
+
+export const getManufacturers = async (
+  page: number = 1,
+  limit: number = 10,
+  search: string = "",
+): Promise<GetManufacturersResponse> => {
+  const params: Record<string, string> = {
+    page: page.toString(),
+    limit: limit.toString(),
+  };
+  if (search && search.trim()) {
+    params.search = search.trim();
+  }
+
+  return await fetcher<GetManufacturersResponse>(GET_MANUFACTURERS, params);
+};
+
+export const getUserStocks = async (
+  page: number = 1,
+  limit: number = 10,
+  search: string = "",
+): Promise<any> => {
+  const params: Record<string, string> = {
+    page: page.toString(),
+    limit: limit.toString(),
+  };
+  if (search) params.search = search;
+
+  return await fetcher<any>(GET_USER_STOCKS, params);
 };

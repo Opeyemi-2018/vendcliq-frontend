@@ -19,14 +19,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema, SignInFormData } from "@/types/auth";
 import { toast } from "sonner";
-import { handleSignIn } from "@/lib/utils/api/apiHelper";
+import {
+  handleGetAttendantPermissions,
+  handleSignIn,
+} from "@/lib/utils/api/apiHelper";
 import { useUser, extractVerificationStatus } from "@/context/userContext";
 
 const SignIN = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { setAllUserData, clearUserData } = useUser();
+  const { setAllUserData, clearUserData, setAttendantPermissions } = useUser();
 
   const form = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -46,9 +49,14 @@ const SignIN = () => {
 
       if (response.status === "success") {
         const token = response.data?.tokens?.accessToken?.token;
+        const userRole = response.data?.user?.account?.accountRole; // ← NEW
 
         if (token) {
           localStorage.setItem("accessToken", token);
+        }
+        // === NEW: Set userRole cookie for middleware ===
+        if (userRole) {
+          document.cookie = `userRole=${userRole}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
         }
 
         const userData = response.data?.user;
@@ -61,6 +69,10 @@ const SignIN = () => {
             email: userData.email.email,
             status: userData.account.status,
             userId: userData.userId,
+
+            accountRole: userData.account.accountRole as
+              | "CUSTOMER"
+              | "ATTENDANTS", 
             phone: userData.phone,
             pin: userData.pin ?? false,
             createdAt: userData.createdAt,
@@ -79,6 +91,44 @@ const SignIN = () => {
             : null;
 
           setAllUserData(formattedUserData, verificationStatus);
+          if (
+            userData.account.accountRole === "ATTENDANTS" &&
+            userData.userId
+          ) {
+            try {
+              const permRes = await handleGetAttendantPermissions(
+                userData.userId,
+              );
+              const permData = permRes?.data;
+
+              if (permData && typeof permData === "object") {
+                setAttendantPermissions({
+                  can_buy: !!permData.can_buy,
+                  can_sell: !!permData.can_sell,
+                  can_update_stock: !!permData.can_update_stock,
+                  can_move_stock: !!permData.can_move_stock,
+                  can_add_stock: !!permData.can_add_stock,
+                  can_market_place: !!permData.can_market_place,
+                  can_push_to_market: !!permData.can_push_to_market,
+                  can_view_store_info: !!permData.can_view_store_info,
+                  can_reporting: !!permData.can_reporting,
+                  can_expenses: !!permData.can_expenses,
+                  can_sell_on_credit: !!permData.can_sell_on_credit,
+                });
+                const perms: string[] = [];
+                if (permData.can_sell) perms.push("canSell");
+                if (permData.can_buy) perms.push("canBuy");
+                if (permData.can_reporting) perms.push("canReporting");
+                if (permData.can_expenses) perms.push("canExpenses");
+                if (permData.can_market_place)
+                  perms.push("canAccessMarketplace");
+
+                document.cookie = `userPermissions=${perms.join(",")}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
+              }
+            } catch {
+              // permissions fetch failed — all will default to false for attendant
+            }
+          }
 
           // Store in localStorage for persistence
           localStorage.setItem("user", JSON.stringify(formattedUserData));
@@ -89,8 +139,17 @@ const SignIN = () => {
             );
           }
 
+          // After the ATTENDANTS block, in the else or just before router.push
+          if (userData.account.accountRole !== "ATTENDANTS") {
+            document.cookie = `userPermissions=canSell,canBuy,canReporting,canExpenses,canAccessMarketplace; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
+          }
+
           toast.success("Signed in successfully!");
-          router.push("/account/overview");
+          router.push(
+            userData.account.accountRole === "ATTENDANTS"
+              ? "/inventory/overview"
+              : "/account/overview",
+          );
         } else {
           toast.error("User data not found in response");
         }
