@@ -161,6 +161,7 @@ import {
   GET_INVOICE_BY_ID,
   GET_MANUFACTURERS,
   GET_USER_STOCKS,
+  RETURN_ITEMS,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -1102,4 +1103,11 @@ export const getUserStocks = async (
   if (search) params.search = search;
 
   return await fetcher<any>(GET_USER_STOCKS, params);
+};
+
+export const handleReturnItems = async (payload: {
+  invoice_id: string;
+  items: { item_id: string; quantity: number; reason: string }[];
+}): Promise<any> => {
+  return await poster<any>(RETURN_ITEMS, payload);
 };
