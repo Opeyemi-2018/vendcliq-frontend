@@ -133,6 +133,7 @@ const UPDATE_STOCK_PRICES = (stockId: string) => `inventory/stocks/${stockId}`;
 // get credit ledger items
  const GET_INVOICE_BY_ID = (id: string) => `inventory/invoices/${id}`;
  const GET_USER_STOCKS = "inventory/stocks/user/stocks";
+ const RETURN_ITEMS = "inventory/items/return";
 
 
 
@@ -218,6 +219,7 @@ export {
   GET_INVOICE_BY_ID,
   GET_MANUFACTURERS,
   GET_USER_STOCKS,
+  RETURN_ITEMS
 
   // v1 endpoint
   // GET_PROFILE,
