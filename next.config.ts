@@ -4,7 +4,6 @@ const nextConfig: NextConfig = {
   images: {
     domains: [],
   },
-  output: "export",
   /* config options here */
 };
 
