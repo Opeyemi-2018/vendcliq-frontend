@@ -165,6 +165,7 @@ import {
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
+import { logger } from "@/lib/logger/otel-logger";
 import {
   CreateStoreFormData,
   CreateStoreResponse,
@@ -306,8 +307,16 @@ export const fetcher = async <T>(
   url: string,
   params?: Record<string, unknown>,
 ): Promise<T> => {
-  const response = await axiosInstance.get<T>(url, { params });
-  return response.data;
+  const start = Date.now();
+  logger.info(JSON.stringify({ method: "GET", url }), "API");
+  try {
+    const response = await axiosInstance.get<T>(url, { params });
+    logger.info(JSON.stringify({ method: "GET", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    return response.data;
+  } catch (err) {
+    logger.error(JSON.stringify({ method: "GET", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    throw err;
+  }
 };
 
 export const poster = async <T, U = unknown>(
@@ -315,15 +324,23 @@ export const poster = async <T, U = unknown>(
   data?: U,
   headers?: Record<string, string>,
 ): Promise<T> => {
-  const response = await axiosInstance.post<T>(url, data, {
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...headers,
-    },
-    validateStatus: () => true,
-  });
-  return response.data;
+  const start = Date.now();
+  logger.info(JSON.stringify({ method: "POST", url }), "API");
+  try {
+    const response = await axiosInstance.post<T>(url, data, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...headers,
+      },
+      validateStatus: () => true,
+    });
+    logger.info(JSON.stringify({ method: "POST", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    return response.data;
+  } catch (err) {
+    logger.error(JSON.stringify({ method: "POST", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    throw err;
+  }
 };
 
 export const posterWithMultipart = async <T>(
@@ -331,14 +348,22 @@ export const posterWithMultipart = async <T>(
   formData: FormData,
   headers?: Record<string, string>,
 ): Promise<T> => {
-  const response = await axiosInstance.post<T>("", formData, {
-    params: { endpoint: url },
-    headers: {
-      Accept: "*/*",
-      ...headers,
-    },
-  });
-  return response.data;
+  const start = Date.now();
+  logger.info(JSON.stringify({ method: "POST(multipart)", url }), "API");
+  try {
+    const response = await axiosInstance.post<T>("", formData, {
+      params: { endpoint: url },
+      headers: {
+        Accept: "*/*",
+        ...headers,
+      },
+    });
+    logger.info(JSON.stringify({ method: "POST(multipart)", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    return response.data;
+  } catch (err) {
+    logger.error(JSON.stringify({ method: "POST(multipart)", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    throw err;
+  }
 };
 
 export const putter = async <T, U = unknown>(
@@ -346,30 +371,46 @@ export const putter = async <T, U = unknown>(
   data?: U,
   headers?: Record<string, string>,
 ): Promise<T> => {
-  const response = await axiosInstance.put<T>(url, data, {
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...headers,
-    },
-    validateStatus: () => true,
-  });
-  return response.data;
+  const start = Date.now();
+  logger.info(JSON.stringify({ method: "PUT", url }), "API");
+  try {
+    const response = await axiosInstance.put<T>(url, data, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...headers,
+      },
+      validateStatus: () => true,
+    });
+    logger.info(JSON.stringify({ method: "PUT", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    return response.data;
+  } catch (err) {
+    logger.error(JSON.stringify({ method: "PUT", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    throw err;
+  }
 };
 
 export const deleter = async <T>(
   url: string,
   headers?: Record<string, string>,
 ): Promise<T> => {
-  const response = await axiosInstance.delete<T>(url, {
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...headers,
-    },
-    validateStatus: () => true,
-  });
-  return response.data;
+  const start = Date.now();
+  logger.info(JSON.stringify({ method: "DELETE", url }), "API");
+  try {
+    const response = await axiosInstance.delete<T>(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...headers,
+      },
+      validateStatus: () => true,
+    });
+    logger.info(JSON.stringify({ method: "DELETE", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    return response.data;
+  } catch (err) {
+    logger.error(JSON.stringify({ method: "DELETE", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    throw err;
+  }
 };
 
 export const handleEmailVerification = async (
@@ -668,10 +709,17 @@ export const handleSendOtpForForgetPassword = async (
 export const handleApiError = (
   error: unknown,
   setError: (msg: string) => void,
+  context?: string,
 ): void => {
   if (error instanceof AxiosError) {
-    setError(error.response?.data.errors?.[0]?.message || "An error occurred");
+    const msg = error.response?.data.errors?.[0]?.message || "An error occurred";
+    logger.error(
+      JSON.stringify({ url: error.config?.url, status: error.response?.status, message: msg }),
+      context ?? "API",
+    );
+    setError(msg);
   } else {
+    logger.error(JSON.stringify({ message: "An unexpected error occurred", error: String(error) }), context ?? "API");
     setError("An unexpected error occurred");
   }
 };
