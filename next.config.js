@@ -17,6 +17,19 @@ const nextConfig = {
   },
   // Fix assetPrefix configuration
   assetPrefix: process.env.NODE_ENV === "production" ? "/" : "",
+
+  // Add this section for OpenTelemetry support
+  serverExternalPackages: [
+    "@opentelemetry/sdk-node",
+    "@opentelemetry/auto-instrumentations-node",
+    "@opentelemetry/exporter-trace-otlp-http",
+    "@opentelemetry/exporter-metrics-otlp-http",
+    "@opentelemetry/exporter-logs-otlp-http",
+    "@opentelemetry/sdk-metrics",
+    "@opentelemetry/sdk-logs",
+    "@opentelemetry/resources",
+    "@opentelemetry/semantic-conventions",
+  ],
 };
 
 module.exports = nextConfig;

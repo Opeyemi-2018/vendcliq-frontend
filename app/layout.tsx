@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import { UserProvider } from "@/context/userContext";
 import TopLoader from "@/components/TopLoader";
+import { AppErrorBoundary } from "@/components/ErrorBoundary";
 
 const dmSans = localFont({
   src: "./fonts/DmSans-Regular.woff2",
@@ -11,7 +12,11 @@ const dmSans = localFont({
   display: "swap",
 });
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className={dmSans.variable}>
       <head>
@@ -20,7 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased bg-white">
         {/* These are client components */}
         <TopLoader />
-        <UserProvider>{children}</UserProvider>
+        <AppErrorBoundary>
+          <UserProvider>{children}</UserProvider>
+        </AppErrorBoundary>
         <Toaster position="top-center" richColors />
       </body>
     </html>

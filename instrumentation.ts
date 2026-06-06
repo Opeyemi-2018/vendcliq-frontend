@@ -1,6 +1,9 @@
+export const runtime = "nodejs";
+
 export async function register() {
+  // Only run in Node.js runtime
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
-  // if (process.env.OTEL_ENABLED !== "true") return;
+  if (process.env.OTEL_ENABLED !== "true") return;
 
   try {
     const { NodeSDK } = await import("@opentelemetry/sdk-node");
@@ -15,24 +18,24 @@ export async function register() {
       process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "https://ingest.vendcliq.cloud"
     ).replace(/\/+$/, "");
 
-    new URL(ENDPOINT);
-
     const HEADERS: Record<string, string> = Object.fromEntries(
       (process.env.OTEL_EXPORTER_OTLP_HEADERS ?? "")
         .split(",")
         .filter(Boolean)
         .map((h) => {
           const i = h.indexOf("=");
-          return i !== -1 ? [h.slice(0, i).trim(), h.slice(i + 1).trim()] : null;
+          return i !== -1
+            ? [h.slice(0, i).trim(), h.slice(i + 1).trim()]
+            : null;
         })
         .filter(Boolean) as [string, string][],
     );
 
     const isProd = process.env.NODE_ENV === "production";
-    process.env.OTEL_SERVICE_NAME ??= isProd ? "vendcliq-web" : "staging-web";
+    const SERVICE_NAME = isProd ? "vendcliq-web" : "staging-web";
 
     const sdk = new NodeSDK({
-      serviceName: process.env.OTEL_SERVICE_NAME,
+      serviceName: SERVICE_NAME,
       traceExporter: new OTLPTraceExporter({
         url: `${ENDPOINT}/v1/traces`,
         headers: HEADERS,
@@ -58,6 +61,7 @@ export async function register() {
     });
 
     sdk.start();
+    console.log("✅ SigNoz OpenTelemetry initialized successfully");
 
     process.on("SIGTERM", () => {
       sdk
