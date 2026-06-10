@@ -5,8 +5,6 @@
 
 import { NextResponse } from "next/server";
 import {
-  // v2 endpoint
-
   VERIFY_EMAIL,
   CONFIRM_PHONE_NUMBER,
   SIGN_IN,
@@ -28,10 +26,13 @@ import {
   TRANSACTION_HISTORY,
   VENDCLIQ_TRANSFER,
   OTHERBANK_TRANSFER,
+  LOOKUP_ACCOUNT,
   BUY_AIRTIME,
   BUY_DATA,
   PIN_VALIDATE,
   CREATE_WALLET,
+  GET_NIP_BANKS,
+  NAME_ENQUIRY,
   ADD_SHOP_ATTENDANT,
   CREATE_INVOICE,
   EDIT_INVOICE,
@@ -40,6 +41,9 @@ import {
   CREATE_CART,
   CHECKOUT_CART,
   PAY_CART,
+  GET_CART,
+  UPDATE_CART_ITEM,
+  DELETE_CART_ITEM,
   UPDATE_TRANSFER_PIN,
   CHANGE_PASSWORD,
   ASSIGN_ATTENDANT_PERMISSIONS,
@@ -86,36 +90,17 @@ import {
   GET_INVOICE_BY_ID,
   GET_MANUFACTURERS,
   GET_USER_STOCKS,
-  RETURN_ITEMS
-
-  // v1 endpoint
-
-  // GET_PROFILE,
-  // DASHBOARD,
-  // BUSINESS_INFORMATION_SETUP_STEP_ONE,
-  // BUSINESS_INFORMATION_SETUP_STEP_TWO,
-  // IDENTITY_UPLOAD,
-  // CREATE_LOAN,
-  // LIST_BANKS,
-  // VERIFY_BANK_ACCOUNT,
-  // RESEND_EMAIL_OTP,
-  // CREATE_PIN,
-  // UPDATE_PIN,
-  // REQUEST_PIN_TOKEN,
-  // GET_TENURES,
-  // POST_REPAYMENT_PATTERN,
-  // GET_LOAN,
-  // GET_BANK_ACCOUNT,
-  // GET_ACCOUNT,
-  // LOAN_STAT_DETAILS,
-  // OUTSIDE_TRANSFER,
-  // LOCAL_TRANSFER,
-  // GET_ACCOUNT_BY_ID,
-  // GET_ACCOUNT_DETAILS_BY_ID,
+  RETURN_ITEMS,
+  GET_CUSTOMERS,
+  GET_STORE_STOCK_BY_ID,
+  GET_MARKETPLACE_STOCKS,
+  GET_MARKETPLACE_OFFERS,
+  GET_OFFER_DETAIL,
+  GET_MARKETPLACE_STOCK_DETAIL,
 } from "@/url/api-url";
 
 export const dynamic = "force-dynamic";
-export const runtime = "edge";
+// export const runtime = "edge";
 
 // API Base URLs
 const VERA_API_BASE_URL = process.env.VERA_API_BASE_URL as string;
@@ -131,22 +116,18 @@ if (!LOGISTIC_API_BASE_URL)
   throw new Error("VENDCLIQ_LOGISTIC_API_BASE_URL not set");
 
 const API_KEY = process.env.PRODUCT_API_KEY as string;
-if (!API_KEY) throw new Error("PRODUCT_API_KEY not set");
-
 const CLIENT_ID = process.env.CLIENT_ID as string;
-if (!CLIENT_ID) throw new Error("CLIENT_ID not set");
-
 const CLIENT_VERSION = process.env.CLIENT_VERSION as string;
-if (!CLIENT_VERSION) throw new Error("CLIENT_VERSION not set");
-
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN as string;
-if (!CLIENT_ORIGIN) throw new Error("CLIENT_ORIGIN not set");
-
 const APP_SECRET_KEY = process.env.APP_SECRET_KEY as string;
+
+if (!API_KEY) throw new Error("PRODUCT_API_KEY not set");
+if (!CLIENT_ID) throw new Error("CLIENT_ID not set");
+if (!CLIENT_VERSION) throw new Error("CLIENT_VERSION not set");
+if (!CLIENT_ORIGIN) throw new Error("CLIENT_ORIGIN not set");
 if (!APP_SECRET_KEY) throw new Error("APP_SECRET_KEY not set");
 
 const AUTH_SIGNIN_PATH = SIGN_IN;
-
 const RATE_LIMIT = parseInt(process.env.RATE_LIMIT || "100", 10);
 const RATE_LIMIT_WINDOW = parseInt(
   process.env.RATE_LIMIT_WINDOW || "60000",
@@ -198,7 +179,6 @@ const addSecurityHeaders = async (
 
 // Whitelists
 const VERA_ENDPOINTS = [
-  // v2 endpoint
   SIGN_IN,
   SIGN_UP,
   CREATE_PASSWORD,
@@ -219,6 +199,9 @@ const VERA_ENDPOINTS = [
   PIN_VALIDATE,
   GET_WALLET,
   OTHERBANK_TRANSFER,
+  LOOKUP_ACCOUNT,
+  GET_NIP_BANKS,
+  NAME_ENQUIRY,
   BUY_AIRTIME,
   BUY_DATA,
   CREATE_WALLET,
@@ -226,38 +209,9 @@ const VERA_ENDPOINTS = [
   REQUEST_PIN_TOKEN,
   CREATE_PIN,
   UPDATE_TRANSFER_PIN,
-  CHANGE_PASSWORD,
   CREATE_BENEFICIARY,
   GET_BENEFICIARIES,
-  // the get attendant is not an inventory endpoint
   GET_ATTENDANTS,
-
-  // v1 endpoint
-  // GET_PROFILE,
-  // DASHBOARD,
-  // CREATE_PIN,
-  // UPDATE_PIN,
-
-  // BUSINESS_INFORMATION_SETUP_STEP_ONE,
-  // BUSINESS_INFORMATION_SETUP_STEP_TWO,
-  // IDENTITY_UPLOAD,
-  // RESEND_EMAIL_OTP,
-  // REQUEST_PIN_TOKEN,
-
-  // LOAN_STAT_DETAILS,
-  // GET_LOAN,
-  // GET_TENURES,
-  // POST_REPAYMENT_PATTERN,
-  // CREATE_LOAN,
-
-  // OUTSIDE_TRANSFER,
-  // LOCAL_TRANSFER,
-  // GET_ACCOUNT,
-  // GET_BANK_ACCOUNT,
-  // GET_ACCOUNT_BY_ID,
-  // GET_ACCOUNT_DETAILS_BY_ID,
-  // VERIFY_BANK_ACCOUNT,
-  // LIST_BANKS,
 ];
 
 const INVENTORY_ENDPOINTS = [
@@ -274,6 +228,9 @@ const INVENTORY_ENDPOINTS = [
   RETURN_CUSTOMER_EMPTIES,
   CREATE_CART,
   CHECKOUT_CART,
+  GET_CART,
+  UPDATE_CART_ITEM,
+  DELETE_CART_ITEM,
   PAY_CART,
   UPDATE_ATTENDANT_PERMISSIONS,
   GET_ATTENDANT_PERMISSIONS,
@@ -309,7 +266,13 @@ const INVENTORY_ENDPOINTS = [
   GET_INVOICE_BY_ID,
   GET_MANUFACTURERS,
   GET_USER_STOCKS,
-  RETURN_ITEMS
+  RETURN_ITEMS,
+  GET_CUSTOMERS,
+  GET_STORE_STOCK_BY_ID,
+  GET_MARKETPLACE_STOCKS,
+  GET_MARKETPLACE_OFFERS,
+  GET_OFFER_DETAIL,
+  GET_MARKETPLACE_STOCK_DETAIL,
 ];
 
 const LOGISTIC_ENDPOINTS = [GET_ITEM_TRACKING_STATUS];
@@ -317,18 +280,12 @@ const LOGISTIC_ENDPOINTS = [GET_ITEM_TRACKING_STATUS];
 const ALLOWED_ENDPOINTS = [
   ...VERA_ENDPOINTS,
   ...INVENTORY_ENDPOINTS,
-  ...LOGISTIC_ENDPOINTS, // ← Add this
+  ...LOGISTIC_ENDPOINTS,
 ];
-// API Base URL Router
-// API Base URL Router
+
 const getApiBaseUrl = (endpoint: string): string => {
   const normalized = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-
-  // Check for logistics endpoints (like /bids/track/...)
-  if (normalized.startsWith("/bids/")) {
-    return LOGISTIC_API_BASE_URL;
-  }
-
+  if (normalized.startsWith("/bids/")) return LOGISTIC_API_BASE_URL;
   if (
     INVENTORY_ENDPOINTS.some(
       (e) =>
@@ -338,19 +295,15 @@ const getApiBaseUrl = (endpoint: string): string => {
   ) {
     return INVENTORY_API_BASE_URL;
   }
-
   return VERA_API_BASE_URL;
 };
 
-// Endpoint Validation
 const isValidEndpoint = (endpoint: string): boolean => {
   const normalized = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-
   const staticMatch = ALLOWED_ENDPOINTS.some((allowed) => {
     if (typeof allowed === "string") {
-      if (allowed.startsWith("/")) {
+      if (allowed.startsWith("/"))
         return endpoint === allowed || endpoint.startsWith(allowed + "?");
-      }
       return (
         endpoint === allowed ||
         endpoint === `/${allowed}` ||
@@ -360,30 +313,26 @@ const isValidEndpoint = (endpoint: string): boolean => {
     }
     return false;
   });
-
   if (staticMatch) return true;
-
   if (
     normalized.match(/^\/client\/v1\/bank-accounts\/\d+$/) ||
     normalized.match(/^\/client\/v1\/bank-accounts\/accounts\/\d+$/) ||
     normalized.match(/^\/client\/v1\/loans\/\d+$/) ||
     normalized.match(/^\/client\/v1\/loans\/list\/repayment[-_]pattern.*$/) ||
     normalized.match(/^\/client\/v1\/bank-accounts\/accounts\/verify\/\d+$/) ||
+    normalized.match(/^\/client\/v2\/wallet\/lookup.*$/) ||
     normalized.match(/^\/v1\/inventory\/.*$/) ||
     normalized.match(/^\/inventory\/.*$/) ||
-    normalized.match(/^\/bids\/track\/[a-f0-9-]+$/) // ← Add this pattern
+    normalized.match(/^\/bids\/track\/[a-f0-9-]+$/)
   ) {
     return true;
   }
-
   return false;
 };
 
-// Auth Token
 const getAuthToken = (request: Request): string | null => {
   const authHeader = request.headers.get("Authorization");
   if (authHeader?.startsWith("Bearer ")) return authHeader.substring(7);
-
   const cookieHeader = request.headers.get("cookie");
   if (cookieHeader) {
     const cookies = cookieHeader.split(";").reduce(
@@ -394,40 +343,34 @@ const getAuthToken = (request: Request): string | null => {
       },
       {} as Record<string, string>,
     );
-
     return cookies["authToken"];
   }
   return null;
 };
 
-// Rate Limiting
 const requestCounts = new Map<string, { count: number; timestamp: number }>();
 const isRateLimited = (clientIp: string): boolean => {
   const now = Date.now();
   const clientData = requestCounts.get(clientIp);
-
   if (!clientData) {
     requestCounts.set(clientIp, { count: 1, timestamp: now });
     return false;
   }
-
   if (now - clientData.timestamp > RATE_LIMIT_WINDOW) {
     requestCounts.set(clientIp, { count: 1, timestamp: now });
     return false;
   }
-
   if (clientData.count >= RATE_LIMIT) return true;
-
   clientData.count++;
   return false;
 };
 
 // POST Handler
+// POST Handler - replace the try block with this
 export async function POST(request: Request) {
   try {
     const forwardedFor = request.headers.get("x-forwarded-for");
     const clientIp = forwardedFor ? forwardedFor.split(",")[0] : "unknown";
-
     if (isRateLimited(clientIp)) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
@@ -458,7 +401,6 @@ export async function POST(request: Request) {
     }
 
     const token = getAuthToken(request);
-
     const baseHeaders: Record<string, string> = {
       "x-api-key": API_KEY,
       "X-Content-Type-Options": "nosniff",
@@ -476,10 +418,9 @@ export async function POST(request: Request) {
       "POST",
       endpoint,
     );
-
     const apiBaseUrl = getApiBaseUrl(endpoint);
 
-    console.log(`Routing POST ${endpoint} to ${apiBaseUrl}`);
+    console.log(`Routing POST ${endpoint} to ${apiBaseUrl}${endpoint}`);
 
     const response = await fetch(`${apiBaseUrl}${endpoint}`, {
       method: "POST",
@@ -488,6 +429,12 @@ export async function POST(request: Request) {
         ? (data as FormData)
         : JSON.stringify(data),
     });
+
+    console.log("Response status:", response.status);
+    console.log(
+      "Response headers:",
+      Object.fromEntries(response.headers.entries()),
+    );
 
     const responseData = await response.json();
     const nextResponse = NextResponse.json(responseData, {
@@ -514,33 +461,38 @@ export async function POST(request: Request) {
     return nextResponse;
   } catch (error) {
     console.error("API proxy error:", error);
+    console.error(
+      "Error details:",
+      error instanceof Error ? error.message : String(error),
+    );
+    console.error(
+      "Error stack:",
+      error instanceof Error ? error.stack : "No stack",
+    );
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      {
+        error: "Internal Server Error",
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 },
     );
   }
 }
 
 // GET Handler
-// GET Handler
-// FIXED GET Handler - Replace your existing GET function with this:
-
 export async function GET(request: Request) {
   try {
     const forwardedFor = request.headers.get("x-forwarded-for");
     const clientIp = forwardedFor ? forwardedFor.split(",")[0] : "unknown";
-
     if (isRateLimited(clientIp)) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
     const { searchParams } = new URL(request.url);
     const endpoint = searchParams.get("endpoint");
-
     if (!endpoint || typeof endpoint !== "string") {
       return NextResponse.json({ error: "Invalid endpoint" }, { status: 400 });
     }
-
     if (!isValidEndpoint(endpoint)) {
       return NextResponse.json(
         { error: "Endpoint not allowed" },
@@ -548,20 +500,12 @@ export async function GET(request: Request) {
       );
     }
 
-    // ============================================
-    // FIX: Extract all query params except 'endpoint'
-    // ============================================
     const forwardParams = new URLSearchParams();
     searchParams.forEach((value, key) => {
-      if (key !== "endpoint") {
-        forwardParams.append(key, value);
-      }
+      if (key !== "endpoint") forwardParams.append(key, value);
     });
-
-    // Build the query string
     const queryString = forwardParams.toString();
     const fullEndpoint = queryString ? `${endpoint}?${queryString}` : endpoint;
-    // ============================================
 
     const token = getAuthToken(request);
     const apiBaseUrl = getApiBaseUrl(endpoint);
@@ -575,62 +519,33 @@ export async function GET(request: Request) {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
-    // Skip security headers for logistics endpoints
     const headers = isLogisticsEndpoint
       ? baseHeaders
       : await addSecurityHeaders(baseHeaders, "GET", endpoint);
-
     console.log(`Routing GET ${endpoint} to ${apiBaseUrl}${fullEndpoint}`);
-    console.log(`Query params being forwarded:`, queryString || "none");
 
-    const response = await fetch(`${apiBaseUrl}${fullEndpoint}`, {
-      headers,
-    });
+    const response = await fetch(`${apiBaseUrl}${fullEndpoint}`, { headers });
 
-    console.log(`Response status: ${response.status}`);
-
-    // Handle logistics endpoints differently
     if (isLogisticsEndpoint) {
+      const text = await response.text();
+      let data;
       try {
-        // Try to read as text first
-        const text = await response.text();
-        console.log(`Logistics response text: ${text}`);
-
-        // Try to parse as JSON, if it fails, return as plain message
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch {
-          // If not JSON, wrap the text in a message object
-          data = { message: text };
-        }
-
-        const nextResponse = NextResponse.json(data, {
-          status: response.status,
-        });
-
-        nextResponse.headers.set("X-Content-Type-Options", "nosniff");
-        nextResponse.headers.set("X-Frame-Options", "DENY");
-        nextResponse.headers.set("X-XSS-Protection", "1; mode=block");
-
-        return nextResponse;
-      } catch (error) {
-        console.error("Error processing logistics response:", error);
-        return NextResponse.json(
-          { message: "Failed to process logistics response" },
-          { status: 500 },
-        );
+        data = JSON.parse(text);
+      } catch {
+        data = { message: text };
       }
+      const nextResponse = NextResponse.json(data, { status: response.status });
+      nextResponse.headers.set("X-Content-Type-Options", "nosniff");
+      nextResponse.headers.set("X-Frame-Options", "DENY");
+      nextResponse.headers.set("X-XSS-Protection", "1; mode=block");
+      return nextResponse;
     }
 
-    // Handle regular JSON responses for non-logistics endpoints
     const data = await response.json();
     const nextResponse = NextResponse.json(data, { status: response.status });
-
     nextResponse.headers.set("X-Content-Type-Options", "nosniff");
     nextResponse.headers.set("X-Frame-Options", "DENY");
     nextResponse.headers.set("X-XSS-Protection", "1; mode=block");
-
     return nextResponse;
   } catch (error) {
     console.error("API proxy error:", error);
@@ -644,12 +559,11 @@ export async function GET(request: Request) {
   }
 }
 
-// PUT Handler - almost identical to POST
+// PUT Handler
 export async function PUT(request: Request) {
   try {
     const forwardedFor = request.headers.get("x-forwarded-for");
     const clientIp = forwardedFor ? forwardedFor.split(",")[0] : "unknown";
-
     if (isRateLimited(clientIp)) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
@@ -671,7 +585,6 @@ export async function PUT(request: Request) {
     if (!endpoint || typeof endpoint !== "string") {
       return NextResponse.json({ error: "Invalid endpoint" }, { status: 400 });
     }
-
     if (!isValidEndpoint(endpoint)) {
       return NextResponse.json(
         { error: "Endpoint not allowed" },
@@ -680,7 +593,6 @@ export async function PUT(request: Request) {
     }
 
     const token = getAuthToken(request);
-
     const baseHeaders: Record<string, string> = {
       "x-api-key": API_KEY,
       "X-Content-Type-Options": "nosniff",
@@ -693,19 +605,16 @@ export async function PUT(request: Request) {
       baseHeaders["Content-Type"] = "application/json";
     }
 
-    // Important: pass "PUT" as method for signature
     const secureHeaders = await addSecurityHeaders(
       baseHeaders,
-      "PUT", // ← This was "POST" before — now correct
+      "PUT",
       endpoint,
     );
-
     const apiBaseUrl = getApiBaseUrl(endpoint);
-
     console.log(`Routing PUT ${endpoint} to ${apiBaseUrl}`);
 
     const response = await fetch(`${apiBaseUrl}${endpoint}`, {
-      method: "PUT", // ← Forward as PUT
+      method: "PUT",
       headers: secureHeaders,
       body: contentType.includes("multipart/form-data")
         ? (data as FormData)
@@ -716,11 +625,9 @@ export async function PUT(request: Request) {
     const nextResponse = NextResponse.json(responseData, {
       status: response.status,
     });
-
     nextResponse.headers.set("X-Content-Type-Options", "nosniff");
     nextResponse.headers.set("X-Frame-Options", "DENY");
     nextResponse.headers.set("X-XSS-Protection", "1; mode=block");
-
     return nextResponse;
   } catch (error) {
     console.error("API proxy PUT error:", error);
@@ -731,22 +638,20 @@ export async function PUT(request: Request) {
   }
 }
 
+// DELETE Handler
 export async function DELETE(request: Request) {
   try {
     const forwardedFor = request.headers.get("x-forwarded-for");
     const clientIp = forwardedFor ? forwardedFor.split(",")[0] : "unknown";
-
     if (isRateLimited(clientIp)) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
     const { searchParams } = new URL(request.url);
     const endpoint = searchParams.get("endpoint");
-
     if (!endpoint || typeof endpoint !== "string") {
       return NextResponse.json({ error: "Invalid endpoint" }, { status: 400 });
     }
-
     if (!isValidEndpoint(endpoint)) {
       return NextResponse.json(
         { error: "Endpoint not allowed" },
@@ -755,7 +660,6 @@ export async function DELETE(request: Request) {
     }
 
     const token = getAuthToken(request);
-
     const baseHeaders: Record<string, string> = {
       "x-api-key": API_KEY,
       "X-Content-Type-Options": "nosniff",
@@ -769,9 +673,7 @@ export async function DELETE(request: Request) {
       "DELETE",
       endpoint,
     );
-
     const apiBaseUrl = getApiBaseUrl(endpoint);
-
     console.log(`Routing DELETE ${endpoint} to ${apiBaseUrl}`);
 
     const response = await fetch(`${apiBaseUrl}${endpoint}`, {
@@ -781,11 +683,9 @@ export async function DELETE(request: Request) {
 
     const data = await response.json();
     const nextResponse = NextResponse.json(data, { status: response.status });
-
     nextResponse.headers.set("X-Content-Type-Options", "nosniff");
     nextResponse.headers.set("X-Frame-Options", "DENY");
     nextResponse.headers.set("X-XSS-Protection", "1; mode=block");
-
     return nextResponse;
   } catch (error) {
     console.error("API proxy DELETE error:", error);

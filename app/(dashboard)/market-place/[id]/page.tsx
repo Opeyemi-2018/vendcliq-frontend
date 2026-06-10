@@ -10,11 +10,12 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   getMarketplaceStockDetail,
   getOfferDetail,
-} from "@/actions/marketPlaceStock";
+} from "@/lib/utils/api/apiHelper";
+
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
@@ -150,39 +151,29 @@ const StockDetailPage = () => {
     try {
       setLoading(true);
       setError(false);
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
-      if (!token) {
-        toast.error("Please log in");
-        setLoading(false);
-        return;
-      }
 
       if (isOffer) {
-        const result = await getOfferDetail(token, stockId);
-        if (result.success && result.offer) {
-          setOffer(result.offer);
+        const result = await getOfferDetail(stockId);
+        if (result?.data?.offer) {
+          setOffer(result.data.offer);
           setStock(null);
-          setRelatedStocks([]);
-          setRelatedOffers(result.relatedOffers || []);
+          setRelatedOffers(result.data.relatedOffers || []);
         } else {
           setError(true);
-          toast.error(result.error || "Failed to load offer details");
+          toast.error("Failed to load offer details");
         }
       } else {
-        const result = await getMarketplaceStockDetail(token, stockId);
-        if (result.success && result.stock) {
-          setStock(result.stock);
+        const result = await getMarketplaceStockDetail(stockId);
+        if (result?.data?.stock) {
+          setStock(result.data.stock);
           setOffer(null);
-          setRelatedStocks(result.relatedStocks || []);
+          setRelatedStocks(result.data.relatedStocks || []);
         } else {
           setError(true);
-          toast.error(result.error || "Failed to load product details");
+          toast.error("Failed to load product details");
         }
       }
-    } catch (error) {
-      console.error("Error fetching detail:", error);
+    } catch {
       setError(true);
       toast.error("An error occurred while loading product details");
     } finally {

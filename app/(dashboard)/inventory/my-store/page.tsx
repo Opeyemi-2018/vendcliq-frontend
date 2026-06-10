@@ -13,7 +13,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useStores } from "@/hooks/useStores";
 import { useState, useEffect, useMemo } from "react";
-import { getAttendants } from "@/actions/getAttendant";
+import { handleGetAttendants } from "@/lib/utils/api/apiHelper";
 import { useUser } from "@/context/userContext";
 
 interface Attendant {
@@ -79,27 +79,20 @@ const MyStore = () => {
 
   useEffect(() => {
     const fetchAttendants = async () => {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
-      if (!token) {
-        setAttendantsError("No authentication token found. Please log in.");
-        setAttendantsLoading(false);
-        return;
-      }
-
       setAttendantsLoading(true);
       setAttendantsError(null);
-
-      const result = await getAttendants(token);
-
-      if (result.success) {
-        setAttendants(result.data || []);
-      } else {
-        setAttendantsError(result.message || "Failed to load attendants");
+      try {
+        const result = await handleGetAttendants();
+        if (result?.data?.attendants) {
+          setAttendants(result.data.attendants);
+        } else {
+          setAttendantsError("Failed to load attendants");
+        }
+      } catch {
+        setAttendantsError("Failed to load attendants");
+      } finally {
+        setAttendantsLoading(false);
       }
-
-      setAttendantsLoading(false);
     };
 
     fetchAttendants();

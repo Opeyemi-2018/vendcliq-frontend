@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Search, Plus, MoreHorizontal } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getCustomers } from "@/actions/getcustomers";
+import { getCustomers } from "@/lib/utils/api/apiHelper";
 import {
   handleCreateCustomer,
   handleUpdateCustomer,
@@ -125,10 +125,8 @@ const Customer = () => {
     const fetchCustomers = async () => {
       setIsLoadingCustomers(true);
       try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
-        const result = await getCustomers(token);
-        if (result.success && result.data) {
+        const result = await getCustomers();
+        if (result?.data) {
           setCustomers(result.data);
         } else {
           toast.error("Failed to load customers");
@@ -143,12 +141,9 @@ const Customer = () => {
   }, []);
 
   const refreshCustomers = async () => {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      const result = await getCustomers(token);
-      if (result.success && result.data) {
-        setCustomers(result.data);
-      }
+    const result = await getCustomers();
+    if (result?.data) {
+      setCustomers(result.data);
     }
   };
 
@@ -278,8 +273,6 @@ const Customer = () => {
                 </tr>
               ) : (
                 paginatedCustomers.map((customer) => {
-                  
-
                   return (
                     <tr key={customer.id} className="hover:bg-gray-50/70">
                       <td className="px-6 py-4 font-medium">{customer.name}</td>

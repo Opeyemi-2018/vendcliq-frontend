@@ -56,6 +56,7 @@ const AssignAttendantPermissions = () => {
         setIsLoadingAttendants(false);
       }
     };
+    
 
     fetchAttendants();
   }, []);

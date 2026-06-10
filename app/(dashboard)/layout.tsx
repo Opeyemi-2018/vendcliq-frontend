@@ -4,6 +4,7 @@ import { AppSidebar } from "@/components/Sidebar";
 import { ReactNode, useEffect, useRef } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { usePathname, useRouter } from "next/navigation";
+import AIChatWidget from "@/components/ChatWidget";
 
 const DashboardContent = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
@@ -43,6 +44,7 @@ const DashboardContent = ({ children }: { children: ReactNode }) => {
           className="px-4 lg:px-5 py-7 overflow-auto mt-16"
           data-scroll-container
         >
+           <AIChatWidget />
           {children}
         </div>
       </main>

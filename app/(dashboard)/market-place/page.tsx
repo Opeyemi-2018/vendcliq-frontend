@@ -8,7 +8,8 @@ import { useEffect, useState } from "react";
 import {
   getMarketplaceStocks,
   getMarketplaceOffers,
-} from "@/actions/marketPlaceStock";
+} from "@/lib/utils/api/apiHelper";
+
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -30,21 +31,12 @@ const MarketPlace = () => {
   const fetchAllItems = async () => {
     try {
       setLoading(true);
-
-      const token =
-        localStorage.getItem("accessToken") 
-
-      if (!token) {
-        toast.error("Please log in");
-        return;
-      }
-
       const [offersResult, stocksResult] = await Promise.all([
-        getMarketplaceOffers(token),
-        getMarketplaceStocks(token),
+        getMarketplaceOffers(),
+        getMarketplaceStocks(),
       ]);
 
-      const offers: OfferStock[] = offersResult.success
+      const offers: OfferStock[] = offersResult?.data
         ? offersResult.data.map((o: any) => ({
             ...o,
             id: o.id,
@@ -54,12 +46,8 @@ const MarketPlace = () => {
           }))
         : [];
 
-      const stocks: RegularStock[] = stocksResult.success
-        ? stocksResult.data
-        : [];
-
+      const stocks: RegularStock[] = stocksResult?.data ?? [];
       const allItems = [...offers, ...stocks];
-
       setItems(allItems);
       setDisplayItems(allItems);
     } catch {
@@ -68,7 +56,6 @@ const MarketPlace = () => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     const delay = setTimeout(() => {
       if (searchQuery.trim() === "") {
@@ -84,20 +71,12 @@ const MarketPlace = () => {
   const searchFromBackend = async (query: string) => {
     try {
       setLoading(true);
-
-      const token =
-        localStorage.getItem("accessToken") 
-
-      if (!token) return;
-
-      const result = await getMarketplaceStocks(token, query, 1, 50);
-
-      if (result.success) {
+      const result = await getMarketplaceStocks(query, 1, 50);
+      if (result?.data) {
         if (result.data.length === 0) {
           toast.info(`No products found for "${query}"`);
-          return; 
+          return;
         }
-
         setDisplayItems(result.data);
       } else {
         toast.error("Search failed");
@@ -113,9 +92,7 @@ const MarketPlace = () => {
   // Navigation
   // ---------------------------
   const handleItemClick = (id: string, isOffer: boolean) => {
-    router.push(
-      `/market-place/${id}${isOffer ? "?type=offer" : ""}`,
-    );
+    router.push(`/market-place/${id}${isOffer ? "?type=offer" : ""}`);
   };
 
   // ---------------------------

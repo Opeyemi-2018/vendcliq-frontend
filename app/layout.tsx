@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { UserProvider } from "@/context/userContext";
 import TopLoader from "@/components/TopLoader";
 import { AppErrorBoundary } from "@/components/ErrorBoundary";
+import AIChatWidget from "@/components/ChatWidget";
 
 const dmSans = localFont({
   src: "./fonts/DmSans-Regular.woff2",
@@ -26,7 +27,11 @@ export default function RootLayout({
         {/* These are client components */}
         <TopLoader />
         <AppErrorBoundary>
-          <UserProvider>{children}</UserProvider>
+          <UserProvider>
+           
+
+            {children}
+          </UserProvider>
         </AppErrorBoundary>
         <Toaster position="top-center" richColors />
       </body>

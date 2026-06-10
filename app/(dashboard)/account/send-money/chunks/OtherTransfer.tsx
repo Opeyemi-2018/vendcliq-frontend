@@ -42,7 +42,6 @@ import {
   AlertDialogFooter,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-
 import {
   Command,
   CommandEmpty,
@@ -64,7 +63,7 @@ import {
   Beneficiary,
 } from "@/types/transfer";
 import { Separator } from "@/components/ui/separator";
-import { getNipBanks, performNameEnquiry } from "@/actions/otherBanks";
+import { getNipBanks, performNameEnquiry } from "@/lib/utils/api/apiHelper";
 import { ClipLoader } from "react-spinners";
 import {
   handleValidatePin,
@@ -144,15 +143,13 @@ export default function OtherBankTransfer() {
 
   useEffect(() => {
     async function loadBanks() {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        toast.error("Please log in again");
-        return;
-      }
-
-      const bankList = await getNipBanks(token);
-      if (bankList) {
-        setBanks(bankList);
+      const result = await getNipBanks();
+      if (result?.status === "success" && result?.data?.banks) {
+        const parsed = result.data.banks.map((item: string) => {
+          const [name, code] = item.split("|");
+          return { name: name.trim(), code: code.trim() };
+        });
+        setBanks(parsed);
       } else {
         toast.error("Failed to load banks. Please try again.");
       }
@@ -167,24 +164,14 @@ export default function OtherBankTransfer() {
         setAccountName(null);
         setEnquiryError(null);
 
-        const token =
-          localStorage.getItem("accessToken") ||
-          localStorage.getItem("authToken");
-        if (!token) {
-          setEnquiryError("Session expired");
-          setIsEnquiring(false);
-          return;
-        }
-
-        const name = await performNameEnquiry(
+        const result = await performNameEnquiry(
           selectedBankCode,
           accountNumber,
-          token,
         );
 
-        if (name) {
-          setAccountName(name);
-          setValue("accountName", name);
+        if (result?.status === "success" && result?.data?.accountName) {
+          setAccountName(result.data.accountName);
+          setValue("accountName", result.data.accountName);
         } else {
           setEnquiryError("Unable to verify account name");
         }

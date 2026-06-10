@@ -6,7 +6,6 @@
 import { useState, useCallback } from "react";
 import { handleGetWallet } from "@/lib/utils/api/apiHelper";
 import { useWebSocketConnection } from "./webSocket";
-import { toast } from "sonner";
 
 export interface WalletData {
   walletId: number;

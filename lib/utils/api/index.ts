@@ -112,7 +112,7 @@ export const clearAuthTokens = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("wallet");
     localStorage.removeItem("verificationStatus");
-    localStorage.removeItem("attendantPermissions"); // ✅ ADD THIS
+    localStorage.removeItem("attendantPermissions");
 
     // Also clear sessionStorage
     sessionStorage.clear();

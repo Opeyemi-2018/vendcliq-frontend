@@ -4,7 +4,9 @@
 import { MoveLeft, Loader2, Search, MoveRight } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import { getStoreById, getStoreStock } from "@/actions/stores";
+import { getStoreById } from "@/actions/stores";
+import { getStoreStock } from "@/lib/utils/api/apiHelper";
+
 import { ThreeDots } from "react-loader-spinner";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/Input";
 import StockForm from "../chunks/StockForm";
@@ -140,13 +143,11 @@ const StoreDetailPage = () => {
   }, [searchTerm]);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) return;
-
     const fetchData = async () => {
       setIsLoadingStore(true);
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
       const storeResult = await getStoreById(storeId, token);
-
       if (storeResult?.data) {
         setStore(storeResult.data);
       } else {
@@ -155,26 +156,24 @@ const StoreDetailPage = () => {
       setIsLoadingStore(false);
 
       setIsLoadingStock(true);
-      const stockResult = (await getStoreStock(
-        storeId,
-        token,
-      )) as StockResponse;
-
-      if (stockResult.success && stockResult.data) {
-        setStocks(stockResult.data);
-        // Prefer server totalCount if available, otherwise use array length
-        setTotalCount(
-          stockResult.pagination?.totalCount ?? stockResult.data.length,
-        );
-      } else {
-        setError(stockResult.message || "Failed to load stock items");
+      try {
+        const stockResult = await getStoreStock(storeId);
+        if (stockResult?.data) {
+          setStocks(stockResult.data);
+          setTotalCount(
+            stockResult.pagination?.totalCount ?? stockResult.data.length,
+          );
+        } else {
+          setError("Failed to load stock items");
+        }
+      } catch {
+        setError("Failed to load stock items");
+      } finally {
+        setIsLoadingStock(false);
       }
-      setIsLoadingStock(false);
     };
 
-    if (storeId) {
-      fetchData();
-    }
+    if (storeId) fetchData();
   }, [storeId]);
 
   useEffect(() => {

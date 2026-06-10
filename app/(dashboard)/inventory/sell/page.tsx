@@ -7,13 +7,12 @@ import Image from "next/image";
 import {
   X,
   Search,
-  Store as StoreIcon,
+ 
   Check,
-  ChevronRight,
+  
   Minus,
   Plus,
   User,
-  Tag,
   Package,
   ExternalLink,
   MapPin,
@@ -25,8 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { ThreeDots } from "react-loader-spinner";
 import { getStores } from "@/actions/stores";
-import { getCustomers } from "@/actions/getcustomers";
-import { getStoreStock } from "@/actions/getUserStocks";
+import { getStoreStock, getCustomers } from "@/lib/utils/api/apiHelper";
 import {
   handleCreateInvoice,
   handleCreateCustomer,
@@ -237,10 +235,8 @@ export default function SellPage() {
   const fetchStock = useCallback(async (storeId: string) => {
     setStockLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-      const result = await getStoreStock(token, storeId);
-      if (result.success && result.data) {
+      const result = await getStoreStock(storeId);
+      if (result?.data) {
         setStock(result.data as StockItem[]);
       } else {
         setStock([]);
@@ -262,10 +258,8 @@ export default function SellPage() {
   const fetchCustomers = useCallback(async () => {
     setCustomersLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-      const result = await getCustomers(token);
-      if (result.success && result.data) {
+      const result = await getCustomers();
+      if (result?.data) {
         setCustomers(result.data as Customer[]);
       } else {
         toast.error("Failed to load customers");
@@ -774,7 +768,7 @@ export default function SellPage() {
                   <div className="text-[13px] text-[#2F2F2F] flex items-center gap-2">
                     <p>Inventory value: </p>
                     <span className="text-[#9E9A9A]">
-                     ₦{selectedStore.stock_value?.toLocaleString()}{" "}
+                      ₦{selectedStore.stock_value?.toLocaleString()}{" "}
                       &nbsp;·&nbsp;
                     </span>{" "}
                   </div>

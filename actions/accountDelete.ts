@@ -4,7 +4,7 @@ export type DeletionRequestPayload = {
   firstName: string;
   lastName: string;
   email: string;
-  phoneNumber: string; // we'll always send "."
+  phoneNumber: string; 
   message: string;
 };
 

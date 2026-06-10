@@ -20,8 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { ThreeDots } from "react-loader-spinner";
 import { getStores } from "@/actions/stores";
-import { getCustomers } from "@/actions/getcustomers";
-import { getStoreStock } from "@/actions/getUserStocks";
+import { getCustomers, getStoreStock } from "@/lib/utils/api/apiHelper";
 import {
   getSaleById,
   handleUpdateInvoice,
@@ -190,12 +189,13 @@ export default function EditInvoicePage() {
     address: "",
   });
 
-  // Fetch stores
+  // Replace the existing fetchStores
   const fetchStores = useCallback(async () => {
     setStoresLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) return toast.error("Please log in");
+
       const result = await getStores(token);
       if (result.success && result.data) {
         const valid: Store[] = (result.data as Store[]).filter(
@@ -211,7 +211,6 @@ export default function EditInvoicePage() {
       setStoresLoading(false);
     }
   }, []);
-
   const fetchInvoice = useCallback(async () => {
     if (storesLoading || stores.length === 0) {
       return;
@@ -256,8 +255,8 @@ export default function EditInvoicePage() {
             setSelectedStore(store);
 
             // Fetch stock for this store
-            const stockResult = await getStoreStock(token, store.id);
-            if (stockResult.success && stockResult.data) {
+            const stockResult = await getStoreStock(store.id);
+            if (stockResult?.data) {
               const stockData = stockResult.data as StockItem[];
               setStock(stockData);
 
@@ -326,8 +325,8 @@ export default function EditInvoicePage() {
             setSelectedStore(store);
 
             // Still fetch stock for this store
-            const stockResult = await getStoreStock(token, store.id);
-            if (stockResult.success && stockResult.data) {
+            const stockResult = await getStoreStock(store.id);
+            if (stockResult?.data) {
               const stockData = stockResult.data as StockItem[];
               setStock(stockData);
 
@@ -416,10 +415,8 @@ export default function EditInvoicePage() {
   const fetchStock = useCallback(async (storeId: string) => {
     setStockLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-      const result = await getStoreStock(token, storeId);
-      if (result.success && result.data) {
+      const result = await getStoreStock(storeId);
+      if (result?.data) {
         setStock(result.data as StockItem[]);
       } else {
         setStock([]);
@@ -436,10 +433,8 @@ export default function EditInvoicePage() {
   const fetchCustomers = useCallback(async () => {
     setCustomersLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-      const result = await getCustomers(token);
-      if (result.success && result.data) {
+      const result = await getCustomers();
+      if (result?.data) {
         setCustomers(result.data as Customer[]);
       } else {
         toast.error("Failed to load customers");

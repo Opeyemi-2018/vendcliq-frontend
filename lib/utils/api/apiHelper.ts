@@ -162,6 +162,18 @@ import {
   GET_MANUFACTURERS,
   GET_USER_STOCKS,
   RETURN_ITEMS,
+  GET_CART,
+  UPDATE_CART_ITEM,
+  DELETE_CART_ITEM,
+  LOOKUP_ACCOUNT,
+  GET_CUSTOMERS,
+  GET_STORE_STOCK_BY_ID,
+  GET_MARKETPLACE_STOCKS,
+  GET_MARKETPLACE_STOCK_DETAIL,
+  GET_MARKETPLACE_OFFERS,
+  GET_OFFER_DETAIL,
+  GET_NIP_BANKS,
+  NAME_ENQUIRY,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -263,6 +275,11 @@ import {
   RecordCreditPaymentPayload,
   RecordCreditPaymentResponse,
 } from "@/types/creditLedger";
+import {
+  ConfirmDraftPayload,
+  ConfirmDraftResponse,
+  ConversationMessage,
+} from "@/types/chatTypes";
 
 interface UserProfile {
   data: {
@@ -311,10 +328,26 @@ export const fetcher = async <T>(
   logger.info(JSON.stringify({ method: "GET", url }), "API");
   try {
     const response = await axiosInstance.get<T>(url, { params });
-    logger.info(JSON.stringify({ method: "GET", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    logger.info(
+      JSON.stringify({
+        method: "GET",
+        url,
+        status: response.status,
+        duration: `${Date.now() - start}ms`,
+      }),
+      "API",
+    );
     return response.data;
   } catch (err) {
-    logger.error(JSON.stringify({ method: "GET", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    logger.error(
+      JSON.stringify({
+        method: "GET",
+        url,
+        duration: `${Date.now() - start}ms`,
+        error: String(err),
+      }),
+      "API",
+    );
     throw err;
   }
 };
@@ -335,10 +368,26 @@ export const poster = async <T, U = unknown>(
       },
       validateStatus: () => true,
     });
-    logger.info(JSON.stringify({ method: "POST", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    logger.info(
+      JSON.stringify({
+        method: "POST",
+        url,
+        status: response.status,
+        duration: `${Date.now() - start}ms`,
+      }),
+      "API",
+    );
     return response.data;
   } catch (err) {
-    logger.error(JSON.stringify({ method: "POST", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    logger.error(
+      JSON.stringify({
+        method: "POST",
+        url,
+        duration: `${Date.now() - start}ms`,
+        error: String(err),
+      }),
+      "API",
+    );
     throw err;
   }
 };
@@ -358,10 +407,26 @@ export const posterWithMultipart = async <T>(
         ...headers,
       },
     });
-    logger.info(JSON.stringify({ method: "POST(multipart)", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    logger.info(
+      JSON.stringify({
+        method: "POST(multipart)",
+        url,
+        status: response.status,
+        duration: `${Date.now() - start}ms`,
+      }),
+      "API",
+    );
     return response.data;
   } catch (err) {
-    logger.error(JSON.stringify({ method: "POST(multipart)", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    logger.error(
+      JSON.stringify({
+        method: "POST(multipart)",
+        url,
+        duration: `${Date.now() - start}ms`,
+        error: String(err),
+      }),
+      "API",
+    );
     throw err;
   }
 };
@@ -382,10 +447,26 @@ export const putter = async <T, U = unknown>(
       },
       validateStatus: () => true,
     });
-    logger.info(JSON.stringify({ method: "PUT", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    logger.info(
+      JSON.stringify({
+        method: "PUT",
+        url,
+        status: response.status,
+        duration: `${Date.now() - start}ms`,
+      }),
+      "API",
+    );
     return response.data;
   } catch (err) {
-    logger.error(JSON.stringify({ method: "PUT", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    logger.error(
+      JSON.stringify({
+        method: "PUT",
+        url,
+        duration: `${Date.now() - start}ms`,
+        error: String(err),
+      }),
+      "API",
+    );
     throw err;
   }
 };
@@ -405,10 +486,26 @@ export const deleter = async <T>(
       },
       validateStatus: () => true,
     });
-    logger.info(JSON.stringify({ method: "DELETE", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    logger.info(
+      JSON.stringify({
+        method: "DELETE",
+        url,
+        status: response.status,
+        duration: `${Date.now() - start}ms`,
+      }),
+      "API",
+    );
     return response.data;
   } catch (err) {
-    logger.error(JSON.stringify({ method: "DELETE", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    logger.error(
+      JSON.stringify({
+        method: "DELETE",
+        url,
+        duration: `${Date.now() - start}ms`,
+        error: String(err),
+      }),
+      "API",
+    );
     throw err;
   }
 };
@@ -639,6 +736,10 @@ export const handleUpdateTransactionPin = async (
   );
 };
 
+export const lookupAccount = async (accountNumber: string): Promise<any> => {
+  return await fetcher<any>(LOOKUP_ACCOUNT(accountNumber));
+};
+
 export const handleCreatePin = async (
   payload: PinPayload,
 ): Promise<ApiResponse> => {
@@ -660,6 +761,20 @@ export const handleGetWallet = async (): Promise<GetWalletResponse> => {
 
 export const handleRequestPinToken = async (): Promise<ApiResponse> => {
   return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
+};
+
+export const getNipBanks = async (): Promise<any> => {
+  return await fetcher<any>(GET_NIP_BANKS);
+};
+
+export const performNameEnquiry = async (
+  bankCode: string,
+  accountNumber: string,
+): Promise<any> => {
+  return await poster<any>(NAME_ENQUIRY, {
+    BankCode: bankCode,
+    AccountNumber: accountNumber,
+  });
 };
 
 // export const handleResendEmailOtp = async (
@@ -712,14 +827,25 @@ export const handleApiError = (
   context?: string,
 ): void => {
   if (error instanceof AxiosError) {
-    const msg = error.response?.data.errors?.[0]?.message || "An error occurred";
+    const msg =
+      error.response?.data.errors?.[0]?.message || "An error occurred";
     logger.error(
-      JSON.stringify({ url: error.config?.url, status: error.response?.status, message: msg }),
+      JSON.stringify({
+        url: error.config?.url,
+        status: error.response?.status,
+        message: msg,
+      }),
       context ?? "API",
     );
     setError(msg);
   } else {
-    logger.error(JSON.stringify({ message: "An unexpected error occurred", error: String(error) }), context ?? "API");
+    logger.error(
+      JSON.stringify({
+        message: "An unexpected error occurred",
+        error: String(error),
+      }),
+      context ?? "API",
+    );
     setError("An unexpected error occurred");
   }
 };
@@ -784,12 +910,42 @@ export const handleCreateCustomer = async (
   );
 };
 
+export const getCustomers = async (): Promise<any> => {
+  return await fetcher<any>(GET_CUSTOMERS);
+};
+
 export const handleUpdateCustomer = async (
   customerId: string,
   payload: Omit<CreateCustomerPayload, "email">,
 ): Promise<CreateCustomerResponse> => {
   const url = UPDATE_CUSTOMER(customerId);
   return await putter<CreateCustomerResponse, typeof payload>(url, payload);
+};
+
+export const getStoreStock = async (storeId: string): Promise<any> => {
+  return await fetcher<any>(GET_STORE_STOCK_BY_ID(storeId));
+};
+
+export const getMarketplaceStocks = async (
+  search = "",
+  page = 1,
+  limit = 20,
+): Promise<any> => {
+  return await fetcher<any>(GET_MARKETPLACE_STOCKS(search, page, limit));
+};
+
+export const getMarketplaceStockDetail = async (
+  stockId: string,
+): Promise<any> => {
+  return await fetcher<any>(GET_MARKETPLACE_STOCK_DETAIL(stockId));
+};
+
+export const getMarketplaceOffers = async (): Promise<any> => {
+  return await fetcher<any>(GET_MARKETPLACE_OFFERS);
+};
+
+export const getOfferDetail = async (offerId: string): Promise<any> => {
+  return await fetcher<any>(GET_OFFER_DETAIL(offerId));
 };
 
 export const handleGetCustomerById = async (
@@ -829,6 +985,21 @@ export const handlePayInvoice = async (
     PAY_CART(invoiceId),
     payload,
   );
+};
+
+export const getCartData = async (): Promise<any> => {
+  return await fetcher<any>(GET_CART);
+};
+
+export const updateCartItem = async (
+  itemId: string,
+  updates: { quantity?: number; delivery?: boolean },
+): Promise<any> => {
+  return await putter<any>(UPDATE_CART_ITEM(itemId), updates);
+};
+
+export const deleteCartItem = async (itemId: string): Promise<any> => {
+  return await deleter<any>(DELETE_CART_ITEM(itemId));
 };
 
 export const handlePayInvoiceCreditOtp = async (
@@ -1158,4 +1329,173 @@ export const handleReturnItems = async (payload: {
   items: { item_id: string; quantity: number; reason: string }[];
 }): Promise<any> => {
   return await poster<any>(RETURN_ITEMS, payload);
+};
+
+export const handleChatMessage = async (
+  message: string,
+  conversationUuid?: string,
+  onEvent?: (event: any) => void,
+  signal?: AbortSignal,
+): Promise<string> => {
+  const token = localStorage.getItem("accessToken");
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const payload: any = { message };
+  if (conversationUuid) {
+    payload.conversation_uuid = conversationUuid;
+  }
+
+  // Call the NEW dedicated chat stream endpoint
+  const response = await fetch("/api/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Chat request failed: ${response.status}`);
+  }
+
+  // Handle SSE stream
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  let fullText = "";
+
+  if (!reader) throw new Error("No reader available");
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value, { stream: true });
+    const lines = chunk.split("\n");
+
+    for (const line of lines) {
+      if (line.startsWith("data: ")) {
+        try {
+          const data = JSON.parse(line.slice(6));
+          if (onEvent) onEvent(data);
+          if (data.type === "token" && data.text) {
+            fullText += data.text;
+          }
+        } catch (e) {
+          // Skip invalid JSON
+        }
+      }
+    }
+  }
+
+  return fullText;
+};
+
+export const handleConfirmDraft = async (confirmId: string): Promise<any> => {
+  const token = localStorage.getItem("accessToken");
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch("/api/chat", {
+    // Same endpoint
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ confirm_id: confirmId }),
+  });
+
+  return await response.json();
+};
+
+// Replace the existing conversation functions with these:
+
+export const getConversations = async (
+  limit = 30,
+  offset = 0,
+): Promise<any> => {
+  const token = localStorage.getItem("accessToken");
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch(
+    `/api/conversation?limit=${limit}&offset=${offset}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch conversations");
+  }
+
+  return await response.json();
+};
+
+export const getConversationMessages = async (
+  uuid: string,
+): Promise<ConversationMessage[]> => {
+  const token = localStorage.getItem("accessToken");
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch(`/api/conversation/${uuid}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch conversation messages");
+  }
+
+  const data = await response.json();
+  console.log("API Response:", data); // Debug: check what you're getting
+
+  // Return the items array, not the whole response
+  return data.items || [];
+};
+
+export const deleteConversation = async (uuid: string): Promise<any> => {
+  const token = localStorage.getItem("accessToken");
+
+  if (!token) {
+    throw new Error("No authentication token found");
+  }
+
+  const response = await fetch(`/api/conversation/${uuid}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete conversation");
+  }
+
+  // Try to parse JSON, but return empty object if no body
+  try {
+    return await response.json();
+  } catch {
+    return { success: true };
+  }
 };

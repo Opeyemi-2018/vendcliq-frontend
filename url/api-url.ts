@@ -29,6 +29,10 @@ const UPDATE_TRANSFER_PIN = "/client/v2/auth/pin-update";
 const CHANGE_PASSWORD = "/client/v2/change-password";
 const CREATE_BENEFICIARY = "/client/v2/wallet/beneficiaries";
 const GET_BENEFICIARIES = "/client/v2/wallet/beneficiaries";
+const LOOKUP_ACCOUNT = (accountNumber: string) =>
+  `/client/v2/wallet/lookup?accountNumber=${accountNumber}`;
+const GET_NIP_BANKS = "/client/v2/wallets/nip-banks";
+const NAME_ENQUIRY = "/client/v2/wallets/name-enquiry";
 
 // v1 endpoint
 // const BUSINESS_INFORMATION_SETUP_STEP_ONE =
@@ -71,7 +75,7 @@ const GET_BENEFICIARIES = "/client/v2/wallet/beneficiaries";
 // inventory endpoint
 const CREATE_STORE = "inventory/stores";
 const CREATE_STOCK = "inventory/stocks";
-// thr 2 below endpoint get all product and also get paginated product
+// the 2 below endpoint get all product and also get paginated product
 const GET_PRODUCTS_PAGINATED =
   "inventory/products?page=1&limit=50&all=false&search=";
 const GET_ALL_PRODUCTS = "inventory/products?all=true";
@@ -82,19 +86,25 @@ const UPDATE_CUSTOMER = (customerId: string) =>
   `inventory/customers/${customerId}`;
 const GET_CUSTOMER_BY_ID = (customerId: string) =>
   `inventory/customers/${customerId}`;
-const GET_SUPPLIER_STORES = (userId: number) => `inventory/suppliers/${userId}/stores`;
+const GET_SUPPLIER_STORES = (userId: number) =>
+  `inventory/suppliers/${userId}/stores`;
+const GET_CUSTOMERS = "inventory/customers";
 const GET_STORE_STOCKS = (storeId: string) => `inventory/stocks/${storeId}`;
-
+const GET_CART = "inventory/carts";
+const UPDATE_CART_ITEM = (id: string) => `inventory/carts/${id}`;
+const DELETE_CART_ITEM = (id: string) => `inventory/carts/${id}`;
 const RETURN_CUSTOMER_EMPTIES = (customerId: string, emptiesId: string) =>
   `inventory/customers/${customerId}/empties/${emptiesId}/return`;
 const CREATE_CART = "inventory/carts";
 const CHECKOUT_CART = "inventory/carts/checkout";
 const PAY_CART = (invoiceId: string) => `inventory/invoices/${invoiceId}/pay`;
- const PAY_CART_CREDIT_OTP = (invoiceId: string) => `inventory/invoices/${invoiceId}/verify-credit-otp`;
- const GET_CREDIT_LEDGER = () => `inventory/credit-ledger`;
-  const GET_CREDIT_LEDGER_SUMMARY = () => `inventory/credit-ledger/summary`;
+const PAY_CART_CREDIT_OTP = (invoiceId: string) =>
+  `inventory/invoices/${invoiceId}/verify-credit-otp`;
+const GET_CREDIT_LEDGER = () => `inventory/credit-ledger`;
+const GET_CREDIT_LEDGER_SUMMARY = () => `inventory/credit-ledger/summary`;
 const GET_MANUFACTURERS = "inventory/manufacturers";
- const RECORD_CREDIT_PAYMENT = (uuid: string) => `inventory/credit-ledger/${uuid}/payments`;
+const RECORD_CREDIT_PAYMENT = (uuid: string) =>
+  `inventory/credit-ledger/${uuid}/payments`;
 const ASSIGN_ATTENDANT_PERMISSIONS = "inventory/attendant-permissions";
 const UPDATE_ATTENDANT_PERMISSIONS = (attendantId: string) =>
   `inventory/attendant-permissions/attendant/${attendantId}`;
@@ -131,12 +141,17 @@ const GET_STORE_ITEMS_SALES = "inventory/dashboard/store-items";
 const CREATE_OFFER = "inventory/offers";
 const UPDATE_STOCK_PRICES = (stockId: string) => `inventory/stocks/${stockId}`;
 // get credit ledger items
- const GET_INVOICE_BY_ID = (id: string) => `inventory/invoices/${id}`;
- const GET_USER_STOCKS = "inventory/stocks/user/stocks";
- const RETURN_ITEMS = "inventory/items/return";
-
-
-
+const GET_INVOICE_BY_ID = (id: string) => `inventory/invoices/${id}`;
+const GET_USER_STOCKS = "inventory/stocks/user/stocks";
+const RETURN_ITEMS = "inventory/items/return";
+const GET_STORE_STOCK_BY_ID = (storeId: string) =>
+  `inventory/stocks/${storeId}?limit=200&all=true`;
+const GET_MARKETPLACE_STOCKS = (search = "", page = 1, limit = 20) =>
+  `inventory/stocks?page=${page}&limit=${limit}&search=${search}`;
+const GET_MARKETPLACE_STOCK_DETAIL = (stockId: string) =>
+  `inventory/stocks/marketplace/${stockId}`;
+const GET_MARKETPLACE_OFFERS = "inventory/offers";
+const GET_OFFER_DETAIL = (offerId: string) => `inventory/offers/${offerId}`;
 export {
   // v2 endpoint
   VERIFY_EMAIL,
@@ -164,6 +179,9 @@ export {
   BUY_AIRTIME,
   BUY_DATA,
   CREATE_WALLET,
+  LOOKUP_ACCOUNT,
+  GET_NIP_BANKS,
+  NAME_ENQUIRY,
   GET_WALLET,
   ADD_SHOP_ATTENDANT,
   CREATE_INVOICE,
@@ -190,6 +208,9 @@ export {
   GET_PURCHASED_INVOICES,
   CREATE_PURCHASE,
   USER_STOCKS,
+  GET_CART,
+  UPDATE_CART_ITEM,
+  DELETE_CART_ITEM,
   GET_PURCHASED_INVOICE_BY_ID,
   GET_ITEM_TRACKING_STATUS,
   UPDATE_STORE_SETTINGS,
@@ -205,6 +226,7 @@ export {
   GET_PURCHASE_REQUEST_BY_ID,
   GET_SALE_BY_ID,
   GET_SALES,
+  GET_CUSTOMERS,
   HAND_OVER_ITEM,
   SUCCESSFUL_HANDOVER,
   SUPPLIER_SALES,
@@ -219,7 +241,12 @@ export {
   GET_INVOICE_BY_ID,
   GET_MANUFACTURERS,
   GET_USER_STOCKS,
-  RETURN_ITEMS
+  RETURN_ITEMS,
+  GET_STORE_STOCK_BY_ID,
+  GET_MARKETPLACE_STOCKS,
+  GET_MARKETPLACE_OFFERS,
+  GET_OFFER_DETAIL,
+  GET_MARKETPLACE_STOCK_DETAIL,
 
   // v1 endpoint
   // GET_PROFILE,
