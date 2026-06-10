@@ -167,13 +167,13 @@ const StockHistoryPage = () => {
                       {paginatedMovements.map((movement) => (
                         <tr key={movement.id} className="hover:bg-gray-50">
                           <td className="py-4 pl-4">
-                            <div className="flex items-center ">
+                            <div className="flex items-center gap-2">
                               {getProductImage(movement) ? (
                                 <Image
                                   src={getProductImage(movement)!}
                                   alt={getProductName(movement)}
-                                  width={40}
-                                  height={40}
+                                  width={10}
+                                  height={10}
                                   className="rounded-md"
                                 />
                               ) : (

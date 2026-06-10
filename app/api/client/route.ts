@@ -97,10 +97,17 @@ import {
   GET_MARKETPLACE_OFFERS,
   GET_OFFER_DETAIL,
   GET_MARKETPLACE_STOCK_DETAIL,
+  GET_PRICING_PLANS,
+  GET_STORES,
+  GET_STORE_BY_ID,
+  MOVE_STOCK,
+  UPDATE_STOCK,
+  GET_STOCK_DETAIL,
+  GET_SUPPLIER_STOCKS,
 } from "@/url/api-url";
 
 export const dynamic = "force-dynamic";
-// export const runtime = "edge";
+export const runtime = "edge";
 
 // API Base URLs
 const VERA_API_BASE_URL = process.env.VERA_API_BASE_URL as string;
@@ -273,6 +280,14 @@ const INVENTORY_ENDPOINTS = [
   GET_MARKETPLACE_OFFERS,
   GET_OFFER_DETAIL,
   GET_MARKETPLACE_STOCK_DETAIL,
+  GET_PRICING_PLANS,
+  GET_STORES,
+  GET_STORE_BY_ID,
+  MOVE_STOCK,
+  UPDATE_STOCK,
+  GET_STOCK_DETAIL,
+  GET_SUPPLIER_STOCKS,
+  GET_SUPPLIER_STORES,
 ];
 
 const LOGISTIC_ENDPOINTS = [GET_ITEM_TRACKING_STATUS];
@@ -420,8 +435,6 @@ export async function POST(request: Request) {
     );
     const apiBaseUrl = getApiBaseUrl(endpoint);
 
-    console.log(`Routing POST ${endpoint} to ${apiBaseUrl}${endpoint}`);
-
     const response = await fetch(`${apiBaseUrl}${endpoint}`, {
       method: "POST",
       headers: secureHeaders,
@@ -429,12 +442,6 @@ export async function POST(request: Request) {
         ? (data as FormData)
         : JSON.stringify(data),
     });
-
-    console.log("Response status:", response.status);
-    console.log(
-      "Response headers:",
-      Object.fromEntries(response.headers.entries()),
-    );
 
     const responseData = await response.json();
     const nextResponse = NextResponse.json(responseData, {
@@ -460,15 +467,6 @@ export async function POST(request: Request) {
 
     return nextResponse;
   } catch (error) {
-    console.error("API proxy error:", error);
-    console.error(
-      "Error details:",
-      error instanceof Error ? error.message : String(error),
-    );
-    console.error(
-      "Error stack:",
-      error instanceof Error ? error.stack : "No stack",
-    );
     return NextResponse.json(
       {
         error: "Internal Server Error",
@@ -522,7 +520,6 @@ export async function GET(request: Request) {
     const headers = isLogisticsEndpoint
       ? baseHeaders
       : await addSecurityHeaders(baseHeaders, "GET", endpoint);
-    console.log(`Routing GET ${endpoint} to ${apiBaseUrl}${fullEndpoint}`);
 
     const response = await fetch(`${apiBaseUrl}${fullEndpoint}`, { headers });
 
@@ -548,7 +545,6 @@ export async function GET(request: Request) {
     nextResponse.headers.set("X-XSS-Protection", "1; mode=block");
     return nextResponse;
   } catch (error) {
-    console.error("API proxy error:", error);
     return NextResponse.json(
       {
         error: "Internal Server Error",
@@ -611,7 +607,6 @@ export async function PUT(request: Request) {
       endpoint,
     );
     const apiBaseUrl = getApiBaseUrl(endpoint);
-    console.log(`Routing PUT ${endpoint} to ${apiBaseUrl}`);
 
     const response = await fetch(`${apiBaseUrl}${endpoint}`, {
       method: "PUT",
@@ -630,7 +625,6 @@ export async function PUT(request: Request) {
     nextResponse.headers.set("X-XSS-Protection", "1; mode=block");
     return nextResponse;
   } catch (error) {
-    console.error("API proxy PUT error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 },
@@ -674,7 +668,6 @@ export async function DELETE(request: Request) {
       endpoint,
     );
     const apiBaseUrl = getApiBaseUrl(endpoint);
-    console.log(`Routing DELETE ${endpoint} to ${apiBaseUrl}`);
 
     const response = await fetch(`${apiBaseUrl}${endpoint}`, {
       method: "DELETE",
@@ -688,7 +681,6 @@ export async function DELETE(request: Request) {
     nextResponse.headers.set("X-XSS-Protection", "1; mode=block");
     return nextResponse;
   } catch (error) {
-    console.error("API proxy DELETE error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 },

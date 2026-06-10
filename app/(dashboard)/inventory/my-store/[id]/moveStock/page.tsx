@@ -8,9 +8,11 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { getStores, moveStock } from "@/actions/stores";
 import Image from "next/image";
 import { X } from "lucide-react";
+import { moveStock } from "@/lib/utils/api/apiHelper";
+
+import { useStores } from "@/hooks/useStores";
 
 interface StockItem {
   id: string;
@@ -41,7 +43,7 @@ const MoveStockPage = () => {
   const [selectedDestinationStore, setSelectedDestinationStore] = useState<
     string | null
   >(null);
-  const [isLoadingStores, setIsLoadingStores] = useState(false);
+  const [isLoadingStores, setIsLoadingStores] = useState(true);
   const [isMoving, setIsMoving] = useState(false);
 
   const [quantities, setQuantities] = useState<Record<string, number>>({});
@@ -87,28 +89,32 @@ const MoveStockPage = () => {
 
     setQuantities(initialQuantities);
     setPrices(initialPrices);
-
-    fetchStores();
   }, [storeId, router]);
 
-  const fetchStores = async () => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) return;
+  // Use the hook
+  const {
+    stores: allStores,
 
-    setIsLoadingStores(true);
-    const result = await getStores(token);
+    error: storesError,
+  } = useStores();
 
-    if (result.success && Array.isArray(result.data)) {
-      // Filter out the current store
-      const availableStores = result.data.filter(
+  // Filter stores when they load
+  useEffect(() => {
+    if (allStores.length > 0) {
+      const availableStores = allStores.filter(
         (store: Store) => store.id !== storeId,
       );
       setStores(availableStores);
-    } else {
-      toast.error("Failed to load stores");
+      setIsLoadingStores(false);
     }
-    setIsLoadingStores(false);
-  };
+  }, [allStores, storeId]);
+
+  useEffect(() => {
+    if (storesError) {
+      toast.error("Failed to load stores");
+      setIsLoadingStores(false);
+    }
+  }, [storesError]);
 
   const handleQuantityChange = (stockId: string, value: string) => {
     const numValue = parseFloat(value) || 0;
@@ -158,12 +164,6 @@ const MoveStockPage = () => {
       return;
     }
 
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
-      toast.error("Authentication required");
-      return;
-    }
-
     setIsMoving(true);
 
     const items = selectedStocks.map((stock) => ({
@@ -172,9 +172,9 @@ const MoveStockPage = () => {
       selling_price: prices[stock.id] || 0,
     }));
 
-    const result = await moveStock(selectedDestinationStore, items, token);
+    const result = await moveStock(selectedDestinationStore, items);
 
-    if (result.success) {
+    if (result.statusCode === 200) {
       toast.success(
         `Successfully moved ${getTotalQuantity()} items to ${
           stores.find((s) => s.id === selectedDestinationStore)?.name

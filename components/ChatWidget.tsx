@@ -24,6 +24,8 @@ import {
   getConversationMessages,
   deleteConversation,
 } from "@/lib/utils/api/apiHelper";
+import ReactMarkdown from "react-markdown";
+
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -140,9 +142,11 @@ function DeleteConfirmDialog({
           </h3>
         </div>
         <p className="text-[13px] font-dm-sans text-[#565656] mb-6">
-          Are you sure you want to delete 
-          {title.length > 50 ? title.substring(0, 50) + "..." : title} ? This
-          action cannot be undone.
+          Are you sure you want to delete{" "}
+          <strong>
+            {title.length > 50 ? title.substring(0, 50) + "..." : title}
+          </strong>{" "}
+          ? This action cannot be undone.
         </p>
         <div className="flex gap-3">
           <button
@@ -152,6 +156,7 @@ function DeleteConfirmDialog({
           >
             Cancel
           </button>
+
           <button
             onClick={onConfirm}
             disabled={isLoading}
@@ -192,6 +197,7 @@ export default function AIChatWidget() {
   const [conversationUuid, setConversationUuid] = useState<string | null>(null);
   const [pendingDraft, setPendingDraft] = useState<PendingDraft | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // History state
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -240,8 +246,17 @@ export default function AIChatWidget() {
   }, [historyOpen]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+    // Scroll to top on initial load or when chat opens with welcome message
+    if (open && messages.length <= 2) {
+      const container = document.querySelector(".messages-container");
+      if (container) {
+        container.scrollTop = 0;
+      }
+    } else {
+      // For regular messages, scroll to bottom
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, loading, open]);
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 300);
@@ -519,6 +534,16 @@ export default function AIChatWidget() {
     [loading, conversationUuid],
   );
 
+  // Detect mobile screen
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   return (
     <>
       {/* Blur overlay when chat or history is open */}
@@ -612,26 +637,34 @@ export default function AIChatWidget() {
 
                         {/* Dropdown menu */}
                         {activeMenuId === conv.uuid && (
-                          <div className="absolute right-0 top-8 z-20 bg-white rounded-lg shadow-lg border border-[#E4E4E4] py-1 ">
+                          <div className="absolute right-0 top-8 z-20 bg-white rounded-lg shadow-lg border border-[#E4E4E4]  min-w-[120px]">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuId(null);
+                                toggleConversation(conv);
+                              }}
+                              className="w-full  px-4 py-2 text-left text-[13px] text-[#2F2F2F] hover:bg-gray-50 transition flex justify-between  items-center gap-2"
+                            >
+                              View
+                              <ChevronDown
+                                size={14}
+                                className="rotate-[-90deg]"
+                              />
+                            </button>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveMenuId(null);
                                 handleDeleteClick(conv, e);
                               }}
-                              className=" px-3 py-2  text-red-600 hover:bg-red-50  transition"
+                              className="w-full px-4 py-2 text-left text-[13px] text-red-600 hover:bg-red-50 transition flex justify-between  items-center gap-2"
                             >
-                              <Trash2 size={14} />
+                              Delete <Trash2 size={14} />
                             </button>
                           </div>
                         )}
                       </div>
-                      <ChevronDown
-                        size={16}
-                        className={`text-[#9E9A9A] transition-transform duration-200 ${
-                          expandedConvId === conv.uuid ? "rotate-180" : ""
-                        }`}
-                      />
                     </div>
                   </div>
 
@@ -665,7 +698,9 @@ export default function AIChatWidget() {
                                 <p className="text-[9px] font-medium mb-1 opacity-70">
                                   {msg.role === "user" ? "You" : "Assistant"}
                                 </p>
-                                <p className="text-[11px]">{msg.content}</p>
+                                <div className="text-[14px]">
+                                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                </div>{" "}
                               </div>
                             </div>
                           ))}
@@ -697,7 +732,10 @@ export default function AIChatWidget() {
         <div className="flex items-center gap-3">
           <Bot size={20} />
           <div>
-            <p className="text-sm font-semibold">Sales Assistant</p>
+            <div className="flex items-center gap-4">
+              <p className="text-sm font-semibold">Hi {user?.firstname} </p>
+              <span className="">👋</span>
+            </div>
             <p className="text-xs text-white/70">How can I help you today?</p>
           </div>
         </div>
@@ -705,11 +743,17 @@ export default function AIChatWidget() {
 
       {/* Floating button */}
       <div className="fixed bottom-6 right-6 z-50">
-        {!open && (
+        {!open && !historyOpen && (
           <span className="absolute bottom-0 right-0 w-14 h-14 rounded-full bg-[#0A6DC0] opacity-30 animate-ping pointer-events-none" />
         )}
         <button
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => {
+            if (isMobile && historyOpen) {
+              setHistoryOpen(false);
+            } else {
+              setOpen((v) => !v);
+            }
+          }}
           aria-label={open ? "Close assistant" : "Open AI assistant"}
           className="relative w-14 h-14 rounded-full bg-[#0A6DC0] hover:bg-[#085a9e] active:scale-95 transition-all flex items-center justify-center text-white shadow-lg"
         >
@@ -719,8 +763,9 @@ export default function AIChatWidget() {
 
       {/* Chat panel */}
       <div
-        className={`fixed bottom-24 right-6 z-50 w-[380px] sm:w-[420px] bg-white rounded-2xl flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right
-          ${open ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-90 pointer-events-none"}`}
+        className={`fixed bottom-24 z-50 bg-white flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right
+  ${open && (!isMobile || (isMobile && !historyOpen)) ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-90 pointer-events-none"}
+  ${isMobile ? "left-4 right-4 w-auto" : "right-6 w-[380px] sm:w-[420px]"}`}
         style={{ maxHeight: "calc(100vh - 140px)", height: 560 }}
         role="dialog"
         aria-label="AI sales assistant"
@@ -762,39 +807,41 @@ export default function AIChatWidget() {
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3 bg-[#F9FAFB]">
+        <div className="messages-container flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3 bg-[#F9FAFB]">
+          {" "}
           {messages.map((msg) => (
             <div
               key={msg.id}
               className={`flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}
             >
               <div
-                className={`px-3 py-2 rounded-2xl text-[13px] font-dm-sans leading-relaxed max-w-[85%] whitespace-pre-line break-words
+                className={`px-3 py-2 rounded-2xl text-[14px] font-dm-sans leading-relaxed max-w-[85%] whitespace-pre-line break-words
                   ${
                     msg.role === "user"
-                      ? "bg-[#0A6DC0] text-white rounded-br-sm"
-                      : "bg-white border border-[#E4E4E4] text-[#2F2F2F] rounded-bl-sm"
+                      ? "bg-[#0A6DC0] text-white rounded-br-none"
+                      : "bg-white border border-[#E4E4E4] text-[#2F2F2F] rounded-bl-none"
                   }`}
               >
-                {msg.text ||
-                  (loading && msg === messages[messages.length - 1] ? (
-                    <div className="flex gap-1 items-center">
-                      <span
-                        className="w-1.5 h-1.5 rounded-full bg-[#0A6DC0] animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      />
-                      <span
-                        className="w-1.5 h-1.5 rounded-full bg-[#0A6DC0] animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      />
-                      <span
-                        className="w-1.5 h-1.5 rounded-full bg-[#0A6DC0] animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      />
-                    </div>
-                  ) : (
-                    msg.text
-                  ))}
+                {loading &&
+                msg === messages[messages.length - 1] &&
+                !msg.text ? (
+                  <div className="flex gap-1 items-center">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-[#0A6DC0] animate-bounce"
+                      style={{ animationDelay: "0ms" }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-[#0A6DC0] animate-bounce"
+                      style={{ animationDelay: "150ms" }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-[#0A6DC0] animate-bounce"
+                      style={{ animationDelay: "300ms" }}
+                    />
+                  </div>
+                ) : (
+                  <ReactMarkdown>{msg.text}</ReactMarkdown>
+                )}
               </div>
               <span className="text-[10px] text-[#9E9A9A] font-dm-sans px-1">
                 {msg.time}

@@ -6,7 +6,7 @@ import PlansSelection from "./chunks/plan";
 import PlanConfirmation from "./chunks/confirmPlan";
 import PaymentInfo from "./chunks/paymentInfo";
 import { DisplayPlan, PlanEntity } from "@/types/plans";
-import { fetchPricingPlans } from "@/actions/plans";
+import { fetchPricingPlans } from "@/lib/utils/api/apiHelper";
 import { Button } from "@/components/ui/button";
 
 const getPlanDescription = (planName: string): string => {
@@ -115,20 +115,26 @@ const Subscription = () => {
       const response = await fetchPricingPlans();
 
       if (response.statusCode === 200 && response.data) {
-        const sortedPlans = response.data.sort((a, b) => {
-          const order: { [key: string]: number } = {
-            starter: 1,
-            smart: 2,
-            pro: 3,
-          };
-          const aName = a.name.toLowerCase();
-          const bName = b.name.toLowerCase();
-          const aOrder = Object.keys(order).find((key) => aName.includes(key));
-          const bOrder = Object.keys(order).find((key) => bName.includes(key));
-          return (
-            (aOrder ? order[aOrder] : 999) - (bOrder ? order[bOrder] : 999)
-          );
-        });
+        const sortedPlans = response.data.sort(
+          (a: PlanEntity, b: PlanEntity) => {
+            const order: { [key: string]: number } = {
+              starter: 1,
+              smart: 2,
+              pro: 3,
+            };
+            const aName = a.name.toLowerCase();
+            const bName = b.name.toLowerCase();
+            const aOrder = Object.keys(order).find((key) =>
+              aName.includes(key),
+            );
+            const bOrder = Object.keys(order).find((key) =>
+              bName.includes(key),
+            );
+            return (
+              (aOrder ? order[aOrder] : 999) - (bOrder ? order[bOrder] : 999)
+            );
+          },
+        );
 
         const apiPlans = sortedPlans.map(transformPlanToDisplay);
         setPlans(apiPlans);

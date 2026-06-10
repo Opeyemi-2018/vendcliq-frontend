@@ -4,7 +4,7 @@
 import { MoveLeft, Package } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getStockDetail } from "@/actions/stores";
+import { getStockDetail } from "@/lib/utils/api/apiHelper";
 import { ThreeDots } from "react-loader-spinner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,29 +38,23 @@ const StockDetailPage = () => {
   const [promoModalOpen, setPromoModalOpen] = useState(false);
 
   const fetchStockDetail = async () => {
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("authToken");
-
-    if (!token) {
-      setError("No authentication token found. Please log in.");
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
-    const result = await getStockDetail(stockId, storeId, token);
+    try {
+      const result = await getStockDetail(stockId, storeId);
 
-    if (result.success) {
-      setStock(result.data);
-    } else {
-      setError(result.message || "Failed to load stock details");
+      if (result.statusCode === 200 && result.data) {
+        setStock(result.data);
+      } else {
+        setError(result.error || "Failed to load stock details");
+      }
+    } catch (err) {
+      setError("Failed to load stock details");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
-
   useEffect(() => {
     if (storeId && stockId) {
       fetchStockDetail();

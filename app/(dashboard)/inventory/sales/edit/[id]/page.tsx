@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { ThreeDots } from "react-loader-spinner";
-import { getStores } from "@/actions/stores";
+import { useStores } from "@/hooks/useStores";
 import { getCustomers, getStoreStock } from "@/lib/utils/api/apiHelper";
 import {
   getSaleById,
@@ -125,6 +125,11 @@ export default function EditInvoicePage() {
     null,
   );
 
+  const {
+    stores: allStores,
+
+    error: storesError,
+  } = useStores();
   // Store
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
@@ -189,28 +194,20 @@ export default function EditInvoicePage() {
     address: "",
   });
 
-  // Replace the existing fetchStores
-  const fetchStores = useCallback(async () => {
-    setStoresLoading(true);
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return toast.error("Please log in");
-
-      const result = await getStores(token);
-      if (result.success && result.data) {
-        const valid: Store[] = (result.data as Store[]).filter(
+  useEffect(() => {
+    if (!storesLoading) {
+      if (storesError) {
+        toast.error(storesError);
+        setStoresLoading(false);
+      } else if (allStores.length > 0) {
+        const valid: Store[] = (allStores as Store[]).filter(
           (s) => !s.credit_store,
         );
         setStores(valid);
-      } else {
-        toast.error(result.error || "Failed to load stores");
+        setStoresLoading(false);
       }
-    } catch {
-      toast.error("Failed to load stores");
-    } finally {
-      setStoresLoading(false);
     }
-  }, []);
+  }, [allStores, storesLoading, storesError]);
   const fetchInvoice = useCallback(async () => {
     if (storesLoading || stores.length === 0) {
       return;
@@ -401,9 +398,7 @@ export default function EditInvoicePage() {
     }
   }, [storesLoading, stores.length, fetchInvoice]);
 
-  useEffect(() => {
-    fetchStores();
-  }, []);
+
 
   useEffect(() => {
     if (stores.length > 0 && !storesLoading) {

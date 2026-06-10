@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { getSuppliers } from "@/actions/suppliers";
+
 import {
   handleGetSupplierStores,
   handleGetStoreStocks,
   handleCreateInvoice,
-  
+  handleGetSuppliers, // ADD THIS
 } from "@/lib/utils/api/apiHelper";
-import { getStores } from "@/actions/stores";
+import { useStores } from "@/hooks/useStores";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
@@ -108,6 +108,11 @@ const formatCurrency = (value: number): string =>
 
 const Buy = () => {
   const router = useRouter();
+  const {
+    stores: userStores,
+    isLoading: loadingUserStores,
+    error: userStoresError,
+  } = useStores();
 
   const [stage, setStage] = useState<
     | "select-supplier"
@@ -157,24 +162,21 @@ const Buy = () => {
   const invoiceForm = useForm({
     defaultValues: { stock_id: "", quantity: "1", mode: "PACKS", price: "" },
   });
-
   const fetchSuppliers = async () => {
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("authToken");
-    if (!token) {
-      setError("No authentication token found.");
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setError(null);
-    const result = await getSuppliers(token);
-    if (result.success) {
-      setSuppliers(result.data);
-    } else {
-      setError(result.error);
+    try {
+      const result = await handleGetSuppliers();
+      if (result.statusCode === 200 && result.data) {
+        setSuppliers(result.data);
+      } else {
+        setError(result.error || "Failed to load suppliers");
+      }
+    } catch (err) {
+      setError("Network error loading suppliers");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -200,38 +202,23 @@ const Buy = () => {
   }, [searchTerm, suppliers]);
 
   useEffect(() => {
-    const load = async () => {
-      setIsLoadingMyStores(true);
-      setMyStoreError(null);
-      try {
-        const token =
-          localStorage.getItem("accessToken") ||
-          localStorage.getItem("authToken");
-        if (!token) {
-          setMyStoreError("Please log in");
-          return;
-        }
-        const result = await getStores(token);
-        if (result.success && result.data) {
-          const mapped = result.data.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            stock_count: s.stock_count,
-            stock_value: s.stock_value?.toLocaleString() || "0",
-          }));
-          setMyStores(mapped);
-          setFilteredMyStores(mapped);
-        } else {
-          setMyStoreError(result.error || "Failed to load stores");
-        }
-      } catch {
-        setMyStoreError("Network error");
-      } finally {
+    if (!loadingUserStores) {
+      if (userStoresError) {
+        setMyStoreError(userStoresError);
+        setIsLoadingMyStores(false);
+      } else if (userStores.length > 0) {
+        const mapped = userStores.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          stock_count: s.stock_count,
+          stock_value: s.stock_value?.toLocaleString() || "0",
+        }));
+        setMyStores(mapped);
+        setFilteredMyStores(mapped);
         setIsLoadingMyStores(false);
       }
-    };
-    load();
-  }, []);
+    }
+  }, [userStores, loadingUserStores, userStoresError]);
 
   useEffect(() => {
     setFilteredMyStores(
@@ -249,8 +236,9 @@ const Buy = () => {
         setIsLoadingSupplierStores(true);
         try {
           const result = await handleGetSupplierStores(
-            parseInt(selectedSupplier.user_id, 10),
+            selectedSupplier.user_id,
           );
+
           if (result.statusCode === 200) {
             setSupplierStores(result.data ?? []);
           } else {
@@ -265,7 +253,6 @@ const Buy = () => {
       load();
     }
   }, [stage, selectedSupplier]);
-
   useEffect(() => {
     if (stage === "invoice" && selectedSupplierStore) {
       const load = async () => {

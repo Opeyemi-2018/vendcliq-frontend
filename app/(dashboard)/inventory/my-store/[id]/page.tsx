@@ -4,7 +4,7 @@
 import { MoveLeft, Loader2, Search, MoveRight } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import { getStoreById } from "@/actions/stores";
+import { getStoreById } from "@/lib/utils/api/apiHelper";
 import { getStoreStock } from "@/lib/utils/api/apiHelper";
 
 import { ThreeDots } from "react-loader-spinner";
@@ -60,18 +60,18 @@ interface StockItem {
   status: string;
 }
 
-interface StockResponse {
-  success: boolean;
-  data?: StockItem[];
-  pagination?: {
-    totalPages: number;
-    currentPage: number;
-    totalCount: number;
-    limit: number;
-    nextPage?: number | null;
-  } | null;
-  message?: string;
-}
+// interface StockResponse {
+//   success: boolean;
+//   data?: StockItem[];
+//   pagination?: {
+//     totalPages: number;
+//     currentPage: number;
+//     totalCount: number;
+//     limit: number;
+//     nextPage?: number | null;
+//   } | null;
+//   message?: string;
+// }
 
 const ITEMS_PER_PAGE = 5;
 
@@ -145,9 +145,7 @@ const StoreDetailPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoadingStore(true);
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-      const storeResult = await getStoreById(storeId, token);
+      const storeResult = await getStoreById(storeId);
       if (storeResult?.data) {
         setStore(storeResult.data);
       } else {

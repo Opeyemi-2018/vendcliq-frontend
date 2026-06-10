@@ -152,6 +152,18 @@ const GET_MARKETPLACE_STOCK_DETAIL = (stockId: string) =>
   `inventory/stocks/marketplace/${stockId}`;
 const GET_MARKETPLACE_OFFERS = "inventory/offers";
 const GET_OFFER_DETAIL = (offerId: string) => `inventory/offers/${offerId}`;
+const GET_PRICING_PLANS = "inventory/plans?page=1&limit=10&all=true";
+const GET_STORES = "inventory/stores";
+const GET_STORE_BY_ID = (storeId: string) => `inventory/stores/${storeId}`;
+const MOVE_STOCK = "inventory/stocks/move";
+const UPDATE_STOCK = (stockId: string) => `inventory/stocks/${stockId}`;
+const GET_STOCK_DETAIL = (stockId: string, storeId: string) =>
+  `inventory/stocks/${stockId}/${storeId}`;
+const GET_SUPPLIER_STOCKS = (userId: string) =>
+  `inventory/suppliers/${userId}/stocks`;
+
+
+
 export {
   // v2 endpoint
   VERIFY_EMAIL,
@@ -247,6 +259,13 @@ export {
   GET_MARKETPLACE_OFFERS,
   GET_OFFER_DETAIL,
   GET_MARKETPLACE_STOCK_DETAIL,
+  GET_PRICING_PLANS,
+  GET_STORES,
+  GET_STORE_BY_ID,
+  MOVE_STOCK,
+  UPDATE_STOCK,
+  GET_STOCK_DETAIL,
+  GET_SUPPLIER_STOCKS,
 
   // v1 endpoint
   // GET_PROFILE,

@@ -174,6 +174,13 @@ import {
   GET_OFFER_DETAIL,
   GET_NIP_BANKS,
   NAME_ENQUIRY,
+  GET_PRICING_PLANS,
+  GET_STOCK_DETAIL,
+  UPDATE_STOCK,
+  MOVE_STOCK,
+  GET_STORES,
+  GET_STORE_BY_ID,
+  GET_SUPPLIER_STOCKS,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -247,7 +254,11 @@ import {
   SubscriptionPaymentPayload,
   SubscriptionPaymentResponse,
 } from "@/types/plans";
-import { GetSuppliersResponse, Supplier } from "@/types/supplier";
+import {
+  GetSuppliersResponse,
+  GetSupplierStocksResponse,
+  Supplier,
+} from "@/types/supplier";
 import {
   CreatePurchasePayload,
   CreatePurchaseResponse,
@@ -1065,7 +1076,7 @@ export const handlePaySubscription = async (
   return await poster<SubscriptionPaymentResponse>(PAY_SUB, payload);
 };
 
-export const handleGetSuppliers = async (): Promise<Supplier> => {
+export const handleGetSuppliers = async (): Promise<GetSuppliersResponse> => {
   return await fetcher<any>(GET_SUPPLIERS);
 };
 
@@ -1109,6 +1120,12 @@ export const handleUpdateStoreSettings = async (
     url,
     payload,
   );
+};
+
+export const handleGetSupplierStocks = async (
+  userId: string,
+): Promise<GetSupplierStocksResponse> => {
+  return await fetcher<GetSupplierStocksResponse>(GET_SUPPLIER_STOCKS(userId));
 };
 
 export const handleUpdateStore = async (
@@ -1329,6 +1346,63 @@ export const handleReturnItems = async (payload: {
   items: { item_id: string; quantity: number; reason: string }[];
 }): Promise<any> => {
   return await poster<any>(RETURN_ITEMS, payload);
+};
+
+export const fetchPricingPlans = async (): Promise<any> => {
+  return await fetcher<any>(GET_PRICING_PLANS);
+};
+
+export const getStores = async (): Promise<any> => {
+  return await fetcher<any>(GET_STORES);
+};
+
+export const getStoreById = async (storeId: string): Promise<any> => {
+  return await fetcher<any>(GET_STORE_BY_ID(storeId));
+};
+
+export const moveStock = async (
+  targetStoreId: string,
+  items: Array<{ stock_id: string; quantity: number; selling_price: number }>,
+): Promise<any> => {
+  return await poster<any>(MOVE_STOCK, {
+    target_store_id: targetStoreId,
+    items,
+  });
+};
+
+export const updateStock = async (
+  stockId: string,
+  data: {
+    cost_price: number;
+    selling_price: number;
+    selling_price_pieces: number;
+    empties_price: number;
+    exp_date: string;
+    stock_alert_no: number;
+    sku: string;
+    remark: string;
+  },
+): Promise<any> => {
+  return await putter<any>(UPDATE_STOCK(stockId), data);
+};
+
+export const updateStockWithMovement = async (
+  stockId: string,
+  data: {
+    action: "Added" | "Removed";
+    quantity: number;
+    empties_qty: number;
+    remark: string;
+  },
+): Promise<any> => {
+  return await putter<any>(UPDATE_STOCK(stockId), data);
+};
+
+export const getStockDetail = async (
+  stockId: string,
+  storeId: string,
+): Promise<any> => {
+  return await fetcher<any>(GET_STOCK_DETAIL(stockId, storeId));
 };
 
 export const handleChatMessage = async (

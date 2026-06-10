@@ -7,9 +7,7 @@ import Image from "next/image";
 import {
   X,
   Search,
- 
   Check,
-  
   Minus,
   Plus,
   User,
@@ -23,7 +21,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { ThreeDots } from "react-loader-spinner";
-import { getStores } from "@/actions/stores";
+import { useStores } from "@/hooks/useStores";
 import { getStoreStock, getCustomers } from "@/lib/utils/api/apiHelper";
 import {
   handleCreateInvoice,
@@ -127,6 +125,11 @@ const imgSrc = (src: string | null) => {
 
 export default function SellPage() {
   const router = useRouter();
+  const {
+    stores: allStores,
+
+    error: storesError,
+  } = useStores();
 
   const [editingDiscountIndex, setEditingDiscountIndex] = useState<
     number | null
@@ -136,7 +139,7 @@ export default function SellPage() {
     useState<StockItem | null>(null);
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
-  const [storesLoading, setStoresLoading] = useState(true);
+  const [storesLoading, setStoresLoading] = useState(false);
   const [changeStoreOpen, setChangeStoreOpen] = useState(false);
   const [storeSearch, setStoreSearch] = useState("");
   const [pendingStore, setPendingStore] = useState<Store | null>(null);
@@ -204,31 +207,25 @@ export default function SellPage() {
 
   // ── Fetch stores ─────────────────────────────────────────────────────────
 
-  const fetchStores = useCallback(async () => {
-    setStoresLoading(true);
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return toast.error("Please log in");
-      const result = await getStores(token);
-      if (result.success && result.data) {
-        const valid: Store[] = (result.data as Store[]).filter(
+  useEffect(() => {
+    if (!storesLoading) {
+      if (storesError) {
+        toast.error(storesError);
+        setStoresLoading(false);
+      } else if (allStores.length > 0) {
+        const valid: Store[] = (allStores as Store[]).filter(
           (s) => !s.credit_store,
         );
         setStores(valid);
-        if (valid.length > 0) setSelectedStore(valid[0]);
-      } else {
-        toast.error(result.error || "Failed to load stores");
+        if (valid.length > 0 && !selectedStore) {
+          setSelectedStore(valid[0]);
+        }
+        setStoresLoading(false);
       }
-    } catch {
-      toast.error("Failed to load stores");
-    } finally {
-      setStoresLoading(false);
     }
-  }, []);
+  }, [allStores, storesLoading, storesError]);
 
-  useEffect(() => {
-    fetchStores();
-  }, []);
+ 
 
   // ── Fetch stock when store changes ───────────────────────────────────────
 

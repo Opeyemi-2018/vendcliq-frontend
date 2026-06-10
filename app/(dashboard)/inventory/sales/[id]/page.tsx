@@ -267,7 +267,7 @@ export default function SaleInvoiceDetailPage() {
 
       {/* BACK BUTTON */}
       <button
-        onClick={() => router.back()}
+        onClick={() => router.push("/inventory/sales")}
         className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors mb-4 print-hidden"
       >
         <MoveLeft className="w-5 h-5" />

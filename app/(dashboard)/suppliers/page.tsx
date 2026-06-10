@@ -1,6 +1,5 @@
 "use client";
 
-import { getSuppliers } from "@/actions/suppliers";
 import { Input } from "@/components/ui/Input";
 import { Supplier } from "@/types/supplier";
 import { MoveLeft, MoveRight, MoveRightIcon, Search } from "lucide-react";
@@ -11,6 +10,7 @@ import { toast } from "sonner";
 import { SupplierFullDetails } from "./detail/SupplierInfo";
 import { SupplierProducts } from "./detail/SupplierProduct";
 import { Button } from "@/components/ui/button";
+import { handleGetSuppliers } from "@/lib/utils/api/apiHelper";
 
 export default function Suppliers() {
   const [error, setError] = useState<string | null>(null);
@@ -40,15 +40,19 @@ export default function Suppliers() {
     setLoading(true);
     setError(null);
 
-    const result = await getSuppliers(token);
+    try {
+      const result = await handleGetSuppliers();
 
-    if (result.success) {
-      setSuppliers(result.data || []);
-    } else {
-      setError(result.error || "Failed to load suppliers");
+      if (result.statusCode === 200 && result.data) {
+        setSuppliers(result.data);
+      } else {
+        setError(result.error || "Failed to load suppliers");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load suppliers");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   useEffect(() => {

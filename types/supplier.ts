@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface Supplier {
-  id: string; 
-  user_id: string;
+  data: any;
+  id: number; // Changed from string to number based on your API response
+  user_id: number; // Changed from string to number
   name: string;
   email: string;
   phone: string;
@@ -17,14 +19,44 @@ export interface Supplier {
   };
 }
 
-interface GetSuppliersSuccess {
-  success: true;
+export interface GetSuppliersResponse {
+  statusCode: number;
+  error: string | null;
   data: Supplier[];
 }
 
-interface GetSuppliersError {
-  success: false;
-  error: string;
+// In your types/supplier.ts file
+export interface SupplierStockItem {
+  id: string;
+  sku: string;
+  quantity: string;
+  selling_price: string;
+  product: {
+    name: string;
+    images?: string;
+  };
 }
 
-export type GetSuppliersResponse = GetSuppliersSuccess | GetSuppliersError;
+export interface GetSupplierStocksResponse {
+  statusCode: number;
+  error: string | null;
+  data: SupplierStockItem[];
+}
+
+export interface SupplierStore {
+  id: string;
+  name: string;
+  address: {
+    lat: number | null;
+    lng: number | null;
+    name: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GetSupplierStoresResponse {
+  statusCode: number;
+  error: string | null;
+  data: SupplierStore[];
+}
