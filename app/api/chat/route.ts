@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // app/api/chat/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +30,9 @@ export async function POST(request: NextRequest) {
 async function handleChat(request: NextRequest, body: any) {
   const { message, conversation_uuid } = body;
 
-  const token = request.headers.get("authorization")?.replace("Bearer ", "");
+  // Get token from cookie instead of header
+  const cookieStore = await cookies();
+  const token = cookieStore.get("authToken")?.value;
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -66,7 +69,9 @@ async function handleChat(request: NextRequest, body: any) {
 async function handleConfirm(request: NextRequest, body: any) {
   const { confirm_id } = body;
 
-  const token = request.headers.get("authorization")?.replace("Bearer ", "");
+  // Get token from cookie instead of header
+  const cookieStore = await cookies();
+  const token = cookieStore.get("authToken")?.value;
 
   if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

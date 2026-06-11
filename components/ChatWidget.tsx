@@ -198,6 +198,7 @@ export default function AIChatWidget() {
   const [pendingDraft, setPendingDraft] = useState<PendingDraft | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [justConfirmedExpense, setJustConfirmedExpense] = useState(false);
 
   // History state
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -392,11 +393,31 @@ export default function AIChatWidget() {
         };
         setMessages((prev) => [...prev, confirmMsg]);
 
+        // Store the expense ID if returned
+        if (pendingDraft.type === "expense" && result.id) {
+          // You might want to store expense ID for navigation
+          sessionStorage.setItem("lastExpenseId", result.id);
+        }
+
         setPendingDraft(null);
       } else {
-        toast.error(
-          result.message || result.error || "Failed to confirm draft",
-        );
+        // Check for subscription error
+        const errorMessage = result.message || result.error;
+        if (errorMessage?.toLowerCase().includes("subscription")) {
+          toast.error(
+            "You need an active subscription to create expenses. Please upgrade your plan.",
+          );
+
+          const errorMsg: Message = {
+            id: Date.now().toString(),
+            role: "ai",
+            text: "❌ I couldn't create the expense because you don't have an active subscription. Please upgrade your plan to track expenses.",
+            time: nowTime(),
+          };
+          setMessages((prev) => [...prev, errorMsg]);
+        } else {
+          toast.error(errorMessage || "Failed to confirm draft");
+        }
       }
     } catch (error) {
       console.error("Confirm draft error:", error);
@@ -877,8 +898,33 @@ export default function AIChatWidget() {
           </div>
         )}
 
-        {messages.some((msg) => msg.text.includes("confirmed successfully")) &&
-          !pendingDraft && (
+        {/* Success bar for expense - shows after confirmation */}
+        {/* Success bar for expense - shows after expense confirmation */}
+        {!pendingDraft &&
+          messages.some((msg) =>
+            msg.text.includes("Expense has been confirmed successfully"),
+          ) && (
+            <div className="px-4 py-3 bg-green-50 border-t border-green-200 flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-green-600" />
+                <p className="text-xs text-green-800 font-dm-sans">
+                  Expense created successfully!
+                </p>
+              </div>
+              <button
+                onClick={() => router.push("/expenses")}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0A6DC0] hover:bg-[#085a9e] text-white text-xs font-medium rounded-lg transition"
+              >
+                View Expense
+              </button>
+            </div>
+          )}
+
+        {/* Success bar for invoice - shows after invoice confirmation */}
+        {!pendingDraft &&
+          messages.some((msg) =>
+            msg.text.includes("Invoice has been confirmed successfully"),
+          ) && (
             <div className="px-4 py-3 bg-green-50 border-t border-green-200 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-600" />

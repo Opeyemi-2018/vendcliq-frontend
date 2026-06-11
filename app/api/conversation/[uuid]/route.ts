@@ -1,4 +1,6 @@
+// app/api/conversation/[uuid]/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,7 +13,9 @@ export async function GET(
   try {
     const { uuid } = await params;
 
-    const token = request.headers.get("authorization")?.replace("Bearer ", "");
+    // Get token from cookie
+    const cookieStore = await cookies();
+    const token = cookieStore.get("authToken")?.value;
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -57,7 +61,9 @@ export async function DELETE(
   try {
     const { uuid } = await params;
 
-    const token = request.headers.get("authorization")?.replace("Bearer ", "");
+    // Get token from cookie
+    const cookieStore = await cookies();
+    const token = cookieStore.get("authToken")?.value;
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

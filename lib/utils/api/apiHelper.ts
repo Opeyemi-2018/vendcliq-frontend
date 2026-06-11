@@ -1411,23 +1411,16 @@ export const handleChatMessage = async (
   onEvent?: (event: any) => void,
   signal?: AbortSignal,
 ): Promise<string> => {
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    throw new Error("No authentication token found");
-  }
-
   const payload: any = { message };
   if (conversationUuid) {
     payload.conversation_uuid = conversationUuid;
   }
 
-  // Call the NEW dedicated chat stream endpoint
+  // No token needed here - cookies will be sent automatically
   const response = await fetch("/api/chat", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
     signal,
@@ -1470,18 +1463,10 @@ export const handleChatMessage = async (
 };
 
 export const handleConfirmDraft = async (confirmId: string): Promise<any> => {
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    throw new Error("No authentication token found");
-  }
-
   const response = await fetch("/api/chat", {
-    // Same endpoint
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ confirm_id: confirmId }),
   });
@@ -1489,25 +1474,16 @@ export const handleConfirmDraft = async (confirmId: string): Promise<any> => {
   return await response.json();
 };
 
-// Replace the existing conversation functions with these:
-
 export const getConversations = async (
   limit = 30,
   offset = 0,
 ): Promise<any> => {
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    throw new Error("No authentication token found");
-  }
-
   const response = await fetch(
     `/api/conversation?limit=${limit}&offset=${offset}`,
     {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     },
   );
@@ -1522,17 +1498,10 @@ export const getConversations = async (
 export const getConversationMessages = async (
   uuid: string,
 ): Promise<ConversationMessage[]> => {
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    throw new Error("No authentication token found");
-  }
-
   const response = await fetch(`/api/conversation/${uuid}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
   });
 
@@ -1541,24 +1510,14 @@ export const getConversationMessages = async (
   }
 
   const data = await response.json();
-  console.log("API Response:", data); // Debug: check what you're getting
-
-  // Return the items array, not the whole response
   return data.items || [];
 };
 
 export const deleteConversation = async (uuid: string): Promise<any> => {
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    throw new Error("No authentication token found");
-  }
-
   const response = await fetch(`/api/conversation/${uuid}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
   });
 
@@ -1566,7 +1525,6 @@ export const deleteConversation = async (uuid: string): Promise<any> => {
     throw new Error("Failed to delete conversation");
   }
 
-  // Try to parse JSON, but return empty object if no body
   try {
     return await response.json();
   } catch {

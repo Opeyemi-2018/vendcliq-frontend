@@ -1,5 +1,6 @@
-// app/api/chat/conversations/route.ts
+// app/api/conversation/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,7 +11,9 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get("limit") || "30";
     const offset = searchParams.get("offset") || "0";
 
-    const token = request.headers.get("authorization")?.replace("Bearer ", "");
+    // Get token from cookie
+    const cookieStore = await cookies();
+    const token = cookieStore.get("authToken")?.value;
 
     if (!token) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
