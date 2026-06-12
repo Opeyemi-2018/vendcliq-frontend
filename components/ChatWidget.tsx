@@ -665,7 +665,7 @@ export default function AIChatWidget() {
                                 setActiveMenuId(null);
                                 toggleConversation(conv);
                               }}
-                              className="w-full  px-4 py-2 text-left text-[13px] text-[#2F2F2F] hover:bg-gray-50 transition flex justify-between  items-center gap-2"
+                              className="w-full rounded-lg px-4 py-2 text-left text-[13px] text-[#2F2F2F] hover:bg-gray-50 transition flex justify-between  items-center gap-2"
                             >
                               View
                               <ChevronDown
@@ -679,7 +679,7 @@ export default function AIChatWidget() {
                                 setActiveMenuId(null);
                                 handleDeleteClick(conv, e);
                               }}
-                              className="w-full px-4 py-2 text-left text-[13px] text-red-600 hover:bg-red-50 transition flex justify-between  items-center gap-2"
+                              className="w-full rounded-lg px-4 py-2 text-left text-[13px] text-red-600 hover:bg-red-50 transition flex justify-between  items-center gap-2"
                             >
                               Delete <Trash2 size={14} />
                             </button>
