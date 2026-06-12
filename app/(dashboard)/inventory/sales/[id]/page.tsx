@@ -1,23 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Edit, MoveLeft, MoveRight, Printer, X, RotateCcw } from "lucide-react";
 import { ThreeDots } from "react-loader-spinner";
-import { getSaleById, handleReturnItems } from "@/lib/utils/api/apiHelper";
-import { SaleInvoice, SaleInvoiceItem } from "@/types/sales";
-
-interface ReturnEntry {
-  item_id: string;
-  quantity: number; // how many are being returned (starts at 0)
-  reason: string;
-  originalQuantity: number;
-  unitPrice: number;
-  productName: string;
-  originalSubtotal: number;
-}
+import { SaleInvoiceItem } from "@/types/sales";
+import { useReturnItems, useSaleInvoice } from "@/hooks/useInventoryOverview";
 
 const RETURN_REASONS = ["Damaged", "Wrong Item", "Expired", "Other"];
 
@@ -25,15 +15,12 @@ export default function SaleInvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  const [invoice, setInvoice] = useState<SaleInvoice | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showPrintModal, setShowPrintModal] = useState(false);
+  const { data: invoice, isLoading, error, refetch } = useSaleInvoice(id);
+  const returnItemsMutation = useReturnItems();
 
+  const [showPrintModal, setShowPrintModal] = useState(false);
   const [returnMode, setReturnMode] = useState(false);
-  const [returnEntries, setReturnEntries] = useState<Record<string, ReturnEntry>>({});
-  const [returnLoading, setReturnLoading] = useState(false);
-  const [returnError, setReturnError] = useState<string | null>(null);
+  const [returnEntries, setReturnEntries] = useState<Record<string, any>>({});
   const [returnSuccess, setReturnSuccess] = useState(false);
 
   const formatCurrency = (amount?: number | null) => {
@@ -45,39 +32,14 @@ export default function SaleInvoiceDetailPage() {
     });
   };
 
-  const getAmountPayable = (inv: SaleInvoice) =>
+  const getAmountPayable = (inv: any) =>
     inv.amount_payable ?? inv.attributes?.amount_payable ?? inv.total ?? 0;
 
-  const getTotalQuantity = (inv: SaleInvoice) =>
+  const getTotalQuantity = (inv: any) =>
     inv.total_quantity ?? inv.attributes?.total_quantity ?? inv.items_count ?? 0;
 
-  const getTotalDiscount = (inv: SaleInvoice) =>
+  const getTotalDiscount = (inv: any) =>
     inv.total_discount ?? inv.attributes?.total_discount ?? 0;
-
-  useEffect(() => {
-    if (!id) {
-      setError("No invoice ID provided");
-      setLoading(false);
-      return;
-    }
-    const fetchInvoice = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await getSaleById(id);
-        if (res.statusCode === 200 && res.data) {
-          setInvoice(res.data);
-        } else {
-          setError(res.error || "Failed to load invoice");
-        }
-      } catch (err: any) {
-        setError(err.message || "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchInvoice();
-  }, [id]);
 
   const getStatusBadge = (status: string) => {
     const s = status?.toLowerCase() || "";
@@ -105,17 +67,20 @@ export default function SaleInvoiceDetailPage() {
     const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
     const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
     const teens = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+    
     const convertHundreds = (n: number): string => {
       if (n === 0) return "";
       if (n < 10) return ones[n];
       if (n < 20) return teens[n - 10];
       return tens[Math.floor(n / 10)] + (n % 10 ? " " + ones[n % 10] : "");
     };
+    
     const convertChunk = (n: number): string => {
       if (n === 0) return "";
       if (n < 100) return convertHundreds(n);
       return ones[Math.floor(n / 100)] + " Hundred" + (n % 100 ? " and " + convertHundreds(n % 100) : "");
     };
+    
     if (n === 0) return "Zero";
     const billions = Math.floor(n / 1000000000);
     const millions = Math.floor((n % 1000000000) / 1000000);
@@ -151,7 +116,6 @@ export default function SaleInvoiceDetailPage() {
 
   const openReturnMode = () => {
     setReturnEntries({});
-    setReturnError(null);
     setReturnSuccess(false);
     setReturnMode(true);
   };
@@ -159,11 +123,9 @@ export default function SaleInvoiceDetailPage() {
   const closeReturnMode = () => {
     setReturnMode(false);
     setReturnEntries({});
-    setReturnError(null);
     setReturnSuccess(false);
   };
 
-  // Toggle: selecting an item starts it with returnQty = 0 (nothing deducted yet)
   const toggleItemReturn = (item: SaleInvoiceItem) => {
     setReturnEntries((prev) => {
       if (prev[item.id]) {
@@ -175,7 +137,7 @@ export default function SaleInvoiceDetailPage() {
         ...prev,
         [item.id]: {
           item_id: item.id,
-          quantity: 0, // return qty starts at 0 — user increments to choose how many to return
+          quantity: 0,
           reason: RETURN_REASONS[0],
           originalQuantity: Number(item.quantity),
           unitPrice: Number(item.stock?.price ?? 0),
@@ -190,7 +152,6 @@ export default function SaleInvoiceDetailPage() {
     setReturnEntries((prev) => {
       const entry = prev[itemId];
       if (!entry) return prev;
-      // returnQty can go from 0 up to originalQuantity
       const newQty = Math.max(0, Math.min(entry.originalQuantity, entry.quantity + delta));
       return { ...prev, [itemId]: { ...entry, quantity: newQty } };
     });
@@ -203,49 +164,52 @@ export default function SaleInvoiceDetailPage() {
     }));
   };
 
-  // Total being credited = sum of (returnQty * unitPrice) per selected item
-  const returnCredit = Object.values(returnEntries).reduce(
-    (sum, e) => sum + e.quantity * e.unitPrice,
-    0
-  );
-
-  const originalTotal = invoice ? getAmountPayable(invoice) : 0;
-  // Live grand subtotal = original total minus what's being returned
-  const liveGrandTotal = originalTotal - returnCredit;
-
   const handleConfirmReturn = async () => {
-    if (!invoice) return;
-    const items = Object.values(returnEntries).filter((e) => e.quantity > 0);
-    if (items.length === 0) {
-      setReturnError("Please select at least one item and set a return quantity.");
-      return;
-    }
-    setReturnLoading(true);
-    setReturnError(null);
-    try {
-      const payload = {
-        invoice_id: invoice.id,
-        items: items.map(({ item_id, quantity, reason }) => ({ item_id, quantity, reason })),
-      };
-      const res = await handleReturnItems(payload);
-      if (res?.statusCode === 200 || res?.success) {
-        setReturnSuccess(true);
-        const updated = await getSaleById(id);
-        if (updated.statusCode === 200 && updated.data) setInvoice(updated.data);
-        setTimeout(() => closeReturnMode(), 2000);
-      } else {
-        setReturnError(res?.error || res?.message || "Failed to process return");
-      }
-    } catch (err: any) {
-      setReturnError(err.message || "An error occurred");
-    } finally {
-      setReturnLoading(false);
-    }
+    const items = Object.values(returnEntries).filter((e: any) => e.quantity > 0);
+    if (items.length === 0) return;
+    
+    await returnItemsMutation.mutateAsync({
+      invoice_id: invoice!.id,
+      items: items.map(({ item_id, quantity, reason }: any) => ({ item_id, quantity, reason })),
+    });
+    
+    setReturnSuccess(true);
+    await refetch();
+    setTimeout(() => closeReturnMode(), 2000);
   };
 
+  const originalTotal = invoice ? getAmountPayable(invoice) : 0;
+  const returnCredit = Object.values(returnEntries).reduce(
+    (sum, e: any) => sum + e.quantity * e.unitPrice,
+    0
+  );
+  const liveGrandTotal = originalTotal - returnCredit;
   const isCompleted = invoice?.status?.toLowerCase() === "completed";
   const selectedCount = Object.keys(returnEntries).length;
-  const itemsWithQty = Object.values(returnEntries).filter((e) => e.quantity > 0).length;
+  const itemsWithQty = Object.values(returnEntries).filter((e: any) => e.quantity > 0).length;
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <ThreeDots height="80" width="80" color="#0A6DC0" visible />
+        <p className="mt-4 text-[#9E9A9A]">Loading invoice details...</p>
+      </div>
+    );
+  }
+
+  if (error || !invoice) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-red-600">{error?.message || "Invoice not found"}</p>
+        <button
+          onClick={() => router.back()}
+          className="mt-4 text-[#0A6DC0] underline"
+        >
+          Go back
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="">
@@ -265,7 +229,6 @@ export default function SaleInvoiceDetailPage() {
         }
       `}</style>
 
-      {/* BACK BUTTON */}
       <button
         onClick={() => router.push("/inventory/sales")}
         className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors mb-4 print-hidden"
@@ -273,7 +236,6 @@ export default function SaleInvoiceDetailPage() {
         <MoveLeft className="w-5 h-5" />
       </button>
 
-      {/* HEADER */}
       <div className="flex items-center justify-between print-hidden mb-1">
         <div className="mb-4 md:mb-6">
           <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
@@ -321,7 +283,6 @@ export default function SaleInvoiceDetailPage() {
         </div>
       </div>
 
-      {/* Return mode banner */}
       {returnMode && (
         <div className="flex items-center gap-2 mb-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 print-hidden">
           <RotateCcw className="w-4 h-4 flex-shrink-0" />
@@ -331,26 +292,14 @@ export default function SaleInvoiceDetailPage() {
         </div>
       )}
 
-      {/* MAIN: table + return panel */}
       <div className="flex flex-col lg:flex-row gap-4 items-start print-hidden">
-
-        {/* TABLE */}
         <div className="w-full min-w-0 flex-1">
           <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Sold Items ({invoice?.items_count || 0})
             </h2>
 
-            {loading ? (
-              <div className="py-16 text-center text-gray-500">
-                <div className="flex justify-center">
-                  <ThreeDots height="40" width="40" color="#0A6DC0" visible />
-                </div>
-                <p className="mt-4">Loading invoice details...</p>
-              </div>
-            ) : error || !invoice ? (
-              <div className="py-16 text-center text-red-600">{error || "Invoice not found"}</div>
-            ) : invoice.items?.length === 0 ? (
+            {invoice.items?.length === 0 ? (
               <div className="p-12 text-center text-gray-500">No items in this invoice</div>
             ) : (
               <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
@@ -379,7 +328,6 @@ export default function SaleInvoiceDetailPage() {
                       {invoice.items.map((item: SaleInvoiceItem) => {
                         const entry = returnEntries[item.id];
                         const isSelected = !!entry;
-                        // Subtotal shown = original subtotal minus (returnQty * unitPrice)
                         const deducted = isSelected ? entry.quantity * entry.unitPrice : 0;
                         const displaySubtotal = Number(item.sub_total) - deducted;
 
@@ -399,7 +347,6 @@ export default function SaleInvoiceDetailPage() {
                                 : undefined
                             }
                           >
-                            {/* Checkbox — return mode */}
                             {returnMode && (
                               <td className="pl-2 py-4" onClick={(e) => e.stopPropagation()}>
                                 <input
@@ -411,7 +358,6 @@ export default function SaleInvoiceDetailPage() {
                               </td>
                             )}
 
-                            {/* Product */}
                             <td className="px-2 py-4">
                               <div className="flex gap-3 items-center">
                                 <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border border-gray-200">
@@ -436,7 +382,6 @@ export default function SaleInvoiceDetailPage() {
                               </div>
                             </td>
 
-                            {/* Quantity — shows stepper for return qty when selected */}
                             <td className="px-6 py-4" onClick={(e) => returnMode && e.stopPropagation()}>
                               {returnMode && isSelected ? (
                                 <div className="flex flex-col gap-0.5">
@@ -467,10 +412,8 @@ export default function SaleInvoiceDetailPage() {
                               )}
                             </td>
 
-                            {/* Unit Cost */}
-                            <td className="px-6 py-4">{formatCurrency(item.stock.price)}</td>
+                            <td className="px-6 py-4">{formatCurrency(item.stock?.price)}</td>
 
-                            {/* Subtotal — live deduction */}
                             <td className="px-6 py-4 font-medium">
                               <div className="flex flex-col">
                                 <span className={isSelected && deducted > 0 ? "text-[#0A6DC0]" : ""}>
@@ -484,7 +427,6 @@ export default function SaleInvoiceDetailPage() {
                               </div>
                             </td>
 
-                            {/* Normal mode cols */}
                             {!returnMode && (
                               <>
                                 <td className="px-6 py-4 font-medium">{formatCurrency(item.profit)}</td>
@@ -495,7 +437,6 @@ export default function SaleInvoiceDetailPage() {
                               </>
                             )}
 
-                            {/* Reason — return mode */}
                             {returnMode && (
                               <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                                 {isSelected ? (
@@ -518,7 +459,6 @@ export default function SaleInvoiceDetailPage() {
                       })}
                     </tbody>
 
-                    {/* Live grand total row in return mode */}
                     {returnMode && invoice && (
                       <tfoot>
                         <tr className="bg-gray-50 border-t-2 border-gray-200">
@@ -545,7 +485,6 @@ export default function SaleInvoiceDetailPage() {
           </div>
         </div>
 
-        {/* RETURN SUMMARY PANEL — inline right, stacks below on mobile */}
         {returnMode && (
           <div className="w-full lg:w-[300px] lg:flex-shrink-0 border border-[#E4E4E4] rounded-[20px] bg-white p-5 flex flex-col lg:sticky lg:top-6 lg:self-start">
             <div className="flex items-center justify-between mb-1">
@@ -562,7 +501,7 @@ export default function SaleInvoiceDetailPage() {
               {selectedCount === 0 ? (
                 <p className="text-sm text-gray-400 italic text-center py-4">No items selected yet</p>
               ) : (
-                Object.values(returnEntries).map((entry) => (
+                Object.values(returnEntries).map((entry: any) => (
                   <div key={entry.item_id} className="flex justify-between items-start gap-2">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-[#2F2F2F] truncate leading-tight">
@@ -599,13 +538,14 @@ export default function SaleInvoiceDetailPage() {
 
             {returnCredit > 0 && (
               <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-700 leading-relaxed">
-                ⓘ The invoice status will update to{" "}
-                <span className="font-semibold">Partially Returned</span> and the customer's credit balance will be reduced.
+                ⓘ The invoice status will update to <span className="font-semibold">Partially Returned</span> and the customer&apos;s credit balance will be reduced.
               </div>
             )}
 
-            {returnError && (
-              <p className="mt-3 text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{returnError}</p>
+            {returnItemsMutation.isError && (
+              <p className="mt-3 text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">
+                {returnItemsMutation.error?.message || "Failed to process return"}
+              </p>
             )}
 
             {returnSuccess && (
@@ -616,10 +556,10 @@ export default function SaleInvoiceDetailPage() {
 
             <button
               onClick={handleConfirmReturn}
-              disabled={returnLoading || itemsWithQty === 0}
+              disabled={returnItemsMutation.isPending || itemsWithQty === 0}
               className="mt-4 w-full bg-[#0A6DC0] text-white rounded-xl py-3 text-sm font-semibold hover:bg-[#0859a0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {returnLoading ? (
+              {returnItemsMutation.isPending ? (
                 <ThreeDots height="20" width="32" color="#ffffff" visible />
               ) : (
                 `Confirm Return · ${formatCurrency(returnCredit)}`
@@ -636,7 +576,6 @@ export default function SaleInvoiceDetailPage() {
         )}
       </div>
 
-      {/* PRINT MODAL */}
       {showPrintModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 print-hidden">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-[320px] relative">
@@ -677,7 +616,6 @@ export default function SaleInvoiceDetailPage() {
         </div>
       )}
 
-      {/* THERMAL PRINT */}
       <div id="print-thermal">
         {invoice && (
           <div className="w-[80mm] mx-auto p-3 text-[13px] leading-tight relative min-h-[400px]" style={{ fontFamily: "monospace" }}>
@@ -702,7 +640,7 @@ export default function SaleInvoiceDetailPage() {
               </div>
               <div className="mb-3">
                 <div className="font-bold text-xs border-b border-dashed pb-1 mb-1">Items</div>
-                {invoice.items?.map((item) => (
+                {invoice.items?.map((item: SaleInvoiceItem) => (
                   <div key={item.id} className="mb-2 text-xs">
                     <div className="flex justify-between font-medium">
                       <span className="flex-1 pr-2">{item.product?.name || "Product"}</span>
@@ -732,7 +670,6 @@ export default function SaleInvoiceDetailPage() {
         )}
       </div>
 
-      {/* A4 PRINT */}
       <div id="print-a4">
         {invoice && (
           <div className="max-w-[720px] mx-auto p-8 text-sm text-gray-800" style={{ fontFamily: "Arial, sans-serif" }}>
@@ -773,7 +710,7 @@ export default function SaleInvoiceDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {invoice.items?.map((item, idx) => (
+                {invoice.items?.map((item: SaleInvoiceItem, idx: number) => (
                   <tr key={item.id} className="border border-gray-400">
                     <td className="border border-gray-400 px-3 py-2 text-center">{idx + 1}</td>
                     <td className="border border-gray-400 px-3 py-2">
@@ -808,7 +745,7 @@ export default function SaleInvoiceDetailPage() {
                       <span className="font-semibold text-sm">Amount in Words:</span>
                       <span className="text-sm font-normal ml-2">{numberToWords(getAmountPayable(invoice))}</span>
                     </div>
-                  </td>
+                   </td>
                   <td className="border border-gray-800 px-3 py-2 text-right text-base">GRAND TOTAL:</td>
                   <td className="border border-gray-800 px-3 py-2 text-right text-base">₦{Number(getAmountPayable(invoice)).toLocaleString("en-NG", { minimumFractionDigits: 2 })}</td>
                 </tr>

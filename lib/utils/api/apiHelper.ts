@@ -1010,7 +1010,11 @@ export const updateCartItem = async (
 };
 
 export const deleteCartItem = async (itemId: string): Promise<any> => {
-  return await deleter<any>(DELETE_CART_ITEM(itemId));
+  return await axiosInstance.delete("", {
+    params: {
+      endpoint: DELETE_CART_ITEM(itemId),
+    },
+  });
 };
 
 export const handlePayInvoiceCreditOtp = async (

@@ -1,21 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  MapPin,
-  ShoppingCart,
-  MoveLeft,
-  Heart,
-  Plus,
-  Minus,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import {
-  getMarketplaceStockDetail,
-  getOfferDetail,
-} from "@/lib/utils/api/apiHelper";
-
+import { ShoppingCart, MoveLeft, Heart, Plus, Minus } from "lucide-react";
+import { useState } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
@@ -29,83 +17,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-
-interface Stock {
-  id: string;
-  sku: string;
-  selling_price: string;
-  selling_price_pieces: string;
-  total_qty: string;
-  exp_date: string;
-  product: {
-    id: string;
-    name: string;
-    items_per_pack: number;
-    image: string;
-  };
-  store: {
-    id: string;
-    name: string;
-    address: {
-      lat: number;
-      lng: number;
-      name: string;
-    };
-  };
-  attributes: {
-    type: string;
-  };
-}
-
-interface Offer {
-  id: string;
-  stock: {
-    id: string;
-    sku: string;
-    qty: string;
-    price: number;
-  };
-  product: {
-    id: string;
-    name: string;
-    image: string;
-  };
-  qty: number;
-  minimum_qty: number;
-  price: number;
-  supply_fee: number;
-  expiry_date: string;
-  supply_available: boolean;
-  views: number | null;
-  store: {
-    id: string;
-    name: string;
-    phone: string;
-    address: {
-      lat: number;
-      lng: number;
-      name: string;
-    };
-  };
-  created_at: string;
-  updated_at: string;
-}
-
-const SkeletonCard = () => (
-  <div className="rounded-lg overflow-hidden animate-pulse">
-    <div className="h-[153px] border border-[#E5E5EA] bg-gray-200"></div>
-    <div className="px-3 py-2 flex flex-col justify-between h-[150px] bg-gray-300">
-      <div>
-        <div className="h-5 bg-gray-400 rounded mb-2 w-20"></div>
-        <div className="h-4 bg-gray-400 rounded mb-2 w-full"></div>
-        <div className="h-3 bg-gray-400 rounded w-24"></div>
-      </div>
-      <div className="h-10 bg-gray-400 rounded"></div>
-    </div>
-  </div>
-);
+import {
+  useMarketplaceStockDetail,
+  useOfferDetail,
+} from "@/hooks/useMarketplaceData";
 
 const MainProductSkeleton = () => (
   <Card className="flex flex-col gap-3 p-5 rounded-lg animate-pulse">
@@ -131,62 +47,33 @@ const StockDetailPage = () => {
   const stockId = params.id as string;
   const isOffer = searchParams.get("type") === "offer";
 
-  const [stock, setStock] = useState<Stock | null>(null);
-  const [offer, setOffer] = useState<Offer | null>(null);
-  const [relatedStocks, setRelatedStocks] = useState<Stock[]>([]);
-  const [relatedOffers, setRelatedOffers] = useState<Offer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const {
+    data: stockData,
+    isLoading: stockLoading,
+    error: stockError,
+  } = useMarketplaceStockDetail(stockId);
+
+  const {
+    data: offerData,
+    isLoading: offerLoading,
+    error: offerError,
+  } = useOfferDetail(stockId);
+
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
 
-  useEffect(() => {
-    if (stockId) {
-      fetchStockDetail();
-    }
-  }, [stockId, isOffer]);
-
-  const fetchStockDetail = async () => {
-    try {
-      setLoading(true);
-      setError(false);
-
-      if (isOffer) {
-        const result = await getOfferDetail(stockId);
-        if (result?.data?.offer) {
-          setOffer(result.data.offer);
-          setStock(null);
-          setRelatedOffers(result.data.relatedOffers || []);
-        } else {
-          setError(true);
-          toast.error("Failed to load offer details");
-        }
-      } else {
-        const result = await getMarketplaceStockDetail(stockId);
-        if (result?.data?.stock) {
-          setStock(result.data.stock);
-          setOffer(null);
-          setRelatedStocks(result.data.relatedStocks || []);
-        } else {
-          setError(true);
-          toast.error("Failed to load product details");
-        }
-      }
-    } catch {
-      setError(true);
-      toast.error("An error occurred while loading product details");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const isLoading = isOffer ? offerLoading : stockLoading;
+  const error = isOffer ? offerError : stockError;
+  const currentItem = isOffer ? offerData?.offer : stockData?.stock;
+  const relatedItems = isOffer
+    ? offerData?.relatedOffers
+    : stockData?.relatedStocks;
 
   const handleQuantityChange = (newQuantity: number) => {
     if (newQuantity < 1) return;
     setQuantity(newQuantity);
   };
-
-  const currentItem = isOffer ? offer : stock;
 
   const onAddToCart = async () => {
     if (!currentItem) {
@@ -194,12 +81,17 @@ const StockDetailPage = () => {
       return;
     }
 
-    const store = isOffer && offer ? offer.store : stock?.store;
+    const store =
+      isOffer && offerData?.offer
+        ? offerData.offer.store
+        : stockData?.stock?.store;
     if (!store || !store.address || !store.id) {
       toast.error("Store information is missing. Please try again.");
       return;
     }
-    const itemId = isOffer && offer ? offer.id : stock?.id;
+
+    const itemId =
+      isOffer && offerData?.offer ? offerData.offer.id : stockData?.stock?.id;
     if (!itemId) {
       toast.error("Product ID is missing");
       return;
@@ -287,11 +179,10 @@ const StockDetailPage = () => {
         </Button>
       </div>
 
-      {loading || !currentItem ? (
+      {isLoading || !currentItem ? (
         <MainProductSkeleton />
       ) : (
-        <div className="flex flex-col gap-3  md:p-6 lg:border bg-white border-[#E4E4E4] rounded-lg ">
-          {/* Product Image */}
+        <div className="flex flex-col gap-3 md:p-6 lg:border bg-white border-[#E4E4E4] rounded-lg">
           <div className="bg-[#FAFAFA] rounded-lg border border-[#E3E3E3] overflow-hidden relative">
             {isOffer && (
               <div className="absolute top-2 z-20 left-2 text-[#E33629] bg-[#FFE7E5] text-[8px] font-bold font-dm-sans px-2 py-1 rounded">
@@ -304,7 +195,11 @@ const StockDetailPage = () => {
             <div className="relative h-56 w-full">
               {currentItem.product?.image ? (
                 <Image
-                  src={`https:${currentItem.product.image}`}
+                  src={
+                    currentItem.product.image.startsWith("//")
+                      ? `https:${currentItem.product.image}`
+                      : currentItem.product.image
+                  }
                   alt={currentItem.product?.name || "Product"}
                   fill
                   className="object-contain p-4"
@@ -327,18 +222,20 @@ const StockDetailPage = () => {
 
                   <p className="text-[16px] font-dm-sans font-bold text-[#313131]">
                     ₦{" "}
-                    {isOffer && offer
-                      ? (offer.price ?? 0).toFixed(2)
-                      : stock
-                        ? parseFloat(stock.selling_price || "0").toFixed(2)
+                    {isOffer && offerData?.offer
+                      ? (offerData.offer.price ?? 0).toFixed(2)
+                      : stockData?.stock
+                        ? parseFloat(
+                            stockData.stock.selling_price || "0",
+                          ).toFixed(2)
                         : "0.00"}
                   </p>
 
                   <p className="text-[13px] font-dm-sans text-[#8E8E93]">
-                    {isOffer && offer
-                      ? `${offer.qty ?? 0} available`
-                      : stock
-                        ? `${stock.total_qty || "0"} available`
+                    {isOffer && offerData?.offer
+                      ? `${offerData.offer.qty ?? 0} available`
+                      : stockData?.stock
+                        ? `${stockData.stock.total_qty || "0"} available`
                         : "0 available"}
                   </p>
                 </div>
@@ -378,75 +275,83 @@ const StockDetailPage = () => {
                 </div>
               </div>
 
-              {isOffer && offer && (
+              {isOffer && offerData?.offer && (
                 <>
                   <p className="text-[13px] font-dm-sans text-[#0A6DC0] font-semibold pt-1">
-                    Minimum order: {offer.minimum_qty ?? 1} units
+                    Minimum order: {offerData.offer.minimum_qty ?? 1} units
                   </p>
-                  {offer.supply_available && (offer.supply_fee ?? 0) > 0 && (
-                    <p className="text-[13px] font-dm-sans text-[#8E8E93] pt-1">
-                      Supply fee: ₦{(offer.supply_fee ?? 0).toFixed(2)}
-                    </p>
-                  )}
-                  {offer.expiry_date && (
+                  {offerData.offer.supply_available &&
+                    (offerData.offer.supply_fee ?? 0) > 0 && (
+                      <p className="text-[13px] font-dm-sans text-[#8E8E93] pt-1">
+                        Supply fee: ₦
+                        {(offerData.offer.supply_fee ?? 0).toFixed(2)}
+                      </p>
+                    )}
+                  {offerData.offer.expiry_date && (
                     <p className="text-[12px] font-dm-sans text-[#8E8E93] pt-1">
                       Expires:{" "}
-                      {new Date(offer.expiry_date).toLocaleDateString()}
+                      {new Date(
+                        offerData.offer.expiry_date,
+                      ).toLocaleDateString()}
                     </p>
                   )}
                 </>
               )}
 
-              {!isOffer && stock?.exp_date && (
+              {!isOffer && stockData?.stock?.exp_date && (
                 <p className="text-[12px] font-dm-sans text-[#8E8E93] pt-1">
-                  Expires: {new Date(stock.exp_date).toLocaleDateString()}
+                  Expires:{" "}
+                  {new Date(stockData.stock.exp_date).toLocaleDateString()}
                 </p>
               )}
 
-              <div className="bg-[#FAFAFA] p-5 rounded-md ">
-                {isOffer && offer?.store && (
+              <div className="bg-[#FAFAFA] p-5 rounded-md">
+                {isOffer && offerData?.offer?.store && (
                   <div className="flex gap-1 items-center">
                     <div className="w-10 h-10 rounded-full bg-[#FCE5D7] text-[#CD1919] text-[23px] flex items-center justify-center font-medium uppercase">
-                      {offer.store.name?.trim().slice(0, 2).toUpperCase()}
+                      {offerData.offer.store.name
+                        ?.trim()
+                        .slice(0, 2)
+                        .toUpperCase()}
                     </div>
                     <div>
-                      <div className="text-[#2F2F2F] flex items-center gap-2  font-medium font-dm-sans ">
-                        {offer.store.name}
+                      <div className="text-[#2F2F2F] flex items-center gap-2 font-medium font-dm-sans">
+                        {offerData.offer.store.name}
                       </div>
-                      <div className="text-[#2F2F2F] flex items-center gap-2 text-[13px] font-regular font-dm-sans ">
-                        {offer.store.address.name}
+                      <div className="text-[#2F2F2F] flex items-center gap-2 text-[13px] font-regular font-dm-sans">
+                        {offerData.offer.store.address.name}
                       </div>
                     </div>
                   </div>
                 )}
 
-                {!isOffer && stock?.store && (
-                  <>
-                    <div className="flex gap-1 items-center">
-                      <div className="w-10 h-10 rounded-full bg-[#FCE5D7] text-[#CD1919] text-[23px] flex items-center justify-center font-medium uppercase">
-                        {stock.store.name?.trim().slice(0, 2).toUpperCase()}
+                {!isOffer && stockData?.stock?.store && (
+                  <div className="flex gap-1 items-center">
+                    <div className="w-10 h-10 rounded-full bg-[#FCE5D7] text-[#CD1919] text-[23px] flex items-center justify-center font-medium uppercase">
+                      {stockData.stock.store.name
+                        ?.trim()
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="text-[#2F2F2F] flex items-center gap-2 font-medium font-dm-sans">
+                        {stockData.stock.store.name}
                       </div>
-                      <div>
-                        <div className="text-[#2F2F2F] flex items-center gap-2  font-medium font-dm-sans ">
-                          {stock.store.name}
-                        </div>
-                        <div className="text-[#2F2F2F] flex items-center gap-2 text-[13px] font-regular font-dm-sans ">
-                          {stock.store.address.name}
-                        </div>
+                      <div className="text-[#2F2F2F] flex items-center gap-2 text-[13px] font-regular font-dm-sans">
+                        {stockData.stock.store.address.name}
                       </div>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Add to Cart Button */}
             <Button
               onClick={onAddToCart}
               disabled={addingToCart}
               className="w-full mt-4 bg-[#0A6DC0] hover:bg-[#09599a] py-6 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <ShoppingCart className="mr-2" />{" "}
+              <ShoppingCart className="mr-2" />
               {addingToCart ? (
                 <>
                   Adding...
@@ -460,14 +365,13 @@ const StockDetailPage = () => {
         </div>
       )}
 
-      {/* Related Stocks - Only show for regular stocks */}
-      {!isOffer && relatedStocks.length > 0 && (
+      {!isOffer && relatedItems && relatedItems.length > 0 && (
         <div className="mt-10">
           <h2 className="font-medium mb-4 font-dm-sans text-[16px] text-[#2F2F2F]">
             Other products you might like
           </h2>
-          <div className="grid  grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            {relatedStocks.map((relatedStock) => (
+          <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {relatedItems.map((relatedStock: any) => (
               <div
                 key={relatedStock.id}
                 className="rounded-xl overflow-hidden hover:shadow-lg flex flex-col transition-shadow cursor-pointer"
@@ -475,7 +379,11 @@ const StockDetailPage = () => {
               >
                 <div className="relative rounded-tr-xl rounded-tl-xl h-[153px] border-t-2 border-r-2 border-l-2 border-[#E3E3E3] bg-[#FAFAFA]">
                   <Image
-                    src={`https:${relatedStock.product.image}`}
+                    src={
+                      relatedStock.product.image.startsWith("//")
+                        ? `https:${relatedStock.product.image}`
+                        : relatedStock.product.image
+                    }
                     alt={relatedStock.product.name}
                     fill
                     className="object-contain p-5"
@@ -494,7 +402,7 @@ const StockDetailPage = () => {
                     </p>
                   </div>
                   <Button
-                    variant={"outline"}
+                    variant="outline"
                     className="w-full text-[13px] text-[#2F2F2F]"
                   >
                     Order
@@ -506,14 +414,13 @@ const StockDetailPage = () => {
         </div>
       )}
 
-      {/* Related Offers - Only show for offer products */}
-      {isOffer && relatedOffers.length > 0 && (
+      {isOffer && relatedItems && relatedItems.length > 0 && (
         <div className="mt-10">
           <h2 className="font-medium mb-4 font-dm-sans text-[16px] text-[#2F2F2F]">
             Other offers you might like
           </h2>
-          <div className="grid  grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-            {relatedOffers.map((relatedOffer) => (
+          <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {relatedItems.map((relatedOffer: any) => (
               <div
                 key={relatedOffer.id}
                 className="rounded-xl overflow-hidden hover:shadow-lg flex flex-col transition-shadow cursor-pointer"
@@ -524,7 +431,11 @@ const StockDetailPage = () => {
                     20% OFF
                   </div>
                   <Image
-                    src={`https:${relatedOffer.product.image}`}
+                    src={
+                      relatedOffer.product.image.startsWith("//")
+                        ? `https:${relatedOffer.product.image}`
+                        : relatedOffer.product.image
+                    }
                     alt={relatedOffer.product.name}
                     fill
                     className="object-contain p-5"
@@ -543,7 +454,7 @@ const StockDetailPage = () => {
                     </p>
                   </div>
                   <Button
-                    variant={"outline"}
+                    variant="outline"
                     className="w-full text-[13px] text-[#2F2F2F]"
                   >
                     Order
@@ -574,7 +485,7 @@ const StockDetailPage = () => {
           </Button>
           <Button
             onClick={() => router.push("/cart")}
-            variant={"outline"}
+            variant="outline"
             className="shadow"
           >
             Proceed to Checkout

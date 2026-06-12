@@ -117,8 +117,13 @@ const Home = () => {
       </h1>
 
       {isLoadingWallet ? (
-        <div className="mt-2 flex items-center gap-3 text-gray-600">
-          <ClipLoader size={20} color="#0A6DC0" />
+        <div className="bg-white font-dm-sans text-center text-[14px] md:font-bold text-[#2F2F2F] py-3 px-4 md:px-6 items-center justify-between gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
+          <div className="h-5 w-16 bg-gray-200 rounded animate-pulse"></div>
+          <Separator orientation="vertical" className="h-4" />
+          <div className="h-5 w-24 bg-gray-200 rounded animate-pulse"></div>
+          <Separator orientation="vertical" className="h-4" />
+          <div className="h-5 w-20 bg-gray-200 rounded animate-pulse"></div>
+          <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
         </div>
       ) : (
         hasWalletAccount && (

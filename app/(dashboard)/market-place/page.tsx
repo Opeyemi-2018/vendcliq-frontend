@@ -4,101 +4,74 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { Heart, Milk, Search, ShoppingCart } from "lucide-react";
-import { useEffect, useState } from "react";
-import {
-  getMarketplaceStocks,
-  getMarketplaceOffers,
-} from "@/lib/utils/api/apiHelper";
-
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
-import { CombinedStock, OfferStock, RegularStock } from "@/types/marketPlace";
 import { MarketSkeletonCard } from "@/components/SkeletonLoader";
+import { CombinedStock, OfferStock, RegularStock } from "@/types/marketPlace";
+
+import {
+  useMarketplaceStocks,
+  useMarketplaceOffers,
+} from "@/hooks/useMarketplaceData";
 
 const MarketPlace = () => {
   const router = useRouter();
-
-  const [items, setItems] = useState<CombinedStock[]>([]);
-  const [displayItems, setDisplayItems] = useState<CombinedStock[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  useEffect(() => {
-    fetchAllItems();
-  }, []);
+  const { data: stocks = [], isLoading: stocksLoading } = useMarketplaceStocks(
+    debouncedSearch,
+    1,
+    50,
+  );
 
-  const fetchAllItems = async () => {
-    try {
-      setLoading(true);
-      const [offersResult, stocksResult] = await Promise.all([
-        getMarketplaceOffers(),
-        getMarketplaceStocks(),
-      ]);
+  const { data: rawOffers = [], isLoading: offersLoading } =
+    useMarketplaceOffers();
 
-      const offers: OfferStock[] = offersResult?.data
-        ? offersResult.data.map((o: any) => ({
-            ...o,
-            id: o.id,
-            selling_price: o.price.toString(),
-            total_qty: o.qty.toString(),
-            isOffer: true,
-          }))
-        : [];
+  const displayItems: CombinedStock[] = useMemo(() => {
+    const offers: OfferStock[] = rawOffers.map((o: any) => ({
+      ...o,
+      id: o.id,
+      selling_price: o.price?.toString(),
+      total_qty: o.qty?.toString(),
+      isOffer: true,
+    }));
 
-      const stocks: RegularStock[] = stocksResult?.data ?? [];
-      const allItems = [...offers, ...stocks];
-      setItems(allItems);
-      setDisplayItems(allItems);
-    } catch {
-      toast.error("Failed to load marketplace");
-    } finally {
-      setLoading(false);
+    const regularStocks: RegularStock[] = stocks.map((s: any) => ({
+      ...s,
+      isOffer: false,
+    }));
+
+    const allItems: CombinedStock[] = [...offers, ...regularStocks];
+
+    if (debouncedSearch.trim() !== "") {
+      return regularStocks;
     }
-  };
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      if (searchQuery.trim() === "") {
-        setDisplayItems(items);
-      } else {
-        searchFromBackend(searchQuery);
-      }
-    }, 400);
+    return allItems;
+  }, [stocks, rawOffers, debouncedSearch]);
 
-    return () => clearTimeout(delay);
+  const loading = stocksLoading || offersLoading;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 400);
+    return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const searchFromBackend = async (query: string) => {
-    try {
-      setLoading(true);
-      const result = await getMarketplaceStocks(query, 1, 50);
-      if (result?.data) {
-        if (result.data.length === 0) {
-          toast.info(`No products found for "${query}"`);
-          return;
-        }
-        setDisplayItems(result.data);
-      } else {
-        toast.error("Search failed");
-      }
-    } catch {
-      toast.error("Search error");
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (!loading && debouncedSearch.trim() !== "" && stocks.length === 0) {
+      toast.info(`No products found for "${debouncedSearch}"`);
     }
-  };
+  }, [debouncedSearch, stocks.length, loading]);
 
-  // ---------------------------
-  // Navigation
-  // ---------------------------
   const handleItemClick = (id: string, isOffer: boolean) => {
     router.push(`/market-place/${id}${isOffer ? "?type=offer" : ""}`);
   };
 
-  // ---------------------------
-  // Product Card (UNCHANGED)
-  // ---------------------------
-  const renderProductCard = (item: CombinedStock) => (
+  const renderProductCard = (item: any) => (
     <div
       key={item.id}
       className="rounded-xl overflow-hidden hover:shadow-lg flex flex-col transition-shadow cursor-pointer"
@@ -114,9 +87,13 @@ const MarketPlace = () => {
           <Heart size={15} />
         </div>
 
-        {item.product.image ? (
+        {item.product?.image ? (
           <Image
-            src={`https:${item.product.image}`}
+            src={
+              item.product.image.startsWith("//")
+                ? `https:${item.product.image}`
+                : item.product.image
+            }
             alt={item.product.name}
             fill
             className="object-contain p-5"
@@ -131,15 +108,15 @@ const MarketPlace = () => {
           <p className="font-bold">
             ₦
             {item.isOffer
-              ? item.price.toFixed(2)
-              : parseFloat(item.selling_price).toFixed(2)}
+              ? item.price?.toFixed(2)
+              : parseFloat(item.selling_price || "0").toFixed(2)}
             /unit
           </p>
 
           <h3 className="font-medium text-[13px]">
-            {item.product.name.length > 15
+            {item.product?.name?.length > 15
               ? `${item.product.name.slice(0, 20)}...`
-              : item.product.name}
+              : item.product?.name}
           </h3>
 
           <p className="font-semibold text-[10px] mb-2">
@@ -158,12 +135,8 @@ const MarketPlace = () => {
     </div>
   );
 
-  // ---------------------------
-  // Render (UNCHANGED)
-  // ---------------------------
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="font-semibold font-clash text-[20px] text-[#2F2F2F]">
@@ -193,15 +166,14 @@ const MarketPlace = () => {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {[...Array(10)].map((_, i) => (
             <MarketSkeletonCard key={i} />
           ))}
         </div>
       ) : (
-        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-lg">
-          {/* Promo Products */}
-          {displayItems.some((item) => item.isOffer) && (
+        <div className="">
+          {displayItems.some((item: CombinedStock) => item.isOffer) && (
             <div className="mb-8">
               <div className="flex items-center gap-4 mb-3">
                 <h2 className="text-lg font-semibold text-[#2F2F2F] font-dm-sans">
@@ -214,14 +186,12 @@ const MarketPlace = () => {
 
               <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 {displayItems
-                  .filter((item) => item.isOffer)
+                  .filter((item: CombinedStock) => item.isOffer === true)
                   .map(renderProductCard)}
               </div>
             </div>
           )}
-
-          {/* All Products */}
-          {displayItems.some((item) => !item.isOffer) && (
+          {displayItems.some((item: CombinedStock) => !item.isOffer) && (
             <div>
               <h2 className="text-[16px] font-medium mb-4 text-[#2F2F2F] font-dm-sans">
                 All Products
@@ -229,7 +199,7 @@ const MarketPlace = () => {
 
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
                 {displayItems
-                  .filter((item) => !item.isOffer)
+                  .filter((item: CombinedStock) => !item.isOffer)
                   .map(renderProductCard)}
               </div>
             </div>

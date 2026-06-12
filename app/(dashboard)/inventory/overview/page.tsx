@@ -1,13 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { format, subDays } from "date-fns";
-import {
-  getSales,
-  getTotalSales,
-  getPurchaseRequest,
-} from "@/lib/utils/api/apiHelper";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { EyeOff, Eye, CalendarIcon, ChevronRight, Loader2 } from "lucide-react";
@@ -22,9 +17,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
-import { SupplierSalesMedium, SupplierSalesResponse } from "@/types/sales";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/context/userContext";
+import { useRecentSales, useSalesData } from "@/hooks/useInventoryOverview";
+import { useRecentPurchaseRequests } from "@/hooks/usePurchaseRequests";
 
 type InvoiceItem = {
   id: string;
@@ -55,21 +51,8 @@ const Home = () => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
 
-  // Sales data
-  const [totalSales, setTotalSales] = useState<number>(0);
-  const [mediumBreakdown, setMediumBreakdown] = useState<SupplierSalesMedium>(
-    {},
-  );
-  const [salesLoading, setSalesLoading] = useState(true);
-
   // Medium modal
   const [mediumModalOpen, setMediumModalOpen] = useState(false);
-
-  // Recent sales & purchases
-  const [sales, setSales] = useState<InvoiceItem[]>([]);
-  const [purchases, setPurchases] = useState<InvoiceItem[]>([]);
-  const [salesLoadingRecent, setSalesLoadingRecent] = useState(true);
-  const [purchasesLoading, setPurchasesLoading] = useState(true);
 
   // Set default date range: last 30 days → today
   useEffect(() => {
@@ -82,70 +65,38 @@ const Home = () => {
     setTempEndDate(today);
   }, []);
 
-  // Fetch total + medium breakdown
+  // Use TanStack Query hooks
+  const {
+    data: salesData,
+    isLoading: salesLoading,
+    error: salesError,
+    refetch: refetchSalesData,
+  } = useSalesData(startDate, endDate);
+
+  const {
+    data: recentSales = [],
+    isLoading: salesLoadingRecent,
+    error: recentSalesError,
+  } = useRecentSales();
+
+  const {
+    data: recentPurchases = [],
+    isLoading: purchasesLoading,
+    error: recentPurchasesError,
+  } = useRecentPurchaseRequests();
+
+  // Handle errors
   useEffect(() => {
-    const fetchSalesData = async () => {
-      if (!startDate || !endDate) return;
-
-      setSalesLoading(true);
-      try {
-        const salesData: SupplierSalesResponse = await getTotalSales(
-          startDate,
-          endDate,
-        );
-
-        setTotalSales(salesData.total_sales ?? 0);
-        setMediumBreakdown(salesData.medium ?? {});
-      } catch (err) {
-        console.error("Failed to fetch sales data:", err);
-        toast.error("Could not load sales data");
-      } finally {
-        setSalesLoading(false);
-      }
-    };
-
-    fetchSalesData();
-  }, [startDate, endDate]);
-
-  // Fetch recent sales (latest 10, then show first 2)
-  useEffect(() => {
-    const fetchSales = async () => {
-      try {
-        setSalesLoadingRecent(true);
-        const salesRes = await getSales(); // No pagination
-        const recent = Array.isArray(salesRes) ? salesRes.slice(0, 10) : [];
-        setSales(recent);
-      } catch (err) {
-        console.error("Failed to load sales invoices:", err);
-        setSales([]);
-      } finally {
-        setSalesLoadingRecent(false);
-      }
-    };
-
-    fetchSales();
-  }, []);
-
-  // Fetch recent purchases
-  useEffect(() => {
-    const fetchPurchases = async () => {
-      try {
-        setPurchasesLoading(true);
-        const purchaseRes = await getPurchaseRequest();
-        const recent = Array.isArray(purchaseRes)
-          ? purchaseRes.slice(0, 10)
-          : [];
-        setPurchases(recent);
-      } catch (err) {
-        console.error("Failed to load purchase invoices:", err);
-        setPurchases([]);
-      } finally {
-        setPurchasesLoading(false);
-      }
-    };
-
-    fetchPurchases();
-  }, []);
+    if (salesError) {
+      toast.error("Could not load sales data");
+    }
+    if (recentSalesError) {
+      toast.error("Could not load recent sales");
+    }
+    if (recentPurchasesError) {
+      toast.error("Could not load recent purchases");
+    }
+  }, [salesError, recentSalesError, recentPurchasesError]);
 
   const formatDate = (isoString: string): string => {
     try {
@@ -212,7 +163,54 @@ const Home = () => {
     </div>
   );
 
-  const displayedSales = sales.slice(0, 2).map((inv) => ({
+  const renderPurchaseTransaction = (tx: DisplayTransaction, index: number) => (
+    <div
+      key={`${tx.id}-${index}`}
+      onClick={() => router.push(`/inventory/purchase-request/${tx.id}`)}
+      className="p-1 md:p-3 rounded-xl border border-[#D8D8D866] mb-4 bg-white cursor-pointer hover:bg-gray-50 transition"
+    >
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          {tx.status.toLowerCase() === "pending" ? (
+            <Image src="/pending.svg" height={40} width={40} alt="pending" />
+          ) : (
+            <Image
+              src="/invoice-in.svg"
+              height={40}
+              width={40}
+              alt="completed"
+            />
+          )}
+          <div className="space-y-0.5">
+            <h1 className="text-[13px] md:text-[15px] font-medium text-[#2F2F2F]">
+              {tx.code}
+            </h1>
+            <p className="text-[13px] text-[#9E9A9A]">{tx.date}</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-[13px] md:text-[15px] font-medium text-[#464343]">
+            {tx.amount.toLocaleString("en-NG", {
+              style: "currency",
+              currency: "NGN",
+              minimumFractionDigits: 0,
+            })}
+          </p>
+          <p
+            className={cn(
+              "text-[12px] font-bold px-2.5 py-0.5 rounded-full inline-block mt-1",
+              getStatusStyle(tx.status),
+            )}
+          >
+            {tx.status.charAt(0).toUpperCase() +
+              tx.status.slice(1).toLowerCase()}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const displayedSales = recentSales.slice(0, 2).map((inv: InvoiceItem) => ({
     id: inv.id,
     code: inv.code,
     date: formatDate(inv.created_at),
@@ -220,13 +218,15 @@ const Home = () => {
     status: inv.status,
   }));
 
-  const displayedPurchases = purchases.slice(0, 2).map((inv) => ({
-    id: inv.id,
-    code: inv.code,
-    date: formatDate(inv.created_at),
-    amount: inv.total,
-    status: inv.status,
-  }));
+  const displayedPurchases = recentPurchases
+    .slice(0, 2)
+    .map((inv: InvoiceItem) => ({
+      id: inv.id,
+      code: inv.code,
+      date: formatDate(inv.created_at),
+      amount: inv.total,
+      status: inv.status,
+    }));
 
   const displayDateRange = () => {
     if (!startDate || !endDate) return "Select date range";
@@ -238,6 +238,8 @@ const Home = () => {
       setStartDate(tempStartDate);
       setEndDate(tempEndDate);
       setDateModalOpen(false);
+      // Refetch sales data with new dates
+      refetchSalesData();
     } else {
       toast.error("Please select a valid date range");
     }
@@ -280,7 +282,7 @@ const Home = () => {
                 ) : (
                   <h1 className="text-[18px] md:text-[28px] font-clash font-bold text-white">
                     ₦
-                    {totalSales.toLocaleString("en-NG", {
+                    {(salesData?.totalSales ?? 0).toLocaleString("en-NG", {
                       minimumFractionDigits: 2,
                     })}
                   </h1>
@@ -381,21 +383,24 @@ const Home = () => {
               <div className="flex justify-center items-center py-10">
                 <Loader2 className="h-8 w-8 animate-spin text-[#0A6DC0]" />
               </div>
-            ) : Object.keys(mediumBreakdown).length > 0 ? (
+            ) : salesData?.mediumBreakdown &&
+              Object.keys(salesData.mediumBreakdown).length > 0 ? (
               <div className="grid gap-4">
-                {Object.entries(mediumBreakdown).map(([medium, amount]) => (
-                  <div
-                    key={medium}
-                    className="flex justify-between text-[#2F2F2F] items-center p-4 rounded-lg border border-[#D8D8D866]"
-                  >
-                    <span className="text-[18px] font-medium capitalize">
-                      {medium.toLowerCase()}
-                    </span>
-                    <span className="text-[14px] font-regular">
-                      ₦{(amount ?? 0).toLocaleString("en-NG")}
-                    </span>
-                  </div>
-                ))}
+                {Object.entries(salesData.mediumBreakdown).map(
+                  ([medium, amount]) => (
+                    <div
+                      key={medium}
+                      className="flex justify-between text-[#2F2F2F] items-center p-4 rounded-lg border border-[#D8D8D866]"
+                    >
+                      <span className="text-[18px] font-medium capitalize">
+                        {medium.toLowerCase()}
+                      </span>
+                      <span className="text-[14px] font-regular">
+                        ₦{(amount ?? 0).toLocaleString("en-NG")}
+                      </span>
+                    </div>
+                  ),
+                )}
               </div>
             ) : (
               <p className="text-center text-gray-500 py-10">
@@ -481,59 +486,9 @@ const Home = () => {
               Loading purchases...
             </p>
           ) : displayedPurchases.length > 0 ? (
-            displayedPurchases.map((tx, index) => (
-              <div
-                key={`${tx.id}-${index}`}
-                onClick={() =>
-                  router.push(`/inventory/purchase-request/${tx.id}`)
-                }
-                className="p-1 md:p-3 rounded-xl border border-[#D8D8D866] mb-4 bg-white cursor-pointer hover:bg-gray-50 transition"
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    {tx.status.toLowerCase() === "pending" ? (
-                      <Image
-                        src="/pending.svg"
-                        height={40}
-                        width={40}
-                        alt="pending"
-                      />
-                    ) : (
-                      <Image
-                        src="/invoice-in.svg"
-                        height={40}
-                        width={40}
-                        alt="completed"
-                      />
-                    )}
-                    <div className="space-y-0.5">
-                      <h1 className="text-[13px] md:text-[15px] font-medium text-[#2F2F2F]">
-                        {tx.code}
-                      </h1>
-                      <p className="text-[13px] text-[#9E9A9A]">{tx.date}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[13px] md:text-[15px] font-medium text-[#464343]">
-                      {tx.amount.toLocaleString("en-NG", {
-                        style: "currency",
-                        currency: "NGN",
-                        minimumFractionDigits: 0,
-                      })}
-                    </p>
-                    <p
-                      className={cn(
-                        "text-[12px] font-bold px-2.5 py-0.5 rounded-full inline-block mt-1",
-                        getStatusStyle(tx.status),
-                      )}
-                    >
-                      {tx.status.charAt(0).toUpperCase() +
-                        tx.status.slice(1).toLowerCase()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))
+            displayedPurchases.map((tx, index) =>
+              renderPurchaseTransaction(tx, index),
+            )
           ) : (
             <p className="text-center text-gray-500 py-6">
               No recent purchases

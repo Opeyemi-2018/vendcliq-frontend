@@ -1,10 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useMemo } from "react";
 import { format, isSameDay } from "date-fns";
-import { getSales } from "@/lib/utils/api/apiHelper";
 import { cn } from "@/lib/utils";
-import { SaleInvoice } from "@/types/sales";
 import {
   Select,
   SelectContent,
@@ -25,78 +23,21 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { toast } from "sonner";
 import { usePaymentSocket } from "@/hooks/invoiceSocket";
+import { useSales } from "@/hooks/useInventoryOverview";
 
 const SalesListPage = () => {
-  const [invoices, setInvoices] = useState<SaleInvoice[]>([]);
-  const [filteredInvoices, setFilteredInvoices] = useState<SaleInvoice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 5;
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 5;
   const router = useRouter();
-  // WebSocket for real-time payment updates
-  const { isConnected } = usePaymentSocket((paymentData) => {
-    if (paymentData.type === "invoice") {
-      setInvoices((prev) =>
-        prev.map((inv) =>
-          inv.id === paymentData.id
-            ? {
-                ...inv,
-                status:
-                  paymentData.status === "success"
-                    ? "completed"
-                    : paymentData.status,
-              }
-            : inv,
-        ),
-      );
 
-      if (paymentData.status === "success") {
-        toast.success(
-          `Invoice #${paymentData.id.slice(0, 8)} payment successful!`,
-        );
-      } else if (paymentData.status === "failed") {
-        toast.error(
-          `Payment failed for invoice #${paymentData.id.slice(0, 8)}`,
-        );
-      }
-    }
-  });
+  // Use TanStack Query
+  const { data: allSales = [], isLoading, error, refetch } = useSales();
 
-  // Safe stats
-  const completedCount = Array.isArray(filteredInvoices)
-    ? filteredInvoices.filter(
-        (inv) => inv.status?.toLowerCase() === "completed",
-      ).length
-    : 0;
-
-  const pendingCount = Array.isArray(filteredInvoices)
-    ? filteredInvoices.filter((inv) => inv.status?.toLowerCase() === "pending")
-        .length
-    : 0;
-
-  const fetchInvoices = async () => {
-    setLoading(true);
-    try {
-      const allInvoices = await getSales(); // No pagination – full list
-      setInvoices(Array.isArray(allInvoices) ? allInvoices : []);
-    } catch (err) {
-      console.error("Failed to load sales invoices:", err);
-      setInvoices([]);
-      toast.error("Failed to load invoices");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
-
-  // Filter by date + status
-  useEffect(() => {
-    let filtered = Array.isArray(invoices) ? [...invoices] : [];
+  // Filter invoices based on date and status
+  const filteredInvoices = useMemo(() => {
+    let filtered = [...allSales];
 
     if (selectedDate) {
       filtered = filtered.filter((inv) => {
@@ -115,9 +56,47 @@ const SalesListPage = () => {
       );
     }
 
-    setFilteredInvoices(filtered);
+    return filtered;
+  }, [allSales, selectedDate, statusFilter]);
+
+  // Reset page when filters change
+  React.useEffect(() => {
     setPage(1);
-  }, [selectedDate, statusFilter, invoices]);
+  }, [selectedDate, statusFilter]);
+
+  // Handle errors
+  React.useEffect(() => {
+    if (error) {
+      toast.error("Failed to load invoices");
+    }
+  }, [error]);
+
+  // WebSocket for real-time payment updates
+  const { isConnected } = usePaymentSocket((paymentData) => {
+    if (paymentData.type === "invoice") {
+      // Refetch to get updated data
+      refetch();
+      
+      if (paymentData.status === "success") {
+        toast.success(
+          `Invoice #${paymentData.id.slice(0, 8)} payment successful!`,
+        );
+      } else if (paymentData.status === "failed") {
+        toast.error(
+          `Payment failed for invoice #${paymentData.id.slice(0, 8)}`,
+        );
+      }
+    }
+  });
+
+  // Safe stats
+  const completedCount = filteredInvoices.filter(
+    (inv) => inv.status?.toLowerCase() === "completed",
+  ).length;
+
+  const pendingCount = filteredInvoices.filter(
+    (inv) => inv.status?.toLowerCase() === "pending",
+  ).length;
 
   const formatDate = (iso: string) => {
     try {
@@ -218,7 +197,7 @@ const SalesListPage = () => {
           <div>
             <p className="text-white font-dm-sans">Total Sales Invoices</p>
             <h1 className="text-white text-[20px] md:text-[25px] font-semibold font-clash">
-              {loading ? (
+              {isLoading ? (
                 <ThreeDots height="20" width="20" color="#ffffff" visible />
               ) : (
                 filteredInvoices.length
@@ -257,7 +236,7 @@ const SalesListPage = () => {
         <div className="border border-[#EAECF0] w-full shadowX min-w-[258px] h-[80px] md:h-[112px] rounded-[12px] flex flex-col justify-center items-start px-6 gap-2">
           <div className="flex justify-between items-center w-full">
             <h1 className="font-clash font-semibold md:text-[20px]">
-              {loading ? (
+              {isLoading ? (
                 <ThreeDots height="20" width="20" color="#000000" visible />
               ) : (
                 completedCount
@@ -273,7 +252,7 @@ const SalesListPage = () => {
         <div className="border border-[#EAECF0] w-full shadowX min-w-[258px] h-[80px] md:h-[112px] rounded-[12px] flex flex-col justify-center items-start px-6 gap-2">
           <div className="flex justify-between items-center w-full">
             <h1 className="font-clash font-semibold md:text-[20px]">
-              {loading ? (
+              {isLoading ? (
                 <ThreeDots height="20" width="20" color="#000000" visible />
               ) : (
                 pendingCount
@@ -316,12 +295,9 @@ const SalesListPage = () => {
               </thead>
 
               <tbody className="bg-white divide-y divide-gray-200">
-                {loading ? (
+                {isLoading ? (
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-10 text-center text-gray-500"
-                    >
+                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
                       <div className="flex justify-center">
                         <ThreeDots
                           height="30"
@@ -334,10 +310,7 @@ const SalesListPage = () => {
                   </tr>
                 ) : paginatedInvoices.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-10 text-center text-gray-500"
-                    >
+                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
                       {selectedDate
                         ? `No sales found for ${format(selectedDate, "MMM dd, yyyy")}`
                         : "No sales invoices found"}
@@ -347,10 +320,8 @@ const SalesListPage = () => {
                   paginatedInvoices.map((inv) => (
                     <tr
                       key={inv.id}
-                      onClick={() =>
-                        router.push(`/inventory/sales/${inv.id}`)
-                      }
-                      className="hover:bg-gray-50 transition-colors"
+                      onClick={() => router.push(`/inventory/sales/${inv.id}`)}
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
                     >
                       <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">
                         {inv.id.substring(0, 8)}...
@@ -379,7 +350,7 @@ const SalesListPage = () => {
         </div>
 
         {/* Pagination */}
-        {!loading && filteredInvoices.length > 0 && (
+        {!isLoading && filteredInvoices.length > 0 && (
           <div className="flex flex-row justify-between items-center mt-6 gap-4">
             <button
               disabled={page === 1}

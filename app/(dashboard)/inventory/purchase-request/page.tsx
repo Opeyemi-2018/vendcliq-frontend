@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { format, isSameDay } from "date-fns";
-import { getPurchaseRequest } from "@/lib/utils/api/apiHelper";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { PurchaseRequest } from "@/types/purchaseRequest";
 import {
   Popover,
   PopoverContent,
@@ -16,68 +14,33 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, MoveRight } from "lucide-react";
 import Image from "next/image";
 import { ThreeDots } from "react-loader-spinner";
+import {
+  usePurchaseRequests,
+  useFilteredPurchaseRequests,
+} from "@/hooks/usePurchaseRequests";
 
 const PurchaseRequestListPage = () => {
-  const [requests, setRequests] = useState<PurchaseRequest[]>([]);
-  const [filteredRequests, setFilteredRequests] = useState<PurchaseRequest[]>(
-    [],
-  );
-  const [loading, setLoading] = useState(true);
-
-  // Client-side pagination
   const [page, setPage] = useState(1);
-  const itemsPerPage = 10; // Adjust as needed
-
-  // Single date filter
+  const itemsPerPage = 10;
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
-  // Derived stats from filtered data
-  const completedCount = filteredRequests.filter(
+  const { data: allRequests = [], isLoading: loadingAll } =
+    usePurchaseRequests();
+  const { data: filteredRequests = [], isLoading: loadingFiltered } =
+    useFilteredPurchaseRequests(selectedDate);
+
+  const isLoading = loadingAll || loadingFiltered;
+  const displayRequests = selectedDate ? filteredRequests : allRequests;
+
+  const completedCount = displayRequests.filter(
     (r) =>
       r.status?.toLowerCase() === "paid" ||
       r.status?.toLowerCase() === "completed",
   ).length;
 
-  const pendingCount = filteredRequests.filter(
+  const pendingCount = displayRequests.filter(
     (r) => r.status?.toLowerCase() === "pending",
   ).length;
-
-  // Fetch all purchase requests (no pagination)
-  useEffect(() => {
-    const fetchRequests = async () => {
-      setLoading(true);
-      try {
-        const allRequests = await getPurchaseRequest(); // Now returns full array
-        setRequests(Array.isArray(allRequests) ? allRequests : []);
-      } catch (err) {
-        console.error("Failed to load purchase requests:", err);
-        setRequests([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRequests();
-  }, []);
-
-  // Filter requests when selectedDate changes
-  useEffect(() => {
-    let filtered = requests || [];
-
-    if (selectedDate) {
-      filtered = filtered.filter((req) => {
-        try {
-          const reqDate = new Date(req.created_at);
-          return isSameDay(reqDate, selectedDate);
-        } catch {
-          return false;
-        }
-      });
-    }
-
-    setFilteredRequests(filtered);
-    setPage(1); // Reset to page 1 on filter change
-  }, [selectedDate, requests]);
 
   const formatDate = (iso: string) => {
     try {
@@ -114,11 +77,10 @@ const PurchaseRequestListPage = () => {
     ? format(selectedDate, "MMM dd, yyyy")
     : "Select date";
 
-  // Client-side pagination
-  const totalItems = filteredRequests.length;
+  const totalItems = displayRequests.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const startIndex = (page - 1) * itemsPerPage;
-  const paginatedRequests = filteredRequests.slice(
+  const paginatedRequests = displayRequests.slice(
     startIndex,
     startIndex + itemsPerPage,
   );
@@ -145,10 +107,10 @@ const PurchaseRequestListPage = () => {
           <div>
             <p className="text-white font-dm-sans">Total Purchase Requests</p>
             <h1 className="text-white text-[20px] md:text-[25px] font-semibold font-clash">
-              {loading ? (
+              {isLoading ? (
                 <ThreeDots height="20" width="20" color="#ffffff" visible />
               ) : (
-                filteredRequests.length
+                displayRequests.length
               )}
             </h1>
           </div>
@@ -179,12 +141,11 @@ const PurchaseRequestListPage = () => {
         </div>
       </div>
 
-      {/* Two stat cards */}
       <div className="flex mb-4 gap-3 overflow-x-auto">
         <div className="border border-[#EAECF0] w-full shadowX min-w-[258px] h-[80px] md:h-[112px] rounded-[12px] flex flex-col justify-center items-start px-6 gap-2">
           <div className="flex justify-between items-center w-full">
             <h1 className="font-clash font-semibold md:text-[20px]">
-              {loading ? (
+              {isLoading ? (
                 <ThreeDots height="20" width="20" color="#000000" visible />
               ) : (
                 completedCount
@@ -205,7 +166,7 @@ const PurchaseRequestListPage = () => {
         <div className="border border-[#EAECF0] w-full shadowX min-w-[258px] h-[80px] md:h-[112px] rounded-[12px] flex flex-col justify-center items-start px-6 gap-2">
           <div className="flex justify-between items-center w-full">
             <h1 className="font-clash font-semibold md:text-[20px]">
-              {loading ? (
+              {isLoading ? (
                 <ThreeDots height="20" width="20" color="#000000" visible />
               ) : (
                 pendingCount
@@ -219,14 +180,11 @@ const PurchaseRequestListPage = () => {
         </div>
       </div>
 
-      {/* Table section */}
       <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white mb-3 md:mb-5">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-[16px] font-bold font-dm-sans">
             Purchase Requests
           </h1>
-          {/* Optional: Add status filter if you want */}
-          {/* <Select defaultValue="all"> ... </Select> */}
         </div>
 
         <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
@@ -243,7 +201,7 @@ const PurchaseRequestListPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {loading ? (
+                {isLoading ? (
                   <tr>
                     <td
                       colSpan={6}
@@ -274,7 +232,10 @@ const PurchaseRequestListPage = () => {
                   paginatedRequests.map((req) => (
                     <tr
                       key={req.id}
-                      className="hover:bg-gray-50 transition-colors"
+                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() =>
+                        (window.location.href = `/inventory/purchase-request/${req.id}`)
+                      }
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         {req.id.substring(0, 8)}...
@@ -296,12 +257,7 @@ const PurchaseRequestListPage = () => {
                         {getStatusBadge(req.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <Link
-                          href={`/inventory/purchase-request/${req.id}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
-                        >
-                          <MoveRight className="w-5 h-5 text-gray-500" />
-                        </Link>
+                        <MoveRight className="w-5 h-5 text-gray-500" />
                       </td>
                     </tr>
                   ))
@@ -311,8 +267,7 @@ const PurchaseRequestListPage = () => {
           </div>
         </div>
 
-        {/* Client-side Pagination */}
-        {!loading && filteredRequests.length > 0 && totalPages > 1 && (
+        {!isLoading && displayRequests.length > 0 && totalPages > 1 && (
           <div className="mt-6 flex items-center justify-between">
             <button
               onClick={() => handlePageChange(page - 1)}
@@ -326,11 +281,9 @@ const PurchaseRequestListPage = () => {
             >
               Previous
             </button>
-
             <span className="text-sm text-gray-700">
               Page {page} of {totalPages}
             </span>
-
             <button
               onClick={() => handlePageChange(page + 1)}
               disabled={page === totalPages}

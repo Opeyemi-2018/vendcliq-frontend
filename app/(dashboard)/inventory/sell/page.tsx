@@ -23,10 +23,9 @@ import { Input } from "@/components/ui/Input";
 import { ThreeDots } from "react-loader-spinner";
 import { useStores } from "@/hooks/useStores";
 import { getStoreStock, getCustomers } from "@/lib/utils/api/apiHelper";
-import {
-  handleCreateInvoice,
-  handleCreateCustomer,
-} from "@/lib/utils/api/apiHelper";
+import { handleCreateCustomer } from "@/lib/utils/api/apiHelper";
+import { useCreateInvoice } from "@/hooks/useInventoryOverview";
+
 import PlacesAutocompleteInput from "@/hooks/googleMap";
 import EditStockPriceModal from "./chunks/EditStockPriceModal";
 
@@ -121,10 +120,10 @@ const imgSrc = (src: string | null) => {
   return src.startsWith("//") ? `https:${src}` : src;
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export default function SellPage() {
   const router = useRouter();
+  const createInvoiceMutation = useCreateInvoice();
+
   const {
     stores: allStores,
 
@@ -224,8 +223,6 @@ export default function SellPage() {
       }
     }
   }, [allStores, storesLoading, storesError]);
-
- 
 
   // ── Fetch stock when store changes ───────────────────────────────────────
 
@@ -528,14 +525,12 @@ export default function SellPage() {
   };
 
   // ── Create invoice ───────────────────────────────────────────────────────
-
-  // ── Create invoice ───────────────────────────────────────────────────────
-
   const handleCreateInvoiceSubmit = async () => {
     if (!selectedStore) return toast.error("Select a store first");
     if (cart.length === 0) return toast.error("Add at least one item");
 
     setCreatingInvoice(true);
+
     try {
       const storeAddress = selectedStore.address || null;
 
@@ -544,18 +539,16 @@ export default function SellPage() {
           customerMode === "registered" ? selectedCustomer?.id || null : null,
         store_id: selectedStore.id,
         items: cart.map((ci) => {
-          // Send quantity as-is based on mode
           let quantityToSend;
           if (ci.mode === "PACKS") {
-            quantityToSend = ci.quantity; // Send packs (can be decimal like 3.5)
+            quantityToSend = ci.quantity;
           } else {
-            // PIECES mode - send pieces directly, no conversion
-            quantityToSend = ci.quantity; // Send pieces as whole number
+            quantityToSend = ci.quantity;
           }
 
           return {
             stock_id: ci.stock.id,
-            quantity: quantityToSend, // Send packs for PACKS mode, pieces for PIECES mode
+            quantity: quantityToSend,
             delivery: false,
             mode: ci.mode,
             discounted_amount: ci.discount,
@@ -572,15 +565,12 @@ export default function SellPage() {
         }),
       };
 
-      const response = await handleCreateInvoice(payload);
-      // ... rest of the code remains the same
+      const response = await createInvoiceMutation.mutateAsync(payload);
 
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Invoice created successfully!");
         const invoiceId = response.data?.id;
 
-        // Calculate additional data for the pay page
-        // Calculate additional data for the pay page
         const totalQuantity = cart.reduce((sum, ci) => {
           if (ci.mode === "PACKS") {
             return sum + ci.quantity;
@@ -594,10 +584,8 @@ export default function SellPage() {
           0,
         );
 
-        // SUBTOTAL = sum of all item subtotals (which already have discount applied to products)
         const subTotal = cart.reduce((sum, ci) => sum + itemSubtotal(ci), 0);
 
-        // Empties Value - only when Empties sales mode is "SELL"
         const emptiesValue = cart.reduce((sum, ci) => {
           if (ci.empties > 0 && ci.emptiesMode === "SELL") {
             return sum + parseFloat(ci.stock.empties_price) * ci.empties;
@@ -605,7 +593,6 @@ export default function SellPage() {
           return sum;
         }, 0);
 
-        // Empties Owed - sum of all Empties sold on credit
         const emptiesOwed = cart.reduce((sum, ci) => {
           if (ci.empties > 0 && ci.emptiesMode === "CREDIT") {
             return sum + ci.empties;
@@ -613,13 +600,12 @@ export default function SellPage() {
           return sum;
         }, 0);
 
-        // TOTAL AMOUNT = subTotal - totalDiscountAmount (this is what customer pays)
         const totalAmountPayable = subTotal;
-        // Store the additional data for pay page
+
         const invoicePreviewData = {
           invoiceId,
           code: response.data?.code || "",
-          total: totalAmountPayable, // Use calculated total, not response.data?.total
+          total: totalAmountPayable,
           items_count: response.data?.items_count || 0,
           storeAddress: storeAddress?.name || selectedStore.name || "",
           items: cart.map((ci, idx) => ({
@@ -629,7 +615,7 @@ export default function SellPage() {
             quantity: ci.quantity,
             cost: unitPrice(ci.stock, ci.mode),
             discounted_amount: ci.discount,
-            sub_total: itemSubtotal(ci), // This already has discount applied to product only
+            sub_total: itemSubtotal(ci),
             mode: ci.mode,
             sku: ci.stock.sku,
             product_name: ci.stock.product.name,
@@ -641,7 +627,7 @@ export default function SellPage() {
           })),
           totalQuantity,
           totalDiscountAmount,
-          subTotal, // This is the subtotal BEFORE discount
+          subTotal,
           emptiesValue,
           emptiesOwed,
           customerName: selectedCustomer?.name || null,
@@ -658,8 +644,9 @@ export default function SellPage() {
       } else {
         toast.error(response.error || "Failed to create invoice");
       }
-    } catch {
-      toast.error("Failed to create invoice");
+    } catch (error: any) {
+      console.error("Invoice creation error:", error);
+      toast.error(error?.message || "Failed to create invoice");
     } finally {
       setCreatingInvoice(false);
     }

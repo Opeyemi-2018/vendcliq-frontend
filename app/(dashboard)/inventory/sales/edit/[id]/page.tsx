@@ -21,11 +21,9 @@ import { Input } from "@/components/ui/Input";
 import { ThreeDots } from "react-loader-spinner";
 import { useStores } from "@/hooks/useStores";
 import { getCustomers, getStoreStock } from "@/lib/utils/api/apiHelper";
-import {
-  getSaleById,
-  handleUpdateInvoice,
-  handleCreateCustomer,
-} from "@/lib/utils/api/apiHelper";
+import { getSaleById, handleCreateCustomer } from "@/lib/utils/api/apiHelper";
+import { useUpdateInvoice } from "@/hooks/useInventoryOverview";
+
 import PlacesAutocompleteInput from "@/hooks/googleMap";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -124,6 +122,7 @@ export default function EditInvoicePage() {
   const [serverAmountPayable, setServerAmountPayable] = useState<number | null>(
     null,
   );
+  const updateInvoiceMutation = useUpdateInvoice();
 
   const {
     stores: allStores,
@@ -195,19 +194,17 @@ export default function EditInvoicePage() {
   });
 
   useEffect(() => {
-    if (!storesLoading) {
-      if (storesError) {
-        toast.error(storesError);
-        setStoresLoading(false);
-      } else if (allStores.length > 0) {
-        const valid: Store[] = (allStores as Store[]).filter(
-          (s) => !s.credit_store,
-        );
-        setStores(valid);
-        setStoresLoading(false);
-      }
+    if (storesError) {
+      toast.error(storesError);
+      setStoresLoading(false);
+    } else if (allStores.length > 0) {
+      const valid: Store[] = (allStores as Store[]).filter(
+        (s) => !s.credit_store,
+      );
+      setStores(valid);
+      setStoresLoading(false);
     }
-  }, [allStores, storesLoading, storesError]);
+  }, [allStores, storesError]);
   const fetchInvoice = useCallback(async () => {
     if (storesLoading || stores.length === 0) {
       return;
@@ -216,9 +213,6 @@ export default function EditInvoicePage() {
     setIsLoadingInvoice(true);
 
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-
       const result = await getSaleById(invoiceId);
       if (result.statusCode === 200 && result.data) {
         const invoice = result.data;
@@ -397,14 +391,6 @@ export default function EditInvoicePage() {
       fetchInvoice();
     }
   }, [storesLoading, stores.length, fetchInvoice]);
-
-
-
-  useEffect(() => {
-    if (stores.length > 0 && !storesLoading) {
-      fetchInvoice();
-    }
-  }, [stores, storesLoading, fetchInvoice]);
 
   // Fetch stock when store changes (for adding new items)
   const fetchStock = useCallback(async (storeId: string) => {
@@ -670,19 +656,21 @@ export default function EditInvoicePage() {
         })),
       };
 
-      const response = await handleUpdateInvoice(invoiceId, payload);
+      const response = await updateInvoiceMutation.mutateAsync({
+        invoiceId,
+        payload,
+      });
 
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Invoice updated successfully!");
 
-        // Use LOCAL calculations as source of truth for preview
         const calculatedTotal = cart.reduce((s, ci) => s + itemSubtotal(ci), 0);
-        const calculatedSubTotal = calculatedTotal; // since discounts are already applied in itemSubtotal
+        const calculatedSubTotal = calculatedTotal;
 
         const invoicePreviewData = {
           invoiceId,
           code: response.data?.code || "",
-          total: calculatedTotal, // ← Use local calc
+          total: calculatedTotal,
           items_count: cart.length,
           storeAddress: storeAddress?.name || selectedStore.name || "",
           items: cart.map((ci, idx) => ({
