@@ -18,12 +18,13 @@ import {
   usePurchaseRequests,
   useFilteredPurchaseRequests,
 } from "@/hooks/usePurchaseRequests";
+import { useRouter } from "next/navigation";
 
 const PurchaseRequestListPage = () => {
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-
+  const router = useRouter();
   const { data: allRequests = [], isLoading: loadingAll } =
     usePurchaseRequests();
   const { data: filteredRequests = [], isLoading: loadingFiltered } =
@@ -234,7 +235,7 @@ const PurchaseRequestListPage = () => {
                       key={req.id}
                       className="hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() =>
-                        (window.location.href = `/inventory/purchase-request/${req.id}`)
+                        router.push(`/inventory/purchase-request/${req.id}`)
                       }
                     >
                       <td className="px-6 py-4 whitespace-nowrap">

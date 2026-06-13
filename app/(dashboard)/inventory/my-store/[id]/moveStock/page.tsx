@@ -91,10 +91,9 @@ const MoveStockPage = () => {
     setPrices(initialPrices);
   }, [storeId, router]);
 
-  // Use the hook
   const {
-    stores: allStores,
-
+    data: allStores = [],
+    isLoading: storesLoading,
     error: storesError,
   } = useStores();
 

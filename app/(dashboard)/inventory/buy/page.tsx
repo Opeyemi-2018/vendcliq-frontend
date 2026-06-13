@@ -109,7 +109,7 @@ const formatCurrency = (value: number): string =>
 const Buy = () => {
   const router = useRouter();
   const {
-    stores: userStores,
+    data: userStores = [],
     isLoading: loadingUserStores,
     error: userStoresError,
   } = useStores();
@@ -204,7 +204,7 @@ const Buy = () => {
   useEffect(() => {
     if (!loadingUserStores) {
       if (userStoresError) {
-        setMyStoreError(userStoresError);
+        setMyStoreError(userStoresError.message || "Failed to load stores");
         setIsLoadingMyStores(false);
       } else if (userStores.length > 0) {
         const mapped = userStores.map((s: any) => ({

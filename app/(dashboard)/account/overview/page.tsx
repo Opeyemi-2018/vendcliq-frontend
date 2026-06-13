@@ -38,7 +38,7 @@ const Home = () => {
   const [mounted, setMounted] = useState(false);
 
   const router = useRouter();
-  const { stores } = useStores();
+  const { data: stores = [] } = useStores();
 
   useEffect(() => {
     setMounted(true);

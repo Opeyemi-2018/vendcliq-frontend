@@ -44,9 +44,9 @@ import { Check, ChevronDown, Info } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
-import { handleCreateStock } from "@/lib/utils/api/apiHelper";
 import Image from "next/image";
 import { useProducts } from "@/hooks/useProduct";
+import { useCreateStock } from "@/hooks/useStores";
 
 interface StockFormProps {
   storeId: string;
@@ -67,6 +67,7 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [displayProducts, setDisplayProducts] = useState<Product[]>(products);
+const createStock = useCreateStock();
 
   // Update display products when initial products change
   useEffect(() => {
@@ -183,127 +184,47 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
     return isNaN(num) ? 0 : num;
   };
 
-  const onSubmit = async (values: CreateStockFormData) => {
-    setIsSubmitting(true);
+  // Inside the component, replace the onSubmit with:
 
-    // Parse all numeric values
-    const quantity = safeParseInt(values.quantity);
-    const emptiesQty = safeParseInt(values.empties_qty);
-    const emptiesPrice = safeParseFloat(values.empties_price);
-    const costPrice = safeParseFloat(values.cost_price);
-    const sellingPrice = safeParseFloat(values.selling_price);
-    const sellingPricePieces = safeParseFloat(values.selling_price_pieces);
-    const stockAlertNo = safeParseInt(values.stock_alert_no);
 
-    // Validate ALL required fields (everything except batch and supplier)
-    if (!values.product_id || values.product_id.trim() === "") {
-      toast.error("Please select a product");
-      setIsSubmitting(false);
-      return;
-    }
+const onSubmit = async (values: CreateStockFormData) => {
+  setIsSubmitting(true);
 
-    if (quantity <= 0) {
-      toast.error("Please enter a valid quantity (must be greater than 0)");
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Empties are optional - no validation needed, backend will handle 0 values
-
-    if (costPrice <= 0) {
-      toast.error("Please enter a valid cost price (must be greater than 0)");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (sellingPrice <= 0) {
-      toast.error(
-        "Please enter a valid selling price (must be greater than 0)",
-      );
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (sellingPricePieces <= 0) {
-      toast.error(
-        "Please enter a valid selling price per piece (must be greater than 0)",
-      );
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!values.exp_date || values.exp_date.trim() === "") {
-      toast.error("Please select an expiry date");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!values.sku || values.sku.trim() === "") {
-      toast.error("SKU is required");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (stockAlertNo < 0) {
-      toast.error("Stock alert number cannot be negative");
-      setIsSubmitting(false);
-      return;
-    }
-
-    const payload: any = {
-      product_id: values.product_id,
-      store_id: storeId,
-      quantity: quantity,
-      empties_qty: emptiesQty,
-      empties_price: emptiesPrice,
-      cost_price: costPrice,
-      selling_price: sellingPrice,
-      selling_price_pieces: sellingPricePieces,
-      exp_date: values.exp_date.trim(),
-      sku: values.sku.trim(),
-      stock_alert_no: stockAlertNo,
-      attributes: {
-        type: values.type,
-        batch: (values.batch || "").trim(),
-        supplier: (values.supplier || "").trim(),
-      },
-    };
-
-    console.log("Sending stock payload:", JSON.stringify(payload, null, 2));
-
-    try {
-      const response = await handleCreateStock(payload);
-
-      if (response.statusCode === 200 || response.statusCode === 201) {
-        toast.success("Stock added successfully!");
-        form.reset({
-          product_id: "",
-          quantity: "",
-          empties_qty: "",
-          empties_price: "",
-          cost_price: "",
-          selling_price: "",
-          selling_price_pieces: "",
-          exp_date: "",
-          sku: "",
-          stock_alert_no: "",
-          type: "packs",
-          batch: "",
-          supplier: "",
-        });
-        setSelectedProduct(null);
-        onSuccess?.();
-      } else {
-        toast.error(response.error || "Failed to add stock");
-        console.error("Server response:", response);
-      }
-    } catch (error: any) {
-      console.error("Error creating stock:", error);
-      toast.error(error.message || "Network/server error while adding stock");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const payload: any = {
+    product_id: values.product_id,
+    store_id: storeId,
+    quantity: safeParseInt(values.quantity),
+    empties_qty: safeParseInt(values.empties_qty),
+    empties_price: safeParseFloat(values.empties_price),
+    cost_price: safeParseFloat(values.cost_price),
+    selling_price: safeParseFloat(values.selling_price),
+    selling_price_pieces: safeParseFloat(values.selling_price_pieces),
+    exp_date: values.exp_date.trim(),
+    sku: values.sku.trim(),
+    stock_alert_no: safeParseInt(values.stock_alert_no),
+    attributes: {
+      type: values.type,
+      batch: (values.batch || "").trim(),
+      supplier: (values.supplier || "").trim(),
+    },
   };
+
+  try {
+    const response = await createStock.mutateAsync(payload);
+    if (response.statusCode === 200 || response.statusCode === 201) {
+      toast.success("Stock added successfully!");
+      form.reset();
+      setSelectedProduct(null);
+      onSuccess?.();
+    } else {
+      toast.error(response.error || "Failed to add stock");
+    }
+  } catch (error: any) {
+    toast.error(error.message || "Failed to add stock");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleNumericInput = (
     e: React.ChangeEvent<HTMLInputElement>,

@@ -1,5 +1,5 @@
 "use client";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
 import { LogOut, ChevronDown, Headphones, User } from "lucide-react";
 import {
   DropdownMenu,
@@ -31,7 +31,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const Navbar = () => {
-    const { isAttendant, canAccessMarketplace } = useUser();
+  const { isAttendant } = useUser();
 
   const { user } = useUser();
   const router = useRouter();
@@ -65,7 +65,10 @@ const Navbar = () => {
   `}
     >
       {" "}
-      <SidebarTrigger style={{ background: "#0A2540", color: "white" }} className="md:-ml-8" />
+      <SidebarTrigger
+        style={{ background: "#0A2540", color: "white" }}
+        className="md:-ml-8"
+      />
       <div style={{ gap: "30px" }} className="flex items-center">
         <div
           style={{ gap: "30px" }}
@@ -89,7 +92,10 @@ const Navbar = () => {
             <h1>Support</h1>
           </a>
 
-          <Separator orientation="vertical" className="h-4 hidden md:inline-block" />
+          <Separator
+            orientation="vertical"
+            className="h-4 hidden md:inline-block"
+          />
           <h1 className="hidden lg:inline">{mounted ? user?.firstname : ""}</h1>
         </div>
         <DropdownMenu>
@@ -108,46 +114,44 @@ const Navbar = () => {
           <DropdownMenuContent sideOffset={10} align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => router.push("/profile-settings")}
-            >
+            <DropdownMenuItem onClick={() => router.push("/profile-settings")}>
               <User className="h-[1.2rem] w-[1.2rem] mr-2" /> Profile
             </DropdownMenuItem>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <DropdownMenuItem
-                  onSelect={(e) => e.preventDefault()}
-                  className="text-[#FF0000] bg-[#FF0000]/20 cursor-pointer focus:bg-red-100"
+                <SidebarMenuButton
+                  tooltip="Logout"
+                  className="hover:text-[#FF0000] hover:bg-[#FF0000]/20 cursor-pointer focus:bg-red-100"
                 >
-                  <div
-                    className="flex gap-3 items-center "
-                    style={{ color: "#FF0000" }}
-                  >
-                    <LogOut className="h-[1.2rem] w-[1.2rem] mr-2 " />
-                    <span className="">Log out</span>
-                  </div>
-                </DropdownMenuItem>
+                  <LogOut
+                    // style={{ width: "30px", height: "30px" }}
+                    className="h-[1.2rem] w-[1.2rem] mr-2"
+                    strokeWidth={2}
+                  />
+                  <span className="">Logout</span>
+                </SidebarMenuButton>
               </AlertDialogTrigger>
-
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="font-dm-sans">
-                    Are you absolutely sure?
+                  <AlertDialogTitle className="font-clash font-semibold text-[25px]">
+                    Log Out
                   </AlertDialogTitle>
-                  <AlertDialogDescription className="font-dm-sans">
-                    This action will log you out of the system
+                  <AlertDialogDescription className="font-dm-sans text-[#464343]">
+                    Are you sure you want to Log Out of your Vendcliq Account?
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogFooter className="flex items-center flex-col gap-3 sm:flex-row justify-center">
+                  <AlertDialogCancel className="w-full sm:w-auto hover:bg-[#0A6DC012] bg-[#0A6DC0] text-white">
+                    No, Keep Vending
+                  </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => {
                       clearAuthTokens();
                       window.location.href = "/signin";
                     }}
-                    className="alert-danger"
+                    className="bg-white text-[#2F2F2F] hover:bg-[#0A6DC012] w-full sm:w-auto"
                   >
-                    Continue
+                    Yes, Log Out
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

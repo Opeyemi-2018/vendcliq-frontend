@@ -77,7 +77,7 @@ const Expenses = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [expenses, setExpense] = useState<Expense[]>([]);
   const [expenseLoading, setExpenseLoading] = useState(false);
-  const { stores, isLoading: isLoadingStores } = useStores();
+  const { data: stores = [], isLoading: isLoadingStores } = useStores();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -107,9 +107,7 @@ const Expenses = () => {
           setExpense(refreshResult.data);
         }
       } else {
-        toast.error(
-          response.error || "Failed to create expense",
-        );
+        toast.error(response.error || "Failed to create expense");
       }
     } catch (error: any) {
       toast.error(error?.message || "An error occurred");

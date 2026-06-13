@@ -1,20 +1,16 @@
 "use client";
 
-import {
-  MoveRight,
-  Loader2,
-  UserPen,
-  MoveLeft,
-  MoveRightIcon,
-} from "lucide-react";
+import { MoveRight, UserPen, MoveLeft, MoveRightIcon } from "lucide-react";
 import { ThreeDots } from "react-loader-spinner";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { useState, useMemo, useEffect } from "react";
 import { useStores } from "@/hooks/useStores";
-import { useState, useEffect, useMemo } from "react";
-import { handleGetAttendants } from "@/lib/utils/api/apiHelper";
 import { useUser } from "@/context/userContext";
+import { handleGetAttendants } from "@/lib/utils/api/apiHelper";
+
+const ITEMS_PER_PAGE = 5;
 
 interface Attendant {
   id: number;
@@ -24,21 +20,10 @@ interface Attendant {
   accountStatus: "ACTIVE" | "INACTIVE" | string;
 }
 
-const ITEMS_PER_PAGE = 5;
-
 const MyStore = () => {
-  const {
-    stores,
-    isLoading: storesLoading,
-    error: storesError,
-    refetch: refetchStores,
-  } = useStores();
+  const { data: stores = [], isLoading, error, refetch } = useStores();
   const router = useRouter();
   const { canViewStoreInfo, isAttendant, canAddStock } = useUser();
-
-  const [attendants, setAttendants] = useState<Attendant[]>([]);
-  const [attendantsLoading, setAttendantsLoading] = useState(true);
-  const [attendantsError, setAttendantsError] = useState<string | null>(null);
 
   const [storesPage, setStoresPage] = useState(1);
 
@@ -59,23 +44,11 @@ const MyStore = () => {
     }
   }, [storesTotalPages, storesPage]);
 
+  // Attendants state
+  const [attendants, setAttendants] = useState<Attendant[]>([]);
+  const [attendantsLoading, setAttendantsLoading] = useState(false);
+  const [attendantsError, setAttendantsError] = useState<string | null>(null);
   const [attendantsPage, setAttendantsPage] = useState(1);
-
-  const attendantsTotalPages = useMemo(
-    () => Math.ceil(attendants.length / ITEMS_PER_PAGE) || 1,
-    [attendants.length],
-  );
-
-  const paginatedAttendants = useMemo(() => {
-    const start = (attendantsPage - 1) * ITEMS_PER_PAGE;
-    return attendants.slice(start, start + ITEMS_PER_PAGE);
-  }, [attendants, attendantsPage]);
-
-  useEffect(() => {
-    if (attendantsPage > attendantsTotalPages) {
-      setAttendantsPage(Math.max(1, attendantsTotalPages));
-    }
-  }, [attendantsTotalPages, attendantsPage]);
 
   useEffect(() => {
     const fetchAttendants = async () => {
@@ -95,8 +68,26 @@ const MyStore = () => {
       }
     };
 
-    fetchAttendants();
-  }, []);
+    if (!isAttendant) {
+      fetchAttendants();
+    }
+  }, [isAttendant]);
+
+  const attendantsTotalPages = useMemo(
+    () => Math.ceil(attendants.length / ITEMS_PER_PAGE) || 1,
+    [attendants.length],
+  );
+
+  const paginatedAttendants = useMemo(() => {
+    const start = (attendantsPage - 1) * ITEMS_PER_PAGE;
+    return attendants.slice(start, start + ITEMS_PER_PAGE);
+  }, [attendants, attendantsPage]);
+
+  useEffect(() => {
+    if (attendantsPage > attendantsTotalPages) {
+      setAttendantsPage(Math.max(1, attendantsTotalPages));
+    }
+  }, [attendantsTotalPages, attendantsPage]);
 
   const getStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
@@ -211,40 +202,33 @@ const MyStore = () => {
         </div>
       </div>
 
-      <div className="md:p-6 lg:border border-[#E4E4E4]  font-dm-sans rounded-[20px] bg-white mb-3 md:mb-5">
+      {/* Stores Section */}
+      <div className="md:p-6 lg:border border-[#E4E4E4] font-dm-sans rounded-[20px] bg-white mb-3 md:mb-5">
         <h1 className="font-dm-sans text-[#2F2F2F] dark:text-white font-bold">
           My Stores ({stores?.length ?? 0})
         </h1>
 
         <div className="py-3 relative min-h-[300px]">
-          {storesError ? (
-            /* error state */
+          {error ? (
             <div className="py-20 px-4 flex flex-col items-center justify-center gap-4">
               <p className="text-red-600 dark:text-red-400 text-center">
-                {storesError}
+                {error.message}
               </p>
               <Button
-                onClick={refetchStores}
+                onClick={() => refetch()}
                 className="bg-[#0A6DC0] hover:bg-[#085a9e]"
               >
                 Retry Stores
               </Button>
             </div>
-          ) : storesLoading ? (
-            /* loading */
+          ) : isLoading ? (
             <div className="py-20 px-4 flex flex-col items-center justify-center">
-              <ThreeDots
-                height="80"
-                width="80"
-                color="#0A6DC0"
-                visible={true}
-              />
+              <ThreeDots height="80" width="80" color="#0A6DC0" visible={true} />
               <p className="mt-4 text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
                 Loading stores...
               </p>
             </div>
           ) : (stores?.length ?? 0) === 0 ? (
-            /* empty */
             <div className="py-20 px-4 flex flex-col items-center justify-center space-y-4">
               <Image src="/store.svg" alt="No store" height={90} width={90} />
               <p className="font-bold font-dm-sans text-[16px] text-[#2F2F2F] dark:text-white">
@@ -266,28 +250,26 @@ const MyStore = () => {
                       <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                         Store Address
                       </th>
-                      <th className="hidden md:table-cell ... font-medium">
+                      <th className="hidden md:table-cell font-medium">
                         Product Count
                       </th>
-                      <th className="hidden md:table-cell ... font-medium">
+                      <th className="hidden md:table-cell font-medium">
                         Inventory Value
                       </th>
-                      <th className="text-left py-3 ...font-medium">Actions</th>
+                      <th className="text-left py-3 font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
                     {paginatedStores.map((store) => (
                       <tr
                         key={store.id}
-                        className="hover:bg-gray-50 cursor-pointer ..."
+                        className="hover:bg-gray-50 cursor-pointer"
                         onClick={() => {
                           if (!canViewStoreInfo()) return;
                           router.push(`/inventory/my-store/${store.id}`);
                         }}
                       >
-                        <td className="py-4 md:pl-4 font-medium">
-                          {store.name}
-                        </td>
+                        <td className="py-4 md:pl-4 font-medium">{store.name}</td>
                         <td className="hidden md:table-cell py-4">
                           {store.address?.name || "—"}
                         </td>
@@ -306,13 +288,13 @@ const MyStore = () => {
                 </table>
               </div>
 
-              {/* Stores Pagination */}
               {renderPagination(storesPage, storesTotalPages, setStoresPage)}
             </>
           )}
         </div>
       </div>
 
+      {/* Attendants Section */}
       {!isAttendant && (
         <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
           <h1 className="font-dm-sans text-[#2F2F2F] dark:text-white font-bold">
@@ -321,15 +303,13 @@ const MyStore = () => {
 
           <div className="py-3 relative min-h-[300px]">
             {attendantsLoading ? (
-              /* loading */
               <div className="py-20 px-4 flex flex-col items-center justify-center">
-                <Loader2 className="h-10 w-10 animate-spin text-[#0A6DC0]" />
+                <ThreeDots height="80" width="80" color="#0A6DC0" visible={true} />
                 <p className="mt-4 text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
                   Loading attendants...
                 </p>
               </div>
             ) : attendantsError ? (
-              /* error */
               <div className="py-20 px-4 flex flex-col items-center justify-center gap-4">
                 <p className="text-red-600 dark:text-red-400 text-center">
                   {attendantsError}
@@ -342,7 +322,6 @@ const MyStore = () => {
                 </Button>
               </div>
             ) : attendants.length === 0 ? (
-              /* empty */
               <div className="py-20 px-4 flex flex-col items-center justify-center space-y-4">
                 <UserPen size={40} />
                 <p className="font-bold font-dm-sans text-[16px] text-[#2F2F2F] dark:text-white">
@@ -358,26 +337,23 @@ const MyStore = () => {
                   <table className="w-full">
                     <thead className="border-b border-[#E6E6E6]">
                       <tr>
-                        <th className="text-left py-3 md:pl-4 ... font-medium">
+                        <th className="text-left py-3 md:pl-4 font-medium">
                           Full Name
                         </th>
-                        <th className="hidden md:table-cell ... font-medium">
+                        <th className="hidden text-left md:table-cell font-medium">
                           Email
                         </th>
-                        <th className="hidden md:table-cell ... font-medium">
+                        <th className="hidden text-left md:table-cell font-medium">
                           Phone Number
                         </th>
-                        <th className="hidden md:table-cell ... font-medium">
+                        <th className="hidden text-left md:table-cell font-medium">
                           Status
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
                       {paginatedAttendants.map((attendant) => (
-                        <tr
-                          key={attendant.id}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-800/50 ..."
-                        >
+                        <tr key={attendant.id} className="hover:bg-gray-50">
                           <td className="py-4 md:pl-4 font-medium">
                             {attendant.fullname}
                           </td>
@@ -402,7 +378,6 @@ const MyStore = () => {
                   </table>
                 </div>
 
-                {/* Attendants Pagination */}
                 {renderPagination(
                   attendantsPage,
                   attendantsTotalPages,

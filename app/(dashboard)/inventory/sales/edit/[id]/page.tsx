@@ -125,14 +125,15 @@ export default function EditInvoicePage() {
   const updateInvoiceMutation = useUpdateInvoice();
 
   const {
-    stores: allStores,
-
+    data: allStores = [],
+    isLoading: storesLoading,
     error: storesError,
   } = useStores();
+
+  // Remove: const [storesLoading, setStoresLoading] = useState(true);
   // Store
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
-  const [storesLoading, setStoresLoading] = useState(true);
   const [changeStoreOpen, setChangeStoreOpen] = useState(false);
   const [storeSearch, setStoreSearch] = useState("");
   const [pendingStore, setPendingStore] = useState<Store | null>(null);
@@ -195,14 +196,12 @@ export default function EditInvoicePage() {
 
   useEffect(() => {
     if (storesError) {
-      toast.error(storesError);
-      setStoresLoading(false);
+      toast.error(storesError.message || "Failed to load stores");
     } else if (allStores.length > 0) {
       const valid: Store[] = (allStores as Store[]).filter(
         (s) => !s.credit_store,
       );
       setStores(valid);
-      setStoresLoading(false);
     }
   }, [allStores, storesError]);
   const fetchInvoice = useCallback(async () => {

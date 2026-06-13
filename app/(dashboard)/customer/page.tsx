@@ -5,13 +5,8 @@ import { CustomerForm, customerSchema } from "@/types/customer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { Search, Plus, MoreHorizontal } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { getCustomers } from "@/lib/utils/api/apiHelper";
-import {
-  handleCreateCustomer,
-  handleUpdateCustomer,
-} from "@/lib/utils/api/apiHelper";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ClipLoader } from "react-spinners";
@@ -47,6 +42,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
+import {
+  useCustomers,
+  useCreateCustomer,
+  useUpdateCustomer,
+} from "@/hooks/useCustomers";
+import { ThreeDots } from "react-loader-spinner";
 
 interface CustomerType {
   id: string;
@@ -74,14 +75,19 @@ const emptyFormValues: CustomerForm = {
 
 const Customer = () => {
   const router = useRouter();
-  const [customers, setCustomers] = useState<CustomerType[]>([]);
-  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
+  const {
+    data: customers = [],
+    isLoading: isLoadingCustomers,
+    error,
+  } = useCustomers();
+  const createCustomer = useCreateCustomer();
+  const updateCustomer = useUpdateCustomer();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [editingCustomer, setEditingCustomer] = useState<CustomerType | null>(
     null,
   );
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
-
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -121,32 +127,6 @@ const Customer = () => {
     setIsCustomerModalOpen(open);
   };
 
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      setIsLoadingCustomers(true);
-      try {
-        const result = await getCustomers();
-        if (result?.data) {
-          setCustomers(result.data);
-        } else {
-          toast.error("Failed to load customers");
-        }
-      } catch (err: any) {
-        toast.error(err?.message || "Error loading customers");
-      } finally {
-        setIsLoadingCustomers(false);
-      }
-    };
-    fetchCustomers();
-  }, []);
-
-  const refreshCustomers = async () => {
-    const result = await getCustomers();
-    if (result?.data) {
-      setCustomers(result.data);
-    }
-  };
-
   const onSubmit = async (data: CustomerForm) => {
     try {
       const basePayload = {
@@ -162,9 +142,12 @@ const Customer = () => {
 
       let response;
       if (isEditing && editingCustomer) {
-        response = await handleUpdateCustomer(editingCustomer.id, basePayload);
+        response = await updateCustomer.mutateAsync({
+          customerId: editingCustomer.id,
+          payload: basePayload,
+        });
       } else {
-        response = await handleCreateCustomer({
+        response = await createCustomer.mutateAsync({
           ...basePayload,
           email: data.email.trim(),
         });
@@ -178,7 +161,6 @@ const Customer = () => {
               : "Customer created successfully"),
         );
         handleModalClose(false);
-        refreshCustomers();
       } else {
         toast.error(response.error || "Failed to save customer");
       }
@@ -187,7 +169,7 @@ const Customer = () => {
     }
   };
 
-  const filteredCustomers = customers.filter((c) =>
+  const filteredCustomers = customers.filter((c: CustomerType) =>
     `${c.name} ${c.phone} ${c.email} ${c.type} ${c.address?.address || ""}`
       .toLowerCase()
       .includes(searchQuery.toLowerCase()),
@@ -202,6 +184,17 @@ const Customer = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
+
+  if (error) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-red-500">Error loading customers: {error.message}</p>
+        <Button onClick={() => window.location.reload()} className="mt-4">
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -260,7 +253,15 @@ const Customer = () => {
               {isLoadingCustomers ? (
                 <tr>
                   <td colSpan={5} className="py-20 text-center">
-                    <p className="mt-4 text-gray-500">Loading customers...</p>
+                    <div className="flex flex-col items-center justify-center">
+                      <ThreeDots
+                        height="80"
+                        width="80"
+                        color="#0A6DC0"
+                        visible
+                      />
+                      <p className="mt-4 text-gray-500">Loading customers...</p>
+                    </div>
                   </td>
                 </tr>
               ) : paginatedCustomers.length === 0 ? (
@@ -272,45 +273,43 @@ const Customer = () => {
                   </td>
                 </tr>
               ) : (
-                paginatedCustomers.map((customer) => {
-                  return (
-                    <tr key={customer.id} className="hover:bg-gray-50/70">
-                      <td className="px-6 py-4 font-medium">{customer.name}</td>
-                      <td className="px-6 py-4 hidden md:table-cell">
-                        {customer.phone}
-                      </td>
-                      <td className="px-6 py-4 hidden md:table-cell">
-                        ₦{customer.totalSales.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 hidden md:table-cell">
-                        {customer.totalEmptiesOwed}
-                      </td>
-                      <td className="px-6 py-4">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-5 w-5" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => openCustomerModal(customer)}
-                            >
-                              Edit Customer
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() =>
-                                router.push(`/customer/${customer.id}`)
-                              }
-                            >
-                              View Empty Returns
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  );
-                })
+                paginatedCustomers.map((customer: CustomerType) => (
+                  <tr key={customer.id} className="hover:bg-gray-50/70">
+                    <td className="px-6 py-4 font-medium">{customer.name}</td>
+                    <td className="px-6 py-4 hidden md:table-cell">
+                      {customer.phone}
+                    </td>
+                    <td className="px-6 py-4 hidden md:table-cell">
+                      ₦{customer.totalSales?.toLocaleString() || 0}
+                    </td>
+                    <td className="px-6 py-4 hidden md:table-cell">
+                      {customer.totalEmptiesOwed || 0}
+                    </td>
+                    <td className="px-6 py-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-5 w-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {/* <DropdownMenuItem
+                            onClick={() => openCustomerModal(customer)}
+                          >
+                            Edit Customer
+                          </DropdownMenuItem> */}
+                          <DropdownMenuItem
+                            onClick={() =>
+                              router.push(`/customer/${customer.id}`)
+                            }
+                          >
+                            View Empty Returns
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
@@ -341,6 +340,7 @@ const Customer = () => {
         )}
       </div>
 
+      {/* Add/Edit Customer Modal */}
       <Dialog open={isCustomerModalOpen} onOpenChange={handleModalClose}>
         <DialogContent className="max-w-[95vw] md:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -370,7 +370,6 @@ const Customer = () => {
                 )}
               />
 
-              {/* Show email only when creating */}
               {!isEditing && (
                 <FormField
                   control={form.control}
@@ -478,10 +477,12 @@ const Customer = () => {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={form.formState.isSubmitting}
+                  disabled={
+                    createCustomer.isPending || updateCustomer.isPending
+                  }
                   className="bg-[#0A6DC0] hover:bg-[#09599a]"
                 >
-                  {form.formState.isSubmitting ? (
+                  {createCustomer.isPending || updateCustomer.isPending ? (
                     <>
                       {isEditing ? "Updating..." : "Creating..."}
                       <ClipLoader size={18} color="white" className="ml-2" />

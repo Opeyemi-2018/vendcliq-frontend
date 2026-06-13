@@ -4,9 +4,6 @@
 import { MoveLeft, Loader2, Search, MoveRight } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import { getStoreById } from "@/lib/utils/api/apiHelper";
-import { getStoreStock } from "@/lib/utils/api/apiHelper";
-
 import { ThreeDots } from "react-loader-spinner";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -17,19 +14,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/Input";
 import StockForm from "../chunks/StockForm";
 import { Switch } from "@/components/ui/switch";
 import { ClipLoader } from "react-spinners";
-import {
-  handleUpdateStoreSettings,
-  handleUpdateStore,
-} from "@/lib/utils/api/apiHelper";
 import { toast } from "sonner";
 import PlacesAutocompleteInput from "@/hooks/googleMap";
 import { useUser } from "@/context/userContext";
+import {
+  useStoreById,
+  useStoreStocks,
+  useUpdateStore,
+  useUpdateStoreSettings,
+} from "@/hooks/useStores";
 
 interface Store {
   id: string;
@@ -60,30 +58,15 @@ interface StockItem {
   status: string;
 }
 
-// interface StockResponse {
-//   success: boolean;
-//   data?: StockItem[];
-//   pagination?: {
-//     totalPages: number;
-//     currentPage: number;
-//     totalCount: number;
-//     limit: number;
-//     nextPage?: number | null;
-//   } | null;
-//   message?: string;
-// }
-
 const ITEMS_PER_PAGE = 5;
 
 const StoreDetailPage = () => {
   const { canMoveStock, canAddStock } = useUser();
-
   const router = useRouter();
   const params = useParams();
   const storeId = params.id as string;
 
   const [searchTerm, setSearchTerm] = useState("");
-
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
@@ -97,20 +80,27 @@ const StoreDetailPage = () => {
     credit_sale_auth_emails: [] as string[],
   });
 
-  const [store, setStore] = useState<Store | null>(null);
   const [editForm, setEditForm] = useState({
     address: { name: "", lat: 0, lng: 0 },
     phone: "",
   });
-  const [stocks, setStocks] = useState<StockItem[]>([]);
-  const [totalCount, setTotalCount] = useState<number | null>(null);
   const [selectedStocks, setSelectedStocks] = useState<Set<string>>(new Set());
-  const [isLoadingStore, setIsLoadingStore] = useState(true);
-  const [isLoadingStock, setIsLoadingStock] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isAddStockOpen, setIsAddStockOpen] = useState(false);
-
   const [currentPage, setCurrentPage] = useState(1);
+
+  // TanStack Query hooks
+  const {
+    data: store,
+    isLoading: isLoadingStore,
+    error: storeError,
+  } = useStoreById(storeId);
+  const {
+    data: stocks = [],
+    isLoading: isLoadingStock,
+    // refetch: refetchStocks,
+  } = useStoreStocks(storeId);
+  const updateStore = useUpdateStore();
+  const updateStoreSettings = useUpdateStoreSettings();
 
   const filteredStocks = useMemo(() => {
     if (!searchTerm.trim()) return stocks;
@@ -143,46 +133,17 @@ const StoreDetailPage = () => {
   }, [searchTerm]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoadingStore(true);
-      const storeResult = await getStoreById(storeId);
-      if (storeResult?.data) {
-        setStore(storeResult.data);
-      } else {
-        setError("Failed to load store details");
-      }
-      setIsLoadingStore(false);
-
-      setIsLoadingStock(true);
-      try {
-        const stockResult = await getStoreStock(storeId);
-        if (stockResult?.data) {
-          setStocks(stockResult.data);
-          setTotalCount(
-            stockResult.pagination?.totalCount ?? stockResult.data.length,
-          );
-        } else {
-          setError("Failed to load stock items");
-        }
-      } catch {
-        setError("Failed to load stock items");
-      } finally {
-        setIsLoadingStock(false);
-      }
-    };
-
-    if (storeId) fetchData();
-  }, [storeId]);
-
-  useEffect(() => {
     if (store) {
+      const storeWithSettings = store as Store;
       setStoreSettings({
-        is_default: store.is_default || false,
-        show_on_marketplace: store.show_on_marketplace || false,
-        is_archived: store.is_archived || false,
-        allow_credit_sales: store.allow_credit_sales || false,
-        credit_sale_auth_required: store.credit_sale_auth_required || false,
-        credit_sale_auth_emails: store.credit_sale_auth_emails || [],
+        is_default: storeWithSettings.is_default || false,
+        show_on_marketplace: storeWithSettings.show_on_marketplace || false,
+        is_archived: storeWithSettings.is_archived || false,
+        allow_credit_sales: storeWithSettings.allow_credit_sales || false,
+        credit_sale_auth_required:
+          storeWithSettings.credit_sale_auth_required || false,
+        credit_sale_auth_emails:
+          storeWithSettings.credit_sale_auth_emails || [],
       });
       setEditForm({
         address: {
@@ -196,41 +157,28 @@ const StoreDetailPage = () => {
   }, [store]);
 
   const handleUpdateStoreDetails = async () => {
+    if (!editForm.address.name.trim()) {
+      toast.error("Please enter a valid address");
+      return;
+    }
+    if (!editForm.phone.trim()) {
+      toast.error("Please enter a phone number");
+      return;
+    }
+
+    setIsUpdatingStore(true);
     try {
-      setIsUpdatingStore(true);
-
-      if (!editForm.address.name.trim()) {
-        toast.error("Please enter a valid address");
-        return;
-      }
-
-      if (!editForm.phone.trim()) {
-        toast.error("Please enter a phone number");
-        return;
-      }
-
-      const response = await handleUpdateStore(storeId, editForm);
-
+      const response = await updateStore.mutateAsync({
+        storeId,
+        payload: editForm,
+      });
       if (response.statusCode === 200) {
         toast.success("Store updated successfully");
-
-        setStore((prev) =>
-          prev
-            ? {
-                ...prev,
-                address: response.data.address,
-                phone: response.data.phone,
-                updatedAt: response.data.updatedAt,
-              }
-            : null,
-        );
-
         setIsEditOpen(false);
       } else {
         toast.error(response.error || "Failed to update store");
       }
     } catch (error: any) {
-      console.error("Update store error:", error);
       toast.error(error?.message || "Failed to update store");
     } finally {
       setIsUpdatingStore(false);
@@ -238,9 +186,8 @@ const StoreDetailPage = () => {
   };
 
   const handleSaveSettings = async () => {
+    setIsUpdatingSettings(true);
     try {
-      setIsUpdatingSettings(true);
-
       const payload = {
         is_default: storeSettings.is_default,
         show_on_marketplace: storeSettings.show_on_marketplace,
@@ -249,12 +196,12 @@ const StoreDetailPage = () => {
         credit_sale_auth_required: storeSettings.credit_sale_auth_required,
         credit_sale_auth_emails: storeSettings.credit_sale_auth_emails,
       };
-
-      const response = await handleUpdateStoreSettings(storeId, payload);
-
+      const response = await updateStoreSettings.mutateAsync({
+        storeId,
+        payload,
+      });
       if (response.statusCode === 200) {
         toast.success("Store settings updated successfully");
-        setStore((prev) => (prev ? { ...prev, ...response.data } : null));
         setIsSettingsOpen(false);
       } else {
         toast.error(response.error || "Failed to update settings");
@@ -343,11 +290,9 @@ const StoreDetailPage = () => {
         >
           <MoveLeft /> Previous
         </button>
-
         <div className="hidden lg:flex items-center gap-2 flex-wrap justify-center">
           {pages}
         </div>
-
         <div className="flex items-center gap-8 lg:gap-10">
           <button
             disabled={currentPage >= totalPages}
@@ -356,7 +301,6 @@ const StoreDetailPage = () => {
           >
             Next <MoveRight />
           </button>
-
           <div className="hidden lg:block text-sm text-gray-600 dark:text-gray-400">
             Showing {showingStart} – {showingEnd} of {filteredStocks.length}
           </div>
@@ -374,10 +318,12 @@ const StoreDetailPage = () => {
     );
   }
 
-  if (error || !store) {
+  if (storeError || !store) {
     return (
       <div className="p-8 text-center">
-        <p className="text-red-600">{error || "Store not found"}</p>
+        <p className="text-red-600">
+          {storeError?.message || "Store not found"}
+        </p>
         <button
           onClick={() => router.back()}
           className="mt-4 text-[#0A6DC0] underline"
@@ -392,14 +338,14 @@ const StoreDetailPage = () => {
     <div className="">
       <button
         onClick={() => router.back()}
-        className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors "
+        className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors"
       >
         <MoveLeft className="w-5 h-5" />
       </button>
 
       <div className="flex flex-col gap-2 md:flex-row md:items-center justify-between">
         <div>
-          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F] ">
+          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
             {store.name}
           </h1>
           <p className="text-[16px] font-dm-sans text-[#9E9A9A] dark:text-gray-400">
@@ -433,7 +379,7 @@ const StoreDetailPage = () => {
           <div className="space-y-2">
             <Label
               htmlFor="store-name"
-              className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
+              className="text-sm font-medium text-[#2F2F2F]"
             >
               Store Name
             </Label>
@@ -444,11 +390,10 @@ const StoreDetailPage = () => {
               className="bg-[#F9F9F9] py-5 md:py-6 cursor-default"
             />
           </div>
-
           <div className="space-y-2">
             <Label
               htmlFor="store-address"
-              className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
+              className="text-sm font-medium text-[#2F2F2F]"
             >
               Address
             </Label>
@@ -459,11 +404,10 @@ const StoreDetailPage = () => {
               className="bg-[#F9F9F9] py-5 md:py-6 cursor-default"
             />
           </div>
-
           <div className="space-y-2">
             <Label
               htmlFor="store-phone"
-              className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
+              className="text-sm font-medium text-[#2F2F2F]"
             >
               Phone
             </Label>
@@ -474,11 +418,10 @@ const StoreDetailPage = () => {
               className="bg-[#F9F9F9] py-5 md:py-6 cursor-default"
             />
           </div>
-
           <div className="space-y-2">
             <Label
               htmlFor="product-count"
-              className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
+              className="text-sm font-medium text-[#2F2F2F]"
             >
               Product Count
             </Label>
@@ -489,7 +432,6 @@ const StoreDetailPage = () => {
               className="bg-[#F9F9F9] py-5 md:py-6 cursor-default"
             />
           </div>
-
           {store.low_stock_count > 0 && (
             <div className="col-span-1 sm:col-span-2 mt-2">
               <p className="text-red-600 dark:text-red-400 font-medium flex items-center gap-2">
@@ -509,7 +451,7 @@ const StoreDetailPage = () => {
           </Button>
           <Button
             variant="outline"
-            className="w-full py-5 md:py-6 bg-white "
+            className="w-full py-5 md:py-6 bg-white"
             onClick={() => setIsSettingsOpen(true)}
           >
             Store Settings
@@ -520,7 +462,7 @@ const StoreDetailPage = () => {
       <div className="mt-8 md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
         <div className="flex justify-between items-center my-3">
           <h2 className="font-dm-sans text-[16px] font-bold text-[#2F2F2F]">
-            Products in Store ({totalCount ?? stocks.length})
+            Products in Store ({stocks.length})
           </h2>
           {canMoveStock() && (
             <Button
@@ -552,7 +494,7 @@ const StoreDetailPage = () => {
           </div>
         ) : filteredStocks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="mt-4 font-bold text-[16px] text-[#2F2F2F] ">
+            <p className="mt-4 font-bold text-[16px] text-[#2F2F2F]">
               No stock items found
             </p>
             <p className="text-[#9E9A9A] dark:text-gray-400 mt-2">
@@ -575,7 +517,7 @@ const StoreDetailPage = () => {
               <table className="w-full">
                 <thead className="border-b border-[#E6E6E6]">
                   <tr className="border-b">
-                    <th className="text-left py-3 md:pl-4 font-medium text-[#2F2F2F] dark:text-gray-300">
+                    <th className="text-left py-3 md:pl-4 font-medium text-[#2F2F2F]">
                       <Checkbox
                         checked={
                           selectedStocks.size === filteredStocks.length &&
@@ -585,19 +527,19 @@ const StoreDetailPage = () => {
                         className="h-[20px] w-[20px]"
                       />
                     </th>
-                    <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                    <th className="text-left py-3 font-medium text-[#2F2F2F]">
                       SKU
                     </th>
-                    <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                    <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F]">
                       Quantity
                     </th>
-                    <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                    <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F]">
                       Selling Price
                     </th>
-                    <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                    <th className="hidden md:table-cell text-left py-3 font-medium text-[#2F2F2F]">
                       Cost Price
                     </th>
-                    <th className="text-left py-3 font-medium text-[#2F2F2F] dark:text-gray-300">
+                    <th className="text-left py-3 font-medium text-[#2F2F2F]">
                       More
                     </th>
                   </tr>
@@ -644,7 +586,6 @@ const StoreDetailPage = () => {
                 </tbody>
               </table>
             </div>
-
             {renderPagination()}
           </>
         )}
@@ -655,18 +596,17 @@ const StoreDetailPage = () => {
         <DialogContent className="sm:max-w-[500px] bg-white font-dm-sans">
           <DialogHeader>
             <div className="flex justify-between items-center">
-              <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] ">
+              <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F]">
                 Edit Store
               </DialogTitle>
             </div>
             <p className="text-[#9E9A9A]">Update your store information</p>
           </DialogHeader>
-
           <div className="space-y-6 py-4">
             <div className="space-y-2">
               <Label
                 htmlFor="address"
-                className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
+                className="text-sm font-medium text-[#2F2F2F]"
               >
                 Store Address
               </Label>
@@ -684,20 +624,16 @@ const StoreDetailPage = () => {
                       },
                     }));
                   } else {
-                    setEditForm((prev) => ({
-                      ...prev,
-                      address: addressData,
-                    }));
+                    setEditForm((prev) => ({ ...prev, address: addressData }));
                   }
                 }}
                 className="bg-[#F3F4F6] h-12"
               />
             </div>
-
             <div className="space-y-2">
               <Label
                 htmlFor="phone"
-                className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300"
+                className="text-sm font-medium text-[#2F2F2F]"
               >
                 Phone Number
               </Label>
@@ -706,16 +642,12 @@ const StoreDetailPage = () => {
                 placeholder="Enter phone number"
                 value={editForm.phone}
                 onChange={(e) =>
-                  setEditForm((prev) => ({
-                    ...prev,
-                    phone: e.target.value,
-                  }))
+                  setEditForm((prev) => ({ ...prev, phone: e.target.value }))
                 }
                 className="bg-[#F3F4F6] h-12"
               />
             </div>
           </div>
-
           <div className="pt-4">
             <Button
               className="w-full py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#09599a]"
@@ -737,7 +669,6 @@ const StoreDetailPage = () => {
       </Dialog>
 
       {/* Store Settings Modal */}
-      {/* Store Settings Modal - Updated with Credit Sales */}
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
         <DialogContent className="sm:max-w-[480px] bg-white font-dm-sans">
           <DialogHeader>
@@ -746,11 +677,9 @@ const StoreDetailPage = () => {
             </DialogTitle>
             <p className="text-[#9E9A9A]">Manage your store preferences</p>
           </DialogHeader>
-
           <div className="space-y-6 py-4">
-            {/* Existing Settings */}
             <div className="flex items-center justify-between space-x-2">
-              <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
+              <p className="text-sm font-medium text-[#2F2F2F]">
                 Make Default Store
               </p>
               <Switch
@@ -760,9 +689,8 @@ const StoreDetailPage = () => {
                 }
               />
             </div>
-
             <div className="flex items-center justify-between space-x-2">
-              <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
+              <p className="text-sm font-medium text-[#2F2F2F]">
                 Show Store Contents on Marketplace
               </p>
               <Switch
@@ -775,9 +703,8 @@ const StoreDetailPage = () => {
                 }
               />
             </div>
-
             <div className="flex items-center justify-between space-x-2">
-              <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
+              <p className="text-sm font-medium text-[#2F2F2F]">
                 Temporary Archive Store
               </p>
               <Switch
@@ -790,15 +717,12 @@ const StoreDetailPage = () => {
                 }
               />
             </div>
-
-            {/* ── New Credit Sales Settings ── */}
             <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
               <p className="text-sm font-semibold text-[#2F2F2F] mb-4">
                 Credit Sales Settings
               </p>
-
               <div className="flex items-center justify-between space-x-2 mb-4">
-                <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
+                <p className="text-sm font-medium text-[#2F2F2F]">
                   Allow Credit Sales
                 </p>
                 <Switch
@@ -807,7 +731,6 @@ const StoreDetailPage = () => {
                     setStoreSettings((prev) => ({
                       ...prev,
                       allow_credit_sales: checked,
-                      // Auto disable auth if credit sales is off
                       credit_sale_auth_required: checked
                         ? prev.credit_sale_auth_required
                         : false,
@@ -815,11 +738,10 @@ const StoreDetailPage = () => {
                   }
                 />
               </div>
-
               {storeSettings.allow_credit_sales && (
                 <>
                   <div className="flex items-center justify-between space-x-2 mb-4">
-                    <p className="text-sm font-medium text-[#2F2F2F] dark:text-gray-300">
+                    <p className="text-sm font-medium text-[#2F2F2F]">
                       Credit Sale Authorization Required
                     </p>
                     <Switch
@@ -832,7 +754,6 @@ const StoreDetailPage = () => {
                       }
                     />
                   </div>
-
                   {storeSettings.credit_sale_auth_required && (
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-[#2F2F2F]">
@@ -865,7 +786,6 @@ const StoreDetailPage = () => {
               )}
             </div>
           </div>
-
           <div className="pt-4">
             <Button
               className="w-full py-5 md:py-6 bg-[#0A6DC0] hover:bg-[#09599a]"
@@ -885,15 +805,13 @@ const StoreDetailPage = () => {
       <Dialog open={isAddStockOpen} onOpenChange={setIsAddStockOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] bg-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F] ">
+            <DialogTitle className="text-[20px] font-clash font-semibold text-[#2F2F2F]">
               Add Stock to {store.name}
             </DialogTitle>
           </DialogHeader>
           <StockForm
             storeId={store.id}
-            onSuccess={() => {
-              setIsAddStockOpen(false);
-            }}
+            onSuccess={() => setIsAddStockOpen(false)}
           />
         </DialogContent>
       </Dialog>

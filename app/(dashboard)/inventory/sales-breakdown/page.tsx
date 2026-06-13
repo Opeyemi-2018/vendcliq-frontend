@@ -40,8 +40,8 @@ type ProductSale = {
 };
 
 const SalesBreakdown = () => {
-  const { stores } = useStores();
-const router = useRouter()
+  const { data: stores = [] } = useStores();
+  const router = useRouter();
   // Date filter
   const [dateModalOpen, setDateModalOpen] = useState(false);
   const [tempStartDate, setTempStartDate] = useState("");
@@ -84,7 +84,7 @@ const router = useRouter()
             const items = res.data;
             const storeTotal = items.reduce(
               (sum: number, item: any) => sum + (item.sub_total || 0),
-              0
+              0,
             );
             return {
               id: store.id,
@@ -97,7 +97,7 @@ const router = useRouter()
         });
 
         const results = (await Promise.all(promises)).filter(
-          (r): r is StoreSales => r !== null
+          (r): r is StoreSales => r !== null,
         );
 
         const grandTotal = results.reduce((sum, s) => sum + s.amount, 0);
@@ -138,7 +138,11 @@ const router = useRouter()
     const fetchProducts = async () => {
       setLoadingProducts(true);
       try {
-        const res = await getStoreStockSales(selectedStoreId, startDate, endDate);
+        const res = await getStoreStockSales(
+          selectedStoreId,
+          startDate,
+          endDate,
+        );
         if (res?.statusCode === 200 && Array.isArray(res.data)) {
           setProducts(res.data);
         } else {
@@ -190,12 +194,12 @@ const router = useRouter()
 
   return (
     <div className="text-[#2F2F2F] font-dm-sans">
-       <button
-              onClick={() => router.back()}
-              className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors mb-4 print-hidden"
-            >
-              <MoveLeft className="w-5 h-5" />
-            </button>
+      <button
+        onClick={() => router.back()}
+        className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors mb-4 print-hidden"
+      >
+        <MoveLeft className="w-5 h-5" />
+      </button>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 md:mb-6 gap-3">
         <div>
           <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
@@ -258,7 +262,7 @@ const router = useRouter()
         <div
           className={cn(
             "md:p-6 lg:border border-[#E4E4E4] md:rounded-lg bg-white w-full lg:w-[40%] min-h-[400px]",
-            showProductsView ? "hidden lg:block" : "block"
+            showProductsView ? "hidden lg:block" : "block",
           )}
         >
           <div className="mb-3 md:mb-5">
@@ -330,7 +334,7 @@ const router = useRouter()
         <div
           className={cn(
             "w-full lg:w-[60%] md:p-6 lg:border border-[#E4E4E4] md:rounded-lg bg-white min-h-[400px]",
-            showProductsView ? "block" : "hidden lg:block"
+            showProductsView ? "block" : "hidden lg:block",
           )}
         >
           {selectedStore ? (
