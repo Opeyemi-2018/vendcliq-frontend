@@ -1188,26 +1188,36 @@ export default function SellPage() {
                     </div>
 
                     {ci.discount > 0 && (
-                      <div className="flex justify-between">
-                        <p className="text-[#9E9A9A] text-[13px]">
-                          Total Discount:{" "}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-[#2F2F2F]">
-                            {fmt(ci.discount * ci.quantity)}
-                          </p>
-                          <button
-                            onClick={() => {
-                              // Open discount edit modal for this cart item
-                              setEditingDiscountIndex(idx);
-                              setTempDiscount(ci.discount.toString());
-                              setDiscountModalOpen(true);
-                            }}
-                            className="text-[#C7C7CC] hover:text-[#09599a]"
-                            title="Edit Discount"
-                          >
-                            <Edit size={16} />
-                          </button>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-2">
+                            <p className="text-[#9E9A9A] text-[13px]">
+                              Discount per item:{" "}
+                            </p>
+                            <p className="font-bold text-[#2F2F2F]">
+                              {fmt(ci.discount)}
+                            </p>
+                            <button
+                              onClick={() => {
+                                // Open discount edit modal for this cart item
+                                setEditingDiscountIndex(idx);
+                                setTempDiscount(ci.discount.toString());
+                                setDiscountModalOpen(true);
+                              }}
+                              className="text-[#C7C7CC] hover:text-[#09599a]"
+                              title="Edit Discount"
+                            >
+                              <Edit size={16} />
+                            </button>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[#9E9A9A] text-[13px]">
+                              Total Discount:
+                            </p>
+                            <p className="font-bold text-[#2F2F2F]">
+                              {fmt(ci.discount * ci.quantity)}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     )}
