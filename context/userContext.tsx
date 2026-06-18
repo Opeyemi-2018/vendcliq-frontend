@@ -244,8 +244,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("user");
     localStorage.removeItem("verificationStatus");
     localStorage.removeItem("hasPin");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("authToken");
     localStorage.removeItem("wallet");
     localStorage.removeItem("attendantPermissions"); // 👈
   };

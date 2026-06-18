@@ -51,16 +51,6 @@ api.interceptors.request.use(
       config.url = "";
     }
 
-    // ADD ONLY THIS BLOCK — the magic that fixes 401
-    if (typeof window !== "undefined") {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
-
     return config;
   },
   (error) => Promise.reject(error),
@@ -106,9 +96,6 @@ api.interceptors.response.use(
  */
 export const clearAuthTokens = () => {
   if (typeof window !== "undefined") {
-    // Clear ALL authentication tokens from storage
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("authToken");
     localStorage.removeItem("user");
     localStorage.removeItem("wallet");
     localStorage.removeItem("verificationStatus");

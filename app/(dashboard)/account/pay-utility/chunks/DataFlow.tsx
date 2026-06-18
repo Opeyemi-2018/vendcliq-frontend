@@ -45,9 +45,13 @@ import {
 
 import { DataSchema, DataFormData, DataPlanItem } from "@/types/utilityBills";
 import { Separator } from "@/components/ui/separator";
-import { getNetworkProvider, fetchDataPlans } from "@/actions/utility";
 import { ClipLoader } from "react-spinners";
-import { handleValidatePin, handleBuyData } from "@/lib/utils/api/apiHelper";
+import {
+  handleValidatePin,
+  handleBuyData,
+  getNetworkProvider,
+  fetchDataPlans,
+} from "@/lib/utils/api/apiHelper";
 import { generateIdempotencyKey } from "@/lib/utils/generateIdempotencyKey";
 import CreatePinPrompt from "@/components/SetPinModal";
 import Image from "next/image";
@@ -121,22 +125,21 @@ export default function DataFlow() {
         setNetworkError(null);
         setDetectedNetwork(null);
 
-        const token =
-          localStorage.getItem("accessToken") 
+        try {
+          const result = await getNetworkProvider(cleanPhone);
+          const innerData = result?.data?.data?.data;
 
-        if (!token) {
-          setNetworkError("Please log in to detect network");
-          setNetworkLoading(false);
-          return;
-        }
-
-        const result = await getNetworkProvider(token, cleanPhone);
-
-        if (result.success && result.network) {
-          setDetectedNetwork(result.network);
-          setValue("network", result.network);
-        } else {
-          setNetworkError(result.error || "Could not detect network");
+          if (result.status === "success" && innerData?.network) {
+            const network = innerData.network.trim().toUpperCase();
+            setDetectedNetwork(network);
+            setValue("network", network);
+          } else {
+            setNetworkError(result.msg || "Could not detect network");
+          }
+        } catch (err: any) {
+          setNetworkError(
+            err?.response?.data?.msg || "Network error. Please try again.",
+          );
         }
 
         setNetworkLoading(false);
@@ -145,7 +148,7 @@ export default function DataFlow() {
         setNetworkError(null);
         setValue("network", "");
       }
-    }, 800); 
+    }, 800);
 
     return () => clearTimeout(timer);
   }, [phoneNumber, setValue]);
@@ -158,26 +161,22 @@ export default function DataFlow() {
         setPlansLoading(true);
         setPlansError(null);
 
-        const token =
-          localStorage.getItem("accessToken") ||
-          localStorage.getItem("authToken");
+        try {
+          const result = await fetchDataPlans(cleanPhone);
+          const innerData = result?.data?.data?.data;
 
-        if (!token) {
-          setPlansError("Please log in");
-          toast.error("Authentication required");
-          setPlansLoading(false);
-          return;
-        }
-
-        const result = await fetchDataPlans(token, cleanPhone);
-
-        if (result.success) {
-          setFetchedPlans(result.plans || []);
-          setCurrentPage(0);
-          // toast.success("Data plans loaded");
-        } else {
-          setPlansError(result.error);
-          toast.error(result.error);
+          if (result.status === "success" && Array.isArray(innerData)) {
+            setFetchedPlans(innerData);
+            setCurrentPage(0);
+          } else {
+            const errorMsg = result.msg || "Failed to retrieve data plans";
+            setPlansError(errorMsg);
+            toast.error(errorMsg);
+          }
+        } catch {
+          const errorMsg = "Network error. Please try again.";
+          setPlansError(errorMsg);
+          toast.error(errorMsg);
         }
 
         setPlansLoading(false);
@@ -386,7 +385,7 @@ export default function DataFlow() {
 
               {/* Data Plans */}
               <div>
-                <Label>Select Data Plans</Label>
+                {fetchedPlans.length !== 0 && <Label>Select Data Plans</Label>}
 
                 {plansLoading ? (
                   <div className="flex justify-center items-center h-32">
@@ -394,11 +393,7 @@ export default function DataFlow() {
                   </div>
                 ) : plansError ? (
                   <p className="text-red-600 text-sm">{plansError}</p>
-                ) : fetchedPlans.length === 0 ? (
-                  <p className="text-gray-500 text-sm">
-                    Enter 11-digit phone number to load plans
-                  </p>
-                ) : (
+                )  : (
                   <>
                     {/* Plans Grid */}
                     <div className="grid grid-cols-3 md:grid-cols-4 gap-1 md:gap-4 mt-1">

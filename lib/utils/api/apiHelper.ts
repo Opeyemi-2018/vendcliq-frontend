@@ -181,6 +181,8 @@ import {
   GET_STORES,
   GET_STORE_BY_ID,
   GET_SUPPLIER_STOCKS,
+  GET_NETWORK_PROVIDER,
+  GET_DATA_PLANS,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -727,7 +729,13 @@ export const handleBuyAirtime = async (
     payload,
   );
 };
+export const getNetworkProvider = async (phone: string): Promise<any> => {
+  return await fetcher<any>(GET_NETWORK_PROVIDER, { phone });
+};
 
+export const fetchDataPlans = async (phone: string): Promise<any> => {
+  return await fetcher<any>(GET_DATA_PLANS, { phone });
+};
 export const handleBuyData = async (
   payload: BuyDataPayload,
 ): Promise<BuyDataResponse> => {

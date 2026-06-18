@@ -33,6 +33,8 @@ const LOOKUP_ACCOUNT = (accountNumber: string) =>
   `/client/v2/wallet/lookup?accountNumber=${accountNumber}`;
 const GET_NIP_BANKS = "/client/v2/wallets/nip-banks";
 const NAME_ENQUIRY = "/client/v2/wallets/name-enquiry";
+const GET_NETWORK_PROVIDER = "/client/v2/payments/network";
+const GET_DATA_PLANS = "/client/v2/payments/data-plans";
 
 // v1 endpoint
 // const BUSINESS_INFORMATION_SETUP_STEP_ONE =
@@ -162,8 +164,6 @@ const GET_STOCK_DETAIL = (stockId: string, storeId: string) =>
 const GET_SUPPLIER_STOCKS = (userId: string) =>
   `inventory/suppliers/${userId}/stocks`;
 
-
-
 export {
   // v2 endpoint
   VERIFY_EMAIL,
@@ -192,6 +192,8 @@ export {
   BUY_DATA,
   CREATE_WALLET,
   LOOKUP_ACCOUNT,
+  GET_NETWORK_PROVIDER,
+  GET_DATA_PLANS,
   GET_NIP_BANKS,
   NAME_ENQUIRY,
   GET_WALLET,
