@@ -59,16 +59,27 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Check authentication on mount and route changes
     const checkAuth = () => {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
+      const userData = localStorage.getItem("user");
 
-      if (!token) {
-        // No token found, redirect to signin
+      if (!userData) {
+        // No user data found, redirect to signin
         window.location.replace("/signin");
         return false;
       }
-      return true;
+
+      try {
+        const parsedUser = JSON.parse(userData);
+        // ✅ Allow both ACTIVE and PENDING status
+        if (parsedUser.status !== "ACTIVE" && parsedUser.status !== "PENDING") {
+          window.location.replace("/signin");
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        window.location.replace("/signin");
+        return false;
+      }
     };
 
     // Initial auth check
@@ -76,10 +87,8 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
 
     // Prevent back navigation after logout
     const handlePopState = () => {
-      const currentToken =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
-      if (!currentToken) {
+      const currentUserData = localStorage.getItem("user");
+      if (!currentUserData) {
         // User logged out, prevent navigation back
         window.history.pushState(null, "", window.location.href);
         window.location.replace("/signin");
@@ -91,18 +100,16 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
 
     // Periodically check auth status (every 2 seconds)
     const authCheckInterval = setInterval(() => {
-      const currentToken =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
-      if (!currentToken) {
+      const currentUserData = localStorage.getItem("user");
+      if (!currentUserData) {
         window.location.replace("/signin");
       }
     }, 2000);
 
     // Listen for storage changes (logout in another tab)
     const handleStorageChange = (e: StorageEvent) => {
-      if ((e.key === "accessToken" || e.key === "authToken") && !e.newValue) {
-        // Token was removed, user logged out
+      if (e.key === "user" && !e.newValue) {
+        // User data was removed, user logged out
         window.location.replace("/signin");
       }
     };
