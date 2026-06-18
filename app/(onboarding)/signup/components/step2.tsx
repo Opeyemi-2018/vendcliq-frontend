@@ -265,6 +265,7 @@ export default function Step2({ onNext, onPrev, data }: Props) {
           </Button>
         </form>
       </Form>
+     
     </div>
   );
 }
