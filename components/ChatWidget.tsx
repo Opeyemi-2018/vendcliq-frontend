@@ -763,7 +763,9 @@ export default function AIChatWidget() {
       </div>
 
       {/* Floating button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div
+        className={`fixed bottom-6 right-6 z-50 ${isMobile && open ? "hidden" : ""}`}
+      >
         {!open && !historyOpen && (
           <span className="absolute bottom-0 right-0 w-14 h-14 rounded-full bg-[#0A6DC0] opacity-30 animate-ping pointer-events-none" />
         )}
@@ -784,10 +786,14 @@ export default function AIChatWidget() {
 
       {/* Chat panel */}
       <div
-        className={`fixed bottom-24 z-50 bg-white flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right
-  ${open && (!isMobile || (isMobile && !historyOpen)) ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-90 pointer-events-none"}
-  ${isMobile ? "left-4 right-4 w-auto" : "right-6 w-[380px] sm:w-[420px]"}`}
-        style={{ maxHeight: "calc(100vh - 140px)", height: 560 }}
+        className={`fixed z-50 bg-white flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right
+${open && (!isMobile || (isMobile && !historyOpen)) ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-90 pointer-events-none"}
+${isMobile ? "inset-0" : "bottom-24 right-6 w-[380px] sm:w-[420px]"}`}
+        style={
+          isMobile
+            ? undefined
+            : { maxHeight: "calc(100vh - 140px)", height: 560 }
+        }
         role="dialog"
         aria-label="AI sales assistant"
       >
