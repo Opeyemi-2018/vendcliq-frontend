@@ -108,18 +108,12 @@ export default function Step2({ onNext, onPrev, data }: Props) {
           toast.error("Authentication failed: No token received");
           return;
         }
-        if (userData) {
-          setUser(userData);
-        }
 
-        localStorage.setItem("accessToken", token);
-
+        if (userData) setUser(userData);
         localStorage.setItem("email", data.email!.toLowerCase().trim());
-
         toast.success(
           "Account created! Check your email for verification code",
         );
-
         onNext({
           password: values.password,
           confirmPassword: values.confirmPassword,
@@ -271,7 +265,6 @@ export default function Step2({ onNext, onPrev, data }: Props) {
           </Button>
         </form>
       </Form>
-      
     </div>
   );
 }

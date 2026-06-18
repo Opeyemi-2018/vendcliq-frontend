@@ -452,7 +452,10 @@ export async function POST(request: Request) {
       status: response.status,
     });
 
-    if (endpoint === AUTH_SIGNIN_PATH && responseData.status === "success") {
+    if (
+      (endpoint === AUTH_SIGNIN_PATH || endpoint === SIGN_UP) &&
+      responseData.status === "success"
+    ) {
       const token = responseData.data?.tokens?.accessToken?.token;
       if (token) {
         nextResponse.cookies.set("authToken", token, {
