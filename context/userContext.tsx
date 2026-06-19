@@ -239,13 +239,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const clearUserData = () => {
     setUserState(null);
     setVerificationStatusState(null);
-    setAttendantPermissionsState(null); // 👈
+    setAttendantPermissionsState(null); 
     setHasPin(false);
     localStorage.removeItem("user");
     localStorage.removeItem("verificationStatus");
     localStorage.removeItem("hasPin");
     localStorage.removeItem("wallet");
-    localStorage.removeItem("attendantPermissions"); // 👈
+    localStorage.removeItem("attendantPermissions"); 
   };
 
   // 👇 permission helpers — non-attendants get full access (true) by default

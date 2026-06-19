@@ -60,12 +60,9 @@ api.interceptors.request.use(
  * Response interceptor that handles:
  * 1. Authentication errors (401) - Redirects to logout
  * 2. Successful responses - Resets redirect tracking
- *
- * This ensures proper session handling and prevents redirect loops
  */
 api.interceptors.response.use(
   (response) => {
-    // Reset redirecting flag on successful response
     isRedirecting = false;
     return response;
   },
@@ -75,10 +72,23 @@ api.interceptors.response.use(
 
       // Handle authentication errors
       if (status === 401) {
-        // Prevent redirect loops
-        if (!isRedirecting) {
-          isRedirecting = true;
-          clearAuthTokens();
+        // ✅ Check if we have user data (meaning user was authenticated)
+        const userData = localStorage.getItem("user");
+
+        if (userData) {
+          // User was authenticated but token expired - redirect to signin
+          // Don't clear auth here - let the logout flow handle it
+          if (!isRedirecting) {
+            isRedirecting = true;
+            // ✅ Just redirect, don't clear tokens
+            window.location.href = "/signin";
+          }
+        } else {
+          // No user data - not authenticated
+          if (!isRedirecting) {
+            isRedirecting = true;
+            window.location.href = "/signin";
+          }
         }
       }
     }
@@ -87,32 +97,29 @@ api.interceptors.response.use(
 );
 
 /**
- * Clears authentication tokens and redirects to logout
- * This is called when authentication errors occur
- */
-/**
  * Clears authentication tokens and redirects to signin
  * This is called when user logs out or authentication errors occur
  */
 export const clearAuthTokens = () => {
   if (typeof window !== "undefined") {
+    // ✅ Only clear client-side data (localStorage/sessionStorage)
     localStorage.removeItem("user");
     localStorage.removeItem("wallet");
     localStorage.removeItem("verificationStatus");
     localStorage.removeItem("attendantPermissions");
+    localStorage.removeItem("hasPin");
 
     // Also clear sessionStorage
     sessionStorage.clear();
 
-    // Clear any cookies
-    document.cookie.split(";").forEach((cookie) => {
-      const eqPos = cookie.indexOf("=");
-      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+    // ✅ Only clear client-side cookies (not HTTP-only)
+    const clientCookies = ["userRole", "userPermissions"];
+    clientCookies.forEach((name) => {
       document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
     });
 
-    // Force redirect to signin
-    window.location.href = "/signin";
+    // ❌ DON'T redirect here - let the caller handle it
+    // window.location.href = "/signin";
   }
 };
 

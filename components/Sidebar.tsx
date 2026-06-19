@@ -172,6 +172,33 @@ export function AppSidebar() {
     }
   };
 
+  // Add this function inside the component
+  const handleLogout = async () => {
+    try {
+      // ✅ Call the logout API to clear HTTP-only cookies
+      await fetch("/api/auth/logout", {
+        method: "GET",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout API error:", error);
+    } finally {
+      // ✅ Clear client-side data
+      clearAuthTokens();
+
+      // ✅ Redirect to signin
+      window.location.href = "/signin";
+    }
+  };
+
+  // Update the AlertDialogAction to use handleLogout
+  <AlertDialogAction
+    onClick={handleLogout}
+    className="bg-white text-[#2F2F2F] hover:bg-[#0A6DC012] w-full sm:w-auto"
+  >
+    Yes, Log Out
+  </AlertDialogAction>;
+
   return (
     <Sidebar collapsible="icon">
       <SidebarContent
@@ -378,10 +405,7 @@ export function AppSidebar() {
                         No, Keep Vending
                       </AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={() => {
-                          clearAuthTokens();
-                          window.location.href = "/signin";
-                        }}
+                        onClick={handleLogout}
                         className="bg-white text-[#2F2F2F] hover:bg-[#0A6DC012] w-full sm:w-auto"
                       >
                         Yes, Log Out
