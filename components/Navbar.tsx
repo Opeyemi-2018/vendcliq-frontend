@@ -25,10 +25,10 @@ import {
 import { useUser } from "@/context/userContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar";
 import { Separator } from "@/components/ui/separator";
-import { clearAuthTokens } from "@/lib/utils/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { clearAuthTokens } from "@/lib/utils/api";
 
 const Navbar = () => {
   const { isAttendant } = useUser();
@@ -40,6 +40,27 @@ const Navbar = () => {
   const isCollapsed = state === "collapsed";
 
   const isUserWalletNull = user?.wallet === null;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      // Call the logout API to clear HTTP-only cookies
+      await fetch("/api/auth/logout", {
+        method: "GET",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout API error:", error);
+    } finally {
+      // Clear client-side data
+      clearAuthTokens();
+      // Redirect to signin
+      window.location.href = "/signin";
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -131,7 +152,7 @@ const Navbar = () => {
                   <span className="">Logout</span>
                 </SidebarMenuButton>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="">
                 <AlertDialogHeader>
                   <AlertDialogTitle className="font-clash font-semibold text-[25px]">
                     Log Out
@@ -145,10 +166,7 @@ const Navbar = () => {
                     No, Keep Vending
                   </AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={() => {
-                      clearAuthTokens();
-                      window.location.href = "/signin";
-                    }}
+                    onClick={handleLogout} 
                     className="bg-white text-[#2F2F2F] hover:bg-[#0A6DC012] w-full sm:w-auto"
                   >
                     Yes, Log Out
