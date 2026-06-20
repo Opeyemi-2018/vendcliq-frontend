@@ -7,13 +7,10 @@ import Image from "next/image";
 import {
   X,
   Search,
-  Store as StoreIcon,
   Check,
-  ChevronRight,
   Minus,
   Plus,
   User,
-  Tag,
   Package,
   ExternalLink,
   MapPin,
@@ -24,17 +21,12 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { ThreeDots } from "react-loader-spinner";
-import { getStores } from "@/actions/stores";
-import { getCustomers } from "@/actions/getcustomers";
-import { getStoreStock } from "@/actions/getUserStocks";
-import {
-  handleCreateInvoice,
-  handleCreateCustomer,
-} from "@/lib/utils/api/apiHelper";
+import { useStores, useStoreStocks } from "@/hooks/useStores";
+import { useCustomers, useCreateCustomer } from "@/hooks/useCustomers";
+import { useCreateInvoice } from "@/hooks/useInventoryOverview";
+
 import PlacesAutocompleteInput from "@/hooks/googleMap";
 import EditStockPriceModal from "./chunks/EditStockPriceModal";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Store {
   id: string;
@@ -125,10 +117,16 @@ const imgSrc = (src: string | null) => {
   return src.startsWith("//") ? `https:${src}` : src;
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 export default function SellPage() {
   const router = useRouter();
+  const createInvoiceMutation = useCreateInvoice();
+  const { data: customers = [], isLoading: customersLoading } = useCustomers();
+  const createCustomer = useCreateCustomer();
+  const {
+    data: allStores = [],
+    isLoading: storesLoading,
+    error: storesError,
+  } = useStores();
 
   const [editingDiscountIndex, setEditingDiscountIndex] = useState<
     number | null
@@ -138,14 +136,10 @@ export default function SellPage() {
     useState<StockItem | null>(null);
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
-  const [storesLoading, setStoresLoading] = useState(true);
   const [changeStoreOpen, setChangeStoreOpen] = useState(false);
   const [storeSearch, setStoreSearch] = useState("");
   const [pendingStore, setPendingStore] = useState<Store | null>(null);
 
-  // Stock
-  const [stock, setStock] = useState<StockItem[]>([]);
-  const [stockLoading, setStockLoading] = useState(false);
   const [stockSearch, setStockSearch] = useState("");
 
   // Active item (expanded product card)
@@ -186,8 +180,6 @@ export default function SellPage() {
     null,
   );
   const [selectCustomerOpen, setSelectCustomerOpen] = useState(false);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [customersLoading, setCustomersLoading] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
   const [pendingCustomer, setPendingCustomer] = useState<Customer | null>(null);
 
@@ -204,84 +196,25 @@ export default function SellPage() {
     address: "",
   });
 
-  // ── Fetch stores ─────────────────────────────────────────────────────────
-
-  const fetchStores = useCallback(async () => {
-    setStoresLoading(true);
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return toast.error("Please log in");
-      const result = await getStores(token);
-      if (result.success && result.data) {
-        const valid: Store[] = (result.data as Store[]).filter(
-          (s) => !s.credit_store,
-        );
-        setStores(valid);
-        if (valid.length > 0) setSelectedStore(valid[0]);
-      } else {
-        toast.error(result.error || "Failed to load stores");
-      }
-    } catch {
-      toast.error("Failed to load stores");
-    } finally {
-      setStoresLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchStores();
-  }, []);
+    if (!storesLoading && !storesError && allStores.length > 0) {
+      const valid: Store[] = (allStores as Store[]).filter(
+        (s) => !s.credit_store,
+      );
+      setStores(valid);
 
-  // ── Fetch stock when store changes ───────────────────────────────────────
-
-  const fetchStock = useCallback(async (storeId: string) => {
-    setStockLoading(true);
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-      const result = await getStoreStock(token, storeId);
-      if (result.success && result.data) {
-        setStock(result.data as StockItem[]);
-      } else {
-        setStock([]);
-        toast.error("Failed to load store stock");
+      // Only set selected store if none is selected yet
+      if (valid.length > 0 && !selectedStore) {
+        setSelectedStore(valid[0]);
       }
-    } catch {
-      toast.error("Network error loading stock");
-    } finally {
-      setStockLoading(false);
     }
-  }, []);
+  }, [allStores, storesError, storesLoading, selectedStore]);
 
-  useEffect(() => {
-    if (selectedStore) fetchStock(selectedStore.id);
-  }, [selectedStore]);
-
-  // ── Fetch customers ──────────────────────────────────────────────────────
-
-  const fetchCustomers = useCallback(async () => {
-    setCustomersLoading(true);
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-      const result = await getCustomers(token);
-      if (result.success && result.data) {
-        setCustomers(result.data as Customer[]);
-      } else {
-        toast.error("Failed to load customers");
-      }
-    } catch {
-      toast.error("Network error");
-    } finally {
-      setCustomersLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (selectCustomerOpen) fetchCustomers();
-  }, [selectCustomerOpen]);
-
-  // ── Active item helpers ──────────────────────────────────────────────────
+  const {
+    data: stock = [],
+    isLoading: stockLoading,
+    refetch: refetchStock,
+  } = useStoreStocks(selectedStore?.id || "");
 
   const openItem = (item: StockItem) => {
     setActiveStockId(item.id);
@@ -495,7 +428,7 @@ export default function SellPage() {
 
     setAddingCustomer(true);
     try {
-      const response = await handleCreateCustomer({
+      const response = await createCustomer.mutateAsync({
         name: newCustomer.name.trim(),
         phone: newCustomer.phone.trim(),
         email: newCustomer.email.trim(),
@@ -515,8 +448,6 @@ export default function SellPage() {
         setCustomerMode("registered");
         setAddCustomerOpen(false);
         setSelectCustomerOpen(false);
-
-        // Reset form
         setNewCustomer({
           name: "",
           email: "",
@@ -524,7 +455,6 @@ export default function SellPage() {
           type: "",
           address: "",
         });
-
         toast.success("Customer created successfully");
       } else {
         toast.error(response.error || "Failed to create customer");
@@ -537,14 +467,13 @@ export default function SellPage() {
   };
 
   // ── Create invoice ───────────────────────────────────────────────────────
-
   // ── Create invoice ───────────────────────────────────────────────────────
-
   const handleCreateInvoiceSubmit = async () => {
     if (!selectedStore) return toast.error("Select a store first");
     if (cart.length === 0) return toast.error("Add at least one item");
 
     setCreatingInvoice(true);
+
     try {
       const storeAddress = selectedStore.address || null;
 
@@ -553,18 +482,16 @@ export default function SellPage() {
           customerMode === "registered" ? selectedCustomer?.id || null : null,
         store_id: selectedStore.id,
         items: cart.map((ci) => {
-          // Send quantity as-is based on mode
           let quantityToSend;
           if (ci.mode === "PACKS") {
-            quantityToSend = ci.quantity; // Send packs (can be decimal like 3.5)
+            quantityToSend = ci.quantity;
           } else {
-            // PIECES mode - send pieces directly, no conversion
-            quantityToSend = ci.quantity; // Send pieces as whole number
+            quantityToSend = ci.quantity;
           }
 
           return {
             stock_id: ci.stock.id,
-            quantity: quantityToSend, // Send packs for PACKS mode, pieces for PIECES mode
+            quantity: quantityToSend,
             delivery: false,
             mode: ci.mode,
             discounted_amount: ci.discount,
@@ -581,94 +508,19 @@ export default function SellPage() {
         }),
       };
 
-      const response = await handleCreateInvoice(payload);
-      // ... rest of the code remains the same
+      const response = await createInvoiceMutation.mutateAsync(payload);
 
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Invoice created successfully!");
         const invoiceId = response.data?.id;
 
-        // Calculate additional data for the pay page
-        // Calculate additional data for the pay page
-        const totalQuantity = cart.reduce((sum, ci) => {
-          if (ci.mode === "PACKS") {
-            return sum + ci.quantity;
-          } else {
-            return sum + ci.quantity / ci.stock.product.items_per_pack;
-          }
-        }, 0);
-
-        const totalDiscountAmount = cart.reduce(
-          (sum, ci) => sum + ci.discount * ci.quantity,
-          0,
-        );
-
-        // SUBTOTAL = sum of all item subtotals (which already have discount applied to products)
-        const subTotal = cart.reduce((sum, ci) => sum + itemSubtotal(ci), 0);
-
-        // Empties Value - only when Empties sales mode is "SELL"
-        const emptiesValue = cart.reduce((sum, ci) => {
-          if (ci.empties > 0 && ci.emptiesMode === "SELL") {
-            return sum + parseFloat(ci.stock.empties_price) * ci.empties;
-          }
-          return sum;
-        }, 0);
-
-        // Empties Owed - sum of all Empties sold on credit
-        const emptiesOwed = cart.reduce((sum, ci) => {
-          if (ci.empties > 0 && ci.emptiesMode === "CREDIT") {
-            return sum + ci.empties;
-          }
-          return sum;
-        }, 0);
-
-        // TOTAL AMOUNT = subTotal - totalDiscountAmount (this is what customer pays)
-        const totalAmountPayable = subTotal;
-        // Store the additional data for pay page
-        const invoicePreviewData = {
-          invoiceId,
-          code: response.data?.code || "",
-          total: totalAmountPayable, // Use calculated total, not response.data?.total
-          items_count: response.data?.items_count || 0,
-          storeAddress: storeAddress?.name || selectedStore.name || "",
-          items: cart.map((ci, idx) => ({
-            id: idx.toString(),
-            stock_id: ci.stock.id,
-            product_id: idx,
-            quantity: ci.quantity,
-            cost: unitPrice(ci.stock, ci.mode),
-            discounted_amount: ci.discount,
-            sub_total: itemSubtotal(ci), // This already has discount applied to product only
-            mode: ci.mode,
-            sku: ci.stock.sku,
-            product_name: ci.stock.product.name,
-            product_image: ci.stock.product.image || "",
-            items_per_pack: ci.stock.product.items_per_pack,
-            empties: ci.empties,
-            emptiesMode: ci.emptiesMode,
-            empties_price: parseFloat(ci.stock.empties_price),
-          })),
-          totalQuantity,
-          totalDiscountAmount,
-          subTotal, // This is the subtotal BEFORE discount
-          emptiesValue,
-          emptiesOwed,
-          customerName: selectedCustomer?.name || null,
-          storeName: selectedStore.name,
-          storePhone: selectedStore.phone || "",
-        };
-
-        localStorage.setItem(
-          `invoice-preview-${invoiceId}`,
-          JSON.stringify(invoicePreviewData),
-        );
-
         router.push(`/inventory/sell/pay?invoiceId=${invoiceId}`);
       } else {
         toast.error(response.error || "Failed to create invoice");
       }
-    } catch {
-      toast.error("Failed to create invoice");
+    } catch (error: any) {
+      console.error("Invoice creation error:", error);
+      toast.error(error?.message || "Failed to create invoice");
     } finally {
       setCreatingInvoice(false);
     }
@@ -687,18 +539,13 @@ export default function SellPage() {
   );
 
   const filteredCustomers = customers.filter(
-    (c) =>
+    (c: Customer) =>
       c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
       c.phone.includes(customerSearch),
   );
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────────────────────────────────
-
   return (
     <div className="">
-      {/* Page header */}
       <div className="  pb-4">
         <h1 className="text-2xl md:text-3xl font-bold text-[#2F2F2F] font-clash">
           Sell
@@ -774,7 +621,7 @@ export default function SellPage() {
                   <div className="text-[13px] text-[#2F2F2F] flex items-center gap-2">
                     <p>Inventory value: </p>
                     <span className="text-[#9E9A9A]">
-                     ₦{selectedStore.stock_value?.toLocaleString()}{" "}
+                      ₦{selectedStore.stock_value?.toLocaleString()}{" "}
                       &nbsp;·&nbsp;
                     </span>{" "}
                   </div>
@@ -1341,27 +1188,37 @@ export default function SellPage() {
                     </div>
 
                     {ci.discount > 0 && (
-                      <div className="">
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-[#2F2F2F]">
-                            {fmt(ci.discount)}
-                          </p>
-                          <button
-                            onClick={() => {
-                              // Open discount edit modal for this cart item
-                              setEditingDiscountIndex(idx);
-                              setTempDiscount(ci.discount.toString());
-                              setDiscountModalOpen(true);
-                            }}
-                            className="text-[#C7C7CC] hover:text-[#09599a]"
-                            title="Edit Discount"
-                          >
-                            <Edit size={16} />
-                          </button>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-2">
+                            <p className="text-[#9E9A9A] text-[13px]">
+                              Discount per item:{" "}
+                            </p>
+                            <p className="font-bold text-[#2F2F2F]">
+                              {fmt(ci.discount)}
+                            </p>
+                            <button
+                              onClick={() => {
+                                // Open discount edit modal for this cart item
+                                setEditingDiscountIndex(idx);
+                                setTempDiscount(ci.discount.toString());
+                                setDiscountModalOpen(true);
+                              }}
+                              className="text-[#C7C7CC] hover:text-[#09599a]"
+                              title="Edit Discount"
+                            >
+                              <Edit size={16} />
+                            </button>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[#9E9A9A] text-[13px]">
+                              Total Discount:
+                            </p>
+                            <p className="font-bold text-[#2F2F2F]">
+                              {fmt(ci.discount * ci.quantity)}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-[#9E9A9A] text-[13px]">
-                          Discount Added:{" "}
-                        </p>
                       </div>
                     )}
                     {ci.empties > 0 && (
@@ -1400,7 +1257,9 @@ export default function SellPage() {
                 {totalDiscount > 0 && (
                   <div className="flex justify-between text-[#9E9A9A]">
                     <span>Total Discount</span>
-                    <span className="font-medium ">{fmt(totalDiscount)}</span>
+                    <span className="font-medium text-[#2F2F2F]">
+                      {fmt(totalDiscount)}
+                    </span>
                   </div>
                 )}
                 {totalEmpties > 0 && (
@@ -1423,7 +1282,7 @@ export default function SellPage() {
               disabled={creatingInvoice || cart.length === 0}
               className="w-full mt-4 bg-[#0A6DC0] hover:bg-[#09599a] text-white rounded-xl h-12 font-semibold text-base"
             >
-              {creatingInvoice ? "Creating..." : "Select Payment Method"}
+              {creatingInvoice ? "Creating..." : "Create Invoice"}
             </Button>
           </div>
         </div>
@@ -1631,7 +1490,7 @@ export default function SellPage() {
                 </div>
               ) : (
                 <div className="space-y-2 max-h-72 overflow-y-auto">
-                  {filteredCustomers.map((c) => (
+                  {filteredCustomers.map((c: Customer) => (
                     <div
                       key={c.id}
                       onClick={() => setPendingCustomer(c)}
@@ -1827,6 +1686,7 @@ export default function SellPage() {
       )}
 
       {/* Edit Price Modal */}
+      {/* Edit Price Modal */}
       {selectedStockForPrice && (
         <EditStockPriceModal
           isOpen={priceModalOpen}
@@ -1843,8 +1703,36 @@ export default function SellPage() {
           onSuccess={async () => {
             // Refresh stock data to get updated prices
             if (selectedStore) {
-              await fetchStock(selectedStore.id);
+              const result = await refetchStock();
+              const updatedStockData = result.data;
+
+              if (updatedStockData) {
+                // Find the updated stock item
+                const updatedStock = updatedStockData.find(
+                  (s: StockItem) => s.id === selectedStockForPrice.id,
+                );
+
+                if (updatedStock) {
+                  // Update the selectedStockForPrice state so the modal gets new prices next time
+                  setSelectedStockForPrice(updatedStock);
+
+                  // Update cart items with new stock prices
+                  setCart((prevCart) =>
+                    prevCart.map((cartItem) => {
+                      if (cartItem.stock.id === selectedStockForPrice.id) {
+                        return {
+                          ...cartItem,
+                          stock: updatedStock,
+                        };
+                      }
+                      return cartItem;
+                    }),
+                  );
+                }
+              }
             }
+            setPriceModalOpen(false);
+            setSelectedStockForPrice(null);
           }}
         />
       )}

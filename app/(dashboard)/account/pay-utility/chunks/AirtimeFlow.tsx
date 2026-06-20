@@ -44,8 +44,11 @@ import {
 
 import { airtimeSchema, AirtimeFormData } from "@/types/utilityBills";
 import { Separator } from "@/components/ui/separator";
-import { getNetworkProvider } from "@/actions/utility";
-import { handleValidatePin, handleBuyAirtime } from "@/lib/utils/api/apiHelper";
+import {
+  handleValidatePin,
+  handleBuyAirtime,
+  getNetworkProvider,
+} from "@/lib/utils/api/apiHelper";
 import { generateIdempotencyKey } from "@/lib/utils/generateIdempotencyKey";
 import { ClipLoader } from "react-spinners";
 import CreatePinPrompt from "@/components/SetPinModal";
@@ -99,24 +102,22 @@ export default function AirtimeFlow() {
         setNetworkError(null);
         setDetectedNetwork(null);
 
-        const token =
-          localStorage.getItem("accessToken") ||
-          localStorage.getItem("authToken");
+        try {
+          const result = await getNetworkProvider(cleanPhone);
+          const innerData = result?.data?.data?.data;
 
-        if (!token) {
-          setNetworkError("Please log in to detect network");
-          setNetworkLoading(false);
-          return;
-        }
-
-        const result = await getNetworkProvider(token, cleanPhone);
-
-        if (result.success && result.network) {
-          setDetectedNetwork(result.network);
-          setValue("network", result.network);
-          toast.success(`Network detected: ${result.network}`);
-        } else {
-          setNetworkError(result.error || "Could not detect network");
+          if (result.status === "success" && innerData?.network) {
+            const network = innerData.network.trim().toUpperCase();
+            setDetectedNetwork(network);
+            setValue("network", network);
+            toast.success(`Network detected: ${network}`);
+          } else {
+            setNetworkError(result.msg || "Could not detect network");
+          }
+        } catch (err: any) {
+          setNetworkError(
+            err?.response?.data?.msg || "Network error. Please try again.",
+          );
         }
 
         setNetworkLoading(false);

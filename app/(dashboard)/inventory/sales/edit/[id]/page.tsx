@@ -19,14 +19,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { ThreeDots } from "react-loader-spinner";
-import { getStores } from "@/actions/stores";
-import { getCustomers } from "@/actions/getcustomers";
-import { getStoreStock } from "@/actions/getUserStocks";
-import {
-  getSaleById,
-  handleUpdateInvoice,
-  handleCreateCustomer,
-} from "@/lib/utils/api/apiHelper";
+import { useStores } from "@/hooks/useStores";
+import { getCustomers, getStoreStock } from "@/lib/utils/api/apiHelper";
+import { getSaleById, handleCreateCustomer } from "@/lib/utils/api/apiHelper";
+import { useUpdateInvoice } from "@/hooks/useInventoryOverview";
+
 import PlacesAutocompleteInput from "@/hooks/googleMap";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -125,11 +122,18 @@ export default function EditInvoicePage() {
   const [serverAmountPayable, setServerAmountPayable] = useState<number | null>(
     null,
   );
+  const updateInvoiceMutation = useUpdateInvoice();
 
+  const {
+    data: allStores = [],
+    isLoading: storesLoading,
+    error: storesError,
+  } = useStores();
+
+  // Remove: const [storesLoading, setStoresLoading] = useState(true);
   // Store
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
-  const [storesLoading, setStoresLoading] = useState(true);
   const [changeStoreOpen, setChangeStoreOpen] = useState(false);
   const [storeSearch, setStoreSearch] = useState("");
   const [pendingStore, setPendingStore] = useState<Store | null>(null);
@@ -190,28 +194,16 @@ export default function EditInvoicePage() {
     address: "",
   });
 
-  // Fetch stores
-  const fetchStores = useCallback(async () => {
-    setStoresLoading(true);
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return toast.error("Please log in");
-      const result = await getStores(token);
-      if (result.success && result.data) {
-        const valid: Store[] = (result.data as Store[]).filter(
-          (s) => !s.credit_store,
-        );
-        setStores(valid);
-      } else {
-        toast.error(result.error || "Failed to load stores");
-      }
-    } catch {
-      toast.error("Failed to load stores");
-    } finally {
-      setStoresLoading(false);
+  useEffect(() => {
+    if (storesError) {
+      toast.error(storesError.message || "Failed to load stores");
+    } else if (allStores.length > 0) {
+      const valid: Store[] = (allStores as Store[]).filter(
+        (s) => !s.credit_store,
+      );
+      setStores(valid);
     }
-  }, []);
-
+  }, [allStores, storesError]);
   const fetchInvoice = useCallback(async () => {
     if (storesLoading || stores.length === 0) {
       return;
@@ -220,9 +212,6 @@ export default function EditInvoicePage() {
     setIsLoadingInvoice(true);
 
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-
       const result = await getSaleById(invoiceId);
       if (result.statusCode === 200 && result.data) {
         const invoice = result.data;
@@ -256,8 +245,8 @@ export default function EditInvoicePage() {
             setSelectedStore(store);
 
             // Fetch stock for this store
-            const stockResult = await getStoreStock(token, store.id);
-            if (stockResult.success && stockResult.data) {
+            const stockResult = await getStoreStock(store.id);
+            if (stockResult?.data) {
               const stockData = stockResult.data as StockItem[];
               setStock(stockData);
 
@@ -326,8 +315,8 @@ export default function EditInvoicePage() {
             setSelectedStore(store);
 
             // Still fetch stock for this store
-            const stockResult = await getStoreStock(token, store.id);
-            if (stockResult.success && stockResult.data) {
+            const stockResult = await getStoreStock(store.id);
+            if (stockResult?.data) {
               const stockData = stockResult.data as StockItem[];
               setStock(stockData);
 
@@ -402,24 +391,12 @@ export default function EditInvoicePage() {
     }
   }, [storesLoading, stores.length, fetchInvoice]);
 
-  useEffect(() => {
-    fetchStores();
-  }, []);
-
-  useEffect(() => {
-    if (stores.length > 0 && !storesLoading) {
-      fetchInvoice();
-    }
-  }, [stores, storesLoading, fetchInvoice]);
-
   // Fetch stock when store changes (for adding new items)
   const fetchStock = useCallback(async (storeId: string) => {
     setStockLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-      const result = await getStoreStock(token, storeId);
-      if (result.success && result.data) {
+      const result = await getStoreStock(storeId);
+      if (result?.data) {
         setStock(result.data as StockItem[]);
       } else {
         setStock([]);
@@ -436,10 +413,8 @@ export default function EditInvoicePage() {
   const fetchCustomers = useCallback(async () => {
     setCustomersLoading(true);
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-      const result = await getCustomers(token);
-      if (result.success && result.data) {
+      const result = await getCustomers();
+      if (result?.data) {
         setCustomers(result.data as Customer[]);
       } else {
         toast.error("Failed to load customers");
@@ -680,19 +655,21 @@ export default function EditInvoicePage() {
         })),
       };
 
-      const response = await handleUpdateInvoice(invoiceId, payload);
+      const response = await updateInvoiceMutation.mutateAsync({
+        invoiceId,
+        payload,
+      });
 
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Invoice updated successfully!");
 
-        // Use LOCAL calculations as source of truth for preview
         const calculatedTotal = cart.reduce((s, ci) => s + itemSubtotal(ci), 0);
-        const calculatedSubTotal = calculatedTotal; // since discounts are already applied in itemSubtotal
+        const calculatedSubTotal = calculatedTotal;
 
         const invoicePreviewData = {
           invoiceId,
           code: response.data?.code || "",
-          total: calculatedTotal, // ← Use local calc
+          total: calculatedTotal,
           items_count: cart.length,
           storeAddress: storeAddress?.name || selectedStore.name || "",
           items: cart.map((ci, idx) => ({

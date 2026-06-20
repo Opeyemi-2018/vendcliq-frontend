@@ -2,8 +2,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { getCartData, updateCartItem, deleteCartItem } from "@/actions/cart";
-import { handleCheckoutCart } from "@/lib/utils/api/apiHelper";
+import {
+  getCartData,
+  updateCartItem,
+  deleteCartItem,
+  handleCheckoutCart,
+} from "@/lib/utils/api/apiHelper";
 import { Plus, Minus, Trash2, ShoppingCart, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -63,21 +67,9 @@ const Cart = () => {
 
   const fetchCart = useCallback(async () => {
     try {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
       setLoading(true);
-      const result = await getCartData(token);
-      if (result.success) {
-        setCartItems(result.data || []);
-      } else {
-        toast.error(result.error || "Failed to load cart");
-      }
+      const result = await getCartData();
+      setCartItems(result.data || []);
     } catch (error) {
       console.error("Error fetching cart:", error);
       toast.error("Failed to load cart");
@@ -85,34 +77,20 @@ const Cart = () => {
       setLoading(false);
     }
   }, []);
-
   useEffect(() => {
     fetchCart();
   }, [fetchCart]);
 
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
     if (newQuantity < 1) return;
-
     try {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
-      if (!token) return toast.error("Please log in");
-
       setUpdatingQuantityId(itemId);
-      const result = await updateCartItem(token, itemId, {
-        quantity: newQuantity,
-      });
-
-      if (result.success) {
-        setCartItems((prev) =>
-          prev.map((item) =>
-            item.id === itemId ? { ...item, quantity: newQuantity } : item,
-          ),
-        );
-      } else {
-        toast.error(result.error || "Failed to update quantity");
-      }
+      await updateCartItem(itemId, { quantity: newQuantity });
+      setCartItems((prev) =>
+        prev.map((item) =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item,
+        ),
+      );
     } catch {
       toast.error("Failed to update quantity");
     } finally {
@@ -122,25 +100,13 @@ const Cart = () => {
 
   const handleToggleDelivery = async (itemId: string, current: boolean) => {
     try {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
-      if (!token) return toast.error("Please log in");
-
       setUpdatingDeliveryId(itemId);
-      const result = await updateCartItem(token, itemId, {
-        delivery: !current,
-      });
-
-      if (result.success) {
-        setCartItems((prev) =>
-          prev.map((item) =>
-            item.id === itemId ? { ...item, delivery: !current } : item,
-          ),
-        );
-      } else {
-        toast.error(result.error || "Failed to update delivery");
-      }
+      await updateCartItem(itemId, { delivery: !current });
+      setCartItems((prev) =>
+        prev.map((item) =>
+          item.id === itemId ? { ...item, delivery: !current } : item,
+        ),
+      );
     } catch {
       toast.error("Failed to update delivery");
     } finally {
@@ -150,18 +116,10 @@ const Cart = () => {
 
   const handleDelete = async (itemId: string) => {
     try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return toast.error("Please log in");
-
       setDeletingId(itemId);
-      const result = await deleteCartItem(token, itemId);
-
-      if (result.success) {
-        setCartItems((prev) => prev.filter((item) => item.id !== itemId));
-        toast.success("Item removed from cart");
-      } else {
-        toast.error(result.error || "Failed to remove item");
-      }
+      await deleteCartItem(itemId);
+      setCartItems((prev) => prev.filter((item) => item.id !== itemId));
+      toast.success("Item removed from cart");
     } catch {
       toast.error("Failed to remove item");
     } finally {
@@ -353,9 +311,7 @@ const Cart = () => {
                         </DialogHeader>
                         <DialogFooter>
                           <DialogClose asChild>
-                            <Button variant="outline">
-                              Cancel
-                            </Button>
+                            <Button variant="outline">Cancel</Button>
                           </DialogClose>
                           <Button
                             variant="destructive"

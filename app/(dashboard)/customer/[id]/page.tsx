@@ -2,12 +2,8 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import {
-  handleGetCustomerById,
-  handleReturnCustomerEmpties,
-} from "@/lib/utils/api/apiHelper";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -28,7 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { MoveLeft } from "lucide-react";
 import Image from "next/image";
-import { ThreeDots } from "react-loader-spinner";
+import { useCustomerEmpties, useReturnCustomerEmpties } from "@/hooks/useCustomers";
 
 interface EmptyRecord {
   id: string;
@@ -62,36 +58,13 @@ export default function CustomerEmptiesPage() {
   const customerId = (params?.id ?? params?.customerId) as string;
   const router = useRouter();
 
-  const [customer, setCustomer] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: empties = [], customer, isLoading, error } = useCustomerEmpties(customerId);
+  const returnEmpties = useReturnCustomerEmpties();
 
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [selectedEmpty, setSelectedEmpty] = useState<EmptyRecord | null>(null);
   const [returnQty, setReturnQty] = useState<string>("");
   const [notes, setNotes] = useState("");
-  const [isSubmittingReturn, setIsSubmittingReturn] = useState(false);
-
-  useEffect(() => {
-    if (customerId) loadCustomer();
-  }, [customerId]);
-
-  const loadCustomer = async () => {
-    setLoading(true);
-    try {
-      const res = await handleGetCustomerById(customerId);
-      if (res?.statusCode === 200 && res?.data) {
-        setCustomer(res.data);
-      } else {
-        toast.error(res?.error || "Failed to load customer details");
-      }
-    } catch (err: any) {
-      toast.error(
-        err?.message || err?.error || "Could not fetch customer data",
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const openReturnModal = (item: EmptyRecord) => {
     setSelectedEmpty(item);
@@ -104,73 +77,40 @@ export default function CustomerEmptiesPage() {
     if (!customerId || !selectedEmpty || !returnQty) return;
 
     const qty = parseInt(returnQty, 10);
+    const remaining = getRemainingQty(selectedEmpty);
+
+    if (qty > remaining) {
+      toast.error(`Cannot return more than ${remaining} units`);
+      return;
+    }
 
     try {
-      setIsSubmittingReturn(true);
-      const res = await handleReturnCustomerEmpties(
+      await returnEmpties.mutateAsync({
         customerId,
-        selectedEmpty.id,
-        {
+        emptiesId: selectedEmpty.id,
+        payload: {
           quantityReturned: qty,
           notes: notes.trim() || "Customer returned empties",
         },
-      );
-
-      if ([200, 201].includes(res?.statusCode)) {
-        toast.success("Empties returned successfully");
-        setReturnDialogOpen(false);
-
-        // ✅ Instantly update the empties in local state
-        setCustomer((prev: any) => ({
-          ...prev,
-          customer_empties: prev.customer_empties.map((empty: EmptyRecord) => {
-            if (empty.id !== selectedEmpty.id) return empty;
-
-            const returned = qty;
-            const prevReturned = getReturnedQty(empty);
-            const prevOriginal = getOriginalQty(empty);
-
-            return {
-              ...empty,
-              attributes: {
-                ...empty.attributes,
-                originalQuantity: prevOriginal,
-                totalQuantityReturned: prevReturned + returned,
-                remainingQuantity: prevOriginal - (prevReturned + returned),
-              },
-            };
-          }),
-        }));
-      } else {
-        toast.error(res?.error || "Return failed");
-      }
+      });
+      toast.success("Empties returned successfully");
+      setReturnDialogOpen(false);
     } catch (err: any) {
       toast.error(err?.message || err?.error || "Error processing return");
-    } finally {
-      setIsSubmittingReturn(false);
     }
   };
-  if (loading) {
-    return (
-      <div className="flex min-h-[70vh] items-center justify-center flex-col gap-4">
-        <ThreeDots height="80" width="80" color="#0A6DC0" visible />
-        <p className="text-muted-foreground">Loading empties data...</p>
-      </div>
-    );
-  }
 
-  if (!customer) {
+  if (error) {
     return (
       <div className="flex min-h-[70vh] flex-col items-center justify-center gap-6">
-        <h2 className="text-2xl font-bold">Customer not found</h2>
+        <h2 className="text-2xl font-bold">Error loading customer</h2>
+        <p className="text-muted-foreground">{error.message}</p>
         <Button variant="outline" onClick={() => router.back()}>
           ← Go Back
         </Button>
       </div>
     );
   }
-
-  const empties: EmptyRecord[] = customer?.customer_empties ?? [];
 
   return (
     <div className="">
@@ -181,10 +121,10 @@ export default function CustomerEmptiesPage() {
         <div>
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-[#2F2F2F] font-clash">
-              {customer.name}
+              {customer?.name || "Customer"}
             </h1>
             <p className="text-[#9E9A9A] font-medium">
-              View {customer.name} empties details
+              View {customer?.name || "customer"} empties details
             </p>
           </div>
         </div>
@@ -203,8 +143,8 @@ export default function CustomerEmptiesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
-              Array.from({ length: 5 }).map((_, i) => (
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
                 <TableRow key={i}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -215,25 +155,17 @@ export default function CustomerEmptiesPage() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="h-3 w-20 bg-muted animate-pulse rounded" />
-                  </TableCell>
-                  <TableCell>
-                    <div className="h-3 w-10 bg-muted animate-pulse rounded" />
-                  </TableCell>
-                  <TableCell>
-                    <div className="h-3 w-10 bg-muted animate-pulse rounded" />
-                  </TableCell>
-                  <TableCell>
-                    <div className="h-3 w-10 bg-muted animate-pulse rounded" />
-                  </TableCell>
+                  <TableCell><div className="h-3 w-20 bg-muted animate-pulse rounded" /></TableCell>
+                  <TableCell><div className="h-3 w-10 bg-muted animate-pulse rounded" /></TableCell>
+                  <TableCell><div className="h-3 w-10 bg-muted animate-pulse rounded" /></TableCell>
+                  <TableCell><div className="h-3 w-10 bg-muted animate-pulse rounded" /></TableCell>
                   <TableCell className="text-right pr-6">
                     <div className="h-8 w-16 bg-muted animate-pulse rounded ml-auto" />
                   </TableCell>
                 </TableRow>
               ))
             ) : empties.length > 0 ? (
-              empties.map((item) => {
+              empties.map((item: EmptyRecord) => {
                 const remaining = getRemainingQty(item);
                 return (
                   <TableRow key={item.id} className="hover:bg-muted/30">
@@ -265,7 +197,6 @@ export default function CustomerEmptiesPage() {
                         </div>
                       </div>
                     </TableCell>
-
                     <TableCell>
                       {new Date(item.created_at).toLocaleDateString("en-GB", {
                         day: "numeric",
@@ -273,21 +204,11 @@ export default function CustomerEmptiesPage() {
                         year: "numeric",
                       })}
                     </TableCell>
-
                     <TableCell>{getOriginalQty(item)}</TableCell>
-
                     <TableCell>{getReturnedQty(item)}</TableCell>
-
-                    <TableCell
-                      className={
-                        remaining > 0
-                          ? "font-semibold text-emerald-700"
-                          : "text-muted-foreground"
-                      }
-                    >
+                    <TableCell className={remaining > 0 ? "font-semibold text-emerald-700" : "text-muted-foreground"}>
                       {remaining}
                     </TableCell>
-
                     <TableCell className="text-right pr-6">
                       {remaining > 0 ? (
                         <Button
@@ -308,10 +229,7 @@ export default function CustomerEmptiesPage() {
               })
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="h-64 text-center text-muted-foreground"
-                >
+                <TableCell colSpan={6} className="h-64 text-center text-muted-foreground">
                   No empty records for this customer yet.
                 </TableCell>
               </TableRow>
@@ -320,14 +238,13 @@ export default function CustomerEmptiesPage() {
         </Table>
       </div>
 
-      {/* Return Modal — pre-filled from the clicked row, no select */}
+      {/* Return Modal */}
       <Dialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
         <DialogContent className="sm:max-w-md bg-white">
           <DialogHeader>
             <DialogTitle>Return Empties</DialogTitle>
             <DialogDescription>
-              {selectedEmpty?.stock?.product?.name || "Product"} —{" "}
-              {customer.name}
+              {selectedEmpty?.stock?.product?.name || "Product"} — {customer?.name}
             </DialogDescription>
           </DialogHeader>
 
@@ -341,9 +258,7 @@ export default function CustomerEmptiesPage() {
                     width={48}
                     height={48}
                     className="h-12 w-12 rounded-md border object-contain bg-white p-1 shrink-0"
-                    onError={(e) =>
-                      (e.currentTarget.src = "/placeholder-image.png")
-                    }
+                    onError={(e) => (e.currentTarget.src = "/placeholder-image.png")}
                   />
                 ) : (
                   <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center text-xs text-muted-foreground shrink-0">
@@ -360,19 +275,14 @@ export default function CustomerEmptiesPage() {
                 </div>
               </div>
 
-              {/* Qty breakdown */}
               <div className="grid grid-cols-3 gap-3 text-sm">
                 <div className="p-3 rounded-lg bg-muted/40 border text-center">
                   <p className="text-muted-foreground mb-0.5">Original</p>
-                  <p className="font-semibold text-base">
-                    {getOriginalQty(selectedEmpty)}
-                  </p>
+                  <p className="font-semibold text-base">{getOriginalQty(selectedEmpty)}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-muted/40 border text-center">
                   <p className="text-muted-foreground mb-0.5">Returned</p>
-                  <p className="font-semibold text-base">
-                    {getReturnedQty(selectedEmpty)}
-                  </p>
+                  <p className="font-semibold text-base">{getReturnedQty(selectedEmpty)}</p>
                 </div>
                 <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-center">
                   <p className="text-muted-foreground mb-0.5">Remaining</p>
@@ -383,9 +293,7 @@ export default function CustomerEmptiesPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Quantity to Return
-                </label>
+                <label className="text-sm font-medium">Quantity to Return</label>
                 <input
                   type="number"
                   min={1}
@@ -400,13 +308,9 @@ export default function CustomerEmptiesPage() {
                 </p>
               </div>
 
-              {/* Notes */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">
-                  Notes{" "}
-                  <span className="text-muted-foreground font-normal">
-                    (optional)
-                  </span>
+                  Notes <span className="text-muted-foreground font-normal">(optional)</span>
                 </label>
                 <Textarea
                   value={notes}
@@ -422,16 +326,16 @@ export default function CustomerEmptiesPage() {
             <Button
               variant="outline"
               onClick={() => setReturnDialogOpen(false)}
-              disabled={isSubmittingReturn}
+              disabled={returnEmpties.isPending}
             >
               Cancel
             </Button>
             <Button
               onClick={handleSubmitReturn}
-              disabled={!returnQty || isSubmittingReturn}
+              disabled={!returnQty || returnEmpties.isPending}
               className="bg-[#0A6DC0] hover:bg-[#09599a]"
             >
-              {isSubmittingReturn ? "Submitting..." : "Confirm Return"}
+              {returnEmpties.isPending ? "Submitting..." : "Confirm Return"}
             </Button>
           </DialogFooter>
         </DialogContent>

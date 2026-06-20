@@ -42,23 +42,23 @@ const formatValidationErrors = (errors: any[]): string => {
 // Helper function to format phone number - remove country code for backend
 const formatPhoneForBackend = (phone: string): string => {
   // Remove all non-digit characters
-  const digitsOnly = phone.replace(/\D/g, '');
-  
+  const digitsOnly = phone.replace(/\D/g, "");
+
   // If it starts with country code (234 for Nigeria), remove it
-  if (digitsOnly.startsWith('234')) {
+  if (digitsOnly.startsWith("234")) {
     return digitsOnly.substring(3);
   }
-  
+
   // If it starts with 0, remove it
-  if (digitsOnly.startsWith('0')) {
+  if (digitsOnly.startsWith("0")) {
     return digitsOnly.substring(1);
   }
-  
+
   return digitsOnly;
 };
 
 const AddAttendant = () => {
-  const { stores } = useStores();
+  const { data: stores = [] } = useStores();
   const [showPassword, setShowPassword] = useState(false);
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -89,7 +89,7 @@ const AddAttendant = () => {
     try {
       // Format phone number - remove country code
       const formattedPhone = formatPhoneForBackend(data.phone);
-      
+
       const payload = {
         firstname: data.firstname.trim(),
         lastname: data.lastname.trim(),
@@ -163,7 +163,7 @@ const AddAttendant = () => {
         }
       } else {
         toast.error(
-          error?.message || "Failed to create attendant. Please try again."
+          error?.message || "Failed to create attendant. Please try again.",
         );
       }
     }

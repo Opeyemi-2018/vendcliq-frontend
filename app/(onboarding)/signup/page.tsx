@@ -24,8 +24,8 @@ export default function SignupPage() {
     try {
       const savedData = localStorage.getItem("signupFormData");
       const savedStep = localStorage.getItem("signupStep");
-      const accessToken = localStorage.getItem("accessToken");
-      const authToken = localStorage.getItem("authToken");
+      // ✅ Check for user data instead of tokens
+      const userData = localStorage.getItem("user");
 
       if (savedData && savedStep) {
         const parsedData = JSON.parse(savedData);
@@ -33,13 +33,13 @@ export default function SignupPage() {
 
         setData(parsedData);
 
-        // If step is 1 or 2 (before signup API), restore without checking tokens
+        // If step is 1 or 2 (before signup API), restore without checking auth
         if (stepNum <= 2) {
           setStep(stepNum);
           isRestoredSession.current = true;
         }
-        // If step is 3+ (after signup API), only restore if tokens exist
-        else if (stepNum >= 3 && (accessToken || authToken)) {
+        // If step is 3+ (after signup API), only restore if user is authenticated
+        else if (stepNum >= 3 && userData) {
           setStep(stepNum);
           isRestoredSession.current = true;
         }
@@ -76,8 +76,6 @@ export default function SignupPage() {
     setData((prev) => ({ ...prev, ...newData }));
 
     if (step === 8) {
-      // Final step → go to congrats page (handled in Step8 component)
-      // Clear signup progress is done in Step8 after API success
       return;
     } else {
       setStep((s) => s + 1);

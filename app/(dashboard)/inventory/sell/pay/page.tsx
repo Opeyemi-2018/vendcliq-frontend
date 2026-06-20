@@ -29,6 +29,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePaymentSocket } from "@/hooks/invoiceSocket";
 import { useUser } from "@/context/userContext";
+import { useSaleInvoice } from "@/hooks/useInventoryOverview"; // Add this import
 
 type PaymentType = "TRANSFER" | "CASH" | "CREDIT";
 
@@ -48,6 +49,7 @@ interface TransferDetails {
   expectedAmount?: number;
 }
 
+// Update InvoicePreviewItem to match API response
 interface InvoicePreviewItem {
   id: string;
   stock_id: string;
@@ -57,11 +59,6 @@ interface InvoicePreviewItem {
   discounted_amount: number;
   sub_total: number;
   mode: "PACKS" | "PIECES";
-  attributes?: {
-    latitude?: number;
-    longitude?: number;
-    address?: string;
-  };
   sku: string;
   product_name: string;
   product_image: string;
@@ -76,8 +73,6 @@ interface InvoicePreview {
   items_count: number;
   code: string;
   total: number;
-  empties_value?: number;
-  status: string;
   storeAddress: string;
   storeName: string;
   storePhone: string;
@@ -138,6 +133,9 @@ function PayInvoiceContent() {
 
   const invoiceId = searchParams.get("invoiceId");
 
+  // Use the hook to fetch invoice data
+  const { data: invoice, isLoading, error } = useSaleInvoice(invoiceId || "");
+
   const [loading, setLoading] = useState(false);
   const [paymentType, setPaymentType] = useState<PaymentType>("TRANSFER");
   const [formData, setFormData] = useState<PayFormData>({
@@ -150,42 +148,51 @@ function PayInvoiceContent() {
     useState<TransferDetails | null>(null);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [invoicePreview, setInvoicePreview] = useState<InvoicePreview | null>(
-    null,
-  );
   const [dueDate, setDueDate] = useState<string>("");
 
   const { subscribeToInvoice, isConnected } = usePaymentSocket();
 
-  useEffect(() => {
-    if (invoiceId) {
-      const saved = localStorage.getItem(`invoice-preview-${invoiceId}`);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved) as InvoicePreview;
-          setInvoicePreview(parsed);
-        } catch (err) {
-          console.error("Failed to parse invoice preview:", err);
-          toast.error("Failed to load invoice details");
-        }
-      } else {
-        toast.error("No invoice preview found");
+  // Transform API response to InvoicePreview format
+  const invoicePreview: InvoicePreview | null = invoice
+    ? {
+        invoiceId: invoice.id,
+        code: invoice.code,
+        total: invoice.amount_payable,
+        items_count: invoice.items_count,
+        storeAddress: invoice.store?.address?.name || "",
+        storeName: invoice.store?.name || "",
+        storePhone: invoice.store?.phone || "",
+        items: invoice.items.map((item) => ({
+          id: item.id,
+          stock_id: item.stock_id.toString(),
+          product_id: item.product_id,
+          quantity: parseFloat(item.quantity as any), // quantity is string "3.00" -> convert to number
+          cost: item.stock.price, // Use stock.price instead of item.cost
+          discounted_amount: item.discounted_amount,
+          sub_total: item.sub_total,
+          mode: item.mode as "PACKS" | "PIECES",
+          sku: item.stock.sku,
+          product_name: item.product.name,
+          product_image: item.product.image || "",
+          items_per_pack: 1,
+          empties: item.empties || 0,
+          emptiesMode: null,
+          empties_price: 0,
+        })),
+        totalQuantity: invoice.total_quantity,
+        totalDiscountAmount: invoice.total_discount,
+        subTotal: invoice.sub_total,
+        emptiesValue: invoice.empties_value,
+        emptiesOwed: invoice.empties_owed,
+        customerName: invoice.customer?.name || null,
       }
-    }
-  }, [invoiceId]);
-
-  const cleanupPreview = () => {
-    if (invoiceId) {
-      localStorage.removeItem(`invoice-preview-${invoiceId}`);
-    }
-  };
+    : null;
 
   const handleSelectPaymentType = (type: PaymentType) => {
     setPaymentType(type);
     setMobileStep("details");
   };
 
-  // AFTER (correct):
   const handlePayment = async () => {
     if (paymentType === "CREDIT" && !dueDate) {
       toast.error("Please select a due date for credit sale");
@@ -221,7 +228,6 @@ function PayInvoiceContent() {
             subscribeToInvoice(invoiceId!);
           } else {
             toast.info("Transfer initialized!");
-            cleanupPreview();
             setShowSuccessModal(true);
           }
         } else {
@@ -233,7 +239,6 @@ function PayInvoiceContent() {
             setOtpDueDate(dueDate);
             setShowCreditOtpModal(true);
           } else {
-            cleanupPreview();
             setShowSuccessModal(true);
             toast.success(
               response.data?.message || "Payment recorded successfully!",
@@ -251,11 +256,10 @@ function PayInvoiceContent() {
   };
 
   const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return; // digits only
+    if (!/^\d*$/.test(value)) return;
     const updated = [...otpValues];
-    updated[index] = value.slice(-1); // one char per box
+    updated[index] = value.slice(-1);
     setOtpValues(updated);
-    // auto-focus next box
     if (value && index < 5) {
       const next = document.getElementById(`otp-box-${index + 1}`);
       (next as HTMLInputElement)?.focus();
@@ -290,7 +294,6 @@ function PayInvoiceContent() {
       });
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success(response.data?.message || "Credit sale completed!");
-        cleanupPreview();
         setShowCreditOtpModal(false);
         router.push("/credit-ledger");
       } else {
@@ -317,11 +320,27 @@ function PayInvoiceContent() {
     );
   }
 
-  if (!invoicePreview) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center flex-col gap-4">
         <ClipLoader color="#0A6DC0" size={40} />
         <p className="text-gray-600">Loading invoice details...</p>
+      </div>
+    );
+  }
+
+  if (error || !invoicePreview) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-red-500">
+            {error?.message || "Invoice not found"}
+          </p>
+          <Button onClick={() => router.back()} variant="outline">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Go Back
+          </Button>
+        </div>
       </div>
     );
   }
@@ -410,7 +429,8 @@ function PayInvoiceContent() {
               </div>
               <div className="text-right">
                 <p className="font-medium">
-                  ₦{(item.cost * item.quantity).toLocaleString()}
+                  ₦{item.sub_total.toLocaleString()}{" "}
+                  {/* Use sub_total directly */}
                 </p>
                 <p className="text-xs text-gray-500">
                   @ ₦{item.cost.toLocaleString()}/
@@ -510,7 +530,7 @@ function PayInvoiceContent() {
   );
 
   return (
-    <div className=" py-6">
+    <div className="py-6">
       {/* Header */}
       <button
         onClick={() => {
@@ -552,7 +572,7 @@ function PayInvoiceContent() {
       <div className="lg:hidden">
         {mobileStep === "select" && (
           <div className="space-y-3">
-            {PAYMENT_OPTIONS.map((option) => (
+            {filteredPaymentOptions.map((option) => (
               <button
                 key={option.type}
                 onClick={() => handleSelectPaymentType(option.type)}
@@ -697,7 +717,6 @@ function PayInvoiceContent() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                cleanupPreview();
                 setShowTransferModal(false);
                 toast.success("Payment recorded! We'll confirm shortly.");
                 router.push("/inventory/overview");
@@ -710,7 +729,6 @@ function PayInvoiceContent() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Success Modal */}
       {/* Success Modal */}
       <AlertDialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
         <AlertDialogContent>
@@ -727,9 +745,7 @@ function PayInvoiceContent() {
           <AlertDialogFooter className="mt-6">
             <Button
               onClick={() => {
-                cleanupPreview();
                 setShowSuccessModal(false);
-
                 if (isEdit) {
                   router.push(`/inventory/sales/${invoiceId}`);
                 } else {

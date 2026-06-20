@@ -9,7 +9,6 @@ export default function Home() {
   useEffect(() => {
     const signupProgress = localStorage.getItem("signupFormData");
     const signupStep = localStorage.getItem("signupStep");
-    const accessToken = localStorage.getItem("accessToken");
     const user = localStorage.getItem("user");
 
     // Check if user has incomplete signup
@@ -18,11 +17,18 @@ export default function Home() {
       return;
     }
 
-    if (accessToken && user) {
+    // Check if user is logged in
+    if (user) {
       try {
         const userData = JSON.parse(user);
-        if (userData.status === "ACTIVE") {
-          router.push("/dashboard/account/overview");
+        // ✅ Allow both ACTIVE and PENDING status
+        if (userData.status === "ACTIVE" || userData.status === "PENDING") {
+          // Redirect based on role
+          if (userData.accountRole === "ATTENDANTS") {
+            router.push("/inventory/overview");
+          } else {
+            router.push("/account/overview");
+          }
           return;
         }
       } catch (error) {
@@ -30,11 +36,7 @@ export default function Home() {
       }
     }
 
-    if (accessToken && signupProgress) {
-      router.push("/signup");
-      return;
-    }
-
+    // If no user data or incomplete signup, redirect to signin
     router.push("/signin");
   }, [router]);
 

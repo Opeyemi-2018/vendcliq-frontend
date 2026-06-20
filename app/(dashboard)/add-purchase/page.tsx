@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
-import { Trash2, Plus, Upload, CloudUpload } from "lucide-react";
+import { Trash2, Plus, Upload, CloudUpload, MoveLeft } from "lucide-react";
 import { toast } from "sonner";
 import {
   handleCreatePurchaseWithFile,
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface PurchaseItem {
   stock_id: string;
@@ -35,6 +36,7 @@ const CreatePurchasePage = () => {
   const [selectedStockId, setSelectedStockId] = useState("");
   const [quantity, setQuantity] = useState("");
   const [costPrice, setCostPrice] = useState("");
+  const router = useRouter()
 
   useEffect(() => {
     const fetchStocks = async () => {
@@ -159,6 +161,12 @@ const CreatePurchasePage = () => {
 
   return (
     <div className="">
+        <button
+              onClick={() => router.back()}
+              className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors"
+            >
+              <MoveLeft className="w-5 h-5" />
+            </button>
       <div className="mb-6">
         <h1 className="font-clash text-[20px] md:text-[25px] lg:text-[32px] font-semibold text-[#2F2F2F]">
           Create Purchase

@@ -1,23 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { MoveLeft } from "lucide-react";
 import { ThreeDots } from "react-loader-spinner";
-import { getSaleById } from "@/lib/utils/api/apiHelper";
-import { SaleInvoice, SaleInvoiceItem } from "@/types/sales";
 import { Button } from "@/components/ui/button";
+import { useSoldItem } from "@/hooks/useInventoryOverview";
 
 export default function SoldItemDetailPage() {
   const { id, itemId } = useParams<{ id: string; itemId: string }>();
   const router = useRouter();
 
-  const [invoice, setInvoice] = useState<SaleInvoice | null>(null);
-  const [item, setItem] = useState<SaleInvoiceItem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: item, invoice, isLoading, error } = useSoldItem(id, itemId);
 
   const formatCurrency = (amount: number) =>
     amount.toLocaleString("en-NG", {
@@ -26,41 +20,7 @@ export default function SoldItemDetailPage() {
       minimumFractionDigits: 0,
     });
 
-  useEffect(() => {
-    if (!id || !itemId) {
-      setError("Missing invoice ID or item ID");
-      setLoading(false);
-      return;
-    }
-
-    const fetchInvoice = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const res = await getSaleById(id);
-        if (res.statusCode === 200 && res.data) {
-          setInvoice(res.data);
-          const foundItem = res.data.items?.find((i) => i.id === itemId);
-          if (foundItem) {
-            setItem(foundItem);
-          } else {
-            setError("Item not found in this invoice");
-          }
-        } else {
-          setError(res.error || "Failed to load invoice");
-        }
-      } catch (err: any) {
-        setError(err.message || "An error occurred");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInvoice();
-  }, [id, itemId]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="py-20 px-4 flex flex-col items-center">
@@ -80,7 +40,7 @@ export default function SoldItemDetailPage() {
           Error
         </h2>
         <p className="text-gray-700 mb-4 max-w-md">
-          {error || "Missing invoice/item ID"}
+          {error?.message || "Item not found"}
         </p>
         <Button
           onClick={() => router.back()}
@@ -111,7 +71,6 @@ export default function SoldItemDetailPage() {
       </div>
 
       <div className="bg-white rounded-xl md:border border-[#E4E7EC] shadow-sm overflow-hidden md:p-6">
-        {/* Image */}
         <div className="bg-[#FAFAFA] rounded-lg border border-gray-200 overflow-hidden mt-4 md:mt-0">
           <div className="h-40 md:h-80 w-full flex items-center justify-center p-6">
             {item.product?.image ? (
@@ -133,7 +92,6 @@ export default function SoldItemDetailPage() {
           </div>
         </div>
 
-        {/* Details */}
         <div className="mt-8 md:mt-10 text-[#2F2F2F] text-[13px] sm:text-[15px] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-6">
           <div>
             <h2 className="font-bold font-dm-sans">Product Name</h2>

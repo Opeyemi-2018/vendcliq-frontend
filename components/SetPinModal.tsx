@@ -181,7 +181,7 @@ export default function SetPinOverlay() {
         onClick={requestCode}
         disabled={isRequesting}
       >
-        {isRequesting ? "Requesting..." : "Create Pin"}
+        {isRequesting ? "Requesting..." : "Create Pin(ignore if it exist)"}
       </button>
 
       {/* Full-screen centered overlay */}

@@ -34,7 +34,7 @@ import {
 
 import { transferSchema, TransferFormData } from "@/types/transfer";
 import { Separator } from "@/components/ui/separator";
-import { lookupAccount } from "@/actions/getAccountNumber";
+import { lookupAccount } from "@/lib/utils/api/apiHelper";
 import { ClipLoader } from "react-spinners";
 import {
   handleValidatePin,
@@ -60,7 +60,7 @@ export default function VendCliqTransfer() {
   const router = useRouter();
   const [isTransferring, setIsTransferring] = useState(false);
 
-  const {  refreshWallet, getBalance, getAccountNumber } = useWallet();
+  const { refreshWallet, getBalance, getAccountNumber } = useWallet();
 
   const fee = 3;
 
@@ -156,7 +156,7 @@ export default function VendCliqTransfer() {
 
       const payload = {
         transactionKey,
-        amount: Number(amount), 
+        amount: Number(amount),
         beneficiaryAccountNumber: accountNumberInput,
         beneficiaryAccountName: accountInfo.accountName,
         beneficiaryProvider: accountInfo.provider,
@@ -226,26 +226,20 @@ export default function VendCliqTransfer() {
 
                       if (value.length === 10) {
                         setIsLookingUp(true);
-
-                        const token =
-                          localStorage.getItem("accessToken") ||
-                          localStorage.getItem("authToken");
-                        if (!token) {
-                          setLookupError(
-                            "Session expired. Please log in again.",
-                          );
-                          setIsLookingUp(false);
-                          return;
-                        }
-
-                        const result = await lookupAccount(value, token);
-
-                        if (result.success && result.data) {
-                          setAccountInfo(result.data);
+                        const result = await lookupAccount(value);
+                        if (
+                          result.status === "success" &&
+                          result.data?.isValid
+                        ) {
+                          setAccountInfo({
+                            accountName: result.data.accountName,
+                            provider: result.data.Provider,
+                          });
                         } else {
-                          setLookupError(result.error);
+                          setLookupError(
+                            result.msg || "Account not found or invalid",
+                          );
                         }
-
                         setIsLookingUp(false);
                       }
                     }}
@@ -355,7 +349,6 @@ export default function VendCliqTransfer() {
                         <FormLabel>Enter Amount</FormLabel>
                         <FormControl>
                           <Input
-                            
                             placeholder="Enter amount"
                             className="h-[55px]"
                             {...field}

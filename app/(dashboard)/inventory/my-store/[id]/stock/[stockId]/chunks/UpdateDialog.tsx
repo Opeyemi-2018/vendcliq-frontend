@@ -22,7 +22,10 @@ import {
 } from "@/components/ui/select";
 import { ClipLoader } from "react-spinners";
 import { toast } from "sonner";
-import { updateStock, updateStockWithMovement } from "@/actions/stores";
+import {
+  updateStock,
+  updateStockWithMovement,
+} from "@/lib/utils/api/apiHelper";
 
 interface UpdateStockModalProps {
   stockId: string;
@@ -83,16 +86,8 @@ export function UpdateStockModal({
           : value,
     }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("authToken");
-
-    if (!token) {
-      toast.error("No authentication token found.");
-      return;
-    }
 
     setLoading(true);
 
@@ -110,7 +105,7 @@ export function UpdateStockModal({
           sku: formData.sku,
           remark: formData.remark,
         };
-        result = await updateStock(stockId, payload, token);
+        result = await updateStock(stockId, payload);
       } else {
         if (formData.quantity <= 0) {
           toast.error("Quantity must be greater than 0");
@@ -123,18 +118,21 @@ export function UpdateStockModal({
           empties_qty: formData.empties_qty,
           remark: formData.remark,
         };
-        result = await updateStockWithMovement(stockId, payload, token);
+        result = await updateStockWithMovement(stockId, payload);
       }
 
-      if (result.success) {
-        toast.success(result.message || "Operation successful");
+      // Helper returns { statusCode, data, error } format
+      if (result.statusCode === 200) {
+        toast.success(
+          result.message || result.data?.message || "Operation successful",
+        );
         onSuccess();
         setOpen(false);
       } else {
-        toast.error(result.message || "Operation failed");
+        toast.error(result.error || result.message || "Operation failed");
       }
     } catch (err: any) {
-      toast.error("An error occurred. Please try again.", err);
+      toast.error("An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }

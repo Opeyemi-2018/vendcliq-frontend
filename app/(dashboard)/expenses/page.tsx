@@ -77,7 +77,7 @@ const Expenses = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [expenses, setExpense] = useState<Expense[]>([]);
   const [expenseLoading, setExpenseLoading] = useState(false);
-  const { stores, isLoading: isLoadingStores } = useStores();
+  const { data: stores = [], isLoading: isLoadingStores } = useStores();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -97,19 +97,20 @@ const Expenses = () => {
       setIsLoading(true);
       const response = await handleCreateExpense(data);
 
-      // Check for statusCode 201 or presence of data
-      if (response.statusCode === 201 || response.data) {
+      if (response.statusCode === 201) {
         toast.success("Expense created successfully");
         form.reset();
         setOpen(false);
+
+        const refreshResult = await handleGetExpenses();
+        if (refreshResult.statusCode === 200) {
+          setExpense(refreshResult.data);
+        }
       } else {
-        toast.error("Failed to create expense");
+        toast.error(response.error || "Failed to create expense");
       }
     } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message ||
-          "An error occurred while creating expense",
-      );
+      toast.error(error?.message || "An error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -426,7 +427,7 @@ const Expenses = () => {
             Highest Expenses Category
           </p>
           <h2 className="font-semibold  text-[16px] md:text-[20px] font-clash">
-            {highestCategory || 'None'} 
+            {highestCategory || "None"}
           </h2>
         </div>
         <div className="bg-[url('/balance-bg.svg')] text-white bg-cover bg-no-repeat bg-center min-w-[260px] w-[280px] flex-shrink-0 h-[117px] rounded-2xl p-6">

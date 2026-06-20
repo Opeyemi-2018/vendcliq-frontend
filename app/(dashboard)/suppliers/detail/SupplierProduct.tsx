@@ -1,7 +1,7 @@
 "use client";
 
 import { Supplier } from "@/types/supplier";
-import { SupplierStockItem, getSupplierStocks } from "@/actions/suppliers";
+import { SupplierStockItem } from "@/types/supplier";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
 import {
@@ -16,6 +16,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { handleGetSupplierStocks } from "@/lib/utils/api/apiHelper";
 
 interface SupplierProductsProps {
   supplier: Supplier;
@@ -47,9 +48,10 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
       setLoadingStocks(true);
       setStocksError(null);
 
-      const result = await getSupplierStocks(supplier.user_id, token);
+      // Replace getSupplierStocks with handleGetSupplierStocks
+      const result = await handleGetSupplierStocks(String(supplier.user_id));
 
-      if (result.success && result.data) {
+      if (result.statusCode === 200 && result.data) {
         setStocks(result.data);
       } else {
         setStocksError(result.error || "Failed to load supplier stocks");
@@ -61,6 +63,7 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
     fetchSupplierStocks();
   }, [supplier.user_id]);
 
+  // Rest of your component remains exactly the same...
   const handleSearch = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
@@ -113,7 +116,6 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
     }
   };
 
-  // Navigate to marketplace detail page - same as MarketPlace component
   const handleViewInMarket = (stockId: string) => {
     router.push(`/market-place/${stockId}`);
   };
@@ -136,7 +138,6 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
 
       <Card className="md:p-4 lg:p-8 bg-white">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          {/* Search Input */}
           <div className="relative w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <Input
@@ -220,7 +221,6 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
                               <Package className="w-4 h-4 text-gray-400" />
                             </div>
                           )}
-
                           <p className="truncate lowercase">
                             {stock.product.name.length > 20
                               ? `${stock.product.name.slice(0, 20)}...`
@@ -228,7 +228,6 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
                           </p>
                         </div>
                       </td>
-
                       <td className="w-1/5 py-4 truncate lowercase">
                         {stock.sku}
                       </td>
@@ -250,7 +249,6 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
               </table>
             </div>
 
-            {/* Pagination Controls */}
             {filteredStocks.length > itemsPerPage && (
               <div className="flex justify-between items-center mt-6 pt-4 border-t">
                 <button
@@ -261,12 +259,10 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
                   <MoveLeft className="w-4 h-4" />
                   Previous
                 </button>
-
                 <p className="text-[14px] text-[#0A6DC0] font-dm-sans">
                   Page {currentPage} of {totalPages} ({filteredStocks.length}{" "}
                   products)
                 </p>
-
                 <button
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}

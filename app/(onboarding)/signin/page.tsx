@@ -48,12 +48,8 @@ const SignIN = () => {
       const response = await handleSignIn(values);
 
       if (response.status === "success") {
-        const token = response.data?.tokens?.accessToken?.token;
         const userRole = response.data?.user?.account?.accountRole; // ← NEW
 
-        if (token) {
-          localStorage.setItem("accessToken", token);
-        }
         // === NEW: Set userRole cookie for middleware ===
         if (userRole) {
           document.cookie = `userRole=${userRole}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
@@ -72,7 +68,7 @@ const SignIN = () => {
 
             accountRole: userData.account.accountRole as
               | "CUSTOMER"
-              | "ATTENDANTS", 
+              | "ATTENDANTS",
             phone: userData.phone,
             pin: userData.pin ?? false,
             createdAt: userData.createdAt,

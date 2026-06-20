@@ -162,6 +162,27 @@ import {
   GET_MANUFACTURERS,
   GET_USER_STOCKS,
   RETURN_ITEMS,
+  GET_CART,
+  UPDATE_CART_ITEM,
+  DELETE_CART_ITEM,
+  LOOKUP_ACCOUNT,
+  GET_CUSTOMERS,
+  GET_STORE_STOCK_BY_ID,
+  GET_MARKETPLACE_STOCKS,
+  GET_MARKETPLACE_STOCK_DETAIL,
+  GET_MARKETPLACE_OFFERS,
+  GET_OFFER_DETAIL,
+  GET_NIP_BANKS,
+  NAME_ENQUIRY,
+  GET_PRICING_PLANS,
+  GET_STOCK_DETAIL,
+  UPDATE_STOCK,
+  MOVE_STOCK,
+  GET_STORES,
+  GET_STORE_BY_ID,
+  GET_SUPPLIER_STOCKS,
+  GET_NETWORK_PROVIDER,
+  GET_DATA_PLANS,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -235,7 +256,11 @@ import {
   SubscriptionPaymentPayload,
   SubscriptionPaymentResponse,
 } from "@/types/plans";
-import { GetSuppliersResponse, Supplier } from "@/types/supplier";
+import {
+  GetSuppliersResponse,
+  GetSupplierStocksResponse,
+  Supplier,
+} from "@/types/supplier";
 import {
   CreatePurchasePayload,
   CreatePurchaseResponse,
@@ -263,6 +288,11 @@ import {
   RecordCreditPaymentPayload,
   RecordCreditPaymentResponse,
 } from "@/types/creditLedger";
+import {
+  ConfirmDraftPayload,
+  ConfirmDraftResponse,
+  ConversationMessage,
+} from "@/types/chatTypes";
 
 interface UserProfile {
   data: {
@@ -311,10 +341,26 @@ export const fetcher = async <T>(
   logger.info(JSON.stringify({ method: "GET", url }), "API");
   try {
     const response = await axiosInstance.get<T>(url, { params });
-    logger.info(JSON.stringify({ method: "GET", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    logger.info(
+      JSON.stringify({
+        method: "GET",
+        url,
+        status: response.status,
+        duration: `${Date.now() - start}ms`,
+      }),
+      "API",
+    );
     return response.data;
   } catch (err) {
-    logger.error(JSON.stringify({ method: "GET", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    logger.error(
+      JSON.stringify({
+        method: "GET",
+        url,
+        duration: `${Date.now() - start}ms`,
+        error: String(err),
+      }),
+      "API",
+    );
     throw err;
   }
 };
@@ -335,10 +381,26 @@ export const poster = async <T, U = unknown>(
       },
       validateStatus: () => true,
     });
-    logger.info(JSON.stringify({ method: "POST", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    logger.info(
+      JSON.stringify({
+        method: "POST",
+        url,
+        status: response.status,
+        duration: `${Date.now() - start}ms`,
+      }),
+      "API",
+    );
     return response.data;
   } catch (err) {
-    logger.error(JSON.stringify({ method: "POST", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    logger.error(
+      JSON.stringify({
+        method: "POST",
+        url,
+        duration: `${Date.now() - start}ms`,
+        error: String(err),
+      }),
+      "API",
+    );
     throw err;
   }
 };
@@ -358,10 +420,26 @@ export const posterWithMultipart = async <T>(
         ...headers,
       },
     });
-    logger.info(JSON.stringify({ method: "POST(multipart)", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    logger.info(
+      JSON.stringify({
+        method: "POST(multipart)",
+        url,
+        status: response.status,
+        duration: `${Date.now() - start}ms`,
+      }),
+      "API",
+    );
     return response.data;
   } catch (err) {
-    logger.error(JSON.stringify({ method: "POST(multipart)", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    logger.error(
+      JSON.stringify({
+        method: "POST(multipart)",
+        url,
+        duration: `${Date.now() - start}ms`,
+        error: String(err),
+      }),
+      "API",
+    );
     throw err;
   }
 };
@@ -382,10 +460,26 @@ export const putter = async <T, U = unknown>(
       },
       validateStatus: () => true,
     });
-    logger.info(JSON.stringify({ method: "PUT", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    logger.info(
+      JSON.stringify({
+        method: "PUT",
+        url,
+        status: response.status,
+        duration: `${Date.now() - start}ms`,
+      }),
+      "API",
+    );
     return response.data;
   } catch (err) {
-    logger.error(JSON.stringify({ method: "PUT", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    logger.error(
+      JSON.stringify({
+        method: "PUT",
+        url,
+        duration: `${Date.now() - start}ms`,
+        error: String(err),
+      }),
+      "API",
+    );
     throw err;
   }
 };
@@ -405,10 +499,26 @@ export const deleter = async <T>(
       },
       validateStatus: () => true,
     });
-    logger.info(JSON.stringify({ method: "DELETE", url, status: response.status, duration: `${Date.now() - start}ms` }), "API");
+    logger.info(
+      JSON.stringify({
+        method: "DELETE",
+        url,
+        status: response.status,
+        duration: `${Date.now() - start}ms`,
+      }),
+      "API",
+    );
     return response.data;
   } catch (err) {
-    logger.error(JSON.stringify({ method: "DELETE", url, duration: `${Date.now() - start}ms`, error: String(err) }), "API");
+    logger.error(
+      JSON.stringify({
+        method: "DELETE",
+        url,
+        duration: `${Date.now() - start}ms`,
+        error: String(err),
+      }),
+      "API",
+    );
     throw err;
   }
 };
@@ -619,7 +729,13 @@ export const handleBuyAirtime = async (
     payload,
   );
 };
+export const getNetworkProvider = async (phone: string): Promise<any> => {
+  return await fetcher<any>(GET_NETWORK_PROVIDER, { phone });
+};
 
+export const fetchDataPlans = async (phone: string): Promise<any> => {
+  return await fetcher<any>(GET_DATA_PLANS, { phone });
+};
 export const handleBuyData = async (
   payload: BuyDataPayload,
 ): Promise<BuyDataResponse> => {
@@ -637,6 +753,10 @@ export const handleUpdateTransactionPin = async (
     UPDATE_TRANSFER_PIN,
     payload,
   );
+};
+
+export const lookupAccount = async (accountNumber: string): Promise<any> => {
+  return await fetcher<any>(LOOKUP_ACCOUNT(accountNumber));
 };
 
 export const handleCreatePin = async (
@@ -660,6 +780,20 @@ export const handleGetWallet = async (): Promise<GetWalletResponse> => {
 
 export const handleRequestPinToken = async (): Promise<ApiResponse> => {
   return await fetcher<ApiResponse>(REQUEST_PIN_TOKEN);
+};
+
+export const getNipBanks = async (): Promise<any> => {
+  return await fetcher<any>(GET_NIP_BANKS);
+};
+
+export const performNameEnquiry = async (
+  bankCode: string,
+  accountNumber: string,
+): Promise<any> => {
+  return await poster<any>(NAME_ENQUIRY, {
+    BankCode: bankCode,
+    AccountNumber: accountNumber,
+  });
 };
 
 // export const handleResendEmailOtp = async (
@@ -712,14 +846,25 @@ export const handleApiError = (
   context?: string,
 ): void => {
   if (error instanceof AxiosError) {
-    const msg = error.response?.data.errors?.[0]?.message || "An error occurred";
+    const msg =
+      error.response?.data.errors?.[0]?.message || "An error occurred";
     logger.error(
-      JSON.stringify({ url: error.config?.url, status: error.response?.status, message: msg }),
+      JSON.stringify({
+        url: error.config?.url,
+        status: error.response?.status,
+        message: msg,
+      }),
       context ?? "API",
     );
     setError(msg);
   } else {
-    logger.error(JSON.stringify({ message: "An unexpected error occurred", error: String(error) }), context ?? "API");
+    logger.error(
+      JSON.stringify({
+        message: "An unexpected error occurred",
+        error: String(error),
+      }),
+      context ?? "API",
+    );
     setError("An unexpected error occurred");
   }
 };
@@ -784,12 +929,42 @@ export const handleCreateCustomer = async (
   );
 };
 
+export const getCustomers = async (): Promise<any> => {
+  return await fetcher<any>(GET_CUSTOMERS);
+};
+
 export const handleUpdateCustomer = async (
   customerId: string,
   payload: Omit<CreateCustomerPayload, "email">,
 ): Promise<CreateCustomerResponse> => {
   const url = UPDATE_CUSTOMER(customerId);
   return await putter<CreateCustomerResponse, typeof payload>(url, payload);
+};
+
+export const getStoreStock = async (storeId: string): Promise<any> => {
+  return await fetcher<any>(GET_STORE_STOCK_BY_ID(storeId));
+};
+
+export const getMarketplaceStocks = async (
+  search = "",
+  page = 1,
+  limit = 20,
+): Promise<any> => {
+  return await fetcher<any>(GET_MARKETPLACE_STOCKS(search, page, limit));
+};
+
+export const getMarketplaceStockDetail = async (
+  stockId: string,
+): Promise<any> => {
+  return await fetcher<any>(GET_MARKETPLACE_STOCK_DETAIL(stockId));
+};
+
+export const getMarketplaceOffers = async (): Promise<any> => {
+  return await fetcher<any>(GET_MARKETPLACE_OFFERS);
+};
+
+export const getOfferDetail = async (offerId: string): Promise<any> => {
+  return await fetcher<any>(GET_OFFER_DETAIL(offerId));
 };
 
 export const handleGetCustomerById = async (
@@ -829,6 +1004,25 @@ export const handlePayInvoice = async (
     PAY_CART(invoiceId),
     payload,
   );
+};
+
+export const getCartData = async (): Promise<any> => {
+  return await fetcher<any>(GET_CART);
+};
+
+export const updateCartItem = async (
+  itemId: string,
+  updates: { quantity?: number; delivery?: boolean },
+): Promise<any> => {
+  return await putter<any>(UPDATE_CART_ITEM(itemId), updates);
+};
+
+export const deleteCartItem = async (itemId: string): Promise<any> => {
+  return await axiosInstance.delete("", {
+    params: {
+      endpoint: DELETE_CART_ITEM(itemId),
+    },
+  });
 };
 
 export const handlePayInvoiceCreditOtp = async (
@@ -894,7 +1088,7 @@ export const handlePaySubscription = async (
   return await poster<SubscriptionPaymentResponse>(PAY_SUB, payload);
 };
 
-export const handleGetSuppliers = async (): Promise<Supplier> => {
+export const handleGetSuppliers = async (): Promise<GetSuppliersResponse> => {
   return await fetcher<any>(GET_SUPPLIERS);
 };
 
@@ -938,6 +1132,12 @@ export const handleUpdateStoreSettings = async (
     url,
     payload,
   );
+};
+
+export const handleGetSupplierStocks = async (
+  userId: string,
+): Promise<GetSupplierStocksResponse> => {
+  return await fetcher<GetSupplierStocksResponse>(GET_SUPPLIER_STOCKS(userId));
 };
 
 export const handleUpdateStore = async (
@@ -1158,4 +1358,188 @@ export const handleReturnItems = async (payload: {
   items: { item_id: string; quantity: number; reason: string }[];
 }): Promise<any> => {
   return await poster<any>(RETURN_ITEMS, payload);
+};
+
+export const fetchPricingPlans = async (): Promise<any> => {
+  return await fetcher<any>(GET_PRICING_PLANS);
+};
+
+export const getStores = async (): Promise<any> => {
+  return await fetcher<any>(GET_STORES);
+};
+
+export const getStoreById = async (storeId: string): Promise<any> => {
+  return await fetcher<any>(GET_STORE_BY_ID(storeId));
+};
+
+export const moveStock = async (
+  targetStoreId: string,
+  items: Array<{ stock_id: string; quantity: number; selling_price: number }>,
+): Promise<any> => {
+  return await poster<any>(MOVE_STOCK, {
+    target_store_id: targetStoreId,
+    items,
+  });
+};
+
+export const updateStock = async (
+  stockId: string,
+  data: {
+    cost_price: number;
+    selling_price: number;
+    selling_price_pieces: number;
+    empties_price: number;
+    exp_date: string;
+    stock_alert_no: number;
+    sku: string;
+    remark: string;
+  },
+): Promise<any> => {
+  return await putter<any>(UPDATE_STOCK(stockId), data);
+};
+
+export const updateStockWithMovement = async (
+  stockId: string,
+  data: {
+    action: "Added" | "Removed";
+    quantity: number;
+    empties_qty: number;
+    remark: string;
+  },
+): Promise<any> => {
+  return await putter<any>(UPDATE_STOCK(stockId), data);
+};
+
+export const getStockDetail = async (
+  stockId: string,
+  storeId: string,
+): Promise<any> => {
+  return await fetcher<any>(GET_STOCK_DETAIL(stockId, storeId));
+};
+
+export const handleChatMessage = async (
+  message: string,
+  conversationUuid?: string,
+  onEvent?: (event: any) => void,
+  signal?: AbortSignal,
+): Promise<string> => {
+  const payload: any = { message };
+  if (conversationUuid) {
+    payload.conversation_uuid = conversationUuid;
+  }
+
+  // No token needed here - cookies will be sent automatically
+  const response = await fetch("/api/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Chat request failed: ${response.status}`);
+  }
+
+  // Handle SSE stream
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  let fullText = "";
+
+  if (!reader) throw new Error("No reader available");
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value, { stream: true });
+    const lines = chunk.split("\n");
+
+    for (const line of lines) {
+      if (line.startsWith("data: ")) {
+        try {
+          const data = JSON.parse(line.slice(6));
+          if (onEvent) onEvent(data);
+          if (data.type === "token" && data.text) {
+            fullText += data.text;
+          }
+        } catch (e) {
+          // Skip invalid JSON
+        }
+      }
+    }
+  }
+
+  return fullText;
+};
+
+export const handleConfirmDraft = async (confirmId: string): Promise<any> => {
+  const response = await fetch("/api/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ confirm_id: confirmId }),
+  });
+
+  return await response.json();
+};
+
+export const getConversations = async (
+  limit = 30,
+  offset = 0,
+): Promise<any> => {
+  const response = await fetch(
+    `/api/conversation?limit=${limit}&offset=${offset}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch conversations");
+  }
+
+  return await response.json();
+};
+
+export const getConversationMessages = async (
+  uuid: string,
+): Promise<ConversationMessage[]> => {
+  const response = await fetch(`/api/conversation/${uuid}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch conversation messages");
+  }
+
+  const data = await response.json();
+  return data.items || [];
+};
+
+export const deleteConversation = async (uuid: string): Promise<any> => {
+  const response = await fetch(`/api/conversation/${uuid}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete conversation");
+  }
+
+  try {
+    return await response.json();
+  } catch {
+    return { success: true };
+  }
 };

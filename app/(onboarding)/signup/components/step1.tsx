@@ -167,7 +167,7 @@ export default function Step1({ onNext, data }: Props) {
         </form>
       </Form>
 
-      <p className="text-center mt-4 md:mt-8 text-sm text-[#9E9A9A]">
+      <p className="text-center mt-4  text-sm text-[#9E9A9A]">
         Already have an account?{" "}
         <Link
           href="/signin"
