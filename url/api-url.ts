@@ -14,27 +14,40 @@ const UPLOAD_BUSINESS_VERIFICATION =
   "/client/v2/profile/upload-identity-documents";
 const SEND_OTP_FOR_FORGET_PASSWORD = "/client/v2/auth/forgot-password";
 const RESET_PASSWORD = "/client/v2/auth/reset-password";
-const TRANSACTION_HISTORY = "/client/v2/wallets/transactions";
-const VENDCLIQ_TRANSFER = "/client/v2/wallets/transfers/vendcliq";
-const OTHERBANK_TRANSFER = "/client/v2/wallets/transfer";
+// const TRANSACTION_HISTORY = "/client/v2/wallets/transactions";
+// const VENDCLIQ_TRANSFER = "/client/v2/wallets/transfers/vendcliq";
+// const OTHERBANK_TRANSFER = "/client/v2/wallets/transfer";
 const PIN_VALIDATE = "/client/v2/wallets/validate-pin";
 const BUY_AIRTIME = "/client/v2/payments/airtime";
 const BUY_DATA = "/client/v2/payments/data";
 const CREATE_WALLET = "/client/v2/wallets/virtual-accounts/create";
-const GET_WALLET = "/client/v2/wallets";
+// const GET_WALLET = "/client/v2/wallets";
 const ADD_SHOP_ATTENDANT = "/client/v2/attendants";
 const CREATE_PIN = "/client/v2/auth/pin";
 const REQUEST_PIN_TOKEN = "/client/v2/auth/request-pin-token";
 const UPDATE_TRANSFER_PIN = "/client/v2/auth/pin-update";
 const CHANGE_PASSWORD = "/client/v2/change-password";
 const CREATE_BENEFICIARY = "/client/v2/wallet/beneficiaries";
-const GET_BENEFICIARIES = "/client/v2/wallet/beneficiaries";
+// const GET_BENEFICIARIES = "/client/v2/wallet/beneficiaries";
 const LOOKUP_ACCOUNT = (accountNumber: string) =>
   `/client/v2/wallet/lookup?accountNumber=${accountNumber}`;
-const GET_NIP_BANKS = "/client/v2/wallets/nip-banks";
+// const GET_NIP_BANKS = "/client/v2/wallets/nip-banks";
 const NAME_ENQUIRY = "/client/v2/wallets/name-enquiry";
 const GET_NETWORK_PROVIDER = "/client/v2/payments/network";
 const GET_DATA_PLANS = "/client/v2/payments/data-plans";
+
+// below is v3 vendcliq endpoint
+const GET_WALLET = "/payment/v3/wallet/balance";
+const TRANSACTION_HISTORY = "/payment/v3/wallet/transactions";
+const TRANSACTION_BY_ID = (id: string) =>
+  `/payment/v3/wallet/transactions/${id}`;
+const WALLET_TRANSFER = "/payment/v3/wallet/transfer";
+const GET_NIP_BANKS = "/payment/v3/wallet/nip-banks";
+const GET_BENEFICIARIES = "/payment/v3/wallet/beneficiaries";
+ const UPDATE_BENEFICIARY = (id: string) =>
+  `/payment/v3/wallet/beneficiaries/${id}`;
+
+export const VENDCLIQ_BANK_CODE = "656656";
 
 // v1 endpoint
 // const BUSINESS_INFORMATION_SETUP_STEP_ONE =
@@ -165,7 +178,6 @@ const GET_SUPPLIER_STOCKS = (userId: string) =>
   `inventory/suppliers/${userId}/stocks`;
 
 export {
-  // v2 endpoint
   VERIFY_EMAIL,
   CONFIRM_PHONE_NUMBER,
   CREATE_PASSWORD,
@@ -185,8 +197,7 @@ export {
   RESET_PASSWORD,
   RESEND_VERIFICATION_TOKEN,
   TRANSACTION_HISTORY,
-  VENDCLIQ_TRANSFER,
-  OTHERBANK_TRANSFER,
+  WALLET_TRANSFER,
   PIN_VALIDATE,
   BUY_AIRTIME,
   BUY_DATA,
@@ -197,6 +208,10 @@ export {
   GET_NIP_BANKS,
   NAME_ENQUIRY,
   GET_WALLET,
+  TRANSACTION_BY_ID,
+  UPDATE_BENEFICIARY,
+
+  // inventory
   ADD_SHOP_ATTENDANT,
   CREATE_INVOICE,
   GET_SUPPLIER_STORES,

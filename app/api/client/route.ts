@@ -24,9 +24,9 @@ import {
   GET_ALL_PRODUCTS,
   GET_PRODUCTS_PAGINATED,
   TRANSACTION_HISTORY,
-  VENDCLIQ_TRANSFER,
-  OTHERBANK_TRANSFER,
+  WALLET_TRANSFER,
   LOOKUP_ACCOUNT,
+  UPDATE_BENEFICIARY,
   GET_NETWORK_PROVIDER,
   GET_DATA_PLANS,
   BUY_AIRTIME,
@@ -106,6 +106,7 @@ import {
   UPDATE_STOCK,
   GET_STOCK_DETAIL,
   GET_SUPPLIER_STOCKS,
+  TRANSACTION_BY_ID,
 } from "@/url/api-url";
 
 export const dynamic = "force-dynamic";
@@ -113,8 +114,9 @@ export const runtime = "edge";
 
 // API Base URLs
 const VERA_API_BASE_URL = process.env.VERA_API_BASE_URL as string;
-const INVENTORY_API_BASE_URL = process.env
-  .VERA_INVENTORY_API_BASE_URL as string;
+const INVENTORY_API_BASE_URL = (
+  process.env.VERA_INVENTORY_API_BASE_URL as string
+).replace(/\/$/, "");
 const LOGISTIC_API_BASE_URL = process.env
   .VENDCLIQ_LOGISTIC_API_BASE_URL as string;
 
@@ -204,11 +206,11 @@ const VERA_ENDPOINTS = [
   REQUEST_BVN_TOKEN,
   VERIFY_BVN_TOKEN,
   UPLOAD_BUSINESS_VERIFICATION,
-  VENDCLIQ_TRANSFER,
   PIN_VALIDATE,
   GET_WALLET,
-  OTHERBANK_TRANSFER,
+  WALLET_TRANSFER,
   LOOKUP_ACCOUNT,
+  UPDATE_BENEFICIARY,
   GET_NETWORK_PROVIDER,
   GET_DATA_PLANS,
   GET_NIP_BANKS,
@@ -223,6 +225,7 @@ const VERA_ENDPOINTS = [
   CREATE_BENEFICIARY,
   GET_BENEFICIARIES,
   GET_ATTENDANTS,
+  TRANSACTION_BY_ID,
 ];
 
 const INVENTORY_ENDPOINTS = [
@@ -306,6 +309,7 @@ const getApiBaseUrl = (endpoint: string): string => {
   const normalized = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   if (normalized.startsWith("/bids/")) return LOGISTIC_API_BASE_URL;
   if (
+    normalized.startsWith("/payment/") ||
     INVENTORY_ENDPOINTS.some(
       (e) =>
         typeof e === "string" &&
@@ -342,6 +346,7 @@ const isValidEndpoint = (endpoint: string): boolean => {
     normalized.match(/^\/client\/v2\/wallet\/lookup.*$/) ||
     normalized.match(/^\/v1\/inventory\/.*$/) ||
     normalized.match(/^\/inventory\/.*$/) ||
+    normalized.match(/^\/payment\/.*$/) || 
     normalized.match(/^\/bids\/track\/[a-f0-9-]+$/)
   ) {
     return true;
@@ -439,13 +444,16 @@ export async function POST(request: Request) {
     );
     const apiBaseUrl = getApiBaseUrl(endpoint);
 
-    const response = await fetch(`${apiBaseUrl}${endpoint}`, {
-      method: "POST",
-      headers: secureHeaders,
-      body: contentType.includes("multipart/form-data")
-        ? (data as FormData)
-        : JSON.stringify(data),
-    });
+    const response = await fetch(
+      `${apiBaseUrl}/${endpoint.replace(/^\//, "")}`,
+      {
+        method: "POST",
+        headers: secureHeaders,
+        body: contentType.includes("multipart/form-data")
+          ? (data as FormData)
+          : JSON.stringify(data),
+      },
+    );
 
     const responseData = await response.json();
     const nextResponse = NextResponse.json(responseData, {
@@ -528,7 +536,10 @@ export async function GET(request: Request) {
       ? baseHeaders
       : await addSecurityHeaders(baseHeaders, "GET", endpoint);
 
-    const response = await fetch(`${apiBaseUrl}${fullEndpoint}`, { headers });
+    const response = await fetch(
+      `${apiBaseUrl}/${fullEndpoint.replace(/^\//, "")}`,
+      { headers },
+    );
 
     if (isLogisticsEndpoint) {
       const text = await response.text();
@@ -615,13 +626,16 @@ export async function PUT(request: Request) {
     );
     const apiBaseUrl = getApiBaseUrl(endpoint);
 
-    const response = await fetch(`${apiBaseUrl}${endpoint}`, {
-      method: "PUT",
-      headers: secureHeaders,
-      body: contentType.includes("multipart/form-data")
-        ? (data as FormData)
-        : JSON.stringify(data),
-    });
+    const response = await fetch(
+      `${apiBaseUrl}/${endpoint.replace(/^\//, "")}`,
+      {
+        method: "PUT",
+        headers: secureHeaders,
+        body: contentType.includes("multipart/form-data")
+          ? (data as FormData)
+          : JSON.stringify(data),
+      },
+    );
 
     const responseData = await response.json();
     const nextResponse = NextResponse.json(responseData, {
@@ -675,11 +689,13 @@ export async function DELETE(request: Request) {
       endpoint,
     );
     const apiBaseUrl = getApiBaseUrl(endpoint);
-
-    const response = await fetch(`${apiBaseUrl}${endpoint}`, {
-      method: "DELETE",
-      headers: secureHeaders,
-    });
+    const response = await fetch(
+      `${apiBaseUrl}/${endpoint.replace(/^\//, "")}`,
+      {
+        method: "DELETE",
+        headers: secureHeaders,
+      },
+    );
 
     const data = await response.json();
     const nextResponse = NextResponse.json(data, { status: response.status });

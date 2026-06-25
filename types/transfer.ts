@@ -77,7 +77,6 @@ export interface OtherBankTransferResponse {
   data?: any;
 }
 
-
 // types/beneficiary.ts
 export interface CreateBeneficiaryPayload {
   walletId: number;
@@ -108,29 +107,53 @@ export interface CreateBeneficiaryResponse {
   data: BeneficiaryData;
 }
 
-
 export interface Beneficiary {
-  id: number;
-  userId: number;
-  walletId: number;
+  id: string; // now UUID
   name: string;
   accountNumber: string;
   bankCode: string;
   bankName: string;
   email: string | null;
-  phoneNumber: string | null;
-  isActive: number;
+  phone: string | null; // was phoneNumber
   createdAt: string;
   updatedAt: string;
 }
 
 export interface GetBeneficiariesResponse {
-  status: string;
-  msg: string;
+  success: boolean;
+  message: string;
+  statusCode: number;
   data: {
-    beneficiaries: Beneficiary[];
-    totalCount: number;
-    walletId: number;
-    filters: Record<string, unknown>;
+    items: Beneficiary[]; // was beneficiaries
+    total: number;
+    max: number;
+    remaining: number;
+  };
+}
+
+export interface WalletTransferPayload {
+  transactionKey: string;
+  amount: number;
+  beneficiaryAccountNumber: string;
+  beneficiaryBankCode: string; // "656656" for Vendcliq, real code for external
+  beneficiaryAccountName: string;
+  narration: string;
+  pinToken: string;
+  deviceFingerprint: string;
+  ipAddress: string;
+}
+
+export interface WalletTransferResponse {
+  success: boolean;
+  message: string;
+  statusCode: number;
+  data?: {
+    transactionId: string;
+    reference: string;
+    status: string;
+    transferType: string;
+    amount: number;
+    currency: string;
+    pendingReview: boolean;
   };
 }

@@ -12,46 +12,17 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
 import { handleGetTransactions } from "@/lib/utils/api/apiHelper";
-import { TransactionHistoryResponse } from "@/types/transactions";
+import type { Transaction } from "@/types/transactions";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@/hooks/useWallet";
 
 const Loans = [
-  {
-    id: "#005676",
-    amount: "5,000,000.00",
-    MaturityAmount: "6,500,000.00",
-    date: "02/May/2024",
-    dueDate: "02/May/2024",
-    status: "active",
-  },
-  {
-    id: "#003746",
-    amount: "5,000,000.00",
-    MaturityAmount: "6,500,000.00",
-    date: "02/May/2024",
-    dueDate: "02/May/2024",
-    status: "active",
-  },
-  {
-    id: "#008394",
-    amount: "5,000,000.00",
-    MaturityAmount: "6,500,000.00",
-    date: "02/May/2024",
-    dueDate: "02/May/2024",
-    status: "active",
-  },
-  {
-    id: "#003748",
-    amount: "5,000,000.00",
-    MaturityAmount: "6,500,000.00",
-    date: "02/May/2024",
-    dueDate: "02/May/2024",
-    status: "active",
-  },
+  { id: "#005676", amount: "5,000,000.00", MaturityAmount: "6,500,000.00", date: "02/May/2024", dueDate: "02/May/2024", status: "active" },
+  { id: "#003746", amount: "5,000,000.00", MaturityAmount: "6,500,000.00", date: "02/May/2024", dueDate: "02/May/2024", status: "active" },
+  { id: "#008394", amount: "5,000,000.00", MaturityAmount: "6,500,000.00", date: "02/May/2024", dueDate: "02/May/2024", status: "active" },
+  { id: "#003748", amount: "5,000,000.00", MaturityAmount: "6,500,000.00", date: "02/May/2024", dueDate: "02/May/2024", status: "active" },
 ];
 
 const TransactionSkeleton = () => (
@@ -75,36 +46,22 @@ const TransactionSkeleton = () => (
 const Table = () => {
   const tabs = ["Payment Transaction", "Loan Transactions"];
   const [activeTab, setActiveTab] = useState(tabs[0]);
-  const [transactions, setTransactions] = useState<
-    TransactionHistoryResponse["data"]["data"]
-  >([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]); // ← updated type
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
 
-  // Use wallet hook for WebSocket updates
-  const { newTransactions, clearNewTransactions, isLiveConnected } =
-    useWallet();
+  const { newTransactions, clearNewTransactions, isLiveConnected } = useWallet();
 
-  // Add new transactions from WebSocket to the list
+  // Merge real-time transactions from WebSocket
   useEffect(() => {
     if (newTransactions.length > 0) {
       setTransactions((prev) => {
-        // Filter out duplicates
         const existingIds = new Set(prev.map((tx) => tx.id));
-        const uniqueNewTxs = newTransactions.filter(
-          (tx) => !existingIds.has(tx.id),
-        );
-
-        if (uniqueNewTxs.length > 0) {
-          // Add new transactions to the top
-          return [...uniqueNewTxs, ...prev];
-        }
-        return prev;
+        const uniqueNew = newTransactions.filter((tx: any) => !existingIds.has(tx.id));
+        return uniqueNew.length > 0 ? [...uniqueNew, ...prev] : prev;
       });
-
-      // Clear new transactions after adding them
       clearNewTransactions();
     }
   }, [newTransactions, clearNewTransactions]);
@@ -115,19 +72,12 @@ const Table = () => {
         setLoading(true);
         setError(null);
         const response = await handleGetTransactions(currentPage);
-
-        setTransactions(response.data.data);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setTransactions(response.data.items); // ← was response.data.data
       } catch (err: any) {
-        if (
-          err?.response?.status === 404 ||
-          err?.message?.includes("No transactions")
-        ) {
+        if (err?.response?.status === 404) {
           setTransactions([]);
-          setError(null);
         } else {
           setError("Failed to load transactions. Please try again.");
-          console.error("Error fetching transactions:", err);
         }
       } finally {
         setLoading(false);
@@ -139,75 +89,49 @@ const Table = () => {
     }
   }, [activeTab, currentPage]);
 
-  // Calculate transaction statistics for last 7 days
+  // Transaction stats for last 7 days
   const transactionStats = useMemo(() => {
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    // Filter transactions from last 7 days
-    const last7DaysTransactions = transactions.filter((transaction) => {
-      const transactionDate = new Date(transaction.createdAt);
-      return transactionDate >= sevenDaysAgo && transactionDate <= now;
+    const recent = transactions.filter((tx) => {
+      const d = new Date(tx.createdAt);
+      return d >= sevenDaysAgo && d <= now;
     });
 
     let totalTransactionValue = 0;
     let collectionsValue = 0;
     let transferValue = 0;
 
-    last7DaysTransactions.forEach((transaction) => {
-      const amount = Math.abs(parseFloat(transaction.amount));
+    recent.forEach((tx) => {
+      const amount = tx.amount; // ← now a number, no parseFloat needed
 
       totalTransactionValue += amount;
 
-      if (transaction.transactionType === "CREDIT") {
-        collectionsValue += amount;
-      }
-
-      if (transaction.transactionType === "TRANSFER") {
-        transferValue += amount;
-      }
+      if (tx.direction === "CREDIT") collectionsValue += amount;  // ← was transactionType === "CREDIT"
+      if (tx.direction === "DEBIT")  transferValue  += amount;    // ← was transactionType === "TRANSFER"
     });
 
-    return {
-      totalTransactionValue,
-      collectionsValue,
-      transferValue,
-    };
+    return { totalTransactionValue, collectionsValue, transferValue };
   }, [transactions]);
 
-  // Format currency helper
-  const formatCurrency = (amount: number) => {
-    return `NGN ${amount.toLocaleString("en-NG", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
+  const formatCurrency = (amount: number) =>
+    `NGN ${amount.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
     <div>
-      <div className="flex justify-between flex-col items-start gap-2 lg:gap-0 lg:flex-row ">
+      <div className="flex justify-between flex-col items-start gap-2 lg:gap-0 lg:flex-row">
         <div className="flex gap-4 lg:gap-10">
           <button
             onClick={() => setActiveTab(tabs[0])}
             className={`text-[13px] lg:text-[16px] font-dm-sans ${
               activeTab === "Payment Transaction"
-                ? "text-[#0A6DC0] font-bold  border-b-2 border-[#0A6DC0]"
+                ? "text-[#0A6DC0] font-bold border-b-2 border-[#0A6DC0]"
                 : "text-[#2F2F2F] font-medium"
             }`}
           >
             Payment Transactions
-            
           </button>
-          {/* <button
-            onClick={() => setActiveTab(tabs[1])}
-            className={`text-[13px] lg:text-[16px] ${
-              activeTab === "Loan Transactions"
-                ? "text-[#0A6DC0] font-bold font-dm-sans border-b-2 border-[#0A6DC0]"
-                : "text-[#2F2F2F] font-medium"
-            }`}
-          >
-            Loan Transactions (coming soon)
-          </button> */}
         </div>
 
         {activeTab === "Loan Transactions" && (
@@ -221,7 +145,6 @@ const Table = () => {
                 <SlidersHorizontal size={20} /> filter <ChevronDown />
               </div>
               <Separator orientation="vertical" className="h-4" />
-
               <div className="flex items-center gap-2">
                 <ArrowUpNarrowWide size={20} /> sort <ChevronDown />
               </div>
@@ -242,96 +165,66 @@ const Table = () => {
               </>
             )}
 
-            {error && (
-              <div className="text-center py-8 text-red-500">{error}</div>
-            )}
+            {error && <div className="text-center py-8 text-red-500">{error}</div>}
 
             {!loading && !error && transactions.length === 0 && (
               <div className="text-center py-8 text-[#2F2F2F] flex items-center justify-center flex-col mt-20">
-                <Image src={"/ts.svg"} alt="ts" height={50} width={50} />
-                <p className="font-bold font-dm-sans text-[16px] ">
-                  {" "}
-                  No transactions found
-                </p>{" "}
+                <Image src="/ts.svg" alt="ts" height={50} width={50} />
+                <p className="font-bold font-dm-sans text-[16px]">No transactions found</p>
                 <p>Your recent transactions will appear here</p>
               </div>
             )}
 
             {!loading &&
               !error &&
-              transactions.slice(0, 4).map((transaction) => {
-                const date = new Date(transaction.createdAt);
+              transactions.slice(0, 4).map((tx) => {
+                const date = new Date(tx.createdAt);
                 const formattedDate = date.toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
+                  day: "numeric", month: "short", year: "numeric",
                 });
                 const formattedTime = date.toLocaleTimeString("en-GB", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
+                  hour: "2-digit", minute: "2-digit", second: "2-digit",
                 });
-                const isCredit = transaction.transactionType === "CREDIT";
-                const isTransfer = transaction.transactionType === "TRANSFER";
 
-                // Determine counterparty name and bank
-                let counterpartyName = "Unknown";
-                let counterpartyBank = "N/A";
+                const isCredit = tx.direction === "CREDIT"; // ← was transactionType === "CREDIT"
 
-                if (isCredit) {
-                  counterpartyName =
-                    transaction.senderAccount?.Name || "Unknown";
-                  counterpartyBank = transaction.senderAccount?.Bank || "N/A";
-                } else if (isTransfer) {
-                  counterpartyName =
-                    transaction.beneficiaryAccount?.name || "Unknown";
-                  counterpartyBank =
-                    transaction.beneficiaryAccount?.provider || "";
-                }
+                // For credits show sender; for debits show receiver
+                const counterpartyName = isCredit
+                  ? (tx.sender?.name   || "Unknown")    // ← was senderAccount?.Name
+                  : (tx.receiver?.name || "Unknown");   // ← was beneficiaryAccount?.name
 
-                // For amount formatting (already good)
-                const amountValue = Math.abs(parseFloat(transaction.amount));
+                const counterpartyBank = isCredit
+                  ? (tx.sender?.bankName   || "")   // ← was senderAccount?.Bank
+                  : (tx.receiver?.bankName || "");  // ← was beneficiaryAccount?.provider
+
                 const formattedAmount = isCredit
-                  ? `+${amountValue.toLocaleString("en-NG")} NGN`
-                  : `-${amountValue.toLocaleString("en-NG")} NGN`;
-
-                const status = isCredit ? "paidIn" : "paidOut";
+                  ? `+${tx.amount.toLocaleString("en-NG")} NGN`   // ← amount is now a number
+                  : `-${tx.amount.toLocaleString("en-NG")} NGN`;
 
                 return (
-                  <div
-                    key={transaction.id}
-                    className=" border-b border-gray-200 pb-2"
-                  >
-                    <div className="flex items-center gap-2 text-[14px] font-regular text-[#6F6F6F]">
+                  <div key={tx.id} className="border-b border-gray-200 pb-2">
+                    <div className="flex items-center gap-2 text-[14px] text-[#6F6F6F]">
                       <p className="whitespace-nowrap">{formattedDate}</p>
                       <Separator orientation="vertical" className="h-4" />
                       <p>{formattedTime}</p>
                     </div>
-                    <div className="flex sm:items-center justify-between flex-col sm:flex-row ">
+                    <div className="flex sm:items-center justify-between flex-col sm:flex-row">
                       <Image
-                        src={status === "paidOut" ? "/out.svg" : "/in.svg"}
-                        width={30}
-                        height={30}
-                        alt="wallet"
-                        className=" hidden sm:inline w-10 h-10"
+                        src={isCredit ? "/in.svg" : "/out.svg"}
+                        width={30} height={30} alt="wallet"
+                        className="hidden sm:inline w-10 h-10"
                       />
-
                       <div className="sm:w-[50%]">
                         <h1 className="font-medium uppercase lg:font-bold text-[14px] font-dm-sans">
                           {counterpartyBank} {counterpartyName}
                         </h1>
                         <p className="text-[13px] text-[#797979]">
-                          Ref: {transaction.transactionReference}
+                          Ref: {tx.transactionReference}
                         </p>
                       </div>
-
-                      <h1
-                        className={` whitespace-nowrap text-[12px] lg:text-[16px] font-dm-sans font-medium ${
-                          status === "paidIn"
-                            ? "text-[#00C53A]"
-                            : "text-[#FF6242]"
-                        }`}
-                      >
+                      <h1 className={`whitespace-nowrap text-[12px] lg:text-[16px] font-dm-sans font-medium ${
+                        isCredit ? "text-[#00C53A]" : "text-[#FF6242]"
+                      }`}>
                         {formattedAmount}
                       </h1>
                     </div>
@@ -341,122 +234,66 @@ const Table = () => {
 
             {transactions.length > 0 && (
               <button
-                onClick={() =>
-                  router.push("/account/transactionHistory")
-                }
+                onClick={() => router.push("/account/transactionHistory")}
                 className="text-[#39498C] font-medium font-dm-sans text-[14px] md:pt-4"
               >
                 Show all
               </button>
             )}
           </div>
-          <div className="xl:w-[45%] md:border border-[#E4E4E4] md:px-4 lg:px-7 py-5  bg-white rounded-2xl">
+
+          <div className="xl:w-[45%] md:border border-[#E4E4E4] md:px-4 lg:px-7 py-5 bg-white rounded-2xl">
             <div className="flex items-center gap-2">
-              {" "}
-              <Calendar /> Last 7 days. <ChevronDown />{" "}
+              <Calendar /> Last 7 days. <ChevronDown />
             </div>
             <Separator orientation="horizontal" className="mt-3" />
             <div className="space-y-4">
-              <div className="mt-4 border border-[#E4E4E4] px-4 lg:px-7 py-5  bg-white rounded-2xl">
-                <div className="flex items-center gap-1 ">
-                  <Calculator className="text-[#39498C]" />
-                  <p className="font-medium text-[#39498C] text-[14px] font-dm-sann">
-                    Total Transaction Value
+              {[
+                { label: "Total Transaction Value", value: transactionStats.totalTransactionValue },
+                { label: "Collections Value",       value: transactionStats.collectionsValue },
+                { label: "Transfer Value",          value: transactionStats.transferValue },
+              ].map(({ label, value }) => (
+                <div key={label} className="mt-4 border border-[#E4E4E4] px-4 lg:px-7 py-5 bg-white rounded-2xl">
+                  <div className="flex items-center gap-1">
+                    <Calculator className="text-[#39498C]" />
+                    <p className="font-medium text-[#39498C] text-[14px] font-dm-sans">{label}</p>
+                  </div>
+                  <p className="text-[14px] lg:text-[16px] font-clash text-[#292826] lg:font-semibold">
+                    {formatCurrency(value)}
                   </p>
                 </div>
-                <p className="text-[14px] lg:text-[16px] font-clash text-[#292826] lg:font-semibold">
-                  {formatCurrency(transactionStats.totalTransactionValue)}
-                </p>
-              </div>
-              <div className="mt-4 border border-[#E4E4E4] px-4 lg:px-7 py-5  bg-white rounded-2xl">
-                <div className="flex items-center gap-1 ">
-                  <Calculator className="text-[#39498C]" />
-                  <p className="font-medium text-[#39498C] text-[14px] font-dm-sann">
-                    Collections Value
-                  </p>
-                </div>
-                <p className="text-[14px] lg:text-[16px] font-clash text-[#292826] lg:font-semibold">
-                  {formatCurrency(transactionStats.collectionsValue)}
-                </p>
-              </div>
-              <div className="mt-4 border border-[#E4E4E4] px-4 lg:px-7 py-5  bg-white rounded-2xl">
-                <div className="flex items-center gap-1 ">
-                  <Calculator className="text-[#39498C]" />
-                  <p className="font-medium text-[#39498C] text-[14px] font-dm-sann">
-                    Transfer Value
-                  </p>
-                </div>
-                <p className="text-[14px] lg:text-[16px] font-clash text-[#292826] lg:font-semibold">
-                  {formatCurrency(transactionStats.transferValue)}
-                </p>
-              </div>
+              ))}
             </div>
-            {/* <Link
-              href={"#"}
-              className="text-[#39498C] font-medium font-dm-sans text-[14px] pt-4"
-            >
-              See More
-            </Link> */}
           </div>
         </div>
       )}
 
       {activeTab === "Loan Transactions" && (
-        <div className="overflow-x-auto mt-6  border-[#E4E4E4] border-2 bg-white  rounded-2xl">
+        <div className="overflow-x-auto mt-6 border-[#E4E4E4] border-2 bg-white rounded-2xl">
           <table className="w-full my-6">
-            <thead className="">
+            <thead>
               <tr>
-                <th className="text-left px-4 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                  ID
-                </th>
-                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                  Amount
-                </th>
-                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                  Maturity Amount
-                </th>
-                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                  Date
-                </th>
-                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                  Due Date
-                </th>
-                <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                  Status
-                </th>
-                <th className="text-left py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
-                  More
-                </th>
+                {["ID", "Amount", "Maturity Amount", "Date", "Due Date", "Status", "More"].map((h) => (
+                  <th key={h} className="text-left px-4 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y">
               {Loans.map((loan) => (
-                <tr
-                  key={loan.id}
-                  className="border-[#E4E4E4] border-b hover:bg-gray-200"
-                >
-                  <td className="text-left p-4 py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
-                    {loan.id}
-                  </td>
-                  <td className="hidden md:table-cell text-left py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
-                    {loan.amount}
-                  </td>
-                  <td className="hidden md:table-cell text-left py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
-                    {loan.MaturityAmount}
-                  </td>
-                  <td className="hidden md:table-cell text-left py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
-                    {loan.date}
-                  </td>
-                  <td className="hidden md:table-cell text-left py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
-                    {loan.dueDate}
-                  </td>
-                  <td className="hidden md:table-cell text-left  ">
+                <tr key={loan.id} className="border-[#E4E4E4] border-b hover:bg-gray-200">
+                  <td className="text-left p-4 py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">{loan.id}</td>
+                  <td className="hidden md:table-cell py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">{loan.amount}</td>
+                  <td className="hidden md:table-cell py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">{loan.MaturityAmount}</td>
+                  <td className="hidden md:table-cell py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">{loan.date}</td>
+                  <td className="hidden md:table-cell py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">{loan.dueDate}</td>
+                  <td className="hidden md:table-cell">
                     <Button className="bg-[#E7F4EB] hover:bg-[#E7F4EB] md:font-bold py-0 text-[#003909] text-[12px] rounded-full">
-                      <span className="bg-[#00C53A] h-2 w-2 rounded-full"></span>{" "}
-                      {loan.status}
+                      <span className="bg-[#00C53A] h-2 w-2 rounded-full"></span> {loan.status}
                     </Button>
                   </td>
-                  <td className="py-4 font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] ">
+                  <td className="py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
                     <MoveRight />
                   </td>
                 </tr>

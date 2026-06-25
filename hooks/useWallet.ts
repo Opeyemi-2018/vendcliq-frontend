@@ -111,14 +111,16 @@ export const useWallet = (): UseWalletReturn => {
       setIsLoading(true);
       const response = await handleGetWallet();
 
-      if (response.status === "success" && response.data) {
+      if (response.statusCode === 200 && response.data) {
         const walletData: WalletData = {
-          walletId: response.data.walletId,
-          balance: response.data.balance,
+          walletId: 0, 
+          balance: String(response.data.balance),
           currency: response.data.currency,
           accountName: response.data.accountName,
-          accountNumbers: response.data.accountNumbers || {},
-          lastUpdated: response.data.lastUpdated,
+          accountNumbers: {
+            [response.data.provider]: response.data.accountNumber,
+          },
+          lastUpdated: response.data.asOf,
         };
 
         setWallet(walletData);
