@@ -50,6 +50,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import { usePinValidation } from "@/hooks/usePinValidation";
 
 import {
   Popover,
@@ -66,7 +67,6 @@ import { Separator } from "@/components/ui/separator";
 import {
   getNipBanks,
   performNameEnquiry,
-  handleValidatePin,
   handleTransfer,
   handleCreateBeneficiary,
   handleGetBeneficiaries,
@@ -86,7 +86,7 @@ export default function OtherBankTransfer() {
   const [isLoadingBeneficiaries, setIsLoadingBeneficiaries] = useState(false);
   const router = useRouter();
   const [maxBeneficiaries, setMaxBeneficiaries] = useState(5);
-  // Add these states at the top with the others:
+  const { validatePin, retriesLeft, resetRetries } = usePinValidation();
   const [editingBeneficiary, setEditingBeneficiary] =
     useState<Beneficiary | null>(null);
   const [editEmail, setEditEmail] = useState("");
@@ -306,20 +306,18 @@ export default function OtherBankTransfer() {
 
     setIsTransferring(true);
     try {
-      const pinRes = await handleValidatePin({ pin });
-      if (pinRes.status !== "success" || !pinRes.data?.validated) {
-        toast.error(pinRes.msg || "Invalid PIN");
+      const pinToken = await validatePin(pin);
+      if (!pinToken) {
+        setValue("pin", "");
         return;
       }
-
-      const pinToken = pinRes.data.pinToken;
       const transactionKey = await generateTransactionKey();
 
       const payload = {
         transactionKey,
         amount: Number(amount),
         beneficiaryAccountNumber: finalAccountNumber,
-        beneficiaryBankCode: finalBankCode, // ← actual bank code for external transfers
+        beneficiaryBankCode: finalBankCode,
         beneficiaryAccountName: finalAccountName,
         narration: narration || "Transfer",
         pinToken,
@@ -327,7 +325,7 @@ export default function OtherBankTransfer() {
         ipAddress: "0.0.0.0",
       };
 
-      const transferRes = await handleTransfer(payload); // ← unified endpoint
+      const transferRes = await handleTransfer(payload);
 
       if (transferRes.statusCode === 202 || transferRes.success === true) {
         toast.success("Transfer successful!");
@@ -785,7 +783,13 @@ export default function OtherBankTransfer() {
             {/* Step 4 - PIN */}
             {step === 4 && (
               <div className="mt-3">
-                <button onClick={() => setStep(3)} className="mt-4">
+                <button
+                  onClick={() => {
+                    setStep(3);
+                    resetRetries();
+                  }}
+                  className="mt-4"
+                >
                   <MoveLeft />
                 </button>
                 <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
@@ -845,6 +849,15 @@ export default function OtherBankTransfer() {
                     </div>
                   ))}
                 </div>
+                {retriesLeft !== null && (
+                  <p
+                    className={`text-sm font-dm-sans ${retriesLeft === 0 ? "text-red-600 font-medium" : "text-red-500"}`}
+                  >
+                    {retriesLeft === 0
+                      ? "PIN blocked. Please contact support."
+                      : `${retriesLeft} of 5 attempt${retriesLeft !== 1 ? "s" : ""} remaining`}
+                  </p>
+                )}
                 <Button
                   type="button"
                   onClick={handleFinalSubmit}

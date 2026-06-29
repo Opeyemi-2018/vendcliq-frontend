@@ -36,21 +36,19 @@ import { transferSchema, TransferFormData } from "@/types/transfer";
 import { Separator } from "@/components/ui/separator";
 import { lookupAccount } from "@/lib/utils/api/apiHelper";
 import { ClipLoader } from "react-spinners";
-import {
-  handleValidatePin,
-  handleTransfer, // ← unified handler
-} from "@/lib/utils/api/apiHelper";
+import { handleTransfer } from "@/lib/utils/api/apiHelper";
 import { generateTransactionKey } from "@/lib/utils/generateTransactionKey";
 import Lottie from "lottie-react";
 import animationData from "@/public/animate.json";
 import CreatePinPrompt from "@/components/SetPinModal";
 import { useWallet } from "@/hooks/useWallet";
+import { usePinValidation } from "@/hooks/usePinValidation";
 
-const VENDCLIQ_BANK_CODE = "656656"; // fixed bank code for Vendcliq transfers
+const VENDCLIQ_BANK_CODE = "656656";
 
 export default function VendCliqTransfer() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [showBalance, setShowBalance] = useState(false); // false = show balance on load
+  const [showBalance, setShowBalance] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [accountNumberInput, setAccountNumberInput] = useState("");
   const [accountInfo, setAccountInfo] = useState<{
@@ -60,6 +58,7 @@ export default function VendCliqTransfer() {
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [isTransferring, setIsTransferring] = useState(false);
+  const { validatePin, retriesLeft, resetRetries } = usePinValidation();
 
   const router = useRouter();
   const { refreshWallet, getBalance } = useWallet();
@@ -133,20 +132,18 @@ export default function VendCliqTransfer() {
     setIsTransferring(true);
 
     try {
-      const validateRes = await handleValidatePin({ pin });
-      if (validateRes.status !== "success" || !validateRes.data?.validated) {
-        toast.error(validateRes.msg || "Invalid PIN");
+      const pinToken = await validatePin(pin);
+      if (!pinToken) {
+        setValue("pin", "");
         return;
       }
-
-      const pinToken = validateRes.data.pinToken;
       const transactionKey = await generateTransactionKey();
 
       const payload = {
         transactionKey,
         amount: Number(amount),
         beneficiaryAccountNumber: accountNumberInput,
-        beneficiaryBankCode: VENDCLIQ_BANK_CODE, 
+        beneficiaryBankCode: VENDCLIQ_BANK_CODE,
         beneficiaryAccountName: accountInfo.accountName,
         narration: watch("narration") || "",
         pinToken,
@@ -473,7 +470,13 @@ export default function VendCliqTransfer() {
             {/* Step 4 - PIN */}
             {step === 4 && (
               <div className="md:mt-8">
-                <button onClick={() => setStep(3)} className="mt-4">
+                <button
+                  onClick={() => {
+                    setStep(3);
+                    resetRetries();
+                  }}
+                  className="mt-4"
+                >
                   <MoveLeft />
                 </button>
                 <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
@@ -536,6 +539,15 @@ export default function VendCliqTransfer() {
                     </div>
                   ))}
                 </div>
+                {retriesLeft !== null && (
+                  <p
+                    className={`text-sm font-dm-sans ${retriesLeft === 0 ? "text-red-600 font-medium" : "text-red-500"}`}
+                  >
+                    {retriesLeft === 0
+                      ? "PIN blocked. Please contact support."
+                      : `${retriesLeft} of 5 attempt${retriesLeft !== 1 ? "s" : ""} remaining`}
+                  </p>
+                )}
                 <Button
                   type="button"
                   onClick={handleFinalSubmit}

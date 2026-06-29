@@ -10,8 +10,9 @@ export interface PinValidateResponse {
   msg: string;
   data: {
     validated: boolean;
-    pinToken: string;
-    pinTokenExpiresAt: string;
+    pinToken?: string;
+    pinTokenExpiresAt?: string;
+    retriesLeft?: number;
   };
 }
 
