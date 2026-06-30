@@ -1,53 +1,51 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // types/transactions.ts
 
+export interface TransactionParty {
+  kind: "USER" | "EXTERNAL" | "SYSTEM";
+  name: string | null;
+  accountNumber: string | null;
+  bankName: string | null;
+  bankCode: string | null;
+}
+
+export interface Transaction {
+  id: string;
+  reference: string;
+  direction: "CREDIT" | "DEBIT";
+  userRole: "SENDER" | "RECEIVER";
+  status: "SUCCESS" | "PENDING" | "FAILED";
+  amount: number;
+  currency: string;
+  fee: number;
+  coin: number;
+  sender: TransactionParty;
+  receiver: TransactionParty;
+  category: "TRANSFER" | "INVENTORY_PAYMENT" | "LOGISTICS" | string;
+  narration: string;
+  sessionId: string | null;
+  transactionReference: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TransactionHistoryResponse {
-  status: string;
-  msg: string;
+  success: boolean;
+  message: string;
+  statusCode: number;
   data: {
-    data: Array<{
-      id: number;
-      walletId: number;
-      amount: string;
-      transactionType: "CREDIT" | "TRANSFER";
-      status: string;
-      provider: string;
-      sessionId: string | null;
-      fee: string | null;
-      rawProviderPayload: Record<string, any>;
-
-      customerAccount: any;
-      senderAccount: {
-        Bank?: string;
-        Name?: string;
-        BankCode?: string;
-        AccountNumber?: string;
-        name?: string;
-        accountNumber?: string;
-      } | null;
-
-      beneficiaryAccount: {
-        name: string;
-        provider: string;
-        accountNumber: string;
-      } | null;
-
-      description: string;
-      transactionReference: string;
-      createdAt: string;
-      updatedAt: string;
-      transactionKey: string | null;
-    }>;
-    meta: {
+    items: Transaction[];
+    pagination: {
       total: number;
+      page: number;
       perPage: number;
-      currentPage: number;
-      lastPage: number;
-      firstPage?: number;
-      firstPageUrl?: string;
-      lastPageUrl?: string;
-      nextPageUrl?: string | null;
-      previousPageUrl?: string | null;
+      totalPages: number;
     };
   };
+}
+
+export interface TransactionByIdResponse {
+  success: boolean;
+  message: string;
+  statusCode: number;
+  data: Transaction;
 }

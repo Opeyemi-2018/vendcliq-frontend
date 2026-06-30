@@ -47,11 +47,11 @@ import { DataSchema, DataFormData, DataPlanItem } from "@/types/utilityBills";
 import { Separator } from "@/components/ui/separator";
 import { ClipLoader } from "react-spinners";
 import {
-  handleValidatePin,
   handleBuyData,
   getNetworkProvider,
   fetchDataPlans,
 } from "@/lib/utils/api/apiHelper";
+import { usePinValidation } from "@/hooks/usePinValidation";
 import { generateIdempotencyKey } from "@/lib/utils/generateIdempotencyKey";
 import CreatePinPrompt from "@/components/SetPinModal";
 import Image from "next/image";
@@ -73,6 +73,7 @@ export default function DataFlow() {
   const [isPaying, setIsPaying] = useState(false);
   const router = useRouter();
   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const { validatePin, retriesLeft, resetRetries } = usePinValidation();
 
   const { wallet, refreshWallet, getBalance } = useWallet();
 
@@ -237,15 +238,12 @@ export default function DataFlow() {
     setIsPaying(true);
 
     try {
-      // 1. Validate PIN → get pinToken
-      const pinRes = await handleValidatePin({ pin: pinValue });
-
-      if (pinRes.status !== "success" || !pinRes.data?.validated) {
-        toast.error(pinRes.msg || "Invalid PIN");
+      const pinToken = await validatePin(pinValue);
+      if (!pinToken) {
+        setValue("pin", "");
+        pinInputRefs.current[0]?.focus();
         return;
       }
-
-      const pinToken = pinRes.data.pinToken;
 
       // 2. Selected plan
       const selectedPlan = fetchedPlans.find(
@@ -393,7 +391,7 @@ export default function DataFlow() {
                   </div>
                 ) : plansError ? (
                   <p className="text-red-600 text-sm">{plansError}</p>
-                )  : (
+                ) : (
                   <>
                     {/* Plans Grid */}
                     <div className="grid grid-cols-3 md:grid-cols-4 gap-1 md:gap-4 mt-1">
@@ -553,7 +551,14 @@ export default function DataFlow() {
           {/* Step 3 - PIN Entry */}
           {step === 3 && (
             <div className="space-y-8 mt-3">
-              <button type="button" onClick={() => setStep(2)} className="mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setStep(2);
+                  resetRetries();
+                }}
+                className="mt-2"
+              >
                 <MoveLeft />
               </button>
               <p className="text-[#9E9A9A] text-[16px] font-dm-sans font-medium">
@@ -625,6 +630,16 @@ export default function DataFlow() {
                   </div>
                 ))}
               </div>
+
+              {retriesLeft !== null && (
+                <p
+                  className={`text-sm font-dm-sans ${retriesLeft === 0 ? "text-red-600 font-medium" : "text-red-500"}`}
+                >
+                  {retriesLeft === 0
+                    ? "PIN blocked. Please contact support."
+                    : `${retriesLeft} of 5 attempt${retriesLeft !== 1 ? "s" : ""} remaining`}
+                </p>
+              )}
 
               <style jsx>{`
                 @keyframes blink {

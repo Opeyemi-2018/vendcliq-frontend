@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-const GOOGLE_MAPS_API_KEY = "AIzaSyC1cj_PC7BXTpOtwpftKi9-DwNczMwjmv8";
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
 interface AddressData {
   display_name?: any;
@@ -76,7 +76,7 @@ export default function PlacesAutocompleteInput({
         {
           fields: ["formatted_address", "name", "geometry"],
           types: ["geocode"],
-        }
+        },
       );
 
       autocomplete.addListener("place_changed", () => {
@@ -104,7 +104,7 @@ export default function PlacesAutocompleteInput({
 
     return () => {
       const script = document.querySelector(
-        `script[src*="maps.googleapis.com"]`
+        `script[src*="maps.googleapis.com"]`,
       );
       if (script) script.remove();
     };

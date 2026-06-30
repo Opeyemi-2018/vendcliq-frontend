@@ -71,8 +71,6 @@ import {
   SEND_OTP_FOR_FORGET_PASSWORD,
   SIGN_IN,
   TRANSACTION_HISTORY,
-  VENDCLIQ_TRANSFER,
-  OTHERBANK_TRANSFER,
   CREATE_WALLET,
   CREATE_INVOICE,
   CREATE_CUSTOMER,
@@ -183,6 +181,9 @@ import {
   GET_SUPPLIER_STOCKS,
   GET_NETWORK_PROVIDER,
   GET_DATA_PLANS,
+  TRANSACTION_BY_ID,
+  WALLET_TRANSFER,
+  UPDATE_BENEFICIARY,
 } from "@/url/api-url";
 
 import { AxiosError } from "axios";
@@ -203,7 +204,10 @@ import {
   UpdateStockPricesPayload,
   UpdateStockPricesResponse,
 } from "@/types/stock";
-import { TransactionHistoryResponse } from "@/types/transactions";
+import {
+  TransactionByIdResponse,
+  TransactionHistoryResponse,
+} from "@/types/transactions";
 import {
   CreateBeneficiaryPayload,
   CreateBeneficiaryResponse,
@@ -214,6 +218,8 @@ import {
   PinValidateResponse,
   VendCliqTransferPayload,
   VendCliqTransferResponse,
+  WalletTransferPayload,
+  WalletTransferResponse,
 } from "@/types/transfer";
 import { CreateWalletResponse, GetWalletResponse } from "@/types/wallet";
 import {
@@ -672,10 +678,18 @@ export const handleSubmitBusinessVerification = (payload: FormData) => {
 
 export const handleGetTransactions = async (
   page: number = 1,
+  limit: number = 50,
 ): Promise<TransactionHistoryResponse> => {
   return await fetcher<TransactionHistoryResponse>(
-    `${TRANSACTION_HISTORY}?page=${page}`,
+    `${TRANSACTION_HISTORY}?page=${page}&limit=${limit}`,
   );
+};
+
+// Add new function:
+export const handleGetTransactionById = async (
+  id: string,
+): Promise<TransactionByIdResponse> => {
+  return await fetcher<TransactionByIdResponse>(TRANSACTION_BY_ID(id));
 };
 
 // Validate PIN to get pinToken
@@ -688,21 +702,11 @@ export const handleValidatePin = async (
   );
 };
 
-// Execute VendCliq Transfer
-export const handleVendCliqTransfer = async (
-  payload: VendCliqTransferPayload,
-): Promise<VendCliqTransferResponse> => {
-  return await poster<VendCliqTransferResponse, VendCliqTransferPayload>(
-    VENDCLIQ_TRANSFER,
-    payload,
-  );
-};
-// Other Bank Transfer
-export const handleOtherBankTransfer = async (
-  payload: OtherBankTransferPayload,
-): Promise<OtherBankTransferResponse> => {
-  return await poster<OtherBankTransferResponse, OtherBankTransferPayload>(
-    OTHERBANK_TRANSFER,
+export const handleTransfer = async (
+  payload: WalletTransferPayload,
+): Promise<WalletTransferResponse> => {
+  return await poster<WalletTransferResponse, WalletTransferPayload>(
+    WALLET_TRANSFER,
     payload,
   );
 };
@@ -720,6 +724,13 @@ export const handleGetBeneficiaries =
   async (): Promise<GetBeneficiariesResponse> => {
     return await fetcher<GetBeneficiariesResponse>(GET_BENEFICIARIES);
   };
+
+export const handleUpdateBeneficiary = async (
+  id: string,
+  payload: { email?: string; phone?: string },
+): Promise<any> => {
+  return await putter<any>(UPDATE_BENEFICIARY(id), payload);
+};
 
 export const handleBuyAirtime = async (
   payload: BuyAirtimePayload,

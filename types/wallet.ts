@@ -28,19 +28,20 @@ export interface CreateWalletResponse {
   };
 }
 
-
 export interface GetWalletResponse {
-  status: string;
-  msg: string;
+  success: boolean;
+  message: string;
+  statusCode: number;
+  timestamp: string;
   data: {
-    walletId: number;
-    balance: string;
-    currency: string;
-    accountNumbers: {
-      WEMA?: string;
-      [key: string]: string | undefined;
-    };
+    accountNumber: string;
     accountName: string;
-    lastUpdated: string;
+    balance: number;
+    availableBalance: number;
+    currency: string;
+    coinBalance: number;
+    provider: string;
+    status: string;
+    asOf: string;
   };
 }
