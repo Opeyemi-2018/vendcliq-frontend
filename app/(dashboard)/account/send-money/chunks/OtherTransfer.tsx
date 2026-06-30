@@ -68,7 +68,7 @@ import {
   getNipBanks,
   performNameEnquiry,
   handleTransfer,
-  handleCreateBeneficiary,
+  // handleCreateBeneficiary,
   handleGetBeneficiaries,
   handleUpdateBeneficiary as handleUpdateBeneficiaryFn,
 } from "@/lib/utils/api/apiHelper";
@@ -82,7 +82,7 @@ export default function OtherBankTransfer() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [showBallance, setShowBallance] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isSavingBeneficiary, setIsSavingBeneficiary] = useState(false);
+  // const [isSavingBeneficiary, setIsSavingBeneficiary] = useState(false);
   const [isLoadingBeneficiaries, setIsLoadingBeneficiaries] = useState(false);
   const router = useRouter();
   const [maxBeneficiaries, setMaxBeneficiaries] = useState(5);
@@ -237,55 +237,55 @@ export default function OtherBankTransfer() {
     setStep(3);
   };
 
-  const handleAddToBeneficiary = async () => {
-    if (
-      !selectedBankCode ||
-      !accountNumber ||
-      !accountName ||
-      !wallet?.walletId
-    ) {
-      toast.error("Missing required information");
-      return;
-    }
-    setIsSavingBeneficiary(true);
-    try {
-      const selectedBankName =
-        banks.find((b) => b.code === selectedBankCode)?.name || "";
-      const payload = {
-        walletId: wallet.walletId,
-        name: accountName,
-        accountNumber,
-        bankCode: selectedBankCode,
-        bankName: selectedBankName,
-      };
-      const response = await handleCreateBeneficiary(payload);
-      if (response.status === "success") {
-        toast.success("Beneficiary added successfully!");
-        const beneficiariesResponse = await handleGetBeneficiaries();
-        if (
-          beneficiariesResponse.success &&
-          Array.isArray(beneficiariesResponse.data.items)
-        ) {
-          setBeneficiaries(beneficiariesResponse.data.items);
-          setMaxBeneficiaries(beneficiariesResponse.data.max);
-        }
-        setFinalBankName(selectedBankName);
-        setFinalAccountNumber(accountNumber);
-        setFinalAccountName(accountName);
-        setFinalBankCode(selectedBankCode);
-        setValue("bank", selectedBankName);
-        setValue("accountNumber", accountNumber);
-        setValue("accountName", accountName);
-        setStep(2);
-      } else {
-        toast.error(response.msg || "Failed to add beneficiary");
-      }
-    } catch (error: any) {
-      toast.error(error?.msg || "Failed to add beneficiary");
-    } finally {
-      setIsSavingBeneficiary(false);
-    }
-  };
+  // const handleAddToBeneficiary = async () => {
+  //   if (
+  //     !selectedBankCode ||
+  //     !accountNumber ||
+  //     !accountName ||
+  //     !wallet?.walletId
+  //   ) {
+  //     toast.error("Missing required information");
+  //     return;
+  //   }
+  //   setIsSavingBeneficiary(true);
+  //   try {
+  //     const selectedBankName =
+  //       banks.find((b) => b.code === selectedBankCode)?.name || "";
+  //     const payload = {
+  //       walletId: wallet.walletId,
+  //       name: accountName,
+  //       accountNumber,
+  //       bankCode: selectedBankCode,
+  //       bankName: selectedBankName,
+  //     };
+  //     const response = await handleCreateBeneficiary(payload);
+  //     if (response.status === "success") {
+  //       toast.success("Beneficiary added successfully!");
+  //       const beneficiariesResponse = await handleGetBeneficiaries();
+  //       if (
+  //         beneficiariesResponse.success &&
+  //         Array.isArray(beneficiariesResponse.data.items)
+  //       ) {
+  //         setBeneficiaries(beneficiariesResponse.data.items);
+  //         setMaxBeneficiaries(beneficiariesResponse.data.max);
+  //       }
+  //       setFinalBankName(selectedBankName);
+  //       setFinalAccountNumber(accountNumber);
+  //       setFinalAccountName(accountName);
+  //       setFinalBankCode(selectedBankCode);
+  //       setValue("bank", selectedBankName);
+  //       setValue("accountNumber", accountNumber);
+  //       setValue("accountName", accountName);
+  //       setStep(2);
+  //     } else {
+  //       toast.error(response.msg || "Failed to add beneficiary");
+  //     }
+  //   } catch (error: any) {
+  //     toast.error(error?.msg || "Failed to add beneficiary");
+  //   } finally {
+  //     setIsSavingBeneficiary(false);
+  //   }
+  // };
 
   const handleFinalSubmit = async () => {
     if (isTransferring) return;
@@ -475,15 +475,15 @@ export default function OtherBankTransfer() {
                             </div>
                           ))}
                         </div>
-                        {savedIndex !== undefined && (
-                          <Button
-                            type="button"
-                            onClick={handleStep1}
-                            className="w-full bg-[#0A6DC0] hover:bg-[#09599a] mt-6 py-6"
-                          >
-                            Proceed
-                          </Button>
-                        )}
+                        {/* {savedIndex !== undefined && ( */}
+                        <Button
+                          type="button"
+                          onClick={handleStep1}
+                          className="w-full bg-[#0A6DC0] hover:bg-[#09599a] mt-6 py-6"
+                        >
+                          Proceed
+                        </Button>
+                        {/* )} */}
                       </>
                     )}
                   </>
@@ -590,21 +590,15 @@ export default function OtherBankTransfer() {
                                 }
                               </p>
                             </div>
-                            <button
-                              type="button"
-                              onClick={handleAddToBeneficiary}
-                              disabled={isSavingBeneficiary}
-                              className="flex flex-col items-end text-[#0A6DC0] hover:text-[#09599a] transition-colors group"
-                            >
-                              <MoveRight className="h-8 w-8 group-hover:translate-x-1 transition-transform" />
-                              <span className="text-xs font-medium mt-1 whitespace-nowrap">
-                                {isSavingBeneficiary
-                                  ? "Adding..."
-                                  : "Add to beneficiary"}
-                              </span>
-                            </button>
                           </div>
                         </div>
+                        <Button
+                          type="button"
+                          onClick={handleStep1}
+                          className="w-full bg-[#0A6DC0] hover:bg-[#09599a] mt-4 py-6"
+                        >
+                          Proceed
+                        </Button>
                       </div>
                     )}
                   </div>
