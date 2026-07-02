@@ -14,7 +14,12 @@ export default function SinglePurchasedItemPage() {
   }>();
   const router = useRouter();
 
-  const { data: item, request, isLoading, error } = usePurchaseRequestItem(id, itemId);
+  const {
+    data: item,
+    request,
+    isLoading,
+    error,
+  } = usePurchaseRequestItem(id, itemId);
 
   const formatCurrency = (amount: number | string): string => {
     const num = typeof amount === "string" ? parseFloat(amount) : amount;
@@ -45,7 +50,9 @@ export default function SinglePurchasedItemPage() {
         <h2 className="text-2xl font-bold text-red-600 mb-4 font-dm-sans">
           Error
         </h2>
-        <p className="text-gray-700 mb-4">{error?.message || "Item not found"}</p>
+        <p className="text-gray-700 mb-4">
+          {error?.message || "Item not found"}
+        </p>
         <Button
           onClick={() => router.back()}
           className="px-8 py-3.5 bg-[#0A6DC0] text-white rounded-lg hover:bg-[#09599a]"
@@ -115,7 +122,7 @@ export default function SinglePurchasedItemPage() {
           <div>
             <h2 className="font-bold font-dm-sans">Total Cost</h2>
             <p className="mt-1.5 font-medium">
-              {formatCurrency(item.cost * item.quantity)}
+              {formatCurrency(item.sub_total)}
             </p>
           </div>
 
@@ -131,16 +138,18 @@ export default function SinglePurchasedItemPage() {
           </div>
         </div>
 
-        <Button
-          className="mt-5 bg-[#0A6DC0] hover:bg-[#085a9e] w-full py-5 md:py-6 font-medium text-base rounded-xl"
-          onClick={() =>
-            router.push(
-              `/inventory/purchase-request/${id}/item/${itemId}/handover`,
-            )
-          }
-        >
-          Hand-over Product
-        </Button>
+        {!item.attributes?.handover_completed && (
+          <Button
+            className="mt-5 bg-[#0A6DC0] hover:bg-[#085a9e] w-full py-5 md:py-6 font-medium text-base rounded-xl"
+            onClick={() =>
+              router.push(
+                `/inventory/purchase-request/${id}/item/${itemId}/handover`,
+              )
+            }
+          >
+            Hand-over Product
+          </Button>
+        )}
       </div>
     </div>
   );

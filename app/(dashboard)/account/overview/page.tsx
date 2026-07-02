@@ -22,6 +22,7 @@ import { toast } from "sonner";
 // import { handleCreateWallet } from "@/lib/utils/api/apiHelper";
 import { useStores } from "@/hooks/useStores";
 import { useWallet } from "@/hooks/useWallet";
+import { WSDiagnostic } from "@/components/WSDiagnostic";
 
 const Home = () => {
   const { user, isUserWalletNull } = useUser();
@@ -170,6 +171,8 @@ const Home = () => {
           className="w-[350px] h-[400px] -ml-12 sm:-ml-0"
         />
       </div>
+
+      {/* <WSDiagnostic /> */}
 
       <div className="mt-6 flex gap-5 flex-col lg:flex-row">
         <div className=" border-[#E4E4E4] border-2 bg-white px-4 lg:px-7 py-5 rounded-2xl flex flex-col justify-between h-[218px] w-full">

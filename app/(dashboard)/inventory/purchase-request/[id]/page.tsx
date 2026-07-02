@@ -21,12 +21,6 @@ const PurchaseRequestDetailPage = () => {
       minimumFractionDigits: 0,
     });
 
-  const getSubtotal = (qty?: number, cost?: number) => {
-    const q = typeof qty === "number" ? qty : 0;
-    const c = typeof cost === "number" ? cost : 0;
-    return q * c;
-  };
-
   const getStatusBadge = (status?: string) => {
     const s = status?.toLowerCase();
 
@@ -70,7 +64,9 @@ const PurchaseRequestDetailPage = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
         <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
-        <p className="text-gray-700 mb-6">{error?.message || "Request not found"}</p>
+        <p className="text-gray-700 mb-6">
+          {error?.message || "Request not found"}
+        </p>
         <Link
           href="/inventory/purchase-request"
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -116,12 +112,23 @@ const PurchaseRequestDetailPage = () => {
                 <thead className="bg-gray-50">
                   <tr className="whitespace-nowrap">
                     <th className="px-6 py-3 text-left font-medium">Product</th>
-                    <th className="px-6 py-3 text-left font-medium">Quantity</th>
-                    <th className="px-6 py-3 text-left font-medium">Unit Cost</th>
-                    <th className="px-6 py-3 text-left font-medium">Subtotal</th>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Quantity
+                    </th>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Unit Cost
+                    </th>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Subtotal
+                    </th>
                     <th className="px-6 py-3 text-left font-medium">Status</th>
-                    <th className="px-6 py-3 text-left font-medium">Delivery</th>
-                   </tr>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Delivery
+                    </th>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Handover
+                    </th>
+                  </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {request.items.map((item) => (
@@ -159,13 +166,15 @@ const PurchaseRequestDetailPage = () => {
                             </div>
                           </div>
                         </div>
-                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">{item.quantity}</td>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.quantity}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap font-medium">
                         {formatCurrency(item.cost)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-medium">
-                        {formatCurrency(getSubtotal(item.quantity, item.cost))}
+                        {formatCurrency(item.sub_total)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(request.status)}
@@ -178,6 +187,17 @@ const PurchaseRequestDetailPage = () => {
                         ) : (
                           <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
                             No
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.attributes?.handover_completed ? (
+                          <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                            Completed
+                          </span>
+                        ) : (
+                          <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                            Pending
                           </span>
                         )}
                       </td>

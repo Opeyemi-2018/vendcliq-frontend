@@ -48,6 +48,31 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/userContext";
 
+// ── Tag badges ────────────────────────────────────────────────────────────────
+function NewTag() {
+  return (
+    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#FAB435] text-[#0A2540] leading-none uppercase tracking-wide">
+      New
+    </span>
+  );
+}
+
+function ComingSoonTag() {
+  return (
+    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#FAB435] text-[#0A2540] leading-none uppercase tracking-wide whitespace-nowrap">
+      Soon
+    </span>
+  );
+}
+
+function RefreshTag() {
+  return (
+    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#0A6DC0] text-white leading-none uppercase tracking-wide">
+      Refresh
+    </span>
+  );
+}
+
 export function AppSidebar() {
   const { state, isMobile, setOpenMobile, setOpen } = useSidebar();
   const isCollapsed = state === "collapsed";
@@ -112,9 +137,14 @@ export function AppSidebar() {
             title: "Enterprise",
             url: "/credit-ledger",
             icon: Building2,
+            tag: "new" as const,
             children: [
               { title: "Credit Ledger", url: "/credit-ledger" },
-              { title: "Delivery", url: "/delivery" },
+              {
+                title: "Delivery",
+                url: "/delivery",
+                tag: "coming-soon" as const,
+              },
             ],
           },
         ]
@@ -125,24 +155,21 @@ export function AppSidebar() {
       icon: RectangleEllipsis,
       children: [
         ...(canReporting()
-          ? [{ title: "Business Report", url: "/business-report" }]
-          : []),
-
-        { title: "Supplier List", url: "/suppliers" },
-        { title: "Customer List", url: "/customer" },
-
-        ...(canExpenses() ? [{ title: "Expenses", url: "/expenses" }] : []),
-
-        { title: "Profile Settings", url: "/profile-settings" },
-        { title: "Referral", url: "/referral" },
-
-        ...(!isAttendant
           ? [
               {
-                title: "Account Deletion",
-                url: "/request-account-deletion",
+                title: "Business Report",
+                url: "/business-report",
+                tag: "refresh" as const,
               },
             ]
+          : []),
+        { title: "Supplier List", url: "/suppliers" },
+        { title: "Customer List", url: "/customer" },
+        ...(canExpenses() ? [{ title: "Expenses", url: "/expenses" }] : []),
+        { title: "Profile Settings", url: "/profile-settings" },
+        { title: "Referral", url: "/referral" },
+        ...(!isAttendant
+          ? [{ title: "Account Deletion", url: "/request-account-deletion" }]
           : []),
       ],
     },
@@ -172,10 +199,8 @@ export function AppSidebar() {
     }
   };
 
-  // Add this function inside the component
   const handleLogout = async () => {
     try {
-      // ✅ Call the logout API to clear HTTP-only cookies
       await fetch("/api/auth/logout", {
         method: "GET",
         credentials: "include",
@@ -183,21 +208,10 @@ export function AppSidebar() {
     } catch (error) {
       console.error("Logout API error:", error);
     } finally {
-      // ✅ Clear client-side data
       clearAuthTokens();
-
-      // ✅ Redirect to signin
       window.location.href = "/signin";
     }
   };
-
-  // Update the AlertDialogAction to use handleLogout
-  <AlertDialogAction
-    onClick={handleLogout}
-    className="bg-white text-[#2F2F2F] hover:bg-[#0A6DC012] w-full sm:w-auto"
-  >
-    Yes, Log Out
-  </AlertDialogAction>;
 
   return (
     <Sidebar collapsible="icon">
@@ -260,14 +274,19 @@ export function AppSidebar() {
                             <span className="text-white font-dm-sans text-[16px]">
                               {item.title}
                             </span>
-                            <ChevronDown
-                              className={`ml-auto text-white transition-transform duration-200 ${
-                                openItems.includes(item.title)
-                                  ? "rotate-180"
-                                  : ""
-                              }`}
-                              style={{ width: "20px", height: "20px" }}
-                            />
+                            <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
+                              {"tag" in item && item.tag === "new" && (
+                                <NewTag />
+                              )}
+                              <ChevronDown
+                                className={`text-white transition-transform duration-200 ${
+                                  openItems.includes(item.title)
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
+                                style={{ width: "20px", height: "20px" }}
+                              />
+                            </div>
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
@@ -275,18 +294,31 @@ export function AppSidebar() {
                             {item.children.map((child) => (
                               <SidebarMenuSubItem key={child.title}>
                                 <SidebarMenuSubButton
-                                  asChild
+                                  asChild={child.tag !== "coming-soon"}
                                   isActive={isActive(child.url)}
                                   className="menuButton text-white hover:bg-white/10 ml-8"
                                 >
-                                  <Link
-                                    href={child.url}
-                                    onClick={handleLinkClick}
-                                  >
-                                    <span className="text-white font-dm-sans text-[14px]">
-                                      {child.title}
-                                    </span>
-                                  </Link>
+                                  {child.tag === "coming-soon" ? (
+                                    <div className="flex items-center w-full cursor-not-allowed opacity-50 select-none pointer-events-none gap-2">
+                                      <span className="text-white font-dm-sans text-[14px] flex-1 line-through">
+                                        {child.title}
+                                      </span>
+                                      <ComingSoonTag />
+                                    </div>
+                                  ) : (
+                                    <Link
+                                      href={child.url}
+                                      onClick={handleLinkClick}
+                                      className="flex items-center w-full gap-2"
+                                    >
+                                      <span className="text-white font-dm-sans text-[14px] flex-1">
+                                        {child.title}
+                                      </span>
+                                      {child.tag === "refresh" && (
+                                        <RefreshTag />
+                                      )}
+                                    </Link>
+                                  )}
                                 </SidebarMenuSubButton>
                               </SidebarMenuSubItem>
                             ))}
