@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { MoveLeft } from "lucide-react";
-import { ThreeDots } from "react-loader-spinner";
 import { usePurchaseRequestById } from "@/hooks/usePurchaseRequests";
 
 const PurchaseRequestDetailPage = () => {
@@ -49,12 +48,59 @@ const PurchaseRequestDetailPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="py-20 px-4 flex flex-col items-center justify-center">
-          <ThreeDots height="100" width="100" color="#0A6DC0" visible={true} />
-          <p className="mt-4 text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
-            Loading items...
-          </p>
+      <div>
+        {/* Back button skeleton */}
+        <div className="w-9 h-9 rounded-full bg-gray-100 animate-pulse mb-4" />
+
+        {/* Title skeleton */}
+        <div className="mb-4 md:mb-6 space-y-2">
+          <div className="h-7 bg-gray-100 rounded-lg w-40 animate-pulse" />
+          <div className="h-4 bg-gray-100 rounded w-48 animate-pulse" />
+        </div>
+
+        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px]">
+          <div className="h-6 bg-gray-100 rounded w-36 animate-pulse mb-4" />
+
+          <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+            {/* Table header skeleton */}
+            <div className="bg-gray-50 px-6 py-3 flex gap-8">
+              {[
+                "Product",
+                "Quantity",
+                "Unit Cost",
+                "Subtotal",
+                "Status",
+                "Delivery",
+                "Handover",
+              ].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-4 bg-gray-100 rounded w-16 animate-pulse"
+                />
+              ))}
+            </div>
+
+            {/* Table rows skeleton */}
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="px-6 py-4 flex gap-8 items-center border-t border-gray-100"
+              >
+                {/* Product cell */}
+                <div className="flex items-center gap-2 min-w-[140px]">
+                  <div className="w-10 h-10 rounded-md bg-gray-100 animate-pulse flex-shrink-0" />
+                  <div className="h-4 bg-gray-100 rounded w-24 animate-pulse" />
+                </div>
+                {/* Other cells */}
+                {Array.from({ length: 6 }).map((_, j) => (
+                  <div
+                    key={j}
+                    className="h-4 bg-gray-100 rounded w-16 animate-pulse"
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

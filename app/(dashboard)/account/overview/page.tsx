@@ -22,7 +22,6 @@ import { toast } from "sonner";
 // import { handleCreateWallet } from "@/lib/utils/api/apiHelper";
 import { useStores } from "@/hooks/useStores";
 import { useWallet } from "@/hooks/useWallet";
-import { WSDiagnostic } from "@/components/WSDiagnostic";
 
 const Home = () => {
   const { user, isUserWalletNull } = useUser();
@@ -30,6 +29,7 @@ const Home = () => {
     wallet,
     isLoading: isLoadingWallet,
     fetchWallet,
+    isLiveConnected,
     getBalance,
     getAccountNumber,
   } = useWallet();
@@ -110,12 +110,14 @@ const Home = () => {
   //     setCreatingWallet(false);
   //   }
   // };
+  // console.log("Live:", isLiveConnected);
 
   return (
     <div className="">
       <h1 className="font-bold font-dm-sans text-[#2F2F2F] text-[20px] md:text-[25px]">
         Welcome back, {mounted ? user?.firstname || "User" : ""}
       </h1>
+      {/* <p className="text-xs">{isLiveConnected ? "🟢 Live" : "🔴 Offline"}</p> */}
 
       {isLoadingWallet ? (
         <div className="bg-white font-dm-sans text-center text-[14px] md:font-bold text-[#2F2F2F] py-3 px-4 md:px-6 items-center justify-between gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">

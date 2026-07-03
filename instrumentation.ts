@@ -7,11 +7,16 @@ export async function register() {
 
   try {
     const { NodeSDK } = await import("@opentelemetry/sdk-node");
-    const { getNodeAutoInstrumentations } = await import("@opentelemetry/auto-instrumentations-node");
-    const { OTLPTraceExporter } = await import("@opentelemetry/exporter-trace-otlp-http");
-    const { OTLPMetricExporter } = await import("@opentelemetry/exporter-metrics-otlp-http");
-    const { OTLPLogExporter } = await import("@opentelemetry/exporter-logs-otlp-http");
-    const { PeriodicExportingMetricReader } = await import("@opentelemetry/sdk-metrics");
+    const { getNodeAutoInstrumentations } =
+      await import("@opentelemetry/auto-instrumentations-node");
+    const { OTLPTraceExporter } =
+      await import("@opentelemetry/exporter-trace-otlp-http");
+    const { OTLPMetricExporter } =
+      await import("@opentelemetry/exporter-metrics-otlp-http");
+    const { OTLPLogExporter } =
+      await import("@opentelemetry/exporter-logs-otlp-http");
+    const { PeriodicExportingMetricReader } =
+      await import("@opentelemetry/sdk-metrics");
     const { BatchLogRecordProcessor } = await import("@opentelemetry/sdk-logs");
 
     const ENDPOINT = (
@@ -61,15 +66,19 @@ export async function register() {
     });
 
     sdk.start();
-    console.log("✅ SigNoz OpenTelemetry initialized successfully");
 
-    process.on("SIGTERM", () => {
-      sdk
-        .shutdown()
-        .catch((err) => console.error("OTel shutdown error", err))
-        .finally(() => process.exit(0));
-    });
+    if (process.env.NEXT_RUNTIME === "nodejs") {
+      process.on("SIGTERM", () => {
+        sdk
+          .shutdown()
+          .catch((err) => console.error("OTel shutdown error", err))
+          .finally(() => process.exit(0));
+      });
+    }
   } catch (err) {
-    console.error("OTel initialization failed, continuing without telemetry:", err);
+    console.error(
+      "OTel initialization failed, continuing without telemetry:",
+      err,
+    );
   }
 }

@@ -60,7 +60,7 @@ function NewTag() {
 function ComingSoonTag() {
   return (
     <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#FAB435] text-[#0A2540] leading-none uppercase tracking-wide whitespace-nowrap">
-      Soon
+    Coming  Soon
     </span>
   );
 }

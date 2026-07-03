@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from "react";
 import { handleGetWallet } from "@/lib/utils/api/apiHelper";
-import { useWebSocketConnection } from "./webSocket";
+import { useRealtimeWallet } from "./webSocket";
 
 export interface WalletData {
   walletId: number;
@@ -29,7 +29,6 @@ interface UseWalletReturn {
   getAccountNumber: (bank?: string) => string;
   setWallet: React.Dispatch<React.SetStateAction<WalletData | null>>;
   isLiveConnected: boolean;
-  getWalletViaWS: () => boolean;
   newTransactions: any[];
   clearNewTransactions: () => void;
 }
@@ -51,60 +50,8 @@ export const useWallet = (): UseWalletReturn => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLiveConnected, setIsLiveConnected] = useState(false);
   const [newTransactions, setNewTransactions] = useState<any[]>([]);
-
-  const handleWebSocketMessage = useCallback(
-    (msg: any) => {
-      if (
-        msg.action === "balanceUpdate" &&
-        msg.status === "success" &&
-        msg.data
-      ) {
-        const updatedWallet: WalletData = {
-          walletId: msg.data.walletId || wallet?.walletId || 0,
-          balance: msg.data.balance?.toString() || "0.00",
-          currency: msg.data.currency || "NGN",
-          accountName: msg.data.accountName || "",
-          accountNumbers: msg.data.accountNumbers || {},
-          lastUpdated: msg.data.updatedAt || new Date().toISOString(),
-        };
-
-        setWallet(updatedWallet);
-        localStorage.setItem("wallet", JSON.stringify(updatedWallet));
-      }
-
-      if (msg.action === "getWallet" && msg.status === "success" && msg.data) {
-        const walletData: WalletData = {
-          walletId: msg.data.walletId || wallet?.walletId || 0,
-          balance: msg.data.balance?.toString() || "0.00",
-          currency: msg.data.currency || "NGN",
-          accountName: msg.data.accountName || "",
-          accountNumbers: msg.data.accountNumbers || {},
-          lastUpdated: msg.data.lastUpdated || new Date().toISOString(),
-        };
-
-        setWallet(walletData);
-        localStorage.setItem("wallet", JSON.stringify(walletData));
-      }
-
-      if (
-        msg.action === "transactionNotification" &&
-        msg.status === "success" &&
-        msg.data?.transaction
-      ) {
-        const tx = msg.data.transaction;
-        const amount = tx.amount?.toLocaleString() || "0";
-        const type = tx.type === "CREDIT" ? "Received" : "Sent";
-
-        setNewTransactions((prev) => [tx, ...prev]);
-      }
-    },
-    [wallet],
-  );
-
-  const { isConnected, sendMessage } = useWebSocketConnection(
-    handleWebSocketMessage,
-  );
 
   const fetchWallet = useCallback(async () => {
     try {
@@ -113,7 +60,7 @@ export const useWallet = (): UseWalletReturn => {
 
       if (response.statusCode === 200 && response.data) {
         const walletData: WalletData = {
-          walletId: 0, 
+          walletId: 0,
           balance: String(response.data.balance),
           currency: response.data.currency,
           accountName: response.data.accountName,
@@ -133,6 +80,40 @@ export const useWallet = (): UseWalletReturn => {
     }
   }, []);
 
+  useRealtimeWallet({
+    onConnected: () => {
+      setIsLiveConnected(true);
+    },
+
+    onWalletBalanceUpdate: (data) => {
+      setWallet((prev) => {
+        if (!prev) return prev;
+        const updated: WalletData = {
+          ...prev,
+          balance: String(data.balance),
+          currency: data.currency,
+          lastUpdated: data.asOf,
+        };
+        localStorage.setItem("wallet", JSON.stringify(updated));
+        return updated;
+      });
+    },
+
+    onTransferUpdate: (data) => {
+      setNewTransactions((prev) => [data, ...prev]);
+    },
+
+    onTransferReceived: (data) => {
+      setNewTransactions((prev) => [data, ...prev]);
+      fetchWallet();
+    },
+
+    onPaymentPush: (data) => {
+      setNewTransactions((prev) => [data, ...prev]);
+      fetchWallet();
+    },
+  });
+
   const refreshWallet = useCallback(async () => {
     await fetchWallet();
   }, [fetchWallet]);
@@ -148,10 +129,6 @@ export const useWallet = (): UseWalletReturn => {
     [wallet],
   );
 
-  const getWalletViaWS = useCallback(() => {
-    return sendMessage("getWallet");
-  }, [sendMessage]);
-
   const clearNewTransactions = useCallback(() => {
     setNewTransactions([]);
   }, []);
@@ -165,8 +142,7 @@ export const useWallet = (): UseWalletReturn => {
     getBalance,
     getAccountNumber,
     setWallet,
-    isLiveConnected: isConnected,
-    getWalletViaWS,
+    isLiveConnected,
     newTransactions,
     clearNewTransactions,
   };

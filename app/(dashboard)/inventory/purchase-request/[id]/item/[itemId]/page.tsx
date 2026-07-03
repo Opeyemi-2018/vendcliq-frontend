@@ -3,7 +3,6 @@
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { MoveLeft } from "lucide-react";
-import { ThreeDots } from "react-loader-spinner";
 import { Button } from "@/components/ui/button";
 import { usePurchaseRequestItem } from "@/hooks/usePurchaseRequests";
 
@@ -31,18 +30,38 @@ export default function SinglePurchasedItemPage() {
     })}`;
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="py-20 px-4 flex flex-col items-center">
-          <ThreeDots height="80" width="80" color="#0A6DC0" visible />
-          <p className="mt-5 text-[#9E9A9A] font-dm-sans text-lg">
-            Loading item details...
-          </p>
-        </div>
+ if (isLoading) {
+  return (
+    <div>
+      {/* Back button skeleton */}
+      <div className="w-9 h-9 rounded-full bg-gray-100 animate-pulse mb-3" />
+
+      {/* Title skeleton */}
+      <div className="mb-3 space-y-2">
+        <div className="h-7 bg-gray-100 rounded-lg w-48 animate-pulse" />
+        <div className="h-4 bg-gray-100 rounded w-72 animate-pulse" />
       </div>
-    );
-  }
+
+      <div className="bg-white rounded-xl md:border border-[#E4E7EC] shadow-sm overflow-hidden md:p-6">
+        {/* Image skeleton */}
+        <div className="bg-gray-100 rounded-lg border border-gray-200 h-20 md:h-80 w-full animate-pulse" />
+
+        {/* Fields skeleton */}
+        <div className="mt-8 md:mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-6">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="h-4 bg-gray-100 rounded w-24 animate-pulse" />
+              <div className="h-5 bg-gray-100 rounded w-32 animate-pulse" />
+            </div>
+          ))}
+        </div>
+
+        {/* Button skeleton */}
+        <div className="mt-5 h-12 md:h-14 bg-gray-100 rounded-xl animate-pulse w-full" />
+      </div>
+    </div>
+  );
+}
 
   if (error || !item || !request) {
     return (
