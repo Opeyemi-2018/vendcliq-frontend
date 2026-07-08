@@ -28,6 +28,7 @@ import { useCreateInvoice } from "@/hooks/useInventoryOverview";
 import PlacesAutocompleteInput from "@/hooks/googleMap";
 import EditStockPriceModal from "./chunks/EditStockPriceModal";
 
+
 interface Store {
   id: string;
   name: string;

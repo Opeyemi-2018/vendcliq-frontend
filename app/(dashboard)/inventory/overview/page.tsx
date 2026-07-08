@@ -451,7 +451,7 @@ const Home = () => {
         {/* Sales Transactions */}
         <div className="p-3 lg:p-6 border border-[#E4E4E4] rounded-[20px] bg-white w-full lg:w-1/2">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="font-bold text-[16px]">Sales Transactions</h2>
+            <h2 className="font-bold text-[16px]">Offline Sales</h2>
             <Link
               href="/inventory/sales"
               className="font-bold text-[13px] text-[#0A6DC0] hover:underline"
@@ -472,7 +472,7 @@ const Home = () => {
         {/* Purchase Requests */}
         <div className="p-3 lg:p-6 border border-[#E4E4E4] rounded-[20px] bg-white w-full lg:w-1/2">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="font-bold text-[16px]">Purchase Requests</h2>
+            <h2 className="font-bold text-[16px]">Online Sales</h2>
             <Link
               href="/inventory/purchase-request"
               className="font-bold text-[13px] text-[#0A6DC0] hover:underline"

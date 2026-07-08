@@ -1,131 +1,138 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// hooks/useWebSocketConnection.ts
+// hooks/useRealtimeWallet.ts
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
 
-interface WebSocketMessage {
-  action: string;
+export interface TransferUpdatePayload {
+  transactionId: string;
+  reference: string;
+  status: "PROCESSING" | "SUCCESS" | "FAILED" | "REVERSED";
+}
+
+export interface TransferReceivedPayload {
+  transactionId: string;
+  reference: string;
+}
+
+export interface PaymentPushPayload {
+  reference: string;
+  amount: string;
+  currency: string;
+  channel: string;
   status: string;
-  message: string;
-  data?: any;
-  error?: any;
 }
 
-interface UseWebSocketConnectionReturn {
-  isConnected: boolean;
-  sendMessage: (action: string, data?: any) => boolean;
+export interface WalletBalanceUpdatePayload {
+  balance: number;
+  currency: string;
+  asOf: string;
 }
 
-export const useWebSocketConnection = (
-  onMessage: (message: WebSocketMessage) => void
-): UseWebSocketConnectionReturn => {
-  const [isConnected, setIsConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+export interface RealtimeWalletHandlers {
+  onConnected?: (data: { userId: string; timestamp: string }) => void;
+  onTransferUpdate?: (data: TransferUpdatePayload) => void;
+  onTransferReceived?: (data: TransferReceivedPayload) => void;
+  onPaymentPush?: (data: PaymentPushPayload) => void;
+  onWalletBalanceUpdate?: (data: WalletBalanceUpdatePayload) => void;
+}
+
+// Module-level cache — fetched once per session
+let cachedToken: string | null = null;
+export const clearTokenCache = () => {
+  cachedToken = null;
+};
+
+export function useRealtimeWallet(handlers: RealtimeWalletHandlers) {
+  const socketRef = useRef<Socket | null>(null);
+  const handlersRef = useRef(handlers);
   const isMountedRef = useRef(true);
 
-  const connect = useCallback(() => {
-    if (!isMountedRef.current) return;
-    
-    const token = localStorage.getItem("accessToken") || 
-                  localStorage.getItem("authToken") ||
-                  localStorage.getItem("token");
-    
-    if (!token || wsRef.current?.readyState === WebSocket.OPEN) return;
+  useEffect(() => {
+    handlersRef.current = handlers;
+  });
 
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
+  const getToken = useCallback(async (): Promise<string | null> => {
+    if (cachedToken) return cachedToken;
+    try {
+      const res = await fetch("/api/auth/ws-token");
+      if (!res.ok) return null;
+      const { token } = await res.json();
+      cachedToken = token;
+      return token;
+    } catch {
+      return null;
     }
-
-    const url = `wss://api.vendcliq.com/wallets?token=${encodeURIComponent(token)}`;
-    
-    const ws = new WebSocket(url);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      if (!isMountedRef.current) {
-        ws.close();
-        return;
-      }
-      setIsConnected(true);
-      ws.send(JSON.stringify({ action: "getWallet" }));
-    };
-
-    ws.onmessage = (event) => {
-      if (!isMountedRef.current) return;
-      try {
-        const message: WebSocketMessage = JSON.parse(event.data);
-        onMessage(message);
-      } catch (err) {
-        console.error("Failed to parse WebSocket message");
-      }
-    };
-
-    ws.onerror = () => {
-      if (!isMountedRef.current) return;
-      setIsConnected(false);
-    };
-
-    ws.onclose = (event) => {
-      if (!isMountedRef.current) return;
-      setIsConnected(false);
-      
-      const normalClosureCodes = [1000, 1001, 1005];
-      if (normalClosureCodes.includes(event.code)) {
-        return;
-      }
-      
-      if (event.code === 1008) {
-        return;
-      }
-      
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      
-      reconnectTimeoutRef.current = setTimeout(() => {
-        if (isMountedRef.current) {
-          connect();
-        }
-      }, 5000);
-    };
-  }, [onMessage]);
+  }, []);
 
   useEffect(() => {
     isMountedRef.current = true;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const connect = async () => {
+      if (!isMountedRef.current) return;
+
+      const token = await getToken();
+      if (!token) return;
+
+      if (socketRef.current?.connected) return;
+
+      const socket = io("wss://vendcliq.cloud", {
+        path: "/realtime",
+        transports: ["websocket"],
+        auth: { token },
+        reconnection: false,
+      });
+
+      socketRef.current = socket;
+
+      socket.on("connect", () => {
+        socket.emit("list_events");
+      });
+
+      socket.on("connected", (data: { userId: string; timestamp: string }) => {
+        if (!isMountedRef.current) return;
+        handlersRef.current.onConnected?.(data);
+      });
+
+      socket.on("transfer.update", (data: TransferUpdatePayload) => {
+        if (!isMountedRef.current) return;
+        handlersRef.current.onTransferUpdate?.(data);
+      });
+
+      socket.on("transfer.received", (data: TransferReceivedPayload) => {
+        if (!isMountedRef.current) return;
+        handlersRef.current.onTransferReceived?.(data);
+      });
+
+      socket.on("payment.push", (data: PaymentPushPayload) => {
+        if (!isMountedRef.current) return;
+        handlersRef.current.onPaymentPush?.(data);
+      });
+
+      socket.on("wallet.balance.update", (data: WalletBalanceUpdatePayload) => {
+        if (!isMountedRef.current) return;
+        handlersRef.current.onWalletBalanceUpdate?.(data);
+      });
+
+      socket.on("disconnect", (reason: string) => {
+        if (!isMountedRef.current) return;
+        if (reason !== "io client disconnect") {
+          reconnectTimer = setTimeout(() => {
+            if (isMountedRef.current) connect();
+          }, 5000);
+        }
+      });
+    };
+
     connect();
-    
+
     return () => {
       isMountedRef.current = false;
-      
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
-      
-      if (wsRef.current) {
-        if (wsRef.current.readyState === WebSocket.OPEN) {
-          wsRef.current.close(1000, "Component unmounting");
-        }
-        wsRef.current = null;
-      }
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      socketRef.current?.disconnect();
+      socketRef.current = null;
     };
-  }, [connect]);
-
-  const sendMessage = useCallback((action: string, data?: any) => {
-    if (!isMountedRef.current) return false;
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ action, data }));
-      return true;
-    }
-    return false;
-  }, []);
-
-  return {
-    isConnected,
-    sendMessage,
-  };
-};
+  }, [getToken]);
+}

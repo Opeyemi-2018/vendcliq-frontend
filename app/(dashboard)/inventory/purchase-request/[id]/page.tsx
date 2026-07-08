@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { MoveLeft } from "lucide-react";
-import { ThreeDots } from "react-loader-spinner";
 import { usePurchaseRequestById } from "@/hooks/usePurchaseRequests";
 
 const PurchaseRequestDetailPage = () => {
@@ -20,12 +19,6 @@ const PurchaseRequestDetailPage = () => {
       currency: "NGN",
       minimumFractionDigits: 0,
     });
-
-  const getSubtotal = (qty?: number, cost?: number) => {
-    const q = typeof qty === "number" ? qty : 0;
-    const c = typeof cost === "number" ? cost : 0;
-    return q * c;
-  };
 
   const getStatusBadge = (status?: string) => {
     const s = status?.toLowerCase();
@@ -55,12 +48,59 @@ const PurchaseRequestDetailPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="py-20 px-4 flex flex-col items-center justify-center">
-          <ThreeDots height="100" width="100" color="#0A6DC0" visible={true} />
-          <p className="mt-4 text-[#9E9A9A] dark:text-gray-400 font-dm-sans">
-            Loading items...
-          </p>
+      <div>
+        {/* Back button skeleton */}
+        <div className="w-9 h-9 rounded-full bg-gray-100 animate-pulse mb-4" />
+
+        {/* Title skeleton */}
+        <div className="mb-4 md:mb-6 space-y-2">
+          <div className="h-7 bg-gray-100 rounded-lg w-40 animate-pulse" />
+          <div className="h-4 bg-gray-100 rounded w-48 animate-pulse" />
+        </div>
+
+        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px]">
+          <div className="h-6 bg-gray-100 rounded w-36 animate-pulse mb-4" />
+
+          <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+            {/* Table header skeleton */}
+            <div className="bg-gray-50 px-6 py-3 flex gap-8">
+              {[
+                "Product",
+                "Quantity",
+                "Unit Cost",
+                "Subtotal",
+                "Status",
+                "Delivery",
+                "Handover",
+              ].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-4 bg-gray-100 rounded w-16 animate-pulse"
+                />
+              ))}
+            </div>
+
+            {/* Table rows skeleton */}
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="px-6 py-4 flex gap-8 items-center border-t border-gray-100"
+              >
+                {/* Product cell */}
+                <div className="flex items-center gap-2 min-w-[140px]">
+                  <div className="w-10 h-10 rounded-md bg-gray-100 animate-pulse flex-shrink-0" />
+                  <div className="h-4 bg-gray-100 rounded w-24 animate-pulse" />
+                </div>
+                {/* Other cells */}
+                {Array.from({ length: 6 }).map((_, j) => (
+                  <div
+                    key={j}
+                    className="h-4 bg-gray-100 rounded w-16 animate-pulse"
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -70,7 +110,9 @@ const PurchaseRequestDetailPage = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
         <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
-        <p className="text-gray-700 mb-6">{error?.message || "Request not found"}</p>
+        <p className="text-gray-700 mb-6">
+          {error?.message || "Request not found"}
+        </p>
         <Link
           href="/inventory/purchase-request"
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -116,12 +158,23 @@ const PurchaseRequestDetailPage = () => {
                 <thead className="bg-gray-50">
                   <tr className="whitespace-nowrap">
                     <th className="px-6 py-3 text-left font-medium">Product</th>
-                    <th className="px-6 py-3 text-left font-medium">Quantity</th>
-                    <th className="px-6 py-3 text-left font-medium">Unit Cost</th>
-                    <th className="px-6 py-3 text-left font-medium">Subtotal</th>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Quantity
+                    </th>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Unit Cost
+                    </th>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Subtotal
+                    </th>
                     <th className="px-6 py-3 text-left font-medium">Status</th>
-                    <th className="px-6 py-3 text-left font-medium">Delivery</th>
-                   </tr>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Delivery
+                    </th>
+                    <th className="px-6 py-3 text-left font-medium">
+                      Handover
+                    </th>
+                  </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {request.items.map((item) => (
@@ -159,13 +212,15 @@ const PurchaseRequestDetailPage = () => {
                             </div>
                           </div>
                         </div>
-                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">{item.quantity}</td>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.quantity}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap font-medium">
                         {formatCurrency(item.cost)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-medium">
-                        {formatCurrency(getSubtotal(item.quantity, item.cost))}
+                        {formatCurrency(item.sub_total)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(request.status)}
@@ -178,6 +233,17 @@ const PurchaseRequestDetailPage = () => {
                         ) : (
                           <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
                             No
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {item.attributes?.handover_completed ? (
+                          <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                            Completed
+                          </span>
+                        ) : (
+                          <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                            Pending
                           </span>
                         )}
                       </td>

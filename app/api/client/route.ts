@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * API Route Handler for /api/client
  * Secure proxy between frontend and backend APIs (VERA + INVENTORY)
@@ -110,7 +111,7 @@ import {
 } from "@/url/api-url";
 
 export const dynamic = "force-dynamic";
-export const runtime = "edge";
+// export const runtime = "edge";
 
 // API Base URLs
 const VERA_API_BASE_URL = process.env.VERA_API_BASE_URL as string;

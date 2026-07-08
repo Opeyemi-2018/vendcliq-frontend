@@ -3,7 +3,6 @@
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { MoveLeft } from "lucide-react";
-import { ThreeDots } from "react-loader-spinner";
 import { Button } from "@/components/ui/button";
 import { usePurchaseRequestItem } from "@/hooks/usePurchaseRequests";
 
@@ -14,7 +13,12 @@ export default function SinglePurchasedItemPage() {
   }>();
   const router = useRouter();
 
-  const { data: item, request, isLoading, error } = usePurchaseRequestItem(id, itemId);
+  const {
+    data: item,
+    request,
+    isLoading,
+    error,
+  } = usePurchaseRequestItem(id, itemId);
 
   const formatCurrency = (amount: number | string): string => {
     const num = typeof amount === "string" ? parseFloat(amount) : amount;
@@ -26,18 +30,38 @@ export default function SinglePurchasedItemPage() {
     })}`;
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="py-20 px-4 flex flex-col items-center">
-          <ThreeDots height="80" width="80" color="#0A6DC0" visible />
-          <p className="mt-5 text-[#9E9A9A] font-dm-sans text-lg">
-            Loading item details...
-          </p>
-        </div>
+ if (isLoading) {
+  return (
+    <div>
+      {/* Back button skeleton */}
+      <div className="w-9 h-9 rounded-full bg-gray-100 animate-pulse mb-3" />
+
+      {/* Title skeleton */}
+      <div className="mb-3 space-y-2">
+        <div className="h-7 bg-gray-100 rounded-lg w-48 animate-pulse" />
+        <div className="h-4 bg-gray-100 rounded w-72 animate-pulse" />
       </div>
-    );
-  }
+
+      <div className="bg-white rounded-xl md:border border-[#E4E7EC] shadow-sm overflow-hidden md:p-6">
+        {/* Image skeleton */}
+        <div className="bg-gray-100 rounded-lg border border-gray-200 h-20 md:h-80 w-full animate-pulse" />
+
+        {/* Fields skeleton */}
+        <div className="mt-8 md:mt-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-6">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="h-4 bg-gray-100 rounded w-24 animate-pulse" />
+              <div className="h-5 bg-gray-100 rounded w-32 animate-pulse" />
+            </div>
+          ))}
+        </div>
+
+        {/* Button skeleton */}
+        <div className="mt-5 h-12 md:h-14 bg-gray-100 rounded-xl animate-pulse w-full" />
+      </div>
+    </div>
+  );
+}
 
   if (error || !item || !request) {
     return (
@@ -45,7 +69,9 @@ export default function SinglePurchasedItemPage() {
         <h2 className="text-2xl font-bold text-red-600 mb-4 font-dm-sans">
           Error
         </h2>
-        <p className="text-gray-700 mb-4">{error?.message || "Item not found"}</p>
+        <p className="text-gray-700 mb-4">
+          {error?.message || "Item not found"}
+        </p>
         <Button
           onClick={() => router.back()}
           className="px-8 py-3.5 bg-[#0A6DC0] text-white rounded-lg hover:bg-[#09599a]"
@@ -115,7 +141,7 @@ export default function SinglePurchasedItemPage() {
           <div>
             <h2 className="font-bold font-dm-sans">Total Cost</h2>
             <p className="mt-1.5 font-medium">
-              {formatCurrency(item.cost * item.quantity)}
+              {formatCurrency(item.sub_total)}
             </p>
           </div>
 
@@ -131,16 +157,18 @@ export default function SinglePurchasedItemPage() {
           </div>
         </div>
 
-        <Button
-          className="mt-5 bg-[#0A6DC0] hover:bg-[#085a9e] w-full py-5 md:py-6 font-medium text-base rounded-xl"
-          onClick={() =>
-            router.push(
-              `/inventory/purchase-request/${id}/item/${itemId}/handover`,
-            )
-          }
-        >
-          Hand-over Product
-        </Button>
+        {!item.attributes?.handover_completed && (
+          <Button
+            className="mt-5 bg-[#0A6DC0] hover:bg-[#085a9e] w-full py-5 md:py-6 font-medium text-base rounded-xl"
+            onClick={() =>
+              router.push(
+                `/inventory/purchase-request/${id}/item/${itemId}/handover`,
+              )
+            }
+          >
+            Hand-over Product
+          </Button>
+        )}
       </div>
     </div>
   );

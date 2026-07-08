@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { Button } from "@/components/ui/button";
@@ -19,10 +20,38 @@ import { useRouter } from "next/navigation";
 import { useWallet } from "@/hooks/useWallet";
 
 const Loans = [
-  { id: "#005676", amount: "5,000,000.00", MaturityAmount: "6,500,000.00", date: "02/May/2024", dueDate: "02/May/2024", status: "active" },
-  { id: "#003746", amount: "5,000,000.00", MaturityAmount: "6,500,000.00", date: "02/May/2024", dueDate: "02/May/2024", status: "active" },
-  { id: "#008394", amount: "5,000,000.00", MaturityAmount: "6,500,000.00", date: "02/May/2024", dueDate: "02/May/2024", status: "active" },
-  { id: "#003748", amount: "5,000,000.00", MaturityAmount: "6,500,000.00", date: "02/May/2024", dueDate: "02/May/2024", status: "active" },
+  {
+    id: "#005676",
+    amount: "5,000,000.00",
+    MaturityAmount: "6,500,000.00",
+    date: "02/May/2024",
+    dueDate: "02/May/2024",
+    status: "active",
+  },
+  {
+    id: "#003746",
+    amount: "5,000,000.00",
+    MaturityAmount: "6,500,000.00",
+    date: "02/May/2024",
+    dueDate: "02/May/2024",
+    status: "active",
+  },
+  {
+    id: "#008394",
+    amount: "5,000,000.00",
+    MaturityAmount: "6,500,000.00",
+    date: "02/May/2024",
+    dueDate: "02/May/2024",
+    status: "active",
+  },
+  {
+    id: "#003748",
+    amount: "5,000,000.00",
+    MaturityAmount: "6,500,000.00",
+    date: "02/May/2024",
+    dueDate: "02/May/2024",
+    status: "active",
+  },
 ];
 
 const TransactionSkeleton = () => (
@@ -52,14 +81,17 @@ const Table = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
 
-  const { newTransactions, clearNewTransactions, isLiveConnected } = useWallet();
+  const { newTransactions, clearNewTransactions, isLiveConnected } =
+    useWallet();
 
   // Merge real-time transactions from WebSocket
   useEffect(() => {
     if (newTransactions.length > 0) {
       setTransactions((prev) => {
         const existingIds = new Set(prev.map((tx) => tx.id));
-        const uniqueNew = newTransactions.filter((tx: any) => !existingIds.has(tx.id));
+        const uniqueNew = newTransactions.filter(
+          (tx: any) => !existingIds.has(tx.id) && tx.amount !== undefined,
+        );
         return uniqueNew.length > 0 ? [...uniqueNew, ...prev] : prev;
       });
       clearNewTransactions();
@@ -104,20 +136,18 @@ const Table = () => {
     let transferValue = 0;
 
     recent.forEach((tx) => {
-      const amount = tx.amount; // ← now a number, no parseFloat needed
-
+      const amount = tx.amount ?? 0;
       totalTransactionValue += amount;
 
-      if (tx.direction === "CREDIT") collectionsValue += amount;  // ← was transactionType === "CREDIT"
-      if (tx.direction === "DEBIT")  transferValue  += amount;    // ← was transactionType === "TRANSFER"
+      if (tx.direction === "CREDIT") collectionsValue += amount; // ← was transactionType === "CREDIT"
+      if (tx.direction === "DEBIT") transferValue += amount; // ← was transactionType === "TRANSFER"
     });
 
     return { totalTransactionValue, collectionsValue, transferValue };
   }, [transactions]);
 
-  const formatCurrency = (amount: number) =>
-    `NGN ${amount.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
+  const formatCurrency = (amount: number | undefined) =>
+    `NGN ${(amount ?? 0).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   return (
     <div>
       <div className="flex justify-between flex-col items-start gap-2 lg:gap-0 lg:flex-row">
@@ -165,12 +195,16 @@ const Table = () => {
               </>
             )}
 
-            {error && <div className="text-center py-8 text-red-500">{error}</div>}
+            {error && (
+              <div className="text-center py-8 text-red-500">{error}</div>
+            )}
 
             {!loading && !error && transactions.length === 0 && (
               <div className="text-center py-8 text-[#2F2F2F] flex items-center justify-center flex-col mt-20">
                 <Image src="/ts.svg" alt="ts" height={50} width={50} />
-                <p className="font-bold font-dm-sans text-[16px]">No transactions found</p>
+                <p className="font-bold font-dm-sans text-[16px]">
+                  No transactions found
+                </p>
                 <p>Your recent transactions will appear here</p>
               </div>
             )}
@@ -180,27 +214,31 @@ const Table = () => {
               transactions.slice(0, 4).map((tx) => {
                 const date = new Date(tx.createdAt);
                 const formattedDate = date.toLocaleDateString("en-GB", {
-                  day: "numeric", month: "short", year: "numeric",
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
                 });
                 const formattedTime = date.toLocaleTimeString("en-GB", {
-                  hour: "2-digit", minute: "2-digit", second: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
                 });
 
                 const isCredit = tx.direction === "CREDIT"; // ← was transactionType === "CREDIT"
 
                 // For credits show sender; for debits show receiver
                 const counterpartyName = isCredit
-                  ? (tx.sender?.name   || "Unknown")    // ← was senderAccount?.Name
-                  : (tx.receiver?.name || "Unknown");   // ← was beneficiaryAccount?.name
+                  ? tx.sender?.name || "Unknown" // ← was senderAccount?.Name
+                  : tx.receiver?.name || "Unknown"; // ← was beneficiaryAccount?.name
 
                 const counterpartyBank = isCredit
-                  ? (tx.sender?.bankName   || "")   // ← was senderAccount?.Bank
-                  : (tx.receiver?.bankName || "");  // ← was beneficiaryAccount?.provider
+                  ? tx.sender?.bankName || "" // ← was senderAccount?.Bank
+                  : tx.receiver?.bankName || ""; // ← was beneficiaryAccount?.provider
 
+                const amount = tx.amount ?? 0;
                 const formattedAmount = isCredit
-                  ? `+${tx.amount.toLocaleString("en-NG")} NGN`   // ← amount is now a number
-                  : `-${tx.amount.toLocaleString("en-NG")} NGN`;
-
+                  ? `+${amount.toLocaleString("en-NG")} NGN`
+                  : `-${amount.toLocaleString("en-NG")} NGN`;
                 return (
                   <div key={tx.id} className="border-b border-gray-200 pb-2">
                     <div className="flex items-center gap-2 text-[14px] text-[#6F6F6F]">
@@ -211,7 +249,9 @@ const Table = () => {
                     <div className="flex sm:items-center justify-between flex-col sm:flex-row">
                       <Image
                         src={isCredit ? "/in.svg" : "/out.svg"}
-                        width={30} height={30} alt="wallet"
+                        width={30}
+                        height={30}
+                        alt="wallet"
                         className="hidden sm:inline w-10 h-10"
                       />
                       <div className="sm:w-[50%]">
@@ -222,9 +262,11 @@ const Table = () => {
                           Ref: {tx.transactionReference}
                         </p>
                       </div>
-                      <h1 className={`whitespace-nowrap text-[12px] lg:text-[16px] font-dm-sans font-medium ${
-                        isCredit ? "text-[#00C53A]" : "text-[#FF6242]"
-                      }`}>
+                      <h1
+                        className={`whitespace-nowrap text-[12px] lg:text-[16px] font-dm-sans font-medium ${
+                          isCredit ? "text-[#00C53A]" : "text-[#FF6242]"
+                        }`}
+                      >
                         {formattedAmount}
                       </h1>
                     </div>
@@ -249,14 +291,28 @@ const Table = () => {
             <Separator orientation="horizontal" className="mt-3" />
             <div className="space-y-4">
               {[
-                { label: "Total Transaction Value", value: transactionStats.totalTransactionValue },
-                { label: "Collections Value",       value: transactionStats.collectionsValue },
-                { label: "Transfer Value",          value: transactionStats.transferValue },
+                {
+                  label: "Total Transaction Value",
+                  value: transactionStats.totalTransactionValue,
+                },
+                {
+                  label: "Collections Value",
+                  value: transactionStats.collectionsValue,
+                },
+                {
+                  label: "Transfer Value",
+                  value: transactionStats.transferValue,
+                },
               ].map(({ label, value }) => (
-                <div key={label} className="mt-4 border border-[#E4E4E4] px-4 lg:px-7 py-5 bg-white rounded-2xl">
+                <div
+                  key={label}
+                  className="mt-4 border border-[#E4E4E4] px-4 lg:px-7 py-5 bg-white rounded-2xl"
+                >
                   <div className="flex items-center gap-1">
                     <Calculator className="text-[#39498C]" />
-                    <p className="font-medium text-[#39498C] text-[14px] font-dm-sans">{label}</p>
+                    <p className="font-medium text-[#39498C] text-[14px] font-dm-sans">
+                      {label}
+                    </p>
                   </div>
                   <p className="text-[14px] lg:text-[16px] font-clash text-[#292826] lg:font-semibold">
                     {formatCurrency(value)}
@@ -273,8 +329,19 @@ const Table = () => {
           <table className="w-full my-6">
             <thead>
               <tr>
-                {["ID", "Amount", "Maturity Amount", "Date", "Due Date", "Status", "More"].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                {[
+                  "ID",
+                  "Amount",
+                  "Maturity Amount",
+                  "Date",
+                  "Due Date",
+                  "Status",
+                  "More",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="text-left px-4 py-3 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]"
+                  >
                     {h}
                   </th>
                 ))}
@@ -282,15 +349,29 @@ const Table = () => {
             </thead>
             <tbody className="divide-y">
               {Loans.map((loan) => (
-                <tr key={loan.id} className="border-[#E4E4E4] border-b hover:bg-gray-200">
-                  <td className="text-left p-4 py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">{loan.id}</td>
-                  <td className="hidden md:table-cell py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">{loan.amount}</td>
-                  <td className="hidden md:table-cell py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">{loan.MaturityAmount}</td>
-                  <td className="hidden md:table-cell py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">{loan.date}</td>
-                  <td className="hidden md:table-cell py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">{loan.dueDate}</td>
+                <tr
+                  key={loan.id}
+                  className="border-[#E4E4E4] border-b hover:bg-gray-200"
+                >
+                  <td className="text-left p-4 py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                    {loan.id}
+                  </td>
+                  <td className="hidden md:table-cell py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                    {loan.amount}
+                  </td>
+                  <td className="hidden md:table-cell py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                    {loan.MaturityAmount}
+                  </td>
+                  <td className="hidden md:table-cell py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                    {loan.date}
+                  </td>
+                  <td className="hidden md:table-cell py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">
+                    {loan.dueDate}
+                  </td>
                   <td className="hidden md:table-cell">
                     <Button className="bg-[#E7F4EB] hover:bg-[#E7F4EB] md:font-bold py-0 text-[#003909] text-[12px] rounded-full">
-                      <span className="bg-[#00C53A] h-2 w-2 rounded-full"></span> {loan.status}
+                      <span className="bg-[#00C53A] h-2 w-2 rounded-full"></span>{" "}
+                      {loan.status}
                     </Button>
                   </td>
                   <td className="py-4 font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F]">

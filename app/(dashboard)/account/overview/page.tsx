@@ -29,6 +29,7 @@ const Home = () => {
     wallet,
     isLoading: isLoadingWallet,
     fetchWallet,
+    isLiveConnected,
     getBalance,
     getAccountNumber,
   } = useWallet();
@@ -109,12 +110,14 @@ const Home = () => {
   //     setCreatingWallet(false);
   //   }
   // };
+  // console.log("Live:", isLiveConnected);
 
   return (
     <div className="">
       <h1 className="font-bold font-dm-sans text-[#2F2F2F] text-[20px] md:text-[25px]">
         Welcome back, {mounted ? user?.firstname || "User" : ""}
       </h1>
+      {/* <p className="text-xs">{isLiveConnected ? "🟢 Live" : "🔴 Offline"}</p> */}
 
       {isLoadingWallet ? (
         <div className="bg-white font-dm-sans text-center text-[14px] md:font-bold text-[#2F2F2F] py-3 px-4 md:px-6 items-center justify-between gap-2 md:gap-4 inline-flex rounded-md border-2 border-[#0000001A]/10 w-full md:w-auto">
@@ -170,6 +173,8 @@ const Home = () => {
           className="w-[350px] h-[400px] -ml-12 sm:-ml-0"
         />
       </div>
+
+      {/* <WSDiagnostic /> */}
 
       <div className="mt-6 flex gap-5 flex-col lg:flex-row">
         <div className=" border-[#E4E4E4] border-2 bg-white px-4 lg:px-7 py-5 rounded-2xl flex flex-col justify-between h-[218px] w-full">
