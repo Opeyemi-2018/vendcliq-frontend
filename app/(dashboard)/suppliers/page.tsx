@@ -29,14 +29,6 @@ export default function Suppliers() {
   }, [searchTerm]);
 
   const fetchSuppliers = async () => {
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
-      setError("No authentication token found. Please log in.");
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     setError(null);
 

@@ -35,20 +35,9 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
 
   useEffect(() => {
     const fetchSupplierStocks = async () => {
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("authToken");
-
-      if (!token) {
-        setStocksError("No authentication token found");
-        setLoadingStocks(false);
-        return;
-      }
-
       setLoadingStocks(true);
       setStocksError(null);
 
-      // Replace getSupplierStocks with handleGetSupplierStocks
       const result = await handleGetSupplierStocks(String(supplier.user_id));
 
       if (result.statusCode === 200 && result.data) {
