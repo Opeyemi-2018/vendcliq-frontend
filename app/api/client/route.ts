@@ -62,7 +62,7 @@ import {
   GET_PURCHASED_INVOICES,
   CREATE_PURCHASE,
   USER_STOCKS,
-  GET_ITEM_TRACKING_STATUS,
+  // GET_ITEM_TRACKING_STATUS,
   UPDATE_STORE_SETTINGS,
   UPDATE_STORE,
   REQUEST_PIN_TOKEN,
@@ -298,7 +298,7 @@ const INVENTORY_ENDPOINTS = [
   GET_SUPPLIER_STORES,
 ];
 
-const LOGISTIC_ENDPOINTS = [GET_ITEM_TRACKING_STATUS];
+const LOGISTIC_ENDPOINTS: string[] = [];
 
 const ALLOWED_ENDPOINTS = [
   ...VERA_ENDPOINTS,
@@ -308,7 +308,7 @@ const ALLOWED_ENDPOINTS = [
 
 const getApiBaseUrl = (endpoint: string): string => {
   const normalized = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-  if (normalized.startsWith("/bids/")) return LOGISTIC_API_BASE_URL;
+  if (normalized.startsWith("/bids/")) return LOGISTIC_API_BASE_URL; // ✅ correct
   if (
     normalized.startsWith("/payment/") ||
     INVENTORY_ENDPOINTS.some(
@@ -347,8 +347,8 @@ const isValidEndpoint = (endpoint: string): boolean => {
     normalized.match(/^\/client\/v2\/wallet\/lookup.*$/) ||
     normalized.match(/^\/v1\/inventory\/.*$/) ||
     normalized.match(/^\/inventory\/.*$/) ||
-    normalized.match(/^\/payment\/.*$/) || 
-    normalized.match(/^\/bids\/track\/[a-f0-9-]+$/)
+    normalized.match(/^\/payment\/.*$/) ||
+    normalized.match(/^\/bids\/track\/.+$/)
   ) {
     return true;
   }

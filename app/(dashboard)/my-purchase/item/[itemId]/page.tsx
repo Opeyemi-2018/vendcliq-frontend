@@ -1,63 +1,145 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { useTrackingStatus } from "@/hooks/useTracking";
+import { format } from "date-fns";
 
 const TRACKING_STEPS = [
   {
-    key: "order_placed",
+    key: "ORDER_PLACED",
     label: "Order Placed",
     desc: "Your order is confirmed.",
   },
   {
-    key: "driver_assigned",
-    label: "Driver Assigned",
-    desc: "A driver is on the way.",
+    key: "ARRIVED_AT_PICKUP",
+    label: "Arrived at Pickup",
+    desc: "Driver has arrived at the pickup location.",
   },
   {
-    key: "picked_up",
+    key: "ACCEPTED",
+    label: "Accepted",
+    desc: "Your order has been accepted by the driver.",
+  },
+  {
+    key: "PICKED_UP",
     label: "Picked Up",
     desc: "Your item has been picked up by the driver.",
   },
-  { key: "on_the_way", label: "On the Way", desc: "Your item is in transit." },
   {
-    key: "arrived",
+    key: "ARRIVED",
     label: "Arrived",
     desc: "The driver has arrived at your location.",
   },
   {
-    key: "delivered",
+    key: "DELIVERED",
     label: "Delivered",
     desc: "Your item has been delivered.",
   },
 ];
 
-// Dummy — all steps completed for now
-const COMPLETED_STEPS = TRACKING_STEPS.map((s) => s.key);
+// Returns all steps up to and including the current status
+function getCompletedSteps(currentStatus: string): string[] {
+  const index = TRACKING_STEPS.findIndex((s) => s.key === currentStatus);
+  if (index === -1) return [];
+  return TRACKING_STEPS.slice(0, index + 1).map((s) => s.key);
+}
 
-function TrackingTimeline() {
+function TrackingTimeline({
+  itemId,
+  delivery,
+}: {
+  itemId: string;
+  delivery: boolean;
+}) {
+  const { data, isLoading, isError, error } = useTrackingStatus(itemId);
+
+  if (!delivery) return null;
+
+  if (isLoading) {
+    return (
+      <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white font-dm-sans mb-3">
+        <h2 className="font-bold text-[16px] md:text-[18px] mb-5">
+          Tracking details
+        </h2>
+        <div className="flex flex-col gap-4 animate-pulse">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex gap-4 items-center">
+              <div className="w-7 h-7 rounded-sm bg-gray-100 flex-shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3 bg-gray-100 rounded w-1/3" />
+                <div className="h-3 bg-gray-100 rounded w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !data || !data.status) {
+    return (
+      <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white font-dm-sans mb-3">
+        <h2 className="font-bold text-[16px] md:text-[18px] mb-3">
+          Tracking details
+        </h2>
+        <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+          <p className="text-sm text-amber-700 font-medium">
+            {/* ← Show real server message if available */}
+            {isError
+              ? (error as any)?.message || "Failed to load tracking"
+              : data?.message ||
+                "No tracking information available for this item yet."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const completedSteps = getCompletedSteps(data.status);
+
   return (
     <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white font-dm-sans mb-3">
-      <h2 className="font-bold text-[16px] md:text-[18px] mb-5">
-        Tracking details
-      </h2>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="font-bold text-[16px] md:text-[18px]">
+          Tracking details
+        </h2>
+        {data.lastUpdated && (
+          <span className="text-xs text-gray-400">
+            Updated {format(new Date(data.lastUpdated), "dd MMM yyyy, hh:mm a")}
+          </span>
+        )}
+      </div>
+
+      {/* Current status badge */}
+      <div className="mb-5 inline-flex items-center gap-2 px-3 py-1.5 bg-[#31A078]/10 border border-[#31A078]/20 rounded-full">
+        <span className="w-2 h-2 rounded-full bg-[#31A078] animate-pulse" />
+        <span className="text-sm font-semibold text-[#31A078]">
+          {data.status.replace(/_/g, " ")}
+        </span>
+      </div>
+
       <div className="flex flex-col">
         {TRACKING_STEPS.map((step, idx) => {
-          const isCompleted = COMPLETED_STEPS.includes(step.key);
+          const isCompleted = completedSteps.includes(step.key);
+          const isCurrent = data.status === step.key;
           const isLast = idx === TRACKING_STEPS.length - 1;
+
           return (
             <div key={step.key} className="flex gap-4">
               {/* Icon + line */}
               <div className="flex flex-col items-center">
                 <div
                   className={cn(
-                    "w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0 z-10",
+                    "w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0 z-10 transition-colors",
                     isCompleted ? "bg-[#31A078]" : "bg-gray-200",
+                    isCurrent && "ring-2 ring-[#31A078] ring-offset-1",
                   )}
                 >
                   <Check className="w-4 h-4 text-white" strokeWidth={3} />
@@ -65,7 +147,7 @@ function TrackingTimeline() {
                 {!isLast && (
                   <div
                     className={cn(
-                      "w-0.5 flex-1 my-1",
+                      "w-0.5 flex-1 my-1 transition-colors",
                       isCompleted ? "bg-[#31A078]" : "bg-gray-200",
                     )}
                     style={{ minHeight: 32 }}
@@ -74,22 +156,23 @@ function TrackingTimeline() {
               </div>
 
               {/* Content */}
-              <div className={cn("pb-6", isLast && "pb-0")}>
+              <div className={cn("pb-6 flex-1", isLast && "pb-0")}>
                 <p
                   className={cn(
                     "font-semibold text-sm",
-                    isCompleted ? "text-green-600" : "text-gray-400",
+                    isCompleted ? "text-[#31A078]" : "text-gray-400",
+                    isCurrent && "text-[#31A078] font-bold",
                   )}
                 >
                   {step.label}
+                  {isCurrent && (
+                    <span className="ml-2 text-[10px] font-bold bg-[#31A078] text-white px-1.5 py-0.5 rounded-full">
+                      Current
+                    </span>
+                  )}
                 </p>
                 <p className="text-sm text-gray-500 mt-0.5">{step.desc}</p>
               </div>
-
-              {/* Time — right side */}
-              <p className="ml-auto text-xs text-gray-400 pt-1 flex-shrink-0">
-                12:18pm
-              </p>
             </div>
           );
         })}
@@ -104,7 +187,11 @@ const ItemDetailPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const itemId = params.itemId as string;
+  const rawItemId = decodeURIComponent(params.itemId as string);
+  const uuidMatch = rawItemId.match(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+  );
+  const itemId = uuidMatch ? uuidMatch[0] : rawItemId;
   const delivery = searchParams.get("delivery") === "true";
   const productName = decodeURIComponent(searchParams.get("productName") || "");
   const quantity = parseInt(searchParams.get("quantity") || "0");
@@ -168,16 +255,22 @@ const ItemDetailPage = () => {
 
       <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white font-dm-sans mb-3">
         <div className="bg-[#FAFAFA] rounded-lg lg:border border-[#E4E4E4]">
-          {productImage && (
-            <div className="relative h-56 w-full">
-              <Image
-                src={productImage}
-                alt={productName}
-                fill
-                className="object-contain"
-              />
-            </div>
-          )}
+          {productImage &&
+            productImage !== "undefined" &&
+            productImage !== "null" && (
+              <div className="relative h-56 w-full">
+                <Image
+                  src={productImage}
+                  alt={productName}
+                  fill
+                  className="object-contain"
+                  unoptimized
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              </div>
+            )}
         </div>
 
         <div className="mt-4 grid md:grid-cols-2 gap-y-3 lg:grid-cols-3">
@@ -206,8 +299,8 @@ const ItemDetailPage = () => {
         </div>
       </div>
 
-      {/* Tracking timeline — only when delivery is true */}
-      {delivery && <TrackingTimeline />}
+      {/* ← Real tracking timeline */}
+      <TrackingTimeline itemId={itemId} delivery={delivery} />
 
       <div className="px-6 py-6 bg-gray-50 border-t border-gray-100">
         <Button
