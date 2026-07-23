@@ -703,7 +703,7 @@ export default function SellPage() {
                           <p className="font-bold text-[12px] md:text-[16px] text-[#2F2F2F]  leading-tight">
                             {item.product.name}
                             {inCart && (
-                              <span className="ml-2 text-xs text-white bg-[#0A6DC0] px-1.5 py-0.5 rounded-full">
+                              <span className="ml-1 md:ml-2 text-[8px] md:text-xs text-white bg-[#0A6DC0] px-1.5 py-0.5 rounded-full">
                                 In cart
                               </span>
                             )}
