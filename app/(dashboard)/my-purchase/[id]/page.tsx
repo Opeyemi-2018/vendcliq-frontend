@@ -15,7 +15,12 @@ const PurchasedInvoiceDetailPage = () => {
   const router = useRouter();
   const id = params.id as string;
 
-  const { data: invoice, isLoading, error, refetch } = usePurchasedInvoiceById(id);
+  const {
+    data: invoice,
+    isLoading,
+    error,
+    refetch,
+  } = usePurchasedInvoiceById(id);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-NG", {
@@ -44,9 +49,10 @@ const PurchasedInvoiceDetailPage = () => {
     if (item.product.image) {
       queryParams.set("productImage", encodeURIComponent(item.product.image));
     }
-    if (item.stock.sku) {
-      queryParams.set("sku", encodeURIComponent(item.stock.sku));
-    }
+    queryParams.set(
+      "sku",
+      encodeURIComponent(item.product.name || item.stock.sku || ""),
+    );
     if (item.mode) {
       queryParams.set("mode", item.mode);
     }
@@ -65,7 +71,10 @@ const PurchasedInvoiceDetailPage = () => {
       <Card className="p-6">
         <div className="text-center">
           <p className="text-red-500 mb-4">Error: {error.message}</p>
-          <Button onClick={() => refetch()} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          <Button
+            onClick={() => refetch()}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
             Retry
           </Button>
         </div>
@@ -109,13 +118,15 @@ const PurchasedInvoiceDetailPage = () => {
             </div>
             <div>
               <p className="font-bold">Status</p>
-              <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                invoice.status === "COMPLETED"
-                  ? "bg-green-100 text-green-800"
-                  : invoice.status === "PENDING"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-gray-100 text-gray-800"
-              }`}>
+              <span
+                className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                  invoice.status === "COMPLETED"
+                    ? "bg-green-100 text-green-800"
+                    : invoice.status === "PENDING"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-gray-100 text-gray-800"
+                }`}
+              >
                 {invoice.status}
               </span>
             </div>
@@ -182,7 +193,9 @@ const PurchasedInvoiceDetailPage = () => {
                             className="object-contain"
                           />
                         </div>
-                        <p className="truncate">{item.product.name.slice(0, 15)}...</p>
+                        <p className="truncate">
+                          {item.product.name.slice(0, 15)}...
+                        </p>
                       </div>
                     </td>
                     <td className="hidden md:table-cell py-4 truncate">
@@ -195,13 +208,15 @@ const PurchasedInvoiceDetailPage = () => {
                       {formatCurrency(item.cost)}
                     </td>
                     <td className="hidden md:table-cell py-4">
-                      <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        invoice.status === "COMPLETED"
-                          ? "bg-green-100 text-green-800"
-                          : invoice.status === "PENDING"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
-                      }`}>
+                      <span
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          invoice.status === "COMPLETED"
+                            ? "bg-green-100 text-green-800"
+                            : invoice.status === "PENDING"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
                         {invoice.status}
                       </span>
                     </td>

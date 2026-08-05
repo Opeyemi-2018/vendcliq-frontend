@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { usePaymentSocket } from "@/hooks/invoiceSocket";
 import { useUser } from "@/context/userContext";

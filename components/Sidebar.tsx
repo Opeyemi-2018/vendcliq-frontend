@@ -292,7 +292,7 @@ export function AppSidebar() {
                         <CollapsibleContent>
                           <SidebarMenuSub className="border-l-0 ml-0 pl-0">
                             {item.children.map((child) => (
-                              <SidebarMenuSubItem key={child.title}>
+                              <SidebarMenuSubItem className="pr-4" key={child.title}>
                                 <SidebarMenuSubButton
                                   asChild={child.tag !== "coming-soon"}
                                   isActive={isActive(child.url)}
