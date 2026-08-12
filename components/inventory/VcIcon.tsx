@@ -65,6 +65,14 @@ export const IC = {
   ],
   copy: ["M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"],
   warning: ["M12 4 2.5 20h19L12 4Z", "M12 10v4", "M12 17h.01"],
+  send: ["M7 17 17 7", "M8 7h9v9"],
+  sim: ["M4 5h16v14H4z", "M4 10h16", "M9 5v14"],
+  wallet: ["M4 6h16v13H4z", "M4 10h16", "M8 15h4"],
+  shield: ["M5 3h14v18l-3-1.6L13 21l-3-1.6L7 21l-2-1.6V3Z", "M9.5 11.5 11 13l4-4"],
+  plus: ["M12 5v14", "M5 12h14"],
+  bolt: ["M13 2 4 14h7l-1 8 9-12h-7l1-8Z"],
+  arrowIn: ["M17 7 7 17", "M16 17H7V8"],
+  arrowOut: ["M7 17 17 7", "M8 7h9v9"],
 } as const;
 
 export type IconName = keyof typeof IC;

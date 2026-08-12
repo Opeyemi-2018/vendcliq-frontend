@@ -28,6 +28,8 @@ import {
 import SalesRow from "@/components/inventory/SalesRow";
 import QuickHandoverDrawer from "@/components/inventory/QuickHandoverDrawer";
 import MediumBreakdownModal from "@/components/inventory/MediumBreakdownModal";
+import ShortcutPickerModal from "@/components/inventory/ShortcutPickerModal";
+import { useShortcutPins } from "@/lib/shortcutStore";
 import { VcIcon, CalendarIcon } from "@/components/inventory/VcIcon";
 import QuickActionsStrip, {
   DEFAULT_INVENTORY_PINS,
@@ -59,6 +61,11 @@ const Home = () => {
   const [channelTab, setChannelTab] = useState<ChannelTab>("all");
   const [mediumModalOpen, setMediumModalOpen] = useState(false);
   const [handoverOpen, setHandoverOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const { pins, setPins, reset: resetPins } = useShortcutPins(
+    "inventory",
+    DEFAULT_INVENTORY_PINS,
+  );
 
   const range = useMemo(
     () => resolvePeriod(period, { start: customStart, end: customEnd }),
@@ -552,10 +559,17 @@ const Home = () => {
       <QuickActionsStrip
         data-tour="shortcut-picker"
         actions={INVENTORY_ACTIONS}
-        pinnedIds={DEFAULT_INVENTORY_PINS}
-        onEditShortcuts={() =>
-          toast("Shortcut customising is coming in the next update")
-        }
+        pinnedIds={pins}
+        onEditShortcuts={() => setPickerOpen(true)}
+      />
+
+      <ShortcutPickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        actions={INVENTORY_ACTIONS}
+        pinnedIds={pins}
+        onChange={setPins}
+        onReset={resetPins}
       />
 
       {/* ── Recent sales ─────────────────────────────────────────────────── */}

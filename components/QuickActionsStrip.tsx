@@ -25,6 +25,24 @@ export const INVENTORY_ACTIONS: QuickAction[] = [
   { id: "suppliers", label: "Supplier List", sub: "Who you buy from", bg: "#E1EEFF", fg: "#0A6DC0", icon: "building", route: "/suppliers" },
 ];
 
+/** ACCT_CATALOG from the prototype. */
+export const ACCOUNT_ACTIONS: QuickAction[] = [
+  { id: "send", label: "Send Money", sub: "To bank or Vendcliq", bg: "#E1EEFF", fg: "#0A6DC0", icon: "send", route: "/account/send-money" },
+  { id: "airtime", label: "Airtime & Data", sub: "All networks", bg: "#E8EEFF", fg: "#4052A3", icon: "sim", route: "/account/pay-utility" },
+  { id: "history", label: "Transactions History", sub: "Every wallet movement", bg: "#E7F4EB", fg: "#0E6E55", icon: "note", route: "/account/transactionHistory" },
+  { id: "subs", label: "Subscription & Payment", sub: "Plan and renewals", bg: "#FFF3DB", fg: "#B47800", icon: "wallet", route: "/payment-subscription" },
+  { id: "ledger", label: "Credit Ledger", sub: "What customers owe you", bg: "#E0F2ED", fg: "#148264", icon: "shield", route: "/credit-ledger" },
+  { id: "loans", label: "Loans", sub: "Borrow against sales", bg: "#F3EAFF", fg: "#7B61FF", icon: "naira", route: "/loans" },
+];
+
+export const DEFAULT_ACCOUNT_PINS = [
+  "send",
+  "airtime",
+  "history",
+  "subs",
+  "ledger",
+];
+
 export const DEFAULT_INVENTORY_PINS = [
   "sell",
   "store",
