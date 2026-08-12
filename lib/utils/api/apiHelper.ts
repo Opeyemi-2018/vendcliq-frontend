@@ -146,6 +146,9 @@ import {
   GET_ALL_PRODUCTS,
   GET_PRODUCTS_PAGINATED,
   UPDATE_STOCK_PRICES,
+  DELETE_STOCKS_BULK,
+  STOCK_CONDITIONS,
+  STOCK_CONDITIONS_BY_STOCK,
   UPDATE_CUSTOMER,
   RETURN_CUSTOMER_EMPTIES,
   GET_CUSTOMER_BY_ID,
@@ -488,6 +491,24 @@ export const putter = async <T, U = unknown>(
     );
     throw err;
   }
+};
+
+/** DELETE that carries a JSON payload (bulk operations send { ids: [...] }). */
+export const deleterWithBody = async <T>(
+  url: string,
+  data: unknown,
+  headers?: Record<string, string>,
+): Promise<T> => {
+  const response = await axiosInstance.delete<T>(url, {
+    data,
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...headers,
+    },
+    validateStatus: () => true,
+  });
+  return response.data;
 };
 
 export const deleter = async <T>(
@@ -1276,6 +1297,24 @@ export const handleCreatePromo = async (payload: {
   supply_fee: number;
 }): Promise<any> => {
   return await poster(CREATE_OFFER, payload);
+};
+
+/** Bulk stock delete — inventory/stocks/bulk. */
+export const bulkDeleteStocks = async (ids: string[]): Promise<any> => {
+  return await deleterWithBody<any>(DELETE_STOCKS_BULK, { ids });
+};
+
+/** Marketplace conditions attached to a stock item. */
+export const getStockConditions = async (stockId: string): Promise<any> => {
+  return await fetcher<any>(STOCK_CONDITIONS_BY_STOCK(stockId));
+};
+
+export const createStockCondition = async (payload: any): Promise<any> => {
+  return await poster(STOCK_CONDITIONS, payload);
+};
+
+export const deleteStockCondition = async (id: string): Promise<any> => {
+  return await deleter<any>(`${STOCK_CONDITIONS}/${id}`);
 };
 
 export const handleUpdateStockPrices = async (

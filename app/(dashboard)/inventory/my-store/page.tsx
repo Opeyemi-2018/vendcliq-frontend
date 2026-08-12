@@ -11,6 +11,9 @@ import { formatNaira } from "@/lib/salesFilters";
 import { VcIcon } from "@/components/inventory/VcIcon";
 import ProductThumb from "@/components/inventory/ProductThumb";
 import AddNewSheet from "@/components/inventory/AddNewSheet";
+import ConfirmDeleteStockModal from "@/components/inventory/ConfirmDeleteStockModal";
+import { bulkDeleteStocks } from "@/lib/utils/api/apiHelper";
+import { useQueryClient } from "@tanstack/react-query";
 import type { StoreStockItem } from "@/types/store";
 
 type StockTab = "all" | "low" | "expiring";
@@ -42,6 +45,8 @@ const MyStorePage = () => {
   const [hideAmounts, setHideAmounts] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [addOpen, setAddOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const loading = storesLoading || stockLoading;
 
@@ -309,30 +314,6 @@ const MyStorePage = () => {
       </div>
 
       {/* ── Selection bar ────────────────────────────────────────────────── */}
-      {selected.length > 0 && (
-        <div className="flex items-center gap-3 flex-wrap bg-[#F0F7FF] border border-[#0A6DC040] rounded-[14px] px-4 py-3">
-          <span className="text-[13.5px] font-bold text-[#0A6DC0]">
-            {selected.length}{" "}
-            {selected.length === 1 ? "product" : "products"} selected
-          </span>
-          <div className="flex-1" />
-          <button
-            type="button"
-            onClick={() => {
-              const first = rows.find((item) => selected.includes(item.id));
-              if (first?.store?.id) {
-                router.push(`/inventory/my-store/${first.store.id}/moveStock`);
-              } else {
-                toast("Pick products from a single store to move stock");
-              }
-            }}
-            className="h-10 px-4 rounded-[10px] border border-[#0A6DC0] bg-white text-[#0A6DC0] text-[13.5px] font-bold cursor-pointer hover:bg-[#E1EEFF]"
-          >
-            Move stock
-          </button>
-        </div>
-      )}
-
       {/* ── Product rows ─────────────────────────────────────────────────── */}
       {loading ? (
         <div className="flex justify-center items-center py-16">
@@ -355,13 +336,22 @@ const MyStorePage = () => {
                     : "border-[#D8D8D88C] hover:border-[#0A6DC0]"
                 }`}
               >
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => toggleSelect(item.id)}
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={isSelected}
                   aria-label={`Select ${item.product?.name ?? "product"}`}
-                  className="w-[18px] h-[18px] accent-[#0A6DC0] cursor-pointer shrink-0"
-                />
+                  onClick={() => toggleSelect(item.id)}
+                  className={`w-[22px] h-[22px] rounded-full inline-flex items-center justify-center shrink-0 cursor-pointer transition ${
+                    isSelected
+                      ? "bg-[#0A6DC0] border-none"
+                      : "bg-white border-[1.6px] border-[#D2D6DC] hover:border-[#0A6DC0]"
+                  }`}
+                >
+                  {isSelected && (
+                    <VcIcon name="check" size={13} stroke="#fff" strokeWidth={3} />
+                  )}
+                </button>
 
                 <button
                   type="button"
@@ -431,6 +421,76 @@ const MyStorePage = () => {
           </div>
         </div>
       )}
+
+      {/* Floating rather than inserted: pushing the list down mid-selection
+          moves the next row out from under the cursor. Fixed rather than
+          sticky because an ancestor's overflow breaks sticky here. */}
+      {selected.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[min(660px,92vw)] flex items-center gap-3 flex-wrap bg-white border border-[#0A6DC040] rounded-[14px] px-4 py-3 shadow-[0_16px_40px_-12px_rgba(10,37,64,.45)]">
+          <span className="text-[13.5px] font-bold text-[#0A6DC0]">
+            {selected.length}{" "}
+            {selected.length === 1 ? "product" : "products"} selected
+          </span>
+          <div className="flex-1" />
+          <button
+            type="button"
+            onClick={() => {
+              const first = rows.find((item) => selected.includes(item.id));
+              if (first?.store?.id) {
+                router.push(`/inventory/my-store/${first.store.id}/moveStock`);
+              } else {
+                toast("Pick products from a single store to move stock");
+              }
+            }}
+            className="h-10 px-4 rounded-[10px] border border-[#0A6DC0] bg-white text-[#0A6DC0] text-[13.5px] font-bold cursor-pointer hover:bg-[#E1EEFF]"
+          >
+            Move stock
+          </button>
+          <button
+            type="button"
+            onClick={() => setDeleteOpen(true)}
+            className="h-10 px-4 rounded-[10px] border border-[#C0392B] bg-white text-[#C0392B] text-[13.5px] font-bold cursor-pointer hover:bg-[#FBE9E7]"
+          >
+            Delete
+          </button>
+        </div>
+      )}
+
+      <ConfirmDeleteStockModal
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        names={rows
+          .filter((item) => selected.includes(item.id))
+          .map((item) => item.product?.name ?? "Product")}
+        onConfirm={async () => {
+          try {
+            const response = await bulkDeleteStocks(selected);
+            const ok =
+              response?.statusCode === 200 ||
+              response?.statusCode === 201 ||
+              response?.status === true ||
+              response?.success;
+            if (!ok) {
+              toast.error(
+                response?.error || response?.message || "Could not delete stock",
+              );
+              return;
+            }
+            toast.success(
+              `${selected.length} ${selected.length === 1 ? "product" : "products"} deleted`,
+            );
+            setSelected([]);
+            setDeleteOpen(false);
+            queryClient.invalidateQueries({ queryKey: ["stores", "stock"] });
+          } catch (err: any) {
+            toast.error(
+              err?.response?.data?.message ||
+                err?.message ||
+                "Could not delete stock",
+            );
+          }
+        }}
+      />
 
       <AddNewSheet open={addOpen} onOpenChange={setAddOpen} />
     </div>

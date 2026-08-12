@@ -171,6 +171,10 @@ const GET_PRICING_PLANS = "inventory/plans?page=1&limit=10&all=true";
 const GET_STORES = "inventory/stores";
 const GET_STORE_BY_ID = (storeId: string) => `inventory/stores/${storeId}`;
 const MOVE_STOCK = "inventory/stocks/move";
+const DELETE_STOCKS_BULK = "inventory/stocks/bulk";
+const STOCK_CONDITIONS = "inventory/stock-conditions";
+const STOCK_CONDITIONS_BY_STOCK = (stockId: string) =>
+  `inventory/stock-conditions/stock/${stockId}`;
 const UPDATE_STOCK = (stockId: string) => `inventory/stocks/${stockId}`;
 const GET_STOCK_DETAIL = (stockId: string, storeId: string) =>
   `inventory/stocks/${stockId}/${storeId}`;
@@ -263,6 +267,9 @@ export {
   GET_STORE_ITEMS_SALES,
   CREATE_OFFER,
   UPDATE_STOCK_PRICES,
+  DELETE_STOCKS_BULK,
+  STOCK_CONDITIONS,
+  STOCK_CONDITIONS_BY_STOCK,
   PAY_CART_CREDIT_OTP,
   GET_CREDIT_LEDGER,
   RECORD_CREDIT_PAYMENT,

@@ -84,6 +84,8 @@ import {
   GET_STORE_ITEMS_SALES,
   CREATE_OFFER,
   UPDATE_STOCK_PRICES,
+  DELETE_STOCKS_BULK,
+  STOCK_CONDITIONS,
   GET_SUPPLIER_STORES,
   GET_STORE_STOCKS,
   PAY_CART_CREDIT_OTP,
@@ -296,6 +298,8 @@ const INVENTORY_ENDPOINTS = [
   GET_STOCK_DETAIL,
   GET_SUPPLIER_STOCKS,
   GET_SUPPLIER_STORES,
+  DELETE_STOCKS_BULK,
+  STOCK_CONDITIONS,
 ];
 
 const LOGISTIC_ENDPOINTS: string[] = [];
@@ -690,11 +694,25 @@ export async function DELETE(request: Request) {
       endpoint,
     );
     const apiBaseUrl = getApiBaseUrl(endpoint);
+
+    // Some deletes carry a payload (bulk stock delete sends { ids: [...] }),
+    // so forward a JSON body when the caller supplied one.
+    let deleteBody: string | undefined;
+    try {
+      const raw = await request.text();
+      if (raw && raw.trim()) deleteBody = raw;
+    } catch {
+      /* no body — a plain DELETE */
+    }
+
     const response = await fetch(
       `${apiBaseUrl}/${endpoint.replace(/^\//, "")}`,
       {
         method: "DELETE",
-        headers: secureHeaders,
+        headers: deleteBody
+          ? { ...secureHeaders, "Content-Type": "application/json" }
+          : secureHeaders,
+        ...(deleteBody ? { body: deleteBody } : {}),
       },
     );
 

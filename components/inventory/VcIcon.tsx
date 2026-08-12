@@ -73,6 +73,13 @@ export const IC = {
   bolt: ["M13 2 4 14h7l-1 8 9-12h-7l1-8Z"],
   arrowIn: ["M17 7 7 17", "M16 17H7V8"],
   arrowOut: ["M7 17 17 7", "M8 7h9v9"],
+  gift: [
+    "M4 11h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9Z",
+    "M3 7.5h18V11H3z",
+    "M12 7.5V21",
+    "M12 7.5S10.5 3 8.2 3a2.2 2.2 0 0 0 0 4.5H12Z",
+    "M12 7.5S13.5 3 15.8 3a2.2 2.2 0 0 1 0 4.5H12Z",
+  ],
 } as const;
 
 export type IconName = keyof typeof IC;

@@ -3,12 +3,25 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { VcIcon, IconName } from "./VcIcon";
+import { uploadImage, UPLOAD_ACCEPT, MAX_UPLOAD_BYTES } from "@/lib/uploadImage";
 
 export type ConditionType =
   | "discount"
   | "free_delivery"
   | "minimum_qty"
-  | "bundle";
+  | "bundle"
+  | "free_gift";
+
+export type GiftType = "same_stock" | "other_stock" | "external_item";
+
+export interface FreeGiftDraft {
+  gift_type: GiftType;
+  quantity?: number;
+  stock_id?: string;
+  item_name?: string;
+  item_description?: string;
+  external_image?: string;
+}
 
 export interface MarketplaceCondition {
   id: string;
@@ -27,6 +40,8 @@ export interface MarketplaceCondition {
   bundleRatioMain?: number;
   bundleRatioBundle?: number;
   bundleFallback?: "terminate" | "allow";
+  /** Free gift only. */
+  gifts?: FreeGiftDraft[];
 }
 
 const TYPE_META: Record<
@@ -37,6 +52,7 @@ const TYPE_META: Record<
   free_delivery: { label: "Free delivery", icon: "truck", bg: "#E7F4EB", fg: "#0E6E55" },
   minimum_qty: { label: "Minimum quantity", icon: "box", bg: "#FFF3DB", fg: "#B47800" },
   bundle: { label: "Bundle products", icon: "cart", bg: "#F3EAFF", fg: "#7B61FF" },
+  free_gift: { label: "Free gift", icon: "gift", bg: "#FFF3DB", fg: "#B47800" },
 };
 
 /** One-line summary shown on a saved condition card. */
@@ -56,6 +72,16 @@ export const summarise = (c: MarketplaceCondition, unit = "packs"): string => {
       return `Requires ${c.bundleProduct || "another product"} at ${
         c.bundleRatioMain ?? 1
       }:${c.bundleRatioBundle ?? 1} ratio, minimum ${c.bundleMainQty ?? 0} ${unit}`;
+    case "free_gift": {
+      const gift = c.gifts?.[0];
+      const what =
+        gift?.gift_type === "external_item"
+          ? gift.item_name || "a gift"
+          : gift?.gift_type === "other_stock"
+            ? `${gift.quantity ?? 1} of another product`
+            : `${gift?.quantity ?? 1} free ${unit}`;
+      return `Buy ${c.triggerQty ?? 0}+ ${unit}, get ${what}`;
+    }
   }
 };
 
@@ -96,6 +122,7 @@ export const MarketplaceConditions = ({
   unit = "packs",
 }: MarketplaceConditionsProps) => {
   const [draft, setDraft] = useState<MarketplaceCondition | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const startDraft = (type: ConditionType) =>
     setDraft({
@@ -107,6 +134,10 @@ export const MarketplaceConditions = ({
       bundleRatioMain: 1,
       bundleRatioBundle: 1,
       bundleFallback: "terminate",
+      gifts:
+        type === "free_gift"
+          ? [{ gift_type: "same_stock", quantity: 1 }]
+          : undefined,
     });
 
   // Each type has its own notion of "enough information to save".
@@ -121,6 +152,13 @@ export const MarketplaceConditions = ({
         return Boolean(draft.minimumQty);
       case "bundle":
         return Boolean(draft.bundleProduct && draft.bundleMainQty);
+      case "free_gift": {
+        const gift = draft.gifts?.[0];
+        if (!draft.triggerQty || !gift) return false;
+        return gift.gift_type === "external_item"
+          ? Boolean(gift.item_name)
+          : Boolean(gift.quantity);
+      }
     }
   })();
 
@@ -346,6 +384,189 @@ export const MarketplaceConditions = ({
                   ))}
                 </div>
               </div>
+            </>
+          )}
+
+          {draft.type === "free_gift" && (
+            <>
+              {numberField("Buy at least", draft.triggerQty, (v) =>
+                setDraft({ ...draft, triggerQty: v }),
+              )}
+
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[12px] font-bold text-[#6E7480]">
+                  What do they get?
+                </span>
+                <div className="flex gap-2 flex-wrap">
+                  {(
+                    [
+                      { id: "same_stock", label: "More of this product" },
+                      { id: "other_stock", label: "Another product" },
+                      { id: "external_item", label: "Something else" },
+                    ] as const
+                  ).map((option) => {
+                    const gift = draft.gifts?.[0];
+                    const active = gift?.gift_type === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() =>
+                          setDraft({
+                            ...draft,
+                            gifts: [
+                              {
+                                gift_type: option.id,
+                                quantity:
+                                  option.id === "external_item" ? undefined : 1,
+                              },
+                            ],
+                          })
+                        }
+                        className={`h-10 px-4 rounded-full text-[13px] font-semibold cursor-pointer border ${
+                          active
+                            ? "border-[#0A6DC0] bg-[#E1EEFF] text-[#0A6DC0]"
+                            : "border-[#D8D8D8E6] bg-white text-[#2F2F2F]"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {draft.gifts?.[0]?.gift_type !== "external_item" &&
+                numberField(
+                  "Free quantity",
+                  draft.gifts?.[0]?.quantity,
+                  (v) =>
+                    setDraft({
+                      ...draft,
+                      gifts: [{ ...(draft.gifts?.[0] as any), quantity: v }],
+                    }),
+                )}
+
+              {draft.gifts?.[0]?.gift_type === "other_stock" && (
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-[12px] font-bold text-[#6E7480]">
+                    Which product
+                  </span>
+                  <input
+                    list="vc-bundle-products"
+                    value={draft.gifts?.[0]?.stock_id ?? ""}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        gifts: [
+                          { ...(draft.gifts?.[0] as any), stock_id: e.target.value },
+                        ],
+                      })
+                    }
+                    placeholder="Search products in this store"
+                    className="h-11 px-3 box-border rounded-[10px] border border-[#D8D8D8E6] bg-white text-[14px] text-[#2F2F2F] outline-none focus:border-[#0A6DC0]"
+                  />
+                </label>
+              )}
+
+              {draft.gifts?.[0]?.gift_type === "external_item" && (
+                <div className="flex flex-col gap-3">
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-[12px] font-bold text-[#6E7480]">
+                      Gift name
+                    </span>
+                    <input
+                      value={draft.gifts?.[0]?.item_name ?? ""}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          gifts: [
+                            { ...(draft.gifts?.[0] as any), item_name: e.target.value },
+                          ],
+                        })
+                      }
+                      placeholder="e.g. Samsung Fridge 200L"
+                      className="h-11 px-3 box-border rounded-[10px] border border-[#D8D8D8E6] bg-white text-[14px] text-[#2F2F2F] outline-none focus:border-[#0A6DC0]"
+                    />
+                  </label>
+
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-[12px] font-bold text-[#6E7480]">
+                      Description
+                    </span>
+                    <input
+                      value={draft.gifts?.[0]?.item_description ?? ""}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          gifts: [
+                            {
+                              ...(draft.gifts?.[0] as any),
+                              item_description: e.target.value,
+                            },
+                          ],
+                        })
+                      }
+                      placeholder="e.g. White, energy A+"
+                      className="h-11 px-3 box-border rounded-[10px] border border-[#D8D8D8E6] bg-white text-[14px] text-[#2F2F2F] outline-none focus:border-[#0A6DC0]"
+                    />
+                  </label>
+
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {draft.gifts?.[0]?.external_image ? (
+                      <img
+                        src={draft.gifts[0].external_image}
+                        alt="Gift"
+                        className="w-16 h-16 rounded-[12px] object-cover border border-[#D8D8D8B3]"
+                      />
+                    ) : (
+                      <span className="w-16 h-16 rounded-[12px] border border-dashed border-[#D8D8D8E6] inline-flex items-center justify-center">
+                        <VcIcon name="gift" size={24} stroke="#B47800" />
+                      </span>
+                    )}
+                    <label className="inline-flex items-center gap-2 h-10 px-4 rounded-[10px] border border-[#D8D8D8E6] bg-white cursor-pointer text-[13px] font-bold text-[#2F2F2F] hover:border-[#0A6DC0] hover:text-[#0A6DC0]">
+                      <VcIcon name="plus" size={15} strokeWidth={2.4} />
+                      <span>{uploading ? "Uploading…" : "Add photo"}</span>
+                      <input
+                        type="file"
+                        accept={UPLOAD_ACCEPT}
+                        className="hidden"
+                        disabled={uploading}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > MAX_UPLOAD_BYTES) {
+                            toast.error("That image is larger than 5MB");
+                            return;
+                          }
+                          try {
+                            setUploading(true);
+                            const url = await uploadImage(file);
+                            setDraft((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    gifts: [
+                                      {
+                                        ...(prev.gifts?.[0] as any),
+                                        external_image: url,
+                                      },
+                                    ],
+                                  }
+                                : prev,
+                            );
+                            toast.success("Gift photo added");
+                          } catch (err: any) {
+                            toast.error(err?.message ?? "Upload failed");
+                          } finally {
+                            setUploading(false);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
             </>
           )}
 
