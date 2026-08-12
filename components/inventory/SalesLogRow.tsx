@@ -113,8 +113,8 @@ export const SalesLogRow = ({ row, hideAmounts = false }: SalesLogRowProps) => {
                 <span>{row.handoverLabel}</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold px-[10px] py-[3px] rounded-full bg-[#FFF3DB] text-[#85540A]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E0A21A]" />
+              <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold px-[10px] py-[3px] rounded-full bg-[#F4F5F7] text-[#6B6B70]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#9AA0A8]" />
                 <span>{row.handoverLabel}</span>
               </span>
             )}

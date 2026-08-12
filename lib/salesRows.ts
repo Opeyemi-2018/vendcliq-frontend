@@ -27,6 +27,7 @@ export interface SalesRowData {
 
 const GREEN = { bg: "#E7F4EB", fg: "#003909" };
 const AMBER = { bg: "#FFF3DB", fg: "#85540A" };
+const BLUE = { bg: "#E1EEFF", fg: "#0A6DC0" };
 
 /**
  * Pending items carry no handover fields at all — the key is absent rather than
@@ -81,14 +82,18 @@ export const purchaseRequestToRow = (
   let tone = GREEN;
 
   if (awaiting) {
+    // Work still to do, but nothing wrong — blue rather than a warning colour.
     statusLabel = "Awaiting handover";
-    tone = AMBER;
+    tone = BLUE;
   } else if (complete) {
     statusLabel = "Handed over";
   } else if (status === "COMPLETED") {
     statusLabel = "Completed";
   } else if (status && status !== "PAID") {
+    // Anything still unpaid (PENDING, etc.) is amber — it was rendering green
+    // because only the label changed and the tone stayed at its default.
     statusLabel = titleCase(status);
+    tone = AMBER;
   }
 
   return {
@@ -119,8 +124,13 @@ export const saleInvoiceToRow = (invoice: SaleInvoice): SalesRowData => {
   const status = (invoice.status || "").toUpperCase();
 
   let statusLabel = "Paid";
-  if (status === "COMPLETED") statusLabel = "Completed";
-  else if (status && status !== "PAID") statusLabel = titleCase(status);
+  let tone = GREEN;
+  if (status === "COMPLETED") {
+    statusLabel = "Completed";
+  } else if (status && status !== "PAID") {
+    statusLabel = titleCase(status);
+    tone = AMBER;
+  }
 
   return {
     id: invoice.id,
@@ -130,8 +140,8 @@ export const saleInvoiceToRow = (invoice: SaleInvoice): SalesRowData => {
     createdAt: invoice.created_at,
     amount: invoice.total ?? 0,
     statusLabel,
-    statusBg: GREEN.bg,
-    statusFg: GREEN.fg,
+    statusBg: tone.bg,
+    statusFg: tone.fg,
     awaitingHandover: false,
     href: `/inventory/sales/${invoice.id}`,
     storeId: invoice.store_id != null ? String(invoice.store_id) : null,
