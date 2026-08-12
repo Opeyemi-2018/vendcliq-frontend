@@ -175,6 +175,9 @@ export function AppSidebar() {
       children: [
         // Business Report / Customer List / Supplier List / Expenses now live
         // under Inventory (and as pinned Quick Actions), per the prototype.
+        ...(!isAttendant
+          ? [{ title: "Business Settings", url: "/business-settings" }]
+          : []),
         { title: "Profile Settings", url: "/profile-settings" },
         { title: "Referral", url: "/referral" },
         ...(!isAttendant
