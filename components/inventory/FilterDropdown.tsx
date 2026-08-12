@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { VcIcon } from "./VcIcon";
 
@@ -47,9 +47,30 @@ export const FilterDropdown = ({
       ? "inline-flex items-center gap-[9px] h-[38px] px-[15px] rounded-full border border-white/30 bg-white/15 text-white text-[13px] font-semibold cursor-pointer whitespace-nowrap hover:bg-white/[.26]"
       : "inline-flex items-center gap-[9px] h-[42px] px-4 rounded-[10px] border border-[#D8D8D8E6] bg-white text-[#2F2F2F] text-[14px] font-semibold cursor-pointer whitespace-nowrap hover:border-[#0A6DC0] hover:text-[#0A6DC0]";
 
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [openUp, setOpenUp] = useState(false);
+
+  // The custom-range inputs sit at the bottom of the panel, so near the foot of
+  // the page the menu would be clipped off-screen. Flip it above the trigger
+  // when there is not enough room below.
+  useEffect(() => {
+    if (!open) return;
+    const measure = () => {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const needed = 340;
+      setOpenUp(
+        window.innerHeight - rect.bottom < needed && rect.top > needed,
+      );
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [open, children]);
+
   return (
     <div className="relative" {...rest}>
-      <button type="button" onClick={onToggle} className={trigger}>
+      <button ref={triggerRef} type="button" onClick={onToggle} className={trigger}>
         {icon}
         <span>{buttonLabel}</span>
         <VcIcon
@@ -66,7 +87,11 @@ export const FilterDropdown = ({
           <div
             className={cn(
               "absolute z-40 bg-white rounded-[16px] shadow-[0_20px_44px_-16px_rgba(10,37,64,.45)] p-2 text-[#2F2F2F] max-h-[300px] overflow-y-auto",
-              variant === "hero" ? "top-[46px]" : "top-[48px]",
+              openUp
+                ? "bottom-[calc(100%+8px)]"
+                : variant === "hero"
+                  ? "top-[46px]"
+                  : "top-[48px]",
               align === "right" ? "right-0" : "left-0",
             )}
             style={{ width }}
