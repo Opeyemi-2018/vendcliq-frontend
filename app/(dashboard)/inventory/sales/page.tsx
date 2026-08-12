@@ -1,406 +1,361 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { format, isSameDay } from "date-fns";
-import { cn } from "@/lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { MoveRight, MoveLeft, MoveRightIcon, CalendarIcon } from "lucide-react";
-import Image from "next/image";
-import { ThreeDots } from "react-loader-spinner";
+import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { usePaymentSocket } from "@/hooks/invoiceSocket";
 import { useSales } from "@/hooks/useInventoryOverview";
+import { usePurchaseRequests } from "@/hooks/usePurchaseRequests";
+import { useSalesData } from "@/hooks/useInventoryOverview";
+import {
+  PERIOD_OPTIONS,
+  PeriodId,
+  formatNaira,
+  isWithinRange,
+  periodLabel,
+  resolvePeriod,
+} from "@/lib/salesFilters";
+import {
+  SalesRowData,
+  purchaseRequestToRow,
+  saleInvoiceToRow,
+} from "@/lib/salesRows";
+import SalesLogRow from "@/components/inventory/SalesLogRow";
+import FilterDropdown, {
+  CustomRangeInputs,
+} from "@/components/inventory/FilterDropdown";
+import { VcIcon, CalendarIcon } from "@/components/inventory/VcIcon";
 
-const SalesListPage = () => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 5;
+type ChannelTab = "all" | "online" | "instore";
+
+const SalesHistoryPage = () => {
   const router = useRouter();
 
-  // Use TanStack Query
-  const { data: allSales = [], isLoading, error, refetch } = useSales();
+  const [hideAmounts, setHideAmounts] = useState(false);
+  const [period, setPeriod] = useState<PeriodId>("today");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [storeId, setStoreId] = useState("all");
+  const [openMenu, setOpenMenu] = useState<"period" | "store" | null>(null);
+  const [channelTab, setChannelTab] = useState<ChannelTab>("all");
+  const [query, setQuery] = useState("");
 
-  // Filter invoices based on date and status
-  const filteredInvoices = useMemo(() => {
-    let filtered = [...allSales];
+  const range = useMemo(
+    () => resolvePeriod(period, { start: customStart, end: customEnd }),
+    [period, customStart, customEnd],
+  );
 
-    if (selectedDate) {
-      filtered = filtered.filter((inv) => {
-        try {
-          const invDate = new Date(inv.created_at);
-          return isSameDay(invDate, selectedDate);
-        } catch {
-          return false;
-        }
-      });
-    }
+  const {
+    data: allSales = [],
+    isLoading: salesLoading,
+    error: salesError,
+    refetch,
+  } = useSales();
+  const {
+    data: onlineOrders = [],
+    isLoading: onlineLoading,
+    error: onlineError,
+  } = usePurchaseRequests();
+  const { data: salesData } = useSalesData(range.start, range.end);
 
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(
-        (inv) => inv.status?.toLowerCase() === statusFilter.toLowerCase(),
-      );
-    }
+  useEffect(() => {
+    if (salesError) toast.error("Failed to load in-store sales");
+    if (onlineError) toast.error("Failed to load online sales");
+  }, [salesError, onlineError]);
 
-    return filtered;
-  }, [allSales, selectedDate, statusFilter]);
-
-  // Reset page when filters change
-  React.useEffect(() => {
-    setPage(1);
-  }, [selectedDate, statusFilter]);
-
-  // Handle errors
-  React.useEffect(() => {
-    if (error) {
-      toast.error("Failed to load invoices");
-    }
-  }, [error]);
-
-  // WebSocket for real-time payment updates
+  // Live payment updates — unchanged behaviour from the previous page.
   const { isConnected } = usePaymentSocket((paymentData) => {
     if (paymentData.type === "invoice") {
-      // Refetch to get updated data
       refetch();
-      
       if (paymentData.status === "success") {
         toast.success(
           `Invoice #${paymentData.id.slice(0, 8)} payment successful!`,
         );
       } else if (paymentData.status === "failed") {
-        toast.error(
-          `Payment failed for invoice #${paymentData.id.slice(0, 8)}`,
-        );
+        toast.error(`Payment failed for invoice #${paymentData.id.slice(0, 8)}`);
       }
     }
   });
 
-  // Safe stats
-  const completedCount = filteredInvoices.filter(
-    (inv) => inv.status?.toLowerCase() === "completed",
-  ).length;
+  const stores = salesData?.stores ?? [];
+  const storeLabel =
+    storeId === "all"
+      ? "All stores"
+      : (stores.find((s) => String(s.store_id) === storeId)?.store_name ??
+        "All stores");
 
-  const pendingCount = filteredInvoices.filter(
-    (inv) => inv.status?.toLowerCase() === "pending",
-  ).length;
+  const matchesStore = (rowStoreId?: string | null) =>
+    storeId === "all" || String(rowStoreId ?? "") === storeId;
 
-  const formatDate = (iso: string) => {
-    try {
-      return format(new Date(iso), "dd/MM/yyyy");
-    } catch {
-      return "—";
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const s = status?.toLowerCase() || "";
-    if (s === "completed") {
-      return (
-        <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-          Completed
-        </span>
-      );
-    }
-    if (s === "pending") {
-      return (
-        <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-          Pending
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
-        {status || "Unknown"}
-      </span>
-    );
-  };
-
-  const formattedDate = selectedDate
-    ? format(selectedDate, "MMM dd, yyyy")
-    : "Select date";
-
-  // Client-side pagination
-  const totalItems = filteredInvoices.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-  const startIndex = (page - 1) * itemsPerPage;
-  const paginatedInvoices = filteredInvoices.slice(
-    startIndex,
-    startIndex + itemsPerPage,
+  const inStoreRows = useMemo(
+    () =>
+      allSales
+        .filter((inv: any) => isWithinRange(inv.created_at, range))
+        .map(saleInvoiceToRow)
+        .filter((row) => matchesStore(row.storeId)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allSales, range, storeId],
   );
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setPage(newPage);
-    }
-  };
+  const onlineRows = useMemo(
+    () =>
+      onlineOrders
+        .filter((req: any) => isWithinRange(req.created_at, range))
+        .map(purchaseRequestToRow)
+        .filter((row) => matchesStore(row.storeId)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onlineOrders, range, storeId],
+  );
 
-  const renderPagination = () => {
-    const pages = [];
-    const maxVisible = 5;
+  const byNewest = (a: SalesRowData, b: SalesRowData) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
 
-    let start = Math.max(1, page - Math.floor(maxVisible / 2));
-    const end = Math.min(totalPages, start + maxVisible - 1);
+  const channelRows = useMemo(() => {
+    const source =
+      channelTab === "online"
+        ? onlineRows
+        : channelTab === "instore"
+          ? inStoreRows
+          : [...inStoreRows, ...onlineRows];
+    return [...source].sort(byNewest);
+  }, [channelTab, inStoreRows, onlineRows]);
 
-    if (end - start + 1 < maxVisible) {
-      start = Math.max(1, end - maxVisible + 1);
-    }
+  // Search matches customer name and invoice code, per §4.
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return channelRows;
+    return channelRows.filter((row) =>
+      `${row.customerName} ${row.code}`.toLowerCase().includes(q),
+    );
+  }, [channelRows, query]);
 
-    for (let i = start; i <= end; i++) {
-      pages.push(
-        <Button
-          key={i}
-          variant={page === i ? "default" : "outline"}
-          size="sm"
-          className={`h-8 w-8 ${
-            page === i ? "bg-[#0A6DC0] text-white hover:bg-[#0A6DC0]" : ""
-          }`}
-          onClick={() => handlePageChange(i)}
-        >
-          {i}
-        </Button>,
-      );
-    }
+  // Totals follow the current filter, so they are summed from the rows shown.
+  const total = useMemo(
+    () => rows.reduce((sum, row) => sum + row.amount, 0),
+    [rows],
+  );
 
-    return pages;
-  };
+  const tabs: { id: ChannelTab; label: string }[] = [
+    { id: "all", label: `All ${[...inStoreRows, ...onlineRows].length}` },
+    { id: "online", label: `Online ${onlineRows.length}` },
+    { id: "instore", label: `In-store ${inStoreRows.length}` },
+  ];
+
+  const periodOptions = PERIOD_OPTIONS.map((p) => ({
+    id: p.id,
+    label: p.label,
+  }));
+  const storeOptions = [
+    { id: "all", label: "All stores" },
+    ...stores.map((s) => ({ id: String(s.store_id), label: s.store_name })),
+  ];
+
+  const loading = salesLoading || onlineLoading;
 
   return (
-    <div className="p-4 md:p-6">
-      <div className=" mb-4">
-        <div>
-          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
-            Sales Invoices
+    <div className="flex flex-col gap-5 max-w-[1360px]">
+      {/* ── Header ───────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-[14px] flex-wrap">
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={() => router.push("/inventory/overview")}
+          className="w-[42px] h-[42px] rounded-[12px] border border-[#D8D8D8E6] bg-white cursor-pointer inline-flex items-center justify-center shrink-0 hover:border-[#0A6DC0]"
+        >
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2F2F2F" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m14 6-6 6 6 6" />
+          </svg>
+        </button>
+        <div className="flex-1 min-w-0">
+          <h1 className="m-0 font-clash font-semibold text-[28px] tracking-[-.5px] text-[#2F2F2F]">
+            Sales History
           </h1>
-          <p className="font-medium font-dm-sans text-[#9E9A9A]">
-            View and track all your sales invoices easily.
+          <p className="mt-[5px] text-[14px] text-[#8E8E93]">
+            {periodLabel(period, range)} · {storeLabel}
           </p>
         </div>
+        {isConnected && (
+          <span className="inline-flex items-center gap-2 text-[12px] font-bold text-[#0E6E55] bg-[#E7F4EB] px-3 py-1.5 rounded-full">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+            </span>
+            Live
+          </span>
+        )}
       </div>
 
-      {/* Banner */}
-      <div className="mb-4 bg-[url('/purchase-bg.svg')] bg-no-repeat bg-cover bg-center p-3 md:p-6 overflow-hidden md:h-[150px] mt-3 flex flex-col md:flex-row justify-between rounded-2xl">
-        <div className="flex w-full md:items-center justify-between flex-col md:flex-row h-full">
-          <div>
-            <p className="text-white font-dm-sans">Total Sales Invoices</p>
-            <h1 className="text-white text-[20px] md:text-[25px] font-semibold font-clash">
-              {isLoading ? (
-                <ThreeDots height="20" width="20" color="#ffffff" visible />
-              ) : (
-                filteredInvoices.length
-              )}
-            </h1>
-          </div>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "justify-start text-left font-normal h-10 px-4 bg-white/90 text-gray-700 hover:bg-white/95",
-                  !selectedDate && "text-muted-foreground",
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {formattedDate}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                initialFocus
-                className="rounded-md border"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
-
-      {/* Stats cards */}
-      <div className="flex mb-4 gap-3 overflow-x-auto">
-        <div className="border border-[#EAECF0] w-full shadowX min-w-[258px] h-[80px] md:h-[112px] rounded-[12px] flex flex-col justify-center items-start px-6 gap-2">
-          <div className="flex justify-between items-center w-full">
-            <h1 className="font-clash font-semibold md:text-[20px]">
-              {isLoading ? (
-                <ThreeDots height="20" width="20" color="#000000" visible />
-              ) : (
-                completedCount
-              )}
-            </h1>
-            <Image src="/in.svg" height={40} width={40} alt="completed" />
-          </div>
-          <p className="font-regular text-[13px] font-dm-sans">
-            Completed Sales
-          </p>
-        </div>
-
-        <div className="border border-[#EAECF0] w-full shadowX min-w-[258px] h-[80px] md:h-[112px] rounded-[12px] flex flex-col justify-center items-start px-6 gap-2">
-          <div className="flex justify-between items-center w-full">
-            <h1 className="font-clash font-semibold md:text-[20px]">
-              {isLoading ? (
-                <ThreeDots height="20" width="20" color="#000000" visible />
-              ) : (
-                pendingCount
-              )}
-            </h1>
-            <Image src="/pending.svg" height={40} width={40} alt="pending" />
-          </div>
-          <p className="font-regular text-[13px] font-dm-sans">Pending Sales</p>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white mb-3 md:mb-5">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-[16px] font-bold font-dm-sans">Sales Invoices</h1>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[160px] border border-gray-300 focus:ring-2 focus:ring-blue-500">
-              <SelectValue placeholder="Filter status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto text-[#2F2F2F]">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left font-medium">ID</th>
-                  <th className="px-6 py-3 text-left font-medium">Code</th>
-                  <th className="px-6 py-3 text-left font-medium">Date</th>
-                  <th className="px-6 py-3 text-left font-medium">Amount</th>
-                  <th className="px-6 py-3 text-left font-medium">Status</th>
-                  <th className="px-6 py-3 text-left font-medium">More</th>
-                </tr>
-              </thead>
-
-              <tbody className="bg-white divide-y divide-gray-200">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
-                      <div className="flex justify-center">
-                        <ThreeDots
-                          height="30"
-                          width="30"
-                          color="#0A6DC0"
-                          visible
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ) : paginatedInvoices.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
-                      {selectedDate
-                        ? `No sales found for ${format(selectedDate, "MMM dd, yyyy")}`
-                        : "No sales invoices found"}
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedInvoices.map((inv) => (
-                    <tr
-                      key={inv.id}
-                      onClick={() => router.push(`/inventory/sales/${inv.id}`)}
-                      className="hover:bg-gray-50 transition-colors cursor-pointer"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">
-                        {inv.id.substring(0, 8)}...
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {inv.code}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {formatDate(inv.created_at)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium">
-                        ₦{inv.total.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(inv.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <MoveRight className="w-5 h-5 text-gray-500" />
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Pagination */}
-        {!isLoading && filteredInvoices.length > 0 && (
-          <div className="flex flex-row justify-between items-center mt-6 gap-4">
-            <button
-              disabled={page === 1}
-              onClick={() => handlePageChange(page - 1)}
-              className={cn(
-                "flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24",
-                page === 1 && "opacity-50 cursor-not-allowed",
-              )}
-            >
-              <MoveLeft /> Previous
-            </button>
-
-            <div className="hidden lg:flex items-center gap-2 flex-wrap justify-center">
-              {renderPagination()}
-            </div>
-
-            <div className="flex items-center gap-10">
+      {/* ── Total card ───────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden rounded-[20px] px-6 py-[22px] text-white bg-[linear-gradient(135deg,#0A6DC0_0%,#3A6BC4_100%)] shadow-[0_12px_28px_-10px_rgba(10,109,192,.45)]">
+        <div className="absolute -top-[70px] -right-[50px] w-[220px] h-[220px] rounded-full bg-white/[.06] pointer-events-none" />
+        <div className="relative flex items-start gap-6 flex-wrap">
+          <div className="flex-[1_1_240px] min-w-0">
+            <div className="flex items-center gap-[10px]">
+              <span className="text-[13px] font-medium text-white/85">
+                Total sales
+              </span>
               <button
-                disabled={page >= totalPages}
-                onClick={() => handlePageChange(page + 1)}
-                className={cn(
-                  "flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24",
-                  page >= totalPages && "opacity-50 cursor-not-allowed",
-                )}
+                type="button"
+                aria-label="Toggle amounts"
+                onClick={() => setHideAmounts((v) => !v)}
+                className="w-[26px] h-[26px] rounded-full border-none bg-white/15 cursor-pointer inline-flex items-center justify-center"
               >
-                Next <MoveRightIcon />
+                {hideAmounts ? (
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m3 3 18 18" />
+                    <path d="M10.6 10.6a3 3 0 0 0 4.2 4.2" />
+                    <path d="M6.8 6.9C4 8.6 2 12 2 12s4 7 10 7c1.6 0 3-.3 4.3-.9" />
+                    <path d="M9.9 5.2A9.6 9.6 0 0 1 12 5c6 0 10 7 10 7a19.6 19.6 0 0 1-3.2 4" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
               </button>
+            </div>
+            <div className="font-clash font-bold text-[clamp(28px,3vw,40px)] tracking-[-1px] leading-[1.05] mt-1.5 whitespace-nowrap">
+              {formatNaira(total, hideAmounts)}
+            </div>
+            <div className="text-[12.5px] text-white/75 mt-1.5">
+              {rows.length.toLocaleString("en-NG")}{" "}
+              {rows.length === 1 ? "sale" : "sales"} · {storeLabel}
+            </div>
+          </div>
 
-              <div className="hidden lg:block text-sm text-gray-600">
-                Showing {startIndex + 1} -{" "}
-                {Math.min(startIndex + itemsPerPage, filteredInvoices.length)}{" "}
-                of {filteredInvoices.length}
-              </div>
+          <div className="flex flex-col gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => router.push("/inventory/sales-breakdown")}
+              className="inline-flex items-center gap-2 h-[38px] px-[14px] rounded-full border border-white/[.32] bg-white/15 text-white text-[12.5px] font-semibold cursor-pointer whitespace-nowrap hover:bg-white/[.28]"
+            >
+              <span>Breakdown by Store</span>
+              <VcIcon name="chevron" size={14} stroke="#fff" strokeWidth={2.6} />
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/inventory/overview")}
+              className="inline-flex items-center gap-2 h-[38px] px-[14px] rounded-full border border-white/[.32] bg-white/15 text-white text-[12.5px] font-semibold cursor-pointer whitespace-nowrap hover:bg-white/[.28]"
+            >
+              <span>Breakdown by medium</span>
+              <VcIcon name="chevron" size={14} stroke="#fff" strokeWidth={2.6} />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Filter bar ───────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-[10px] flex-wrap">
+        <FilterDropdown
+          variant="plain"
+          open={openMenu === "period"}
+          onToggle={() => setOpenMenu(openMenu === "period" ? null : "period")}
+          onClose={() => setOpenMenu(null)}
+          buttonLabel={periodLabel(period, range)}
+          icon={<CalendarIcon size={17} />}
+          options={periodOptions}
+          selectedId={period}
+          onSelect={(id) => {
+            setPeriod(id as PeriodId);
+            if (id !== "custom") setOpenMenu(null);
+          }}
+          width={290}
+        >
+          {period === "custom" && (
+            <CustomRangeInputs
+              from={customStart}
+              to={customEnd}
+              onFrom={setCustomStart}
+              onTo={setCustomEnd}
+            />
+          )}
+        </FilterDropdown>
+
+        <FilterDropdown
+          variant="plain"
+          open={openMenu === "store"}
+          onToggle={() => setOpenMenu(openMenu === "store" ? null : "store")}
+          onClose={() => setOpenMenu(null)}
+          buttonLabel={storeLabel}
+          icon={<VcIcon name="storefront" size={17} strokeWidth={1.9} />}
+          options={storeOptions}
+          selectedId={storeId}
+          onSelect={(id) => {
+            setStoreId(id);
+            setOpenMenu(null);
+          }}
+        />
+
+        <label
+          data-tour="store-search"
+          className="flex-[1_1_220px] min-w-0 flex items-center gap-[10px] h-[42px] px-[14px] box-border rounded-[10px] border border-[#D8D8D8E6] bg-white"
+        >
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#8E8E93" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.2-3.2" />
+          </svg>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search invoice or customer"
+            className="flex-1 min-w-0 border-none outline-none bg-transparent text-[14px] text-[#2F2F2F]"
+          />
+        </label>
+      </div>
+
+      {/* ── Channel tabs ─────────────────────────────────────────────────── */}
+      <div
+        data-tour="page-tabs"
+        className="flex gap-1 bg-[#F4F5F7] p-1 rounded-full self-start flex-wrap"
+      >
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setChannelTab(tab.id)}
+            className={cn(
+              "border-none px-[18px] py-[9px] rounded-full text-[13.5px] cursor-pointer whitespace-nowrap",
+              channelTab === tab.id
+                ? "bg-white text-[#0A6DC0] font-bold shadow-[0_1px_3px_rgba(0,0,0,.10)]"
+                : "bg-transparent text-[#6B6B70] font-semibold hover:text-[#2F2F2F]",
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Rows ─────────────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-[10px]">
+        {loading ? (
+          <div className="bg-white border border-dashed border-[#D8D8D8E6] rounded-[16px] py-10 px-5 text-center">
+            <div className="font-bold text-[15px] text-[#2F2F2F]">
+              Loading sales…
+            </div>
+          </div>
+        ) : rows.length > 0 ? (
+          rows.map((row) => (
+            <SalesLogRow
+              key={`${row.channel}-${row.id}`}
+              row={row}
+              hideAmounts={hideAmounts}
+            />
+          ))
+        ) : (
+          <div className="bg-white border border-dashed border-[#D8D8D8E6] rounded-[16px] py-10 px-5 text-center">
+            <div className="font-bold text-[15px] text-[#2F2F2F]">
+              No sales match this view
+            </div>
+            <div className="text-[13px] text-[#8E8E93] mt-1">
+              Try another channel, range or search term.
             </div>
           </div>
         )}
       </div>
-
-      {/* Mobile live indicator */}
-      {isConnected && (
-        <div className="fixed bottom-4 right-4 md:hidden bg-green-50 text-green-700 px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-xs">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-          </span>
-          Live
-        </div>
-      )}
     </div>
   );
 };
 
-export default SalesListPage;
+export default SalesHistoryPage;
