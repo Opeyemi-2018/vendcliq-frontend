@@ -1,15 +1,15 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { LogOut, ChevronDown } from "lucide-react";
 import {
-  BookOpen,
-  Home,
-  RectangleEllipsis,
-  LogOut,
-  ChevronDown,
-  Building2,
-  Store,
-} from "lucide-react";
+  NavAccount,
+  NavInventory,
+  NavMarket,
+  NavEnterprise,
+  NavMore,
+  NavIconProps,
+} from "@/components/inventory/NavIcons";
 import {
   Sidebar,
   SidebarContent,
@@ -88,22 +88,33 @@ export function AppSidebar() {
     canAccessMarketplace,
   } = useUser();
 
-  const allItems = [
+  type NavTag = "new" | "refresh" | "coming-soon";
+  type NavChild = { title: string; url: string; tag?: NavTag };
+
+  const allItems: {
+    title: string;
+    url: string;
+    icon: React.ComponentType<NavIconProps>;
+    tag?: NavTag;
+    children?: NavChild[];
+  }[] = [
+    // Tapping a section header navigates to its own overview, so the children
+    // no longer repeat an "Overview" entry (prototype behaviour).
     ...(!isAttendant
       ? [
           {
             title: "Account",
             url: "/account/overview",
-            icon: Home,
+            icon: NavAccount,
             children: [
-              { title: "Overview", url: "/account/overview" },
               { title: "Send Money", url: "/account/send-money" },
-              { title: "Pay Utility Bill", url: "/account/pay-utility" },
+              { title: "Airtime & Data", url: "/account/pay-utility" },
               {
-                title: "Transaction History",
+                title: "Transactions History",
                 url: "/account/transactionHistory",
               },
-              { title: "Payment & Subscription", url: "/payment-subscription" },
+              { title: "Subscription & Payment", url: "/payment-subscription" },
+              { title: "Credit Ledger", url: "/credit-ledger" },
             ],
           },
         ]
@@ -111,15 +122,18 @@ export function AppSidebar() {
     {
       title: "Inventory",
       url: "/inventory/overview",
-      icon: BookOpen,
+      icon: NavInventory,
       children: [
-        { title: "Overview", url: "/inventory/overview" },
         ...(canSell() ? [{ title: "Sell", url: "/inventory/sell" }] : []),
         ...(canBuy() ? [{ title: "Buy", url: "/inventory/buy" }] : []),
         { title: "My Store", url: "/inventory/my-store" },
-        ...(!isAttendant
-          ? [{ title: "My Purchase", url: "/my-purchase" }]
+        { title: "Customer List", url: "/customer" },
+        ...(canReporting()
+          ? [{ title: "Business Report", url: "/business-report" }]
           : []),
+        { title: "Sales History", url: "/inventory/sales" },
+        ...(canExpenses() ? [{ title: "Expenses", url: "/expenses" }] : []),
+        { title: "Supplier List", url: "/suppliers" },
       ],
     },
     ...(canAccessMarketplace()
@@ -127,7 +141,12 @@ export function AppSidebar() {
           {
             title: "Market Place",
             url: "/market-place",
-            icon: Store,
+            icon: NavMarket,
+            children: [
+              ...(!isAttendant
+                ? [{ title: "My Purchases", url: "/my-purchase" }]
+                : []),
+            ],
           },
         ]
       : []),
@@ -136,7 +155,7 @@ export function AppSidebar() {
           {
             title: "Enterprise",
             url: "/credit-ledger",
-            icon: Building2,
+            icon: NavEnterprise,
             tag: "new" as const,
             children: [
               { title: "Credit Ledger", url: "/credit-ledger" },
@@ -152,20 +171,10 @@ export function AppSidebar() {
     {
       title: "More",
       url: "#",
-      icon: RectangleEllipsis,
+      icon: NavMore,
       children: [
-        ...(canReporting()
-          ? [
-              {
-                title: "Business Report",
-                url: "/business-report",
-                tag: "refresh" as const,
-              },
-            ]
-          : []),
-        { title: "Supplier List", url: "/suppliers" },
-        { title: "Customer List", url: "/customer" },
-        ...(canExpenses() ? [{ title: "Expenses", url: "/expenses" }] : []),
+        // Business Report / Customer List / Supplier List / Expenses now live
+        // under Inventory (and as pinned Quick Actions), per the prototype.
         { title: "Profile Settings", url: "/profile-settings" },
         { title: "Referral", url: "/referral" },
         ...(!isAttendant
