@@ -7,6 +7,7 @@ import { ClipLoader } from "react-spinners";
 import Toggle from "@/components/business-settings/Toggle";
 import {
   useStores,
+  useStoreById,
   useUpdateStore,
   useUpdateStoreSettings,
 } from "@/hooks/useStores";
@@ -67,6 +68,9 @@ export const StoreSettings = () => {
   const updateSettings = useUpdateStoreSettings();
 
   const [storeId, setStoreId] = useState<string>("");
+  // The list endpoint carries no preference flags — those live in the detail
+  // response under `settings`, so the form hydrates from there.
+  const { data: detail, isLoading: loadingDetail } = useStoreById(storeId);
   const [form, setForm] = useState<StoreForm>({
     name: "",
     phone: "",
@@ -88,8 +92,9 @@ export const StoreSettings = () => {
 
   // Reset the form whenever a different store is picked.
   useEffect(() => {
-    if (!selected) return;
-    const store = selected as any;
+    if (!detail) return;
+    const store = detail as any;
+    const settings = store.settings ?? {};
     setForm({
       name: store.name ?? "",
       phone: store.phone ?? "",
@@ -100,16 +105,16 @@ export const StoreSettings = () => {
       },
     });
     setFlags({
-      is_default: Boolean(store.is_default),
-      show_on_marketplace: Boolean(store.show_on_marketplace),
-      is_archived: Boolean(store.is_archived),
+      is_default: Boolean(settings.is_default),
+      show_on_marketplace: Boolean(settings.show_on_marketplace),
+      is_archived: Boolean(settings.is_archived),
       allow_credit_sales: Boolean(
-        store.allow_credit_sales ?? store.credit_store,
+        settings.allow_credit_sales ?? store.credit_store,
       ),
     });
-    setEmails(store.credit_sale_auth_emails ?? []);
+    setEmails(settings.credit_sale_auth_emails ?? []);
     setEmailDraft("");
-  }, [selected]);
+  }, [detail]);
 
   const addEmail = () => {
     const value = emailDraft.trim().toLowerCase();
@@ -174,7 +179,7 @@ export const StoreSettings = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || (storeId && loadingDetail)) {
     return (
       <div className="flex justify-center py-20">
         <ClipLoader size={28} color="#0A6DC0" />

@@ -135,16 +135,15 @@ const StoreDetailPage = () => {
 
   useEffect(() => {
     if (store) {
-      const storeWithSettings = store as Store;
+      // The API nests these under `settings`, not on the store itself.
+      const settings = (store as any).settings ?? {};
       setStoreSettings({
-        is_default: storeWithSettings.is_default || false,
-        show_on_marketplace: storeWithSettings.show_on_marketplace || false,
-        is_archived: storeWithSettings.is_archived || false,
-        allow_credit_sales: storeWithSettings.allow_credit_sales || false,
-        credit_sale_auth_required:
-          storeWithSettings.credit_sale_auth_required || false,
-        credit_sale_auth_emails:
-          storeWithSettings.credit_sale_auth_emails || [],
+        is_default: settings.is_default || false,
+        show_on_marketplace: settings.show_on_marketplace || false,
+        is_archived: settings.is_archived || false,
+        allow_credit_sales: settings.allow_credit_sales || false,
+        credit_sale_auth_required: settings.credit_sale_auth_required || false,
+        credit_sale_auth_emails: settings.credit_sale_auth_emails || [],
       });
       setEditForm({
         address: {
