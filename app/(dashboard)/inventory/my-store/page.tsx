@@ -8,6 +8,7 @@ import { ClipLoader } from "react-spinners";
 import { useStores } from "@/hooks/useStores";
 import { useAllStoreStock, stockFlagOf } from "@/hooks/useAllStoreStock";
 import { formatNaira } from "@/lib/salesFilters";
+import { formatPacks } from "@/lib/priceInput";
 import { VcIcon } from "@/components/inventory/VcIcon";
 import ProductThumb from "@/components/inventory/ProductThumb";
 import AddNewSheet from "@/components/inventory/AddNewSheet";
@@ -397,7 +398,7 @@ const MyStorePage = () => {
                         flag === "out" || flag === "low" ? "#C0392B" : "#2F2F2F",
                     }}
                   >
-                    {qty}
+                    {formatPacks(qty, item.product?.items_per_pack)}
                   </span>
                 </span>
 
@@ -525,6 +526,19 @@ const MyStorePage = () => {
         stores={stores}
         storeId={addStockStore ?? ""}
         onStoreChange={setAddStockStore}
+        bundleOptions={scoped
+          .filter(
+            (item) =>
+              !addStockStore || String(item.store?.id) === addStockStore,
+          )
+          .map((item) => ({
+            id: item.id,
+            name: item.product?.name ?? "Product",
+            image: item.product?.image,
+            pack: item.product?.items_per_pack
+              ? `Pack of ${item.product.items_per_pack}`
+              : undefined,
+          }))}
         onSuccess={() => {
           setAddStockStore(null);
           queryClient.invalidateQueries({ queryKey: ["stores", "stock"] });

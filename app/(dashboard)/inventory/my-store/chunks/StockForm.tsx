@@ -44,31 +44,40 @@ import { Check, ChevronDown, Info } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
+import { formatPriceInput, parsePriceInput } from "@/lib/priceInput";
 import Image from "next/image";
 import { useProducts } from "@/hooks/useProduct";
 import { useCreateStock } from "@/hooks/useStores";
 
-import MarketplaceConditions, {
-  MarketplaceCondition,
-} from "@/components/inventory/MarketplaceConditions";
-
 interface StockFormProps {
+  /** Lets a host (the Add Stock sheet) drive its own submit button. */
+  onStateChange?: (state: { submitting: boolean; ready: boolean }) => void;
   storeId: string;
-  onSuccess?: () => void;
+  /** Receives the new stock so a host can attach conditions to it. */
+  onSuccess?: (created?: {
+    id?: string;
+    productName?: string;
+    sellingPrice?: number;
+  }) => void;
+  /** Hosts that show their own success UI turn the toast off. */
+  successToast?: boolean;
 }
 
-const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
+const StockForm: React.FC<StockFormProps> = ({
+  storeId,
+  onSuccess,
+  successToast = true,
+  onStateChange,
+}) => {
   const {
     products,
     isLoading: loadingProducts,
     fetchAllProducts,
   } = useProducts();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<"details" | "conditions">(
-    "details",
-  );
-  const [conditions, setConditions] = useState<MarketplaceCondition[]>([]);
-  const [isEmptiesModalOpen, setIsEmptiesModalOpen] = useState(false);
+  // Inline disclosure rather than a nested modal: this form now renders
+  // inside a custom sheet, and a nested Radix dialog stacks behind it.
+  const [showEmpties, setShowEmpties] = useState(false);
   const [tempEmptiesQty, setTempEmptiesQty] = useState("");
   const [tempEmptiesPrice, setTempEmptiesPrice] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -103,6 +112,12 @@ const createStock = useCreateStock();
     },
   });
 
+  // Publish state so the sheet's sticky button can disable and show a spinner.
+  const productChosen = Boolean(form.watch("product_id"));
+  useEffect(() => {
+    onStateChange?.({ submitting: isSubmitting, ready: productChosen });
+  }, [isSubmitting, productChosen, onStateChange]);
+
   // Handle search
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
@@ -122,7 +137,8 @@ const createStock = useCreateStock();
         product.name.toLowerCase().includes(lowerQuery) ||
         product.productType?.toLowerCase().includes(lowerQuery) ||
         product.containerType?.toLowerCase().includes(lowerQuery) ||
-        product.sizeCl?.toString().includes(query),
+        product.sizeCl?.toString().includes(query) ||
+        product.itemsPerPack?.toString().includes(query),
     );
 
     setDisplayProducts(filtered);
@@ -145,39 +161,6 @@ const createStock = useCreateStock();
     }
 
     form.setValue("product_id", productId);
-  };
-
-  const handleSaveEmpties = () => {
-    if (!tempEmptiesQty || tempEmptiesQty.trim() === "") {
-      toast.error("Please enter empties quantity");
-      return;
-    }
-
-    if (!tempEmptiesPrice || tempEmptiesPrice.trim() === "") {
-      toast.error("Please enter empties price");
-      return;
-    }
-
-    // Validate numeric values
-    const qty = parseInt(tempEmptiesQty, 10);
-    const price = parseFloat(tempEmptiesPrice);
-
-    if (isNaN(qty) || qty < 0) {
-      toast.error("Please enter a valid empties quantity");
-      return;
-    }
-
-    if (isNaN(price) || price < 0) {
-      toast.error("Please enter a valid empties price");
-      return;
-    }
-
-    form.setValue("empties_qty", qty.toString());
-    form.setValue("empties_price", price.toString());
-    setIsEmptiesModalOpen(false);
-    toast.success("Empties added successfully");
-    setTempEmptiesQty("");
-    setTempEmptiesPrice("");
   };
 
   const safeParseInt = (val: string | undefined): number => {
@@ -214,20 +197,20 @@ const onSubmit = async (values: CreateStockFormData) => {
       type: values.type,
       batch: (values.batch || "").trim(),
       supplier: (values.supplier || "").trim(),
-      // No dedicated endpoint models the four condition types yet (the only
-      // offer API is a single fixed promo), so they ride along in attributes —
-      // which the stock payload already treats as a free-form bag.
-      ...(conditions.length ? { marketplace_conditions: conditions } : {}),
     },
   };
 
   try {
     const response = await createStock.mutateAsync(payload);
     if (response.statusCode === 200 || response.statusCode === 201) {
-      toast.success("Stock added successfully!");
+      if (successToast) toast.success("Stock added successfully!");
       form.reset();
       setSelectedProduct(null);
-      onSuccess?.();
+      onSuccess?.({
+        id: response.data?.id ? String(response.data.id) : undefined,
+        productName: selectedProduct?.name,
+        sellingPrice: Number(values.selling_price) || undefined,
+      });
     } else {
       toast.error(response.error || "Failed to add stock");
     }
@@ -261,47 +244,7 @@ const onSubmit = async (values: CreateStockFormData) => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* ── Tabs ───────────────────────────────────────────────────────── */}
-        <div className="flex gap-1 bg-[#F4F5F7] p-1 rounded-full self-start w-fit">
-          {(
-            [
-              { id: "details", label: "Stock details" },
-              {
-                id: "conditions",
-                label: `Marketplace Conditions${conditions.length ? ` (${conditions.length})` : ""}`,
-              },
-            ] as const
-          ).map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              {...(t.id === "conditions" ? { "data-tour": "np-cond-tab" } : {})}
-              onClick={() => setActiveTab(t.id)}
-              className={`border-none px-4 py-2 rounded-full text-[13px] cursor-pointer whitespace-nowrap ${
-                activeTab === t.id
-                  ? "bg-white text-[#0A6DC0] font-bold shadow-[0_1px_3px_rgba(0,0,0,.10)]"
-                  : "bg-transparent text-[#6B6B70] font-semibold hover:text-[#2F2F2F]"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <div
-          data-tour="np-conditions"
-          className={activeTab === "conditions" ? "block" : "hidden"}
-        >
-          <MarketplaceConditions
-            conditions={conditions}
-            onChange={setConditions}
-            bundleOptions={displayProducts.map((p: any) => p.name)}
-            mode="add"
-          />
-        </div>
-
-        <div className={activeTab === "details" ? "space-y-6" : "hidden"}>
+      <form id="add-stock-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Product Selection */}
         <FormField
           control={form.control}
@@ -354,6 +297,9 @@ const onSubmit = async (values: CreateStockFormData) => {
                               {selectedProduct.productType} •{" "}
                               {selectedProduct.sizeCl}cl •{" "}
                               {selectedProduct.containerType}
+                              {selectedProduct.itemsPerPack
+                                ? ` • Pack of ${selectedProduct.itemsPerPack}`
+                                : ""}
                             </span>
                           </div>
                         </div>
@@ -442,6 +388,9 @@ const onSubmit = async (values: CreateStockFormData) => {
                                     <span className="text-xs text-gray-500 truncate">
                                       {product.productType} • {product.sizeCl}cl
                                       • {product.containerType}
+                                      {product.itemsPerPack
+                                        ? ` • Pack of ${product.itemsPerPack}`
+                                        : ""}
                                     </span>
                                   </div>
                                 </div>
@@ -515,73 +464,15 @@ const onSubmit = async (values: CreateStockFormData) => {
                   Quantity 
                 </FormLabel>
 
-                <Dialog
-                  open={isEmptiesModalOpen}
-                  onOpenChange={setIsEmptiesModalOpen}
+                <button
+                  type="button"
+                  onClick={() => setShowEmpties((v) => !v)}
+                  className="text-[#0A6DC0] text-[16px] font-medium hover:underline"
                 >
-                  <DialogTrigger asChild>
-                    <button
-                      type="button"
-                      className="text-[#0A6DC0] text-[16px] font-medium hover:underline"
-                    >
-                      + Add empties count and its price
-                    </button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md bg-white">
-                    <DialogHeader>
-                      <DialogTitle className="text-[#0E0E0F] font-bold font-dm-sans text-[20px]">
-                        Add Empties
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div>
-                        <label className="text-[#2F2F2F] font-dm-sans text-[16px] font-medium">
-                          How many Empties?
-                        </label>
-                        <Input
-                          type="number"
-                          placeholder="e.g. 10"
-                          value={tempEmptiesQty}
-                          onChange={(e) => setTempEmptiesQty(e.target.value)}
-                          className="mt-2 h-12"
-                          min="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[#2F2F2F] font-dm-sans text-[16px] font-medium">
-                          Empties Price (per unit)
-                        </label>
-                        <Input
-                          type="number"
-                          placeholder="e.g. 50"
-                          value={tempEmptiesPrice}
-                          onChange={(e) => setTempEmptiesPrice(e.target.value)}
-                          className="mt-2 h-12"
-                          min="0"
-                          step="0.01"
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setIsEmptiesModalOpen(false);
-                          setTempEmptiesQty("");
-                          setTempEmptiesPrice("");
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSaveEmpties}
-                        className="bg-[#0A6DC0] hover:bg-[#09599a]"
-                      >
-                        Save
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                  {showEmpties
+                    ? "− Remove empties count"
+                    : "+ Add empties count and its price"}
+                </button>
               </div>
 
               <FormControl>
@@ -598,6 +489,56 @@ const onSubmit = async (values: CreateStockFormData) => {
             </FormItem>
           )}
         />
+
+        {showEmpties && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-[12px] border border-[#D8D8D8B3] bg-[#FAFBFC] p-4">
+            <FormField
+              control={form.control}
+              name="empties_qty"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[#2F2F2F] text-[15px] font-medium">
+                    How many empties?
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      min="0"
+                      placeholder="e.g. 10"
+                      className="h-12 bg-white"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="empties_price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[#2F2F2F] text-[15px] font-medium">
+                    Empties price (per unit)
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="e.g. 50"
+                      value={formatPriceInput(field.value)}
+                      onChange={(e) =>
+                        field.onChange(parsePriceInput(e.target.value))
+                      }
+                      className="h-12 bg-white"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
 
         {/* Show added empties summary */}
         {form.watch("empties_qty") && Number(form.watch("empties_qty")) > 0 && (
@@ -646,8 +587,10 @@ const onSubmit = async (values: CreateStockFormData) => {
                     type="text"
                     inputMode="decimal"
                     placeholder="Enter cost price"
-                    value={field.value}
-                    onChange={(e) => handleDecimalInput(e, field.onChange)}
+                    value={formatPriceInput(field.value)}
+                    onChange={(e) =>
+                      field.onChange(parsePriceInput(e.target.value))
+                    }
                     className="bg-[#F3F4F6] h-12 pl-8"
                   />
                 </div>
@@ -681,8 +624,10 @@ const onSubmit = async (values: CreateStockFormData) => {
                     type="text"
                     inputMode="decimal"
                     placeholder="Enter selling price"
-                    value={field.value}
-                    onChange={(e) => handleDecimalInput(e, field.onChange)}
+                    value={formatPriceInput(field.value)}
+                    onChange={(e) =>
+                      field.onChange(parsePriceInput(e.target.value))
+                    }
                     className="bg-[#F3F4F6] h-12 pl-8"
                   />
                 </div>
@@ -713,8 +658,10 @@ const onSubmit = async (values: CreateStockFormData) => {
                     type="text"
                     inputMode="decimal"
                     placeholder="Enter price per piece"
-                    value={field.value}
-                    onChange={(e) => handleDecimalInput(e, field.onChange)}
+                    value={formatPriceInput(field.value)}
+                    onChange={(e) =>
+                      field.onChange(parsePriceInput(e.target.value))
+                    }
                     className="bg-[#F3F4F6] h-12 pl-8"
                   />
                 </div>
@@ -833,23 +780,6 @@ const onSubmit = async (values: CreateStockFormData) => {
           )}
         />
 
-        <div className="pt-2">
-          <Button
-            type="submit"
-            disabled={isSubmitting || !form.watch("product_id")}
-            className="w-full bg-[#0A6DC0] hover:bg-[#085a9e] h-12 text-[16px] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? (
-              <>
-                Adding Stock...{" "}
-                <ClipLoader size={20} color="white" className="ml-2" />
-              </>
-            ) : (
-              "Add Stock"
-            )}
-          </Button>
-        </div>
-        </div>
       </form>
     </Form>
   );

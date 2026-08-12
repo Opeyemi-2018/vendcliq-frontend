@@ -28,6 +28,7 @@ import {
   useUpdateStore,
   useUpdateStoreSettings,
 } from "@/hooks/useStores";
+import { formatPacks } from "@/lib/priceInput";
 
 interface Store {
   id: string;
@@ -561,7 +562,7 @@ const StoreDetailPage = () => {
                         <p className="font-medium text-[#2F2F2F]">{item.sku}</p>
                       </td>
                       <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
-                        {parseFloat(item.quantity).toFixed(0)}
+                        {formatPacks(item.quantity, item.product?.items_per_pack)}
                       </td>
                       <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
                         ₦{parseFloat(item.selling_price).toLocaleString()}

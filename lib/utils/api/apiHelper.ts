@@ -1313,6 +1313,14 @@ export const createStockCondition = async (payload: any): Promise<any> => {
   return await poster(STOCK_CONDITIONS, payload);
 };
 
+/** Not in the endpoint doc — used for pause/resume and edits, fails loudly. */
+export const updateStockCondition = async (
+  id: string,
+  payload: any,
+): Promise<any> => {
+  return await putter<any, any>(`${STOCK_CONDITIONS}/${id}`, payload);
+};
+
 export const deleteStockCondition = async (id: string): Promise<any> => {
   return await deleter<any>(`${STOCK_CONDITIONS}/${id}`);
 };
