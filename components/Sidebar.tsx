@@ -273,6 +273,12 @@ export function AppSidebar() {
                             className="menuButton mb-3 text-white hover:bg-white/10"
                             onClick={() => {
                               if (!isMobile) setOpen(true);
+                              // A section header is also a destination: go to
+                              // its own overview, then let it expand.
+                              if (item.url && item.url !== "#") {
+                                router.push(item.url);
+                                if (isMobile) setOpenMobile(false);
+                              }
                             }}
                           >
                             <item.icon

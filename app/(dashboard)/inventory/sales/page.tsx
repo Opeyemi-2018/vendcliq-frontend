@@ -30,6 +30,7 @@ import { VcIcon, CalendarIcon } from "@/components/inventory/VcIcon";
 import MediumBreakdownModal from "@/components/inventory/MediumBreakdownModal";
 
 type ChannelTab = "all" | "online" | "instore";
+type StatusFilter = "all" | "pending" | "awaiting";
 
 const SalesHistoryPage = () => {
   const router = useRouter();
@@ -45,6 +46,7 @@ const SalesHistoryPage = () => {
   const [channelTab, setChannelTab] = useState<ChannelTab>("all");
   const [query, setQuery] = useState("");
   const [mediumModalOpen, setMediumModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   const range = useMemo(
     () => resolvePeriod(period, { start: customStart, end: customEnd }),
@@ -126,14 +128,39 @@ const SalesHistoryPage = () => {
     return [...source].sort(byNewest);
   }, [channelTab, inStoreRows, onlineRows]);
 
+  // Unpaid orders and orders still owing a handover are separate concerns —
+  // an order can be paid but not handed over, and vice versa.
+  const statusRows = useMemo(() => {
+    if (statusFilter === "pending") {
+      return channelRows.filter(
+        (row) => row.statusLabel.toLowerCase() === "pending",
+      );
+    }
+    if (statusFilter === "awaiting") {
+      return channelRows.filter((row) => row.awaitingHandover);
+    }
+    return channelRows;
+  }, [channelRows, statusFilter]);
+
   // Search matches customer name and invoice code, per §4.
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return channelRows;
-    return channelRows.filter((row) =>
+    if (!q) return statusRows;
+    return statusRows.filter((row) =>
       `${row.customerName} ${row.code}`.toLowerCase().includes(q),
     );
-  }, [channelRows, query]);
+  }, [statusRows, query]);
+
+  const pendingCount = useMemo(
+    () =>
+      channelRows.filter((row) => row.statusLabel.toLowerCase() === "pending")
+        .length,
+    [channelRows],
+  );
+  const awaitingCount = useMemo(
+    () => channelRows.filter((row) => row.awaitingHandover).length,
+    [channelRows],
+  );
 
   // Totals follow the current filter, so they are summed from the rows shown.
   const total = useMemo(
@@ -332,6 +359,44 @@ const SalesHistoryPage = () => {
         ))}
       </div>
 
+      {/* ── Status filters ───────────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 flex-wrap -mt-1">
+        {(
+          [
+            { id: "all", label: "All statuses", count: channelRows.length, tone: "#6B6B70", bg: "#F4F5F7" },
+            { id: "pending", label: "Pending payment", count: pendingCount, tone: "#85540A", bg: "#FFF3DB" },
+            { id: "awaiting", label: "Awaiting handover", count: awaitingCount, tone: "#0A6DC0", bg: "#E1EEFF" },
+          ] as { id: StatusFilter; label: string; count: number; tone: string; bg: string }[]
+        ).map((chip) => {
+          const active = statusFilter === chip.id;
+          return (
+            <button
+              key={chip.id}
+              type="button"
+              onClick={() => setStatusFilter(chip.id)}
+              className={cn(
+                "inline-flex items-center gap-2 h-9 px-[14px] rounded-full text-[13px] font-semibold cursor-pointer border transition",
+                active
+                  ? "border-transparent"
+                  : "bg-white border-[#D8D8D8E6] text-[#6B6B70] hover:border-[#0A6DC0] hover:text-[#0A6DC0]",
+              )}
+              style={active ? { background: chip.bg, color: chip.tone } : undefined}
+            >
+              <span>{chip.label}</span>
+              <span
+                className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11.5px] font-bold"
+                style={{
+                  background: active ? "rgba(255,255,255,.65)" : "#F4F5F7",
+                  color: active ? chip.tone : "#6B6B70",
+                }}
+              >
+                {chip.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* ── Rows ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-[10px]">
         {loading ? (
@@ -354,7 +419,7 @@ const SalesHistoryPage = () => {
               No sales match this view
             </div>
             <div className="text-[13px] text-[#8E8E93] mt-1">
-              Try another channel, range or search term.
+              Try another channel, status, range or search term.
             </div>
           </div>
         )}
