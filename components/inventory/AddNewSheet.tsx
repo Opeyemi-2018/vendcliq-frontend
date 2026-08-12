@@ -13,6 +13,8 @@ import { VcIcon, IconName } from "./VcIcon";
 interface AddNewSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** New Product opens the Add Stock sheet rather than navigating. */
+  onAddProduct?: () => void;
 }
 
 const OPTIONS: {
@@ -54,7 +56,11 @@ const OPTIONS: {
 ];
 
 /** The three things "Add New" can mean, per §7. */
-export const AddNewSheet = ({ open, onOpenChange }: AddNewSheetProps) => {
+export const AddNewSheet = ({
+  open,
+  onOpenChange,
+  onAddProduct,
+}: AddNewSheetProps) => {
   const router = useRouter();
 
   return (
@@ -75,6 +81,10 @@ export const AddNewSheet = ({ open, onOpenChange }: AddNewSheetProps) => {
               key={option.id}
               type="button"
               onClick={() => {
+                if (option.id === "product" && onAddProduct) {
+                  onAddProduct();
+                  return;
+                }
                 onOpenChange(false);
                 router.push(option.route);
               }}

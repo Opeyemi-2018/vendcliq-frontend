@@ -5,6 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
+import axios from "axios";
 import {
   VERIFY_EMAIL,
   CONFIRM_PHONE_NUMBER,
@@ -667,8 +668,26 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
+    // The axios interceptor puts the endpoint in the body for non-GET verbs
+    // (same shape POST uses), so read it there and fall back to the query
+    // string for callers that pass it that way.
     const { searchParams } = new URL(request.url);
-    const endpoint = searchParams.get("endpoint");
+    let endpoint = searchParams.get("endpoint") ?? "";
+    let payload: unknown;
+
+    try {
+      const raw = await request.text();
+      if (raw && raw.trim()) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          if (typeof parsed.endpoint === "string") endpoint = parsed.endpoint;
+          payload = "data" in parsed ? parsed.data : parsed;
+        }
+      }
+    } catch {
+      /* no body, or not JSON — treat as a plain DELETE */
+    }
+
     if (!endpoint || typeof endpoint !== "string") {
       return NextResponse.json({ error: "Invalid endpoint" }, { status: 400 });
     }
@@ -695,28 +714,27 @@ export async function DELETE(request: Request) {
     );
     const apiBaseUrl = getApiBaseUrl(endpoint);
 
-    // Some deletes carry a payload (bulk stock delete sends { ids: [...] }),
-    // so forward a JSON body when the caller supplied one.
-    let deleteBody: string | undefined;
-    try {
-      const raw = await request.text();
-      if (raw && raw.trim()) deleteBody = raw;
-    } catch {
-      /* no body — a plain DELETE */
-    }
+    const hasPayload =
+      payload !== undefined &&
+      payload !== null &&
+      !(typeof payload === "object" && Object.keys(payload).length === 0);
+    const deleteBody = hasPayload ? JSON.stringify(payload) : undefined;
 
-    const response = await fetch(
-      `${apiBaseUrl}/${endpoint.replace(/^\//, "")}`,
-      {
-        method: "DELETE",
-        headers: deleteBody
-          ? { ...secureHeaders, "Content-Type": "application/json" }
-          : secureHeaders,
-        ...(deleteBody ? { body: deleteBody } : {}),
-      },
-    );
+    // Node's fetch drops the body on DELETE, and this endpoint needs one, so
+    // the outbound call goes through axios which sends it reliably.
+    const target = `${apiBaseUrl}/${endpoint.replace(/^\//, "")}`;
+    const axiosResponse = await axios.request({
+      url: target,
+      method: "DELETE",
+      headers: deleteBody
+        ? { ...secureHeaders, "Content-Type": "application/json" }
+        : secureHeaders,
+      ...(deleteBody ? { data: JSON.parse(deleteBody) } : {}),
+      validateStatus: () => true,
+    });
 
-    const data = await response.json();
+    const data = axiosResponse.data;
+    const response = { status: axiosResponse.status };
     const nextResponse = NextResponse.json(data, { status: response.status });
     nextResponse.headers.set("X-Content-Type-Options", "nosniff");
     nextResponse.headers.set("X-Frame-Options", "DENY");

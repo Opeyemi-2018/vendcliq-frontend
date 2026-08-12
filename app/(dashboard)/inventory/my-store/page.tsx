@@ -11,6 +11,7 @@ import { formatNaira } from "@/lib/salesFilters";
 import { VcIcon } from "@/components/inventory/VcIcon";
 import ProductThumb from "@/components/inventory/ProductThumb";
 import AddNewSheet from "@/components/inventory/AddNewSheet";
+import AddStockSheet from "@/components/inventory/AddStockSheet";
 import ConfirmDeleteStockModal from "@/components/inventory/ConfirmDeleteStockModal";
 import { bulkDeleteStocks } from "@/lib/utils/api/apiHelper";
 import { useQueryClient } from "@tanstack/react-query";
@@ -46,6 +47,7 @@ const MyStorePage = () => {
   const [selected, setSelected] = useState<string[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [addStockStore, setAddStockStore] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const loading = storesLoading || stockLoading;
@@ -367,6 +369,14 @@ const MyStorePage = () => {
                     <span className="block font-bold text-[14.5px] text-[#2F2F2F] tracking-[-.2px] truncate">
                       {item.product?.name ?? "Product"}
                     </span>
+                    {chip && (
+                      <span
+                        className="inline-block text-[11px] font-bold px-[9px] py-[2px] rounded-full mt-1"
+                        style={{ background: chip.bg, color: chip.fg }}
+                      >
+                        {chip.label}
+                      </span>
+                    )}
                     <span className="block text-[12.5px] text-[#8E8E93] mt-[3px] truncate">
                       {item.store?.name ?? "—"} · SKU {item.sku || "—"}
                     </span>
@@ -374,31 +384,22 @@ const MyStorePage = () => {
                 </button>
 
                 <span className="text-right shrink-0 min-w-[110px]">
-                  <span className="block font-clash font-bold text-[16px] text-[#2F2F2F] tracking-[-.3px]">
+                  <span className="block text-[13px] text-[#6E7480]">
                     {formatNaira(
                       parseFloat(item.selling_price ?? "0") || 0,
                       hideAmounts,
                     )}
                   </span>
                   <span
-                    className="block text-[12.5px] mt-[3px]"
+                    className="block font-clash font-bold text-[22px] tracking-[-.4px] leading-tight mt-0.5"
                     style={{
                       color:
-                        flag === "out" || flag === "low" ? "#C0392B" : "#8E8E93",
+                        flag === "out" || flag === "low" ? "#C0392B" : "#2F2F2F",
                     }}
                   >
-                    {qty} in stock
+                    {qty}
                   </span>
                 </span>
-
-                {chip && (
-                  <span
-                    className="text-[11.5px] font-bold px-[10px] py-[3px] rounded-full shrink-0"
-                    style={{ background: chip.bg, color: chip.fg }}
-                  >
-                    {chip.label}
-                  </span>
-                )}
 
                 <VcIcon
                   name="chevron"
@@ -426,31 +427,46 @@ const MyStorePage = () => {
           moves the next row out from under the cursor. Fixed rather than
           sticky because an ancestor's overflow breaks sticky here. */}
       {selected.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[min(660px,92vw)] flex items-center gap-3 flex-wrap bg-white border border-[#0A6DC040] rounded-[14px] px-4 py-3 shadow-[0_16px_40px_-12px_rgba(10,37,64,.45)]">
-          <span className="text-[13.5px] font-bold text-[#0A6DC0]">
-            {selected.length}{" "}
-            {selected.length === 1 ? "product" : "products"} selected
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[min(680px,92vw)] flex items-center gap-3 flex-wrap bg-[#0A2540] rounded-[16px] px-4 py-3 shadow-[0_16px_40px_-12px_rgba(10,37,64,.55)]">
+          <span className="inline-flex items-center gap-2.5 text-[13.5px] font-bold text-white">
+            <span className="inline-flex items-center justify-center min-w-[26px] h-[26px] px-2 rounded-full bg-white/[.16] text-white text-[13px]">
+              {selected.length}
+            </span>
+            <span>
+              {selected.length === 1 ? "product" : "products"} selected
+            </span>
           </span>
           <div className="flex-1" />
           <button
             type="button"
             onClick={() => {
-              const first = rows.find((item) => selected.includes(item.id));
-              if (first?.store?.id) {
-                router.push(`/inventory/my-store/${first.store.id}/moveStock`);
-              } else {
-                toast("Pick products from a single store to move stock");
+              const picked = rows.filter((item) => selected.includes(item.id));
+              const storeIds = new Set(picked.map((item) => item.store?.id));
+              if (storeIds.size > 1) {
+                toast.error("Pick products from one store to move them");
+                return;
               }
+              const targetStore = picked[0]?.store?.id;
+              if (!targetStore) return;
+              // The move screen reads its payload from sessionStorage — this is
+              // the same handoff the store detail page uses, left untouched.
+              sessionStorage.setItem(
+                "selectedStocksToMove",
+                JSON.stringify(picked),
+              );
+              router.push(`/inventory/my-store/${targetStore}/moveStock`);
             }}
-            className="h-10 px-4 rounded-[10px] border border-[#0A6DC0] bg-white text-[#0A6DC0] text-[13.5px] font-bold cursor-pointer hover:bg-[#E1EEFF]"
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-[10px] border-none bg-white/[.14] text-white text-[13.5px] font-bold cursor-pointer hover:bg-white/[.24]"
           >
+            <VcIcon name="list" size={16} stroke="#fff" strokeWidth={2.2} />
             Move stock
           </button>
           <button
             type="button"
             onClick={() => setDeleteOpen(true)}
-            className="h-10 px-4 rounded-[10px] border border-[#C0392B] bg-white text-[#C0392B] text-[13.5px] font-bold cursor-pointer hover:bg-[#FBE9E7]"
+            className="inline-flex items-center gap-2 h-10 px-4 rounded-[10px] border-none bg-[#E4694F] text-white text-[13.5px] font-bold cursor-pointer hover:bg-[#C0392B]"
           >
+            <VcIcon name="warning" size={16} stroke="#fff" strokeWidth={2.2} />
             Delete
           </button>
         </div>
@@ -492,7 +508,28 @@ const MyStorePage = () => {
         }}
       />
 
-      <AddNewSheet open={addOpen} onOpenChange={setAddOpen} />
+      <AddNewSheet
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        onAddProduct={() => {
+          setAddOpen(false);
+          // Adding stock needs a specific store; use the active chip when there
+          // is one, otherwise let them choose inside the sheet.
+          setAddStockStore(storeId === "all" ? "" : storeId);
+        }}
+      />
+
+      <AddStockSheet
+        open={addStockStore !== null}
+        onOpenChange={(next) => setAddStockStore(next ? addStockStore : null)}
+        stores={stores}
+        storeId={addStockStore ?? ""}
+        onStoreChange={setAddStockStore}
+        onSuccess={() => {
+          setAddStockStore(null);
+          queryClient.invalidateQueries({ queryKey: ["stores", "stock"] });
+        }}
+      />
     </div>
   );
 };
