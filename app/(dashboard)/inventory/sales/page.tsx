@@ -22,10 +22,12 @@ import {
   saleInvoiceToRow,
 } from "@/lib/salesRows";
 import SalesLogRow from "@/components/inventory/SalesLogRow";
+import { useSalesFilter } from "@/lib/salesFilterStore";
 import FilterDropdown, {
   CustomRangeInputs,
 } from "@/components/inventory/FilterDropdown";
 import { VcIcon, CalendarIcon } from "@/components/inventory/VcIcon";
+import MediumBreakdownModal from "@/components/inventory/MediumBreakdownModal";
 
 type ChannelTab = "all" | "online" | "instore";
 
@@ -33,13 +35,16 @@ const SalesHistoryPage = () => {
   const router = useRouter();
 
   const [hideAmounts, setHideAmounts] = useState(false);
-  const [period, setPeriod] = useState<PeriodId>("today");
-  const [customStart, setCustomStart] = useState("");
-  const [customEnd, setCustomEnd] = useState("");
-  const [storeId, setStoreId] = useState("all");
+  // Defaults to the last week here; a choice made on either surface carries
+  // across navigation via the shared store.
+  const { period, custom, storeId, setPeriod, setCustom, setStoreId } =
+    useSalesFilter("week");
+  const customStart = custom.start ?? "";
+  const customEnd = custom.end ?? "";
   const [openMenu, setOpenMenu] = useState<"period" | "store" | null>(null);
   const [channelTab, setChannelTab] = useState<ChannelTab>("all");
   const [query, setQuery] = useState("");
+  const [mediumModalOpen, setMediumModalOpen] = useState(false);
 
   const range = useMemo(
     () => resolvePeriod(period, { start: customStart, end: customEnd }),
@@ -236,7 +241,7 @@ const SalesHistoryPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => router.push("/inventory/overview")}
+              onClick={() => setMediumModalOpen(true)}
               className="inline-flex items-center gap-2 h-[38px] px-[14px] rounded-full border border-white/[.32] bg-white/15 text-white text-[12.5px] font-semibold cursor-pointer whitespace-nowrap hover:bg-white/[.28]"
             >
               <span>Breakdown by medium</span>
@@ -267,8 +272,8 @@ const SalesHistoryPage = () => {
             <CustomRangeInputs
               from={customStart}
               to={customEnd}
-              onFrom={setCustomStart}
-              onTo={setCustomEnd}
+              onFrom={(v) => setCustom({ start: v })}
+              onTo={(v) => setCustom({ end: v })}
             />
           )}
         </FilterDropdown>
@@ -354,6 +359,14 @@ const SalesHistoryPage = () => {
           </div>
         )}
       </div>
+
+      <MediumBreakdownModal
+        open={mediumModalOpen}
+        onOpenChange={setMediumModalOpen}
+        breakdown={salesData?.mediumBreakdown}
+        rangeLabel={`${periodLabel(period, range)} · ${storeLabel}`}
+        hideAmounts={hideAmounts}
+      />
     </div>
   );
 };

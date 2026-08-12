@@ -5,12 +5,6 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useRecentSales, useSalesData } from "@/hooks/useInventoryOverview";
 import { useRecentPurchaseRequests } from "@/hooks/usePurchaseRequests";
 import {
@@ -24,6 +18,7 @@ import {
   previousRange,
   resolvePeriod,
 } from "@/lib/salesFilters";
+import { useSalesFilter } from "@/lib/salesFilterStore";
 import {
   SalesRowData,
   isAwaitingHandover,
@@ -32,6 +27,7 @@ import {
 } from "@/lib/salesRows";
 import SalesRow from "@/components/inventory/SalesRow";
 import QuickHandoverDrawer from "@/components/inventory/QuickHandoverDrawer";
+import MediumBreakdownModal from "@/components/inventory/MediumBreakdownModal";
 import { VcIcon, CalendarIcon } from "@/components/inventory/VcIcon";
 import QuickActionsStrip, {
   DEFAULT_INVENTORY_PINS,
@@ -48,10 +44,17 @@ const Home = () => {
   const router = useRouter();
 
   const [hideAmounts, setHideAmounts] = useState(false);
-  const [period, setPeriod] = useState<PeriodId>("today");
-  const [customStart, setCustomStart] = useState("");
-  const [customEnd, setCustomEnd] = useState("");
-  const [storeId, setStoreId] = useState<string>("all");
+  // Shared with Sales History so a chosen range survives navigation.
+  const {
+    period,
+    custom,
+    storeId,
+    setPeriod,
+    setCustom,
+    setStoreId,
+  } = useSalesFilter("today");
+  const customStart = custom.start ?? "";
+  const customEnd = custom.end ?? "";
   const [openMenu, setOpenMenu] = useState<"period" | "store" | null>(null);
   const [channelTab, setChannelTab] = useState<ChannelTab>("all");
   const [mediumModalOpen, setMediumModalOpen] = useState(false);
@@ -126,15 +129,41 @@ const Home = () => {
     [inStoreRows, onlineRows],
   );
 
-  const visibleRows = useMemo(() => {
-    const source =
-      channelTab === "online"
-        ? onlineRows
-        : channelTab === "instore"
-          ? inStoreRows
-          : allRows;
-    return [...source].sort(byNewest).slice(0, MAX_ROWS);
-  }, [channelTab, allRows, onlineRows, inStoreRows]);
+  // Every sale on record, ignoring the period — the fallback that keeps the
+  // list from ever rendering empty.
+  const everyRow = useMemo(
+    () =>
+      [
+        ...recentSales.map(saleInvoiceToRow),
+        ...onlineOrders.map(purchaseRequestToRow),
+      ].sort(byNewest),
+    [recentSales, onlineOrders],
+  );
+
+  const pickChannel = (rows: SalesRowData[]) =>
+    channelTab === "all"
+      ? rows
+      : rows.filter((row) =>
+          channelTab === "online"
+            ? row.channel === "online"
+            : row.channel === "instore",
+        );
+
+  const inPeriodRows = useMemo(
+    () => pickChannel(allRows).sort(byNewest).slice(0, MAX_ROWS),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [channelTab, allRows],
+  );
+
+  const fallbackRows = useMemo(
+    () => pickChannel(everyRow).slice(0, MAX_ROWS),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [channelTab, everyRow],
+  );
+
+  // A quiet period should still show recent activity rather than a blank card.
+  const showingFallback = inPeriodRows.length === 0 && fallbackRows.length > 0;
+  const visibleRows = showingFallback ? fallbackRows : inPeriodRows;
 
   // `total_sales` already covers both channels, so it is the headline figure.
   const totalSales = useMemo(() => {
@@ -268,7 +297,7 @@ const Home = () => {
                           <input
                             type="date"
                             value={customStart}
-                            onChange={(e) => setCustomStart(e.target.value)}
+                            onChange={(e) => setCustom({ start: e.target.value })}
                             className="box-border w-full border border-[#D8D8D8E6] bg-white text-[#2F2F2F] rounded-[10px] px-[10px] py-[9px] text-[13px] outline-none"
                           />
                         </label>
@@ -279,7 +308,7 @@ const Home = () => {
                           <input
                             type="date"
                             value={customEnd}
-                            onChange={(e) => setCustomEnd(e.target.value)}
+                            onChange={(e) => setCustom({ end: e.target.value })}
                             className="box-border w-full border border-[#D8D8D8E6] bg-white text-[#2F2F2F] rounded-[10px] px-[10px] py-[9px] text-[13px] outline-none"
                           />
                         </label>
@@ -537,7 +566,9 @@ const Home = () => {
               Recent sales
             </h2>
             <p className="mt-1 text-[13px] text-[#8E8E93]">
-              Online orders and in-store sales in one list.
+              {showingFallback
+                ? `No sales in ${periodLabel(period, range).toLowerCase()} — showing your most recent.`
+                : "Online orders and in-store sales in one list."}
             </p>
           </div>
 
@@ -603,49 +634,14 @@ const Home = () => {
       />
 
       {/* ── Medium breakdown modal ───────────────────────────────────────── */}
-      <Dialog open={mediumModalOpen} onOpenChange={setMediumModalOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[500px] font-dm-sans text-[#2F2F2F] rounded-xl bg-white">
-          <DialogHeader>
-            <DialogTitle className="md:text-[21px] font-bold">
-              Breakdown by collection medium
-            </DialogTitle>
-            <p className="text-sm text-[#8E8E93]">
-              {periodLabel(period, range)}
-            </p>
-          </DialogHeader>
-
-          <div className="py-6">
-            {salesLoading ? (
-              <div className="flex justify-center items-center py-10">
-                <Loader2 className="h-8 w-8 animate-spin text-[#0A6DC0]" />
-              </div>
-            ) : salesData?.mediumBreakdown &&
-              Object.keys(salesData.mediumBreakdown).length > 0 ? (
-              <div className="grid gap-4">
-                {Object.entries(salesData.mediumBreakdown).map(
-                  ([medium, amount]) => (
-                    <div
-                      key={medium}
-                      className="flex justify-between items-center p-4 rounded-[12px] border border-[#D8D8D866]"
-                    >
-                      <span className="text-[16px] font-medium capitalize">
-                        {medium.toLowerCase()}
-                      </span>
-                      <span className="text-[14px] font-bold">
-                        {formatNaira(amount ?? 0, hideAmounts)}
-                      </span>
-                    </div>
-                  ),
-                )}
-              </div>
-            ) : (
-              <p className="text-center text-[#8E8E93] py-10">
-                No sales data available for this period
-              </p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <MediumBreakdownModal
+        open={mediumModalOpen}
+        onOpenChange={setMediumModalOpen}
+        breakdown={salesData?.mediumBreakdown}
+        rangeLabel={`${periodLabel(period, range)} · ${storeLabel}`}
+        loading={salesLoading}
+        hideAmounts={hideAmounts}
+      />
     </div>
   );
 };
