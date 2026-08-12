@@ -55,6 +55,16 @@ export const IC = {
   list: ["M4 6h16", "M4 12h16", "M4 18h16"],
   arrowUp: ["M12 19V5", "m5 12 7-7 7 7"],
   arrowDown: ["M12 5v14", "m5 12 7 7 7-7"],
+  bottle: [
+    "M10 2h4v3.2l1.4 2.6V20a2 2 0 0 1-2 2h-2.8a2 2 0 0 1-2-2V7.8L10 5.2V2Z",
+    "M8.6 12h6.8",
+  ],
+  person: [
+    "M19 20v-1.5a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4V20",
+    "M15.5 7.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0",
+  ],
+  copy: ["M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"],
+  warning: ["M12 4 2.5 20h19L12 4Z", "M12 10v4", "M12 17h.01"],
 } as const;
 
 export type IconName = keyof typeof IC;
@@ -87,7 +97,7 @@ export const VcIcon = ({
     aria-hidden="true"
   >
     {name === "globe" && <circle cx="12" cy="12" r="9" />}
-    {name === "clock" && null}
+    {name === "copy" && <rect x="9" y="9" width="11" height="11" rx="2" />}
     {IC[name].map((d) => (
       <path key={d} d={d} />
     ))}

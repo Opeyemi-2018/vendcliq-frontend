@@ -8,6 +8,26 @@
  * @import at all), leaving only the 500-weight Medium file — so every
  * `font-clash font-bold` silently rendered at Medium.
  */
+/* Wrong hand-over code nudges the digit boxes (prototype `vcShake`). */
+@keyframes vcShake {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translateX(-7px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
 @font-face {
   font-family: "Clash Display";
   src: url("/fonts/ClashDisplay-400.woff2") format("woff2");
