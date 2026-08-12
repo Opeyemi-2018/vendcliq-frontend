@@ -229,57 +229,67 @@ export default function SaleInvoiceDetailPage() {
         }
       `}</style>
 
-      <button
-        onClick={() => router.push("/inventory/sales")}
-        className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors mb-4 print-hidden"
-      >
-        <MoveLeft className="w-5 h-5" />
-      </button>
+      <div className="flex items-start gap-[14px] flex-wrap print-hidden mb-5">
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={() => router.push("/inventory/sales")}
+          className="w-[42px] h-[42px] rounded-[12px] border border-[#D8D8D8E6] bg-white cursor-pointer inline-flex items-center justify-center shrink-0 mt-1 hover:border-[#0A6DC0]"
+        >
+          <MoveLeft className="w-[19px] h-[19px] text-[#2F2F2F]" />
+        </button>
 
-      <div className="flex items-center justify-between print-hidden mb-1">
-        <div className="mb-4 md:mb-6">
-          <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
+        <div className="flex-1 min-w-[260px]">
+          <span className="text-[12.5px] font-bold tracking-[.4px] uppercase text-[#8E8E93]">
+            In-store Sales
+          </span>
+          <h1 className="mt-1.5 font-clash font-semibold text-[30px] tracking-[-.6px] text-[#2F2F2F]">
             {invoice?.code || "Loading..."}
           </h1>
-          <p className="font-medium text-[13px] md:text-[16px] font-dm-sans text-[#9E9A9A]">
+          <p className="mt-[5px] text-[14px] text-[#8E8E93]">
             View all items sold in this invoice
           </p>
         </div>
-        <div className="flex items-center gap-4 flex-wrap justify-end">
+
+        <div className="flex items-center gap-2.5 shrink-0 mt-1.5 flex-wrap">
           {invoice?.status?.toLowerCase() === "pending" && (
             <button
+              type="button"
               onClick={() => router.push(`/inventory/sales/edit/${invoice.id}`)}
-              className="flex cursor-pointer items-center gap-2 text-[#0A2540] hover:text-[#0A6DC0]"
+              className="inline-flex items-center gap-2 h-[42px] px-4 rounded-[10px] border border-[#D8D8D8E6] bg-white cursor-pointer text-[14px] font-semibold text-[#2F2F2F] whitespace-nowrap hover:border-[#0A6DC0] hover:text-[#0A6DC0]"
             >
-              <Edit className="w-5 h-5" />
-              Edit
+              <Edit className="w-[17px] h-[17px]" />
+              <span>Edit</span>
             </button>
           )}
           {isCompleted && !returnMode && (
             <button
+              type="button"
               onClick={openReturnMode}
-              className="flex items-center gap-2 text-[#0A2540] hover:text-[#0A6DC0] cursor-pointer"
+              className="inline-flex items-center gap-2 h-[42px] px-4 rounded-[10px] border border-[#D8D8D8E6] bg-white cursor-pointer text-[14px] font-semibold text-[#2F2F2F] whitespace-nowrap hover:border-[#0A6DC0] hover:text-[#0A6DC0]"
             >
-              <RotateCcw className="w-5 h-5" />
-              Return Items
+              <RotateCcw className="w-[17px] h-[17px]" />
+              <span>Return Items</span>
             </button>
           )}
           {returnMode && (
             <button
+              type="button"
               onClick={closeReturnMode}
-              className="flex items-center gap-2 text-red-500 hover:text-red-700 cursor-pointer text-sm font-medium"
+              className="inline-flex items-center gap-2 h-[42px] px-4 rounded-[10px] border border-[#E5A3A0] bg-white cursor-pointer text-[14px] font-semibold text-[#B3261E] whitespace-nowrap hover:bg-[#FDECEC]"
             >
               <X className="w-4 h-4" />
-              Cancel Return
+              <span>Cancel Return</span>
             </button>
           )}
-          <div
-            className="flex items-center gap-2 text-[#0A2540] hover:text-[#0A6DC0] cursor-pointer"
+          <button
+            type="button"
             onClick={() => setShowPrintModal(true)}
+            className="inline-flex items-center gap-2 h-[42px] px-4 rounded-[10px] border border-[#D8D8D8E6] bg-white cursor-pointer text-[14px] font-semibold text-[#2F2F2F] whitespace-nowrap hover:border-[#0A6DC0] hover:text-[#0A6DC0]"
           >
-            <Printer className="w-5 h-5" />
+            <Printer className="w-[17px] h-[17px]" />
             <span>Print</span>
-          </div>
+          </button>
         </div>
       </div>
 
