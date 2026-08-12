@@ -48,6 +48,10 @@ import Image from "next/image";
 import { useProducts } from "@/hooks/useProduct";
 import { useCreateStock } from "@/hooks/useStores";
 
+import MarketplaceConditions, {
+  MarketplaceCondition,
+} from "@/components/inventory/MarketplaceConditions";
+
 interface StockFormProps {
   storeId: string;
   onSuccess?: () => void;
@@ -60,6 +64,10 @@ const StockForm: React.FC<StockFormProps> = ({ storeId, onSuccess }) => {
     fetchAllProducts,
   } = useProducts();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<"details" | "conditions">(
+    "details",
+  );
+  const [conditions, setConditions] = useState<MarketplaceCondition[]>([]);
   const [isEmptiesModalOpen, setIsEmptiesModalOpen] = useState(false);
   const [tempEmptiesQty, setTempEmptiesQty] = useState("");
   const [tempEmptiesPrice, setTempEmptiesPrice] = useState("");
@@ -206,6 +214,10 @@ const onSubmit = async (values: CreateStockFormData) => {
       type: values.type,
       batch: (values.batch || "").trim(),
       supplier: (values.supplier || "").trim(),
+      // No dedicated endpoint models the four condition types yet (the only
+      // offer API is a single fixed promo), so they ride along in attributes —
+      // which the stock payload already treats as a free-form bag.
+      ...(conditions.length ? { marketplace_conditions: conditions } : {}),
     },
   };
 
@@ -250,6 +262,46 @@ const onSubmit = async (values: CreateStockFormData) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* ── Tabs ───────────────────────────────────────────────────────── */}
+        <div className="flex gap-1 bg-[#F4F5F7] p-1 rounded-full self-start w-fit">
+          {(
+            [
+              { id: "details", label: "Stock details" },
+              {
+                id: "conditions",
+                label: `Marketplace Conditions${conditions.length ? ` (${conditions.length})` : ""}`,
+              },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              {...(t.id === "conditions" ? { "data-tour": "np-cond-tab" } : {})}
+              onClick={() => setActiveTab(t.id)}
+              className={`border-none px-4 py-2 rounded-full text-[13px] cursor-pointer whitespace-nowrap ${
+                activeTab === t.id
+                  ? "bg-white text-[#0A6DC0] font-bold shadow-[0_1px_3px_rgba(0,0,0,.10)]"
+                  : "bg-transparent text-[#6B6B70] font-semibold hover:text-[#2F2F2F]"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div
+          data-tour="np-conditions"
+          className={activeTab === "conditions" ? "block" : "hidden"}
+        >
+          <MarketplaceConditions
+            conditions={conditions}
+            onChange={setConditions}
+            bundleOptions={displayProducts.map((p: any) => p.name)}
+            mode="add"
+          />
+        </div>
+
+        <div className={activeTab === "details" ? "space-y-6" : "hidden"}>
         {/* Product Selection */}
         <FormField
           control={form.control}
@@ -796,6 +848,7 @@ const onSubmit = async (values: CreateStockFormData) => {
               "Add Stock"
             )}
           </Button>
+        </div>
         </div>
       </form>
     </Form>
