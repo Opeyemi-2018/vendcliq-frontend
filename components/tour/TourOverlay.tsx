@@ -45,6 +45,8 @@ export const TourOverlay = () => {
   const pathname = usePathname();
   const [rect, setRect] = useState<Rect | null>(null);
   const [mounted, setMounted] = useState(false);
+  const listRef = useRef<HTMLOListElement>(null);
+  const [more, setMore] = useState({ up: false, down: false });
   const routedFor = useRef<number | null>(null);
   const openedPanel = useRef<string | null>(null);
 
@@ -56,6 +58,27 @@ export const TourOverlay = () => {
   );
 
   useEffect(() => setMounted(true), []);
+
+  // Whether the highlight list runs past its box, so the card can say so.
+  const measureList = useCallback(() => {
+    const el = listRef.current;
+    if (!el) return;
+    setMore({
+      up: el.scrollTop > 4,
+      down: el.scrollTop + el.clientHeight < el.scrollHeight - 4,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "welcome") return;
+    // The list mounts with the card, so measure once it has laid out.
+    const timer = setTimeout(measureList, 60);
+    window.addEventListener("resize", measureList);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", measureList);
+    };
+  }, [phase, measureList]);
 
   // First login shows the welcome card once; after that only the sidebar card
   // can bring it back.
@@ -183,6 +206,15 @@ export const TourOverlay = () => {
     return () => document.removeEventListener("click", onClick, true);
   }, [phase, step]);
 
+  const scrollList = (direction: 1 | -1) => {
+    const el = listRef.current;
+    if (!el) return;
+    el.scrollBy({
+      top: direction * Math.max(120, el.clientHeight * 0.7),
+      behavior: "smooth",
+    });
+  };
+
   if (!mounted || phase === "idle") return null;
 
   // ── Welcome ──────────────────────────────────────────────────────────
@@ -216,18 +248,81 @@ export const TourOverlay = () => {
             </p>
           </div>
 
-          <ol className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2.5 mt-4 mb-1 px-7 sm:px-8 list-none py-0">
-            {TOUR_HIGHLIGHTS.map((label, i) => (
-              <li key={label} className="flex items-start gap-3">
-                <span className="w-[22px] h-[22px] rounded-full bg-[#FFF3DB] text-[#85540A] text-[12px] font-bold inline-flex items-center justify-center shrink-0 mt-[1px]">
-                  {i + 1}
-                </span>
-                <span className="text-[14px] leading-[1.45] text-[#2F2F2F]">
-                  {label}
-                </span>
-              </li>
-            ))}
-          </ol>
+          <div className="relative flex flex-col min-h-0 flex-1 overflow-hidden mt-4 mb-1">
+            <ol
+              ref={listRef}
+              onScroll={measureList}
+              className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2.5 px-7 sm:px-8 list-none py-0"
+            >
+              {TOUR_HIGHLIGHTS.map((label, i) => (
+                <li key={label} className="flex items-start gap-3">
+                  <span className="w-[22px] h-[22px] rounded-full bg-[#FFF3DB] text-[#85540A] text-[12px] font-bold inline-flex items-center justify-center shrink-0 mt-[1px]">
+                    {i + 1}
+                  </span>
+                  <span className="text-[14px] leading-[1.45] text-[#2F2F2F]">
+                    {label}
+                  </span>
+                </li>
+              ))}
+            </ol>
+
+            {/* Fades plus a chevron, so it is obvious the list keeps going. */}
+            {more.up && (
+              <>
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-0 inset-x-0 h-7 bg-gradient-to-b from-white to-transparent"
+                />
+                <button
+                  type="button"
+                  aria-label="Scroll up"
+                  onClick={() => scrollList(-1)}
+                  className="absolute top-0 right-3 w-7 h-7 rounded-full bg-white border border-[#E4E4E4] shadow-sm inline-flex items-center justify-center cursor-pointer text-[#0A6DC0] hover:bg-[#F0F7FF]"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="15"
+                    height="15"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m6 15 6-6 6 6" />
+                  </svg>
+                </button>
+              </>
+            )}
+            {more.down && (
+              <>
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-white to-transparent"
+                />
+                <button
+                  type="button"
+                  aria-label="Scroll down for more"
+                  onClick={() => scrollList(1)}
+                  className="absolute bottom-1 right-3 h-7 pl-2.5 pr-2 rounded-full bg-[#0A6DC0] text-white text-[11.5px] font-bold shadow-sm inline-flex items-center gap-1 cursor-pointer hover:bg-[#09599A]"
+                >
+                  <span>More</span>
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="14"
+                    height="14"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+              </>
+            )}
+          </div>
 
           {/* Sticky footer: the actions stay reachable however long the list. */}
           <div className="shrink-0 px-7 sm:px-8 pt-3.5 pb-6 border-t border-[#EEF1F4] bg-white">
