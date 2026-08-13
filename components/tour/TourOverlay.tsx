@@ -10,13 +10,14 @@ import {
   beginTour,
   endTour,
   hasSeenTour,
+  nextSection,
   nextStep,
   openTourWelcome,
   useTour,
 } from "@/lib/tour/store";
 
 const RING_PAD = 8;
-const CARD_W = 356;
+const CARD_W = 372;
 const GAP = 16;
 
 /** First visible element carrying this key — a target can appear more than once. */
@@ -45,9 +46,14 @@ export const TourOverlay = () => {
   const [rect, setRect] = useState<Rect | null>(null);
   const [mounted, setMounted] = useState(false);
   const routedFor = useRef<number | null>(null);
+  const openedPanel = useRef<string | null>(null);
 
   const step = TOUR_STEPS[index] ?? null;
   const total = TOUR_STEPS.length;
+  // "Next feature" only earns its place while stops remain in this one.
+  const moreInSection = Boolean(
+    step && step.indexInSection < step.sectionSize - 1,
+  );
 
   useEffect(() => setMounted(true), []);
 
@@ -64,8 +70,18 @@ export const TourOverlay = () => {
     if (routedFor.current === index) return;
     routedFor.current = index;
 
+    // A panel opened for an earlier stop would sit over everything that
+    // follows, so it is closed the moment the tour leaves it.
+    if (openedPanel.current && openedPanel.current !== step.open) {
+      window.dispatchEvent(
+        new CustomEvent(`vc:tour-close-${openedPanel.current}`),
+      );
+      openedPanel.current = null;
+    }
+
     if (step.route && pathname !== step.route) router.push(step.route);
     if (step.open) {
+      openedPanel.current = step.open;
       // Give the route a beat to mount before the host can act on this.
       const timer = setTimeout(
         () => window.dispatchEvent(new CustomEvent(`vc:tour-open-${step.open}`)),
@@ -76,7 +92,14 @@ export const TourOverlay = () => {
   }, [phase, index, step, pathname, router]);
 
   useEffect(() => {
-    if (phase !== "run") routedFor.current = null;
+    if (phase === "run") return;
+    routedFor.current = null;
+    if (openedPanel.current) {
+      window.dispatchEvent(
+        new CustomEvent(`vc:tour-close-${openedPanel.current}`),
+      );
+      openedPanel.current = null;
+    }
   }, [phase]);
 
   // Poll briefly for the target: a route change or a panel opening means it is
@@ -374,8 +397,9 @@ export const TourOverlay = () => {
           )}
 
           <div className="relative flex items-center justify-between gap-3">
-            <span className="text-[11px] font-bold tracking-[.8px] uppercase text-[#0A6DC0]">
-              Stop {index + 1} of {total}
+            <span className="text-[11px] font-bold tracking-[.8px] uppercase text-[#0A6DC0] truncate">
+              {step?.sectionLabel} · {(step?.indexInSection ?? 0) + 1} of{" "}
+              {step?.sectionSize}
             </span>
             <button
               type="button"
@@ -432,6 +456,15 @@ export const TourOverlay = () => {
               </button>
             )}
             <div className="flex-1" />
+            {moreInSection && (
+              <button
+                type="button"
+                onClick={nextSection}
+                className="h-[42px] px-3.5 border border-[#D8D8D8E6] rounded-[11px] bg-white text-[#2F2F2F] text-[13.5px] font-semibold cursor-pointer whitespace-nowrap hover:border-[#0A6DC0] hover:text-[#0A6DC0]"
+              >
+                Next feature
+              </button>
+            )}
             <button
               type="button"
               onClick={nextStep}

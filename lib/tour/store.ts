@@ -69,6 +69,16 @@ export const goToStep = (index: number) => {
 export const nextStep = () => goToStep(state.index + 1);
 export const backStep = () => goToStep(Math.max(0, state.index - 1));
 
+/** Skips the rest of the current feature and starts the next one. */
+export const nextSection = () => {
+  const start = TOUR_STEPS[state.index]?.nextSectionStart;
+  if (start == null) {
+    finishTour();
+    return;
+  }
+  goToStep(start);
+};
+
 export const getTourState = () => state;
 
 export const useTour = () => {
