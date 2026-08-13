@@ -25,6 +25,7 @@ import { getSaleById, handleCreateCustomer } from "@/lib/utils/api/apiHelper";
 import { useUpdateInvoice } from "@/hooks/useInventoryOverview";
 
 import PlacesAutocompleteInput from "@/hooks/googleMap";
+import { formatQty, formatPacks, formatPieces, piecesOf } from "@/lib/priceInput";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -470,13 +471,13 @@ export default function EditInvoicePage() {
     }
 
     const availablePacks = parseFloat(activeItem.quantity);
-    const availablePieces = availablePacks * activeItem.product.items_per_pack;
+    const availablePieces = piecesOf(availablePacks, activeItem.product.items_per_pack);
 
     if (activeMode === "PACKS" && qty > availablePacks) {
-      return toast.error(`Only ${availablePacks} packs available`);
+      return toast.error(`Only ${formatQty(availablePacks)} packs available`);
     }
     if (activeMode === "PIECES" && qty > availablePieces) {
-      return toast.error(`Only ${availablePieces} pieces available`);
+      return toast.error(`Only ${formatQty(availablePieces)} pieces available`);
     }
 
     const empties = showEmptiesInput ? parseFloat(activeEmpties) || 0 : 0;
@@ -549,18 +550,20 @@ export default function EditInvoicePage() {
             newQuantity = Math.max(0.5, ci.quantity + delta);
             newPacksQuantity = newQuantity;
             if (newPacksQuantity > availablePacks) {
-              toast.error(`Only ${availablePacks} packs available`);
+              toast.error(`Only ${formatQty(availablePacks)} packs available`);
               return ci;
             }
           } else {
-            const availablePieces =
-              availablePacks * ci.stock.product.items_per_pack;
+            const availablePieces = piecesOf(
+              availablePacks,
+              ci.stock.product.items_per_pack,
+            );
             const newPieces = Math.max(
               ci.stock.product.items_per_pack,
               ci.quantity + delta,
             );
             if (newPieces > availablePieces) {
-              toast.error(`Only ${availablePieces} pieces available`);
+              toast.error(`Only ${formatQty(availablePieces)} pieces available`);
               return ci;
             }
             newQuantity = newPieces;
@@ -930,8 +933,8 @@ export default function EditInvoicePage() {
                         </p>
                         <p className="font-bold text-[12px] md:text-[16px] text-[#2F2F2F]">
                           {(itemDisplayModes[item.id] || "PACKS") === "PACKS"
-                            ? `${parseFloat(item.quantity).toFixed(0)} packs`
-                            : `${(parseFloat(item.quantity) * item.product.items_per_pack).toFixed(0)} pieces`}
+                            ? formatPacks(item.quantity, item.product.items_per_pack)
+                            : `${formatPieces(item.quantity, item.product.items_per_pack)} pieces`}
                         </p>
                         <p className="text-[10px] text-[#2F2F2F] mt-0.5">
                           1 pack = {item.product.items_per_pack} pieces
@@ -1584,7 +1587,7 @@ export default function EditInvoicePage() {
                   Available Empties in Store
                 </p>
                 <p className="font-bold text-lg">
-                  {parseFloat(activeItem?.empties_qty || "0").toFixed(0)} units
+                  {formatQty(activeItem?.empties_qty)} units
                 </p>
               </div>
               <div>

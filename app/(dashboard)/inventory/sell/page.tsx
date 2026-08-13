@@ -28,6 +28,7 @@ import { useCreateInvoice } from "@/hooks/useInventoryOverview";
 
 import PlacesAutocompleteInput from "@/hooks/googleMap";
 import EditStockPriceModal from "./chunks/EditStockPriceModal";
+import { formatQty, formatPacks, formatPieces, piecesOf } from "@/lib/priceInput";
 
 
 interface Store {
@@ -275,18 +276,18 @@ export default function SellPage() {
 
     // Get available stock
     const availablePacks = parseFloat(activeItem.quantity);
-    const availablePieces = availablePacks * activeItem.product.items_per_pack;
+    const availablePieces = piecesOf(availablePacks, activeItem.product.items_per_pack);
 
     // Validate based on mode
     if (activeMode === "PACKS") {
       if (qty > availablePacks) {
-        return toast.error(`Only ${availablePacks} packs available in stock`);
+        return toast.error(`Only ${formatPacks(availablePacks, activeItem.product.items_per_pack)} available in stock`);
       }
     } else {
       // PIECES mode
       if (qty > availablePieces) {
         return toast.error(
-          `Only ${availablePieces} pieces available in stock (${availablePacks} packs)`,
+          `Only ${formatQty(availablePieces)} pieces available in stock (${formatPacks(availablePacks, activeItem.product.items_per_pack)})`,
         );
       }
     }
@@ -318,10 +319,12 @@ export default function SellPage() {
     }
 
     if (newTotalPacks > availablePacks) {
-      const availablePiecesMsg =
-        availablePacks * activeItem.product.items_per_pack;
+      const availablePiecesMsg = piecesOf(
+        availablePacks,
+        activeItem.product.items_per_pack,
+      );
       return toast.error(
-        `Cannot add more. Only ${availablePacks} packs (${availablePiecesMsg} pieces) available in total`,
+        `Cannot add more. Only ${formatPacks(availablePacks, activeItem.product.items_per_pack)} (${formatQty(availablePiecesMsg)} pieces) available in total`,
       );
     }
 
@@ -388,15 +391,19 @@ export default function SellPage() {
             newQuantity = Math.max(0.5, ci.quantity + delta);
             newPacksQuantity = newQuantity;
             if (newPacksQuantity > availablePacks) {
-              toast.error(`Only ${availablePacks} packs available`);
+              toast.error(
+                `Only ${formatPacks(availablePacks, ci.stock.product.items_per_pack)} available`,
+              );
               return ci;
             }
           } else {
-            const availablePieces =
-              availablePacks * ci.stock.product.items_per_pack;
+            const availablePieces = piecesOf(
+              availablePacks,
+              ci.stock.product.items_per_pack,
+            );
             const newPieces = Math.max(1, ci.quantity + delta);
             if (newPieces > availablePieces) {
-              toast.error(`Only ${availablePieces} pieces available`);
+              toast.error(`Only ${formatQty(availablePieces)} pieces available`);
               return ci;
             }
             newQuantity = newPieces;
@@ -727,8 +734,8 @@ export default function SellPage() {
                         </p>
                         <p className="font-bold text-[12px] md:text-[16px] text-[#2F2F2F] ">
                           {(itemDisplayModes[item.id] || "PACKS") === "PACKS"
-                            ? `${parseFloat(item.quantity).toFixed(0)} packs`
-                            : `${(parseFloat(item.quantity) * item.product.items_per_pack).toFixed(0)} pieces`}
+                            ? formatPacks(item.quantity, item.product.items_per_pack)
+                            : `${formatPieces(item.quantity, item.product.items_per_pack)} pieces`}
                         </p>
                         {/* Show items_per_pack value here */}
                         <p className="text-[10px] text-[#2F2F2F] mt-0.5">
@@ -898,9 +905,7 @@ export default function SellPage() {
                                   Available Empties in Store
                                 </p>
                                 <p className="font-bold text-[#2F2F2F] text-lg">
-                                  {parseFloat(
-                                    activeItem?.empties_qty || "0",
-                                  ).toFixed(0)}{" "}
+                                  {formatQty(activeItem?.empties_qty)}{" "}
                                   units
                                 </p>
                               </div>

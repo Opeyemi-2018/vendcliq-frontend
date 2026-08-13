@@ -62,7 +62,8 @@ const AddAttendant = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const [step, setStep] = useState<1 | 2>(1);
-  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  // store_ids is an array, so an attendant can cover more than one store.
+  const [selectedStoreIds, setSelectedStoreIds] = useState<string[]>([]);
   const router = useRouter();
 
   const form = useForm<ShopAttendantForm>({
@@ -77,12 +78,16 @@ const AddAttendant = () => {
   });
 
   const toggleStoreSelection = (storeId: string) => {
-    setSelectedStoreId((prev) => (prev === storeId ? null : storeId));
+    setSelectedStoreIds((prev) =>
+      prev.includes(storeId)
+        ? prev.filter((id) => id !== storeId)
+        : [...prev, storeId],
+    );
   };
 
   const onSubmit = async (data: ShopAttendantForm) => {
-    if (!selectedStoreId) {
-      toast.error("Please select a store");
+    if (selectedStoreIds.length === 0) {
+      toast.error("Select at least one store");
       return;
     }
 
@@ -96,7 +101,7 @@ const AddAttendant = () => {
         email: data.email.toLowerCase().trim(),
         phone: formattedPhone, // Send without country code
         password: data.password,
-        store_ids: [selectedStoreId],
+        store_ids: selectedStoreIds,
       };
 
       console.log("Sending payload:", payload); // Debug log
@@ -108,7 +113,7 @@ const AddAttendant = () => {
       if (response.status === "success") {
         toast.success(response.msg || "Shop attendant created successfully!");
         form.reset();
-        setSelectedStoreId(null);
+        setSelectedStoreIds([]);
         router.push("/inventory/my-store");
       } else {
         // Handle validation errors from the data array
@@ -408,13 +413,29 @@ const AddAttendant = () => {
                       {stores.map((store) => (
                         <div
                           key={store.id}
+                          role="checkbox"
+                          aria-checked={selectedStoreIds.includes(store.id)}
                           onClick={() => toggleStoreSelection(store.id)}
-                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                            selectedStoreId === store.id
+                          className={`p-3 rounded-lg border cursor-pointer transition-all flex items-start gap-3 ${
+                            selectedStoreIds.includes(store.id)
                               ? "border-[#0A6DC0] bg-[#0A6DC0]/10"
                               : "border-[#D8D8D866]"
                           }`}
                         >
+                          <span
+                            className={`w-[22px] h-[22px] rounded-full inline-flex items-center justify-center shrink-0 mt-0.5 ${
+                              selectedStoreIds.includes(store.id)
+                                ? "bg-[#0A6DC0]"
+                                : "bg-white border-[1.6px] border-[#D2D6DC]"
+                            }`}
+                          >
+                            {selectedStoreIds.includes(store.id) && (
+                              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="m4 12.5 5 5L20 6.5" />
+                              </svg>
+                            )}
+                          </span>
+                          <div className="min-w-0">
                           <h1 className="font-medium font-dm-sans text-[#2F2F2F]">
                             {store.name}
                           </h1>
@@ -426,6 +447,7 @@ const AddAttendant = () => {
                             <p className="text-[#2F2F2F]">Product Count:</p>{" "}
                             {store.stock_count}
                           </div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -434,7 +456,7 @@ const AddAttendant = () => {
 
                 <Button
                   type="submit"
-                  disabled={form.formState.isSubmitting || !selectedStoreId}
+                  disabled={form.formState.isSubmitting || selectedStoreIds.length === 0}
                   className="bg-[#0A6DC0] hover:bg-[#085a9e] disabled:bg-gray-400 text-white px-4 py-2 rounded-lg w-full h-11 transition-all mt-6"
                 >
                   {form.formState.isSubmitting ? (

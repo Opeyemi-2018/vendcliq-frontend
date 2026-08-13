@@ -1,11 +1,12 @@
 "use client";
 
+import React from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
-import { MoveLeft } from "lucide-react";
-import { ThreeDots } from "react-loader-spinner";
-import { Button } from "@/components/ui/button";
+import { ClipLoader } from "react-spinners";
+import { toast } from "sonner";
 import { useSoldItem } from "@/hooks/useInventoryOverview";
+import { formatNaira, formatQuantity } from "@/lib/salesFilters";
+import ProductThumb from "@/components/inventory/ProductThumb";
 
 export default function SoldItemDetailPage() {
   const { id, itemId } = useParams<{ id: string; itemId: string }>();
@@ -13,123 +14,123 @@ export default function SoldItemDetailPage() {
 
   const { data: item, invoice, isLoading, error } = useSoldItem(id, itemId);
 
-  const formatCurrency = (amount: number) =>
-    amount.toLocaleString("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-    });
+  React.useEffect(() => {
+    if (error) toast.error("Could not load this sold item");
+  }, [error]);
+
+  const backToInvoice = () => router.push(`/inventory/sales/${id}`);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="py-20 px-4 flex flex-col items-center">
-          <ThreeDots height="80" width="80" color="#0A6DC0" visible />
-          <p className="mt-5 text-[#9E9A9A] font-dm-sans text-lg">
-            Loading item details...
+      <div className="flex justify-center items-center py-24">
+        <ClipLoader color="#0A6DC0" size={34} />
+      </div>
+    );
+  }
+
+  if (!item) {
+    return (
+      <div className="bg-white border border-dashed border-[#D8D8D8E6] rounded-[16px] py-10 px-5 text-center max-w-[600px]">
+        <div className="font-bold text-[15px] text-[#2F2F2F]">
+          Item not found on this invoice
+        </div>
+        <button
+          type="button"
+          onClick={backToInvoice}
+          className="mt-3 text-[13px] font-bold text-[#0A6DC0] hover:underline"
+        >
+          Back to invoice
+        </button>
+      </div>
+    );
+  }
+
+  const profit = Number(item.profit ?? 0);
+
+  const fields: { label: string; value: string; tone?: "bold" | "profit" }[] = [
+    { label: "Product name", value: item.product?.name ?? "—" },
+    { label: "Quantity sold", value: formatQuantity(item.quantity) },
+    { label: "Unit cost", value: formatNaira(item.cost) },
+    { label: "Subtotal", value: formatNaira(item.sub_total), tone: "bold" },
+    { label: "Profit", value: formatNaira(profit), tone: "profit" },
+    { label: "Delivery required", value: item.delivery ? "Yes" : "No" },
+  ];
+
+  return (
+    <div className="flex flex-col gap-[22px] max-w-[1360px]">
+      <div className="flex items-start gap-[14px] flex-wrap">
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={backToInvoice}
+          className="w-[42px] h-[42px] rounded-[12px] border border-[#D8D8D8E6] bg-white cursor-pointer inline-flex items-center justify-center shrink-0 mt-1 hover:border-[#0A6DC0]"
+        >
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2F2F2F" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m14 6-6 6 6 6" />
+          </svg>
+        </button>
+        <div className="flex-1 min-w-[260px]">
+          <span className="text-[12.5px] font-bold tracking-[.4px] uppercase text-[#8E8E93]">
+            In-store Sales · {invoice?.code ?? ""}
+          </span>
+          <h1 className="mt-1.5 font-clash font-semibold text-[30px] tracking-[-.6px] text-[#2F2F2F]">
+            {item.product?.name ?? "Item"}
+          </h1>
+          <p className="mt-[5px] text-[14px] text-[#8E8E93]">
+            Full details of this sold item
           </p>
         </div>
       </div>
-    );
-  }
 
-  if (error || !item || !invoice) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 text-center">
-        <h2 className="text-2xl font-bold text-red-600 mb-4 font-dm-sans">
-          Error
-        </h2>
-        <p className="text-gray-700 mb-4 max-w-md">
-          {error?.message || "Item not found"}
-        </p>
-        <Button
-          onClick={() => router.back()}
-          className="px-8 py-3.5 bg-[#0A6DC0] text-white rounded-lg hover:bg-[#085a9e]"
-        >
-          Go Back
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="">
-      <button
-        onClick={() => router.back()}
-        className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors mb-4"
-      >
-        <MoveLeft className="w-5 h-5" />
-      </button>
-
-      <div className="mb-4 md:mb-6">
-        <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
-          {item.product?.name || "Sold Item Details"}
-        </h1>
-        <p className="font-medium font-dm-sans text-[#9E9A9A]">
-          Full details of this sold item
-        </p>
-      </div>
-
-      <div className="bg-white rounded-xl md:border border-[#E4E7EC] shadow-sm overflow-hidden md:p-6">
-        <div className="bg-[#FAFAFA] rounded-lg border border-gray-200 overflow-hidden mt-4 md:mt-0">
-          <div className="h-40 md:h-80 w-full flex items-center justify-center p-6">
-            {item.product?.image ? (
-              <Image
-                src={
-                  item.product.image.startsWith("//")
-                    ? `https:${item.product.image}`
-                    : item.product.image
-                }
-                alt={item.product.name || "Product"}
-                width={400}
-                height={400}
-                className="object-contain max-h-full rounded-lg drop-shadow-md"
-                priority
-              />
-            ) : (
-              <div className="text-gray-400 text-8xl opacity-50">📦</div>
-            )}
-          </div>
+      <div className="bg-white border border-[#E4E4E4] rounded-[20px] p-[22px] flex flex-col gap-6">
+        <div className="border border-[#D8D8D8B3] rounded-[15px] bg-[#FBFCFD] p-7 flex flex-col items-center gap-3">
+          <ProductThumb
+            src={item.product?.image}
+            alt={item.product?.name ?? "Product"}
+            size={180}
+            className="!bg-transparent !border-0"
+          />
+          <span className="text-[12.5px] text-[#8E8E93]">Product photo</span>
         </div>
 
-        <div className="mt-8 md:mt-10 text-[#2F2F2F] text-[13px] sm:text-[15px] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-6">
-          <div>
-            <h2 className="font-bold font-dm-sans">Product Name</h2>
-            <p className="mt-1.5">{item.product?.name || "—"}</p>
-          </div>
+        <div className="grid [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))] gap-x-5 gap-y-6">
+          {fields.map((field) => (
+            <div key={field.label}>
+              <div className="text-[13px] font-bold text-[#6E7480]">
+                {field.label}
+              </div>
+              <div
+                className={`text-[15.5px] mt-1.5 ${
+                  field.tone === "profit"
+                    ? "font-semibold text-[#0E6E55]"
+                    : field.tone === "bold"
+                      ? "font-bold text-[#2F2F2F]"
+                      : "text-[#2F2F2F]"
+                }`}
+              >
+                {field.value}
+              </div>
+            </div>
+          ))}
+        </div>
 
-          <div>
-            <h2 className="font-bold font-dm-sans">Quantity Sold</h2>
-            <p className="mt-1.5 font-medium">{item.quantity}</p>
-          </div>
-
-          <div>
-            <h2 className="font-bold font-dm-sans">Unit Cost</h2>
-            <p className="mt-1.5 font-medium">{formatCurrency(item.cost)}</p>
-          </div>
-
-          <div>
-            <h2 className="font-bold font-dm-sans">Subtotal</h2>
-            <p className="mt-1.5 font-medium">{formatCurrency(item.sub_total)}</p>
-          </div>
-
-          <div>
-            <h2 className="font-bold font-dm-sans">Profit</h2>
-            <p className="mt-1.5 font-medium text-green-700">
-              {formatCurrency(item.profit)}
-            </p>
-          </div>
-
-          <div>
-            <h2 className="font-bold font-dm-sans">Delivery Required</h2>
-            <p className="mt-1.5">
-              {item.delivery ? (
-                <span className="text-green-700 font-medium">Yes</span>
-              ) : (
-                "No"
-              )}
-            </p>
-          </div>
+        <div className="flex gap-3 flex-wrap">
+          <button
+            type="button"
+            onClick={backToInvoice}
+            className="flex-1 min-w-[240px] h-[54px] rounded-[13px] border border-[#D8D8D8E6] bg-white text-[#2F2F2F] font-bold text-[15px] cursor-pointer hover:border-[#0A6DC0] hover:text-[#0A6DC0]"
+          >
+            Back to invoice
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              toast("Open the invoice and use Return Items to return this one")
+            }
+            className="h-[54px] px-[22px] rounded-[13px] border border-[#D8D8D8E6] bg-white text-[#2F2F2F] font-bold text-[15px] cursor-pointer hover:border-[#0A6DC0] hover:text-[#0A6DC0]"
+          >
+            Return this item
+          </button>
         </div>
       </div>
     </div>

@@ -17,8 +17,10 @@ import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { CreatePromoModal } from "./chunks/OfferModal";
 import { useUser } from "@/context/userContext";
-import { useStockDetail } from "@/hooks/useStores";
+import { useStockDetail, useStoreStocks } from "@/hooks/useStores";
 import { useState } from "react";
+import { formatQty, formatPacks } from "@/lib/priceInput";
+import StockConditionsPanel from "@/components/inventory/StockConditionsPanel";
 
 const StockDetailPage = () => {
   const { canUpdateStock } = useUser();
@@ -28,6 +30,8 @@ const StockDetailPage = () => {
   const stockId = params.stockId as string;
 
   const { data: stock, isLoading, error, refetch } = useStockDetail(storeId, stockId);
+  // Other stocks in this store are what a bundle condition can point at.
+  const { data: storeStocks = [] } = useStoreStocks(storeId);
   const [promoModalOpen, setPromoModalOpen] = useState(false);
 
   const handleUpdateSuccess = () => {
@@ -73,7 +77,7 @@ const StockDetailPage = () => {
           <div className="flex gap-3 items-center font-clash text-[16px] md:text-[25px] font-semibold text-[#2F2F2F]">
             <h1>{stock.product.name}</h1>
             <span className="text-[#0A6DC0]">•</span>
-            <p>{parseFloat(stock.quantity).toFixed(0)} Qty in stock</p>
+            <p>{formatPacks(stock.quantity, stock.product?.items_per_pack)} in stock</p>
           </div>
           <p className="font-medium font-dm-sans text-[#9E9A9A] mt-1">
             This is all you need to know about this product
@@ -116,7 +120,7 @@ const StockDetailPage = () => {
         <div className="min-w-[260px] flex-shrink-0 lg:min-w-0 lg:flex-1 bg-[url('/blue.svg')] bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6 text-white">
           <p className="text-[16px] font-dm-sans">Qty Sold</p>
           <p className="text-[20px] md:text-[24px] font-clash font-semibold">
-            {stock.stats.qty_sold.toLocaleString()}
+            {formatPacks(stock.stats.qty_sold, stock.product?.items_per_pack)}
           </p>
         </div>
         <div className="min-w-[260px] flex-shrink-0 lg:min-w-0 lg:flex-1 bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6 text-white">
@@ -128,7 +132,7 @@ const StockDetailPage = () => {
         <div className="min-w-[260px] flex-shrink-0 lg:min-w-0 lg:flex-1 bg-[url('/balance-bg.svg')] bg-cover bg-no-repeat bg-center h-[100px] rounded-2xl p-6 text-white">
           <p className="text-[16px] font-dm-sans">Qty Added</p>
           <p className="text-[20px] md:text-[24px] font-clash font-semibold">
-            {stock.stats.qty_added.toLocaleString()}
+            {formatPacks(stock.stats.qty_added, stock.product?.items_per_pack)}
           </p>
         </div>
       </div>
@@ -154,9 +158,9 @@ const StockDetailPage = () => {
         <div className="mt-6 text-[#2F2F2F] text-[13px] sm:text-[15px] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5">
           <div><h2 className="font-bold font-dm-sans">Product Name</h2><p className="mt-1">{stock.product.name}</p></div>
           <div><h2 className="font-bold font-dm-sans">SKU</h2><p className="mt-1">{stock.sku}</p></div>
-          <div><h2 className="font-bold font-dm-sans">Total Qty</h2><p className="mt-1">{parseFloat(stock.total_qty).toFixed(0)}</p></div>
-          <div><h2 className="font-bold font-dm-sans">Content Qty</h2><p className="mt-1">{parseFloat(stock.quantity).toFixed(0)}</p></div>
-          <div><h2 className="font-bold font-dm-sans">Empties Qty</h2><p className="mt-1">{parseFloat(stock.empties_qty).toFixed(0)}</p></div>
+          <div><h2 className="font-bold font-dm-sans">Total Qty</h2><p className="mt-1">{formatPacks(stock.total_qty, stock.product?.items_per_pack)}</p></div>
+          <div><h2 className="font-bold font-dm-sans">Content Qty</h2><p className="mt-1">{formatPacks(stock.quantity, stock.product?.items_per_pack)}</p></div>
+          <div><h2 className="font-bold font-dm-sans">Empties Qty</h2><p className="mt-1">{formatQty(stock.empties_qty)}</p></div>
           <div><h2 className="font-bold font-dm-sans">Stock Value</h2><p className="mt-1">₦{parseFloat(stock.stock_value).toLocaleString()}</p></div>
           <div><h2 className="font-bold font-dm-sans">Cost Price</h2><p className="mt-1">₦{parseFloat(stock.cost_price).toLocaleString()}</p></div>
           <div><h2 className="font-bold font-dm-sans">Selling Price</h2><p className="mt-1">₦{parseFloat(stock.selling_price).toLocaleString()}</p></div>
@@ -189,6 +193,22 @@ const StockDetailPage = () => {
           )}
         </div>
       </Card>
+
+      <StockConditionsPanel
+        stockId={String(stock.id)}
+        productName={stock.product?.name}
+        sellingPrice={parseFloat(stock.selling_price) || undefined}
+        bundleOptions={storeStocks
+          .filter((item: any) => String(item.id) !== String(stock.id))
+          .map((item: any) => ({
+            id: item.id,
+            name: item.product?.name ?? "Product",
+            image: item.product?.image,
+            pack: item.product?.items_per_pack
+              ? `Pack of ${item.product.items_per_pack}`
+              : undefined,
+          }))}
+      />
     </div>
   );
 };

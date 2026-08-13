@@ -13,6 +13,7 @@ import { X } from "lucide-react";
 import { moveStock } from "@/lib/utils/api/apiHelper";
 
 import { useStores } from "@/hooks/useStores";
+import { formatQty } from "@/lib/priceInput";
 
 interface StockItem {
   id: string;
@@ -266,7 +267,7 @@ const MoveStockPage = () => {
               <div>
                 <p className="font-medium text-[#2F2F2F]">{stock.sku}</p>
                 <p className="text-[13px] text-[#2F2F2F] font-dm-sans">
-                  Qty in stock: {parseFloat(stock.quantity).toFixed(0)}
+                  Qty in stock: {formatQty(stock.quantity)}
                 </p>
               </div>
             </div>
