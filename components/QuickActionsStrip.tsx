@@ -20,7 +20,7 @@ export const INVENTORY_ACTIONS: QuickAction[] = [
   { id: "store", label: "My Store", sub: "Products and stock", bg: "#E8EEFF", fg: "#4052A3", icon: "shop", route: "/inventory/my-store" },
   { id: "customers", label: "Customer List", sub: "Everyone you sell to", bg: "#E0F2ED", fg: "#148264", icon: "people", route: "/customer" },
   { id: "report", label: "Business Report", sub: "Sales & profit", bg: "#F3EAFF", fg: "#7B61FF", icon: "chart", route: "/business-report" },
-  { id: "saleslog", label: "Sales History", sub: "In-store & online sales", bg: "#E7F4EB", fg: "#0E6E55", icon: "clock", route: "/inventory/sales" },
+  { id: "saleslog", label: "Sales History", sub: "Shop & online sales", bg: "#E7F4EB", fg: "#0E6E55", icon: "clock", route: "/inventory/sales" },
   { id: "expenses", label: "Expenses", sub: "What the business spends", bg: "#F6E8E7", fg: "#BE4637", icon: "naira", route: "/expenses" },
   { id: "suppliers", label: "Supplier List", sub: "Who you buy from", bg: "#E1EEFF", fg: "#0A6DC0", icon: "building", route: "/suppliers" },
 ];

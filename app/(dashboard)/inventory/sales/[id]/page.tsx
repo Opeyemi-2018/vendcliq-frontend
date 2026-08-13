@@ -241,7 +241,7 @@ export default function SaleInvoiceDetailPage() {
 
         <div className="flex-1 min-w-[260px]">
           <span className="text-[12.5px] font-bold tracking-[.4px] uppercase text-[#8E8E93]">
-            In-store Sales
+            Shop Sales
           </span>
           <h1 className="mt-1.5 font-clash font-semibold text-[30px] tracking-[-.6px] text-[#2F2F2F]">
             {invoice?.code || "Loading..."}

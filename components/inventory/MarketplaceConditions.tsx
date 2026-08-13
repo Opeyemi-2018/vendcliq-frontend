@@ -247,7 +247,7 @@ export const MarketplaceConditions = ({
   unit = "packs",
   mainProductName = "this product",
   locked = false,
-  lockedMessage = "Add the stock first — conditions attach to a saved product.",
+  lockedMessage = "Add the stock first. Rules attach to a saved product.",
 }: MarketplaceConditionsProps) => {
   const [picking, setPicking] = useState(false);
   const [draft, setDraft] = useState<MarketplaceCondition | null>(null);
@@ -321,7 +321,7 @@ export const MarketplaceConditions = ({
         : [...conditions, draft],
     );
     setDraft(null);
-    toast.success("Condition saved");
+    toast.success("Rule saved");
   };
 
   const panel =
@@ -352,7 +352,7 @@ export const MarketplaceConditions = ({
 
       {mode === "edit" && conditions.length > 0 && (
         <p className="text-[13px] text-[#565656] leading-[1.55]">
-          These conditions are live on the marketplace. Pause one to stop it
+          These rules are live on the marketplace. Pause one to stop it
           without losing its setup.
         </p>
       )}
@@ -426,10 +426,10 @@ export const MarketplaceConditions = ({
           </div>
           <div className="max-w-[420px]">
             <div className="font-bold text-[16px] text-[#1F2328]">
-              No conditions on this product yet
+              No rules on this product yet
             </div>
             <div className="text-[13.5px] text-[#565656] mt-1.5 leading-[1.55]">
-              Add a condition to create deals like bundle offers, minimum order
+              Add a rule to create deals like bundle offers, minimum order
               quantities, free delivery, or price discounts.
             </div>
           </div>
@@ -440,7 +440,7 @@ export const MarketplaceConditions = ({
         <div className="border border-[#D8D8D8B3] rounded-[14px] p-[18px] bg-[#FAFBFC]">
           <div className="flex items-center justify-between mb-3.5">
             <div className="font-bold text-[14.5px] text-[#1F2328]">
-              Choose a condition type
+              Choose a rule type
             </div>
             <button
               type="button"
@@ -968,7 +968,7 @@ export const MarketplaceConditions = ({
             className="w-full h-[48px] rounded-[12px] border-none text-white text-[14.5px] font-bold cursor-pointer disabled:cursor-not-allowed"
             style={{ background: valid && !locked ? "#0A6DC0" : "#C7D5E5" }}
           >
-            {locked ? "Add the stock to save this" : "Save condition"}
+            {locked ? "Add the stock to save this" : "Save rule"}
           </button>
         </div>
       )}
@@ -989,7 +989,7 @@ export const MarketplaceConditions = ({
             size={18}
             width={2.2}
           />
-          Add condition
+          Add rule
         </button>
       )}
     </div>

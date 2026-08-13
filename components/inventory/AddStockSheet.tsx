@@ -108,12 +108,12 @@ export const AddStockSheet = ({
         toast.error(
           result.failed.length === 1
             ? result.failed[0].message
-            : `${result.failed.length} conditions could not be saved`,
+            : `${result.failed.length} rules could not be saved`,
         );
         if (result.saved === 0) return;
       } else {
         toast.success(
-          result.saved === 1 ? "Condition saved" : `${result.saved} conditions saved`,
+          result.saved === 1 ? "Rule saved" : `${result.saved} rules saved`,
         );
       }
     }
@@ -196,7 +196,7 @@ export const AddStockSheet = ({
                     </>
                   }
                 />
-                Marketplace Conditions
+                Marketplace Rules
                 {conditions.length > 0 && (
                   <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-[#E8F2FF] text-[#0A6DC0] text-[11.5px] font-bold">
                     {conditions.length}
@@ -254,7 +254,7 @@ export const AddStockSheet = ({
                   mode="add"
                   mainProductName={created?.productName}
                   locked={!created?.id}
-                  lockedMessage="You cannot create a condition until the stock is added."
+                  lockedMessage="You cannot create a rule until the stock is added."
                 />
               </div>
             </>
@@ -277,7 +277,7 @@ export const AddStockSheet = ({
                     <span>Saving conditions…</span>
                   </>
                 ) : pendingConditions.length ? (
-                  `Save ${pendingConditions.length} condition${
+                  `Save ${pendingConditions.length} rule${
                     pendingConditions.length === 1 ? "" : "s"
                   }`
                 ) : (

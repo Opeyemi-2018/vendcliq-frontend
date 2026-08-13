@@ -42,7 +42,7 @@ export const MediumBreakdownModal = ({
       <DialogContent className="max-w-[95vw] sm:max-w-[500px] font-dm-sans text-[#2F2F2F] rounded-xl bg-white">
         <DialogHeader>
           <DialogTitle className="md:text-[21px] font-bold">
-            Breakdown by collection medium
+            Breakdown by channel
           </DialogTitle>
           <p className="text-sm text-[#8E8E93]">{rangeLabel}</p>
         </DialogHeader>

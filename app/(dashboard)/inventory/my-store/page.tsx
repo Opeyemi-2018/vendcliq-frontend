@@ -30,7 +30,7 @@ const SORT_LABEL: Record<SortMode, string> = {
 const FLAG_CHIP = {
   out: { label: "Out of stock", bg: "#FBE9E7", fg: "#C0392B" },
   low: { label: "Low stock", bg: "#FBE9E7", fg: "#C0392B" },
-  expiring: { label: "Exp. soon", bg: "#FDEDE4", fg: "#C4531B" },
+  expiring: { label: "Expiring soon", bg: "#FDEDE4", fg: "#C4531B" },
   ok: null,
 } as const;
 
@@ -50,7 +50,7 @@ const MyStorePage = () => {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [addStockStore, setAddStockStore] = useState<string | null>(null);
 
-  // The guided tour opens this sheet for the Marketplace Conditions stops.
+  // The guided tour opens this sheet for the Marketplace Rules stops.
   useEffect(() => {
     const open = () => setAddStockStore((current) => current ?? "");
     const close = () => setAddStockStore(null);
@@ -237,7 +237,7 @@ const MyStorePage = () => {
           {[
             { label: "Products", value: stats.products, color: "#fff" },
             { label: "Low stock", value: stats.low, color: "#FFB4A8" },
-            { label: "Exp. soon", value: stats.expiring, color: "#FFD37A" },
+            { label: "Expiring soon", value: stats.expiring, color: "#FFD37A" },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -278,7 +278,7 @@ const MyStorePage = () => {
           [
             { id: "all", label: `All ${scoped.length}` },
             { id: "low", label: `Low stock ${stats.low}` },
-            { id: "expiring", label: `Exp. soon ${stats.expiring}` },
+            { id: "expiring", label: `Expiring soon ${stats.expiring}` },
           ] as { id: StockTab; label: string }[]
         ).map((t) => {
           const active = tab === t.id;

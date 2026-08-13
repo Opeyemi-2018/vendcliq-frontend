@@ -4,7 +4,12 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { TOUR_STEPS, TOUR_HIGHLIGHTS, TOUR_WELCOME } from "@/lib/tour/steps";
+import {
+  TOUR_STEPS,
+  TOUR_HIGHLIGHTS,
+  TOUR_WELCOME,
+  TOUR_FINISH,
+} from "@/lib/tour/steps";
 import {
   backStep,
   beginTour,
@@ -27,9 +32,22 @@ const findTarget = (key: string): HTMLElement | null => {
   return all[0] ?? null;
 };
 
-/** Bring the target into view inside whatever scroller owns it. */
-const scrollIntoView = (el: HTMLElement) => {
-  el.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+/**
+ * Bring the target into view. On phones the sheet owns the bottom of the
+ * screen, so the target is parked in the upper half with room above it.
+ */
+const scrollIntoView = (el: HTMLElement, phone: boolean) => {
+  el.scrollIntoView({
+    block: phone ? "start" : "center",
+    inline: "nearest",
+    behavior: "smooth",
+  });
+  if (!phone) return;
+  // scrollIntoView("start") puts it flush against the top; back off by 80px.
+  window.setTimeout(
+    () => window.scrollBy({ top: -80, behavior: "smooth" }),
+    240,
+  );
 };
 
 interface Rect {
@@ -47,8 +65,18 @@ export const TourOverlay = () => {
   const [mounted, setMounted] = useState(false);
   const listRef = useRef<HTMLOListElement>(null);
   const [more, setMore] = useState({ up: false, down: false });
+  // Below 768px the callout becomes a bottom sheet instead of a popover.
+  const [isPhone, setIsPhone] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsPhone(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
   const routedFor = useRef<number | null>(null);
   const openedPanel = useRef<string | null>(null);
+  const startedAt = useRef<string | null>(null);
 
   const step = TOUR_STEPS[index] ?? null;
   const total = TOUR_STEPS.length;
@@ -86,6 +114,12 @@ export const TourOverlay = () => {
     if (!mounted) return;
     if (!hasSeenTour()) openTourWelcome();
   }, [mounted]);
+
+  // The tour walks the user across the app, so remember where they came from.
+  useEffect(() => {
+    if (phase === "welcome" && !startedAt.current) startedAt.current = pathname;
+    if (phase === "idle") startedAt.current = null;
+  }, [phase, pathname]);
 
   // Route to where the stop lives, then ask its host to open any panel it needs.
   useEffect(() => {
@@ -151,7 +185,7 @@ export const TourOverlay = () => {
       const el = findTarget(step.target);
       if (el && !scrolled) {
         scrolled = true;
-        scrollIntoView(el);
+        scrollIntoView(el, isPhone);
       }
       const next = measure();
       if (next) setRect(next);
@@ -176,7 +210,7 @@ export const TourOverlay = () => {
       window.removeEventListener("scroll", onMove, true);
       window.removeEventListener("resize", onMove);
     };
-  }, [phase, index, step, measure]);
+  }, [phase, index, step, measure, isPhone]);
 
   // Escape skips, per the spec.
   useEffect(() => {
@@ -205,6 +239,12 @@ export const TourOverlay = () => {
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
   }, [phase, step]);
+
+  const finishAndReturn = () => {
+    const back = startedAt.current;
+    endTour();
+    if (back && back !== pathname) router.push(back);
+  };
 
   const scrollList = (direction: 1 | -1) => {
     const el = listRef.current;
@@ -391,18 +431,17 @@ export const TourOverlay = () => {
             </svg>
           </div>
           <h2 className="mt-5 font-clash font-semibold text-[26px] leading-[1.15] tracking-[-.6px] text-[#2F2F2F]">
-            That&apos;s The Tour
+            {TOUR_FINISH.title}
           </h2>
           <p className="mt-2.5 text-[14.5px] leading-[1.5] text-[#6B6B70]">
-            Your wallet, your sales and your store all take fewer taps now.
-            Start a quick tour from the sidebar any time to run it again.
+            {TOUR_FINISH.body}
           </p>
           <button
             type="button"
-            onClick={endTour}
+            onClick={finishAndReturn}
             className="mt-6 w-full h-[52px] rounded-[12px] border-none bg-[#0A6DC0] text-white text-[15.5px] font-bold cursor-pointer hover:bg-[#09599A]"
           >
-            Done
+            {TOUR_FINISH.button}
           </button>
         </div>
       </div>,
@@ -419,7 +458,7 @@ export const TourOverlay = () => {
   const hw = rect ? Math.min(vw - hx - 4, rect.width + RING_PAD * 2) : 0;
   const hh = rect ? Math.min(vh - hy - 4, rect.height + RING_PAD * 2) : 0;
 
-  const cw = Math.min(CARD_W, vw - 32);
+  const cw = isPhone ? vw - 32 : Math.min(CARD_W, vw - 32);
   const estH = 232 + (step?.prompt ? 58 : 0);
   const clampX = (v: number) => Math.max(16, Math.min(vw - cw - 16, v));
 
@@ -427,7 +466,11 @@ export const TourOverlay = () => {
   let cLeft = (vw - cw) / 2;
   let arrow: "up" | "down" | null = null;
 
-  if (!rect) {
+  if (isPhone) {
+    // Anchored to the bottom; the highlight is kept in the upper half.
+    cTop = Math.max(16, vh - estH - 16);
+    cLeft = 16;
+  } else if (!rect) {
     cTop = Math.max(16, (vh - estH) / 2);
   } else {
     const mid = Math.max(16, Math.min(vh - estH - 16, hy + hh / 2 - estH / 2));
@@ -505,18 +548,36 @@ export const TourOverlay = () => {
       )}
 
       <div
-        style={{
-          position: "fixed",
-          top: cTop,
-          left: cLeft,
-          width: cw,
-          pointerEvents: "auto",
-          transition:
-            "top 220ms cubic-bezier(.4,0,.2,1), left 220ms cubic-bezier(.4,0,.2,1)",
-        }}
+        style={
+          isPhone
+            ? {
+                // Anchored, not measured: the card can be any height and still
+                // sit flush with the bottom of the screen.
+                position: "fixed",
+                left: 16,
+                right: 16,
+                bottom: 0,
+                pointerEvents: "auto",
+              }
+            : {
+                position: "fixed",
+                top: cTop,
+                left: cLeft,
+                width: cw,
+                pointerEvents: "auto",
+                transition:
+                  "top 220ms cubic-bezier(.4,0,.2,1), left 220ms cubic-bezier(.4,0,.2,1)",
+              }
+        }
       >
-        <div className="relative bg-white border border-[#D8D8D88C] rounded-[18px] px-5 pt-[17px] pb-4 shadow-[0_24px_54px_-18px_rgba(10,37,64,.5)]">
-          {rect && arrow && (
+        <div
+          className={`relative bg-white border border-[#D8D8D88C] shadow-[0_24px_54px_-18px_rgba(10,37,64,.5)] px-5 pt-[17px] ${
+            isPhone
+              ? "rounded-t-[20px] rounded-b-none pb-[max(16px,env(safe-area-inset-bottom))] max-h-[70vh] flex flex-col"
+              : "rounded-[18px] pb-4"
+          }`}
+        >
+          {!isPhone && rect && arrow && (
             <div
               style={{
                 position: "absolute",
@@ -548,7 +609,7 @@ export const TourOverlay = () => {
             <button
               type="button"
               onClick={endTour}
-              className="border-none bg-transparent p-0 cursor-pointer text-[12.5px] font-semibold text-[#8E8E93] hover:text-[#2F2F2F]"
+              className="border-none bg-transparent p-0 sm:p-0 min-h-[44px] sm:min-h-0 px-1 cursor-pointer text-[13px] font-semibold text-[#8E8E93] hover:text-[#2F2F2F]"
             >
               Skip tour
             </button>
@@ -569,48 +630,58 @@ export const TourOverlay = () => {
             />
           </div>
 
-          <h3 className="relative mt-3.5 font-clash font-semibold text-[19.5px] leading-[1.18] tracking-[-.45px] text-[#2F2F2F]">
-            {step?.title}
-          </h3>
-          <p className="relative mt-2 text-[13.5px] leading-[1.5] text-[#6B6B70]">
-            {step?.body}
-          </p>
+          <div
+            className={isPhone ? "flex-1 min-h-0 overflow-y-auto" : undefined}
+          >
+            <h3 className="relative mt-3.5 font-clash font-semibold text-[18px] sm:text-[19.5px] leading-[1.25] sm:leading-[1.18] tracking-[-.45px] text-[#2F2F2F]">
+              {step?.title}
+            </h3>
+            <p className="relative mt-2 text-[15px] sm:text-[13.5px] leading-[1.5] text-[#6B6B70]">
+              {step?.body}
+            </p>
 
-          {step?.prompt && (
-            <div className="relative flex items-start gap-[9px] mt-3.5 px-3 py-2.5 rounded-[11px] bg-[#FFF3DB]">
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="#85540A"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="shrink-0 mt-px"
-              >
-                <path d="M9 4.5v9.2l2.4-2 1.8 4.6 2.1-.9-1.8-4.5 3-.5z" />
-                <path d="M17.5 4.5A6.5 6.5 0 0 1 19 8.6" />
-                <path d="M3.5 8.6A6.5 6.5 0 0 1 5 4.5" />
-              </svg>
-              <span className="text-[12.5px] font-semibold leading-[1.4] text-[#85540A]">
-                {step.prompt}
-              </span>
-            </div>
-          )}
+            {step?.prompt && (
+              <div className="relative flex items-start gap-[9px] mt-3.5 px-3 py-2.5 rounded-[11px] bg-[#FFF3DB]">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="#85540A"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="shrink-0 mt-px"
+                >
+                  <path d="M9 4.5v9.2l2.4-2 1.8 4.6 2.1-.9-1.8-4.5 3-.5z" />
+                  <path d="M17.5 4.5A6.5 6.5 0 0 1 19 8.6" />
+                  <path d="M3.5 8.6A6.5 6.5 0 0 1 5 4.5" />
+                </svg>
+                <span className="text-[13px] font-semibold leading-[1.4] text-[#85540A]">
+                  {step.prompt}
+                </span>
+              </div>
+            )}
+          </div>
 
-          <div className="relative flex items-center gap-2.5 mt-[17px]">
+          <div
+            className={`relative mt-[17px] gap-2.5 shrink-0 ${
+              isPhone
+                ? "flex flex-col-reverse items-stretch"
+                : "flex items-center"
+            }`}
+          >
             {index > 0 && (
               <button
                 type="button"
                 onClick={backStep}
-                className="h-[42px] px-4 border border-[#D8D8D8E6] rounded-[11px] bg-white text-[#2F2F2F] text-[14px] font-semibold cursor-pointer hover:border-[#0A6DC0] hover:text-[#0A6DC0]"
+                className="h-11 sm:h-[42px] px-4 border border-[#D8D8D8E6] rounded-[11px] bg-white text-[#2F2F2F] text-[14px] font-semibold cursor-pointer hover:border-[#0A6DC0] hover:text-[#0A6DC0]"
               >
                 Back
               </button>
             )}
-            <div className="flex-1" />
-            {moreInSection && (
+            {!isPhone && <div className="flex-1" />}
+            {!isPhone && moreInSection && (
               <button
                 type="button"
                 onClick={nextSection}
@@ -622,7 +693,11 @@ export const TourOverlay = () => {
             <button
               type="button"
               onClick={nextStep}
-              className="h-[42px] px-5 border-none rounded-[11px] bg-[#0A6DC0] text-white text-[14.5px] font-bold cursor-pointer inline-flex items-center gap-2 hover:bg-[#09599A]"
+              className={`border-none rounded-[11px] bg-[#0A6DC0] text-white font-bold cursor-pointer inline-flex items-center justify-center gap-2 hover:bg-[#09599A] ${
+                isPhone
+                  ? "w-full h-12 text-[15.5px]"
+                  : "h-[42px] px-5 text-[14.5px]"
+              }`}
             >
               <span>{index === total - 1 ? "Finish" : "Next"}</span>
               <svg

@@ -228,7 +228,7 @@ const Home = () => {
   const tabs: { id: ChannelTab; label: string }[] = [
     { id: "all", label: `All ${allRows.length}` },
     { id: "online", label: `Online ${onlineRows.length}` },
-    { id: "instore", label: `In-store ${inStoreRows.length}` },
+    { id: "instore", label: `Shop ${inStoreRows.length}` },
   ];
 
   return (
@@ -504,7 +504,7 @@ const Home = () => {
               className={pillClass.replace("h-[38px]", "h-10")}
             >
               <VcIcon name="card" size={16} stroke="#fff" strokeWidth={1.9} />
-              <span>Breakdown by collection medium</span>
+              <span>Breakdown by channel</span>
               <VcIcon name="chevron" size={14} stroke="#fff" strokeWidth={2.6} />
             </button>
           </div>
