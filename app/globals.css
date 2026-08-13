@@ -204,3 +204,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Sidebar promo cards (prototype) ──────────────────────────────────────── */
+@keyframes vcSheen {
+  0% { transform: translateX(-130%) skewX(-18deg); }
+  55%, 100% { transform: translateX(360%) skewX(-18deg); }
+}
+@keyframes vcRing {
+  0% { transform: scale(1); opacity: .5; }
+  70%, 100% { transform: scale(2.1); opacity: 0; }
+}
+@keyframes vcStep {
+  0%, 100% { opacity: .35; }
+  30% { opacity: 1; }
+}
+@keyframes vcGlow {
+  0%, 100% { opacity: .3; transform: scale(1); }
+  50% { opacity: .62; transform: scale(1.14); }
+}
+@keyframes vcDot {
+  0%, 100% { transform: translateY(0); opacity: .4; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}
+@keyframes vcFloat {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-5px) rotate(5deg); }
+}

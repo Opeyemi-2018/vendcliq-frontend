@@ -565,6 +565,13 @@ export default function AIChatWidget() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // The sidebar's "Start Chat" card opens the widget from outside its tree.
+  useEffect(() => {
+    const open = () => setOpen(true);
+    window.addEventListener("vc:open-chat", open);
+    return () => window.removeEventListener("vc:open-chat", open);
+  }, []);
+
   return (
     <>
       {/* Blur overlay when chat or history is open */}
