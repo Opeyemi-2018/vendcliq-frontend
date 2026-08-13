@@ -53,11 +53,16 @@ const MyStorePage = () => {
   // The guided tour opens this sheet for the Marketplace Conditions stops.
   useEffect(() => {
     const open = () => setAddStockStore((current) => current ?? "");
+    const close = () => setAddStockStore(null);
     window.addEventListener("vc:tour-open-add-stock", open);
     window.addEventListener("vc:tour-open-conditions", open);
+    window.addEventListener("vc:tour-close-add-stock", close);
+    window.addEventListener("vc:tour-close-conditions", close);
     return () => {
       window.removeEventListener("vc:tour-open-add-stock", open);
       window.removeEventListener("vc:tour-open-conditions", open);
+      window.removeEventListener("vc:tour-close-add-stock", close);
+      window.removeEventListener("vc:tour-close-conditions", close);
     };
   }, []);
   const queryClient = useQueryClient();
@@ -140,7 +145,7 @@ const MyStorePage = () => {
     router.push(`/inventory/my-store/${item.store?.id}/stock/${item.id}`);
 
   return (
-    <div className="flex flex-col gap-[18px] max-w-[1360px]">
+    <div data-tour="store-page" className="flex flex-col gap-[18px] max-w-[1360px]">
       {/* ── Header ───────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-[14px] flex-wrap">
         <button

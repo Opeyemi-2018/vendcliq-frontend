@@ -63,11 +63,23 @@ const Home = () => {
   const [handoverOpen, setHandoverOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  // The guided tour asks for this panel when it reaches the shortcuts stop.
+  // The guided tour opens these panels for their stops and closes them again
+  // on the way out, so nothing is left covering the screen.
   useEffect(() => {
-    const open = () => setPickerOpen(true);
-    window.addEventListener("vc:tour-open-shortcuts", open);
-    return () => window.removeEventListener("vc:tour-open-shortcuts", open);
+    const openPicker = () => setPickerOpen(true);
+    const closePicker = () => setPickerOpen(false);
+    const openHandover = () => setHandoverOpen(true);
+    const closeHandover = () => setHandoverOpen(false);
+    window.addEventListener("vc:tour-open-shortcuts", openPicker);
+    window.addEventListener("vc:tour-close-shortcuts", closePicker);
+    window.addEventListener("vc:tour-open-handover", openHandover);
+    window.addEventListener("vc:tour-close-handover", closeHandover);
+    return () => {
+      window.removeEventListener("vc:tour-open-shortcuts", openPicker);
+      window.removeEventListener("vc:tour-close-shortcuts", closePicker);
+      window.removeEventListener("vc:tour-open-handover", openHandover);
+      window.removeEventListener("vc:tour-close-handover", closeHandover);
+    };
   }, []);
   const { pins, setPins, reset: resetPins } = useShortcutPins(
     "inventory",

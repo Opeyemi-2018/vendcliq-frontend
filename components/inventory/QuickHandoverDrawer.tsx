@@ -68,6 +68,7 @@ export const QuickHandoverDrawer = ({
       />
 
       <aside
+        data-tour="handover-drawer"
         role="dialog"
         aria-modal="true"
         aria-label="Quick Handover"
