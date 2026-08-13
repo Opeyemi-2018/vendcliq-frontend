@@ -52,7 +52,12 @@ const MyStorePage = () => {
 
   // The guided tour opens this sheet for the Marketplace Rules stops.
   useEffect(() => {
-    const open = () => setAddStockStore((current) => current ?? "");
+    // The tour cannot answer "which store?", so it picks the first one and
+    // the sheet opens straight on the form it is describing.
+    const open = () =>
+      setAddStockStore(
+        (current) => current ?? (stores[0] ? String(stores[0].id) : ""),
+      );
     const close = () => setAddStockStore(null);
     window.addEventListener("vc:tour-open-add-stock", open);
     window.addEventListener("vc:tour-open-conditions", open);
@@ -64,7 +69,7 @@ const MyStorePage = () => {
       window.removeEventListener("vc:tour-close-add-stock", close);
       window.removeEventListener("vc:tour-close-conditions", close);
     };
-  }, []);
+  }, [stores]);
   const queryClient = useQueryClient();
 
   const loading = storesLoading || stockLoading;
@@ -179,7 +184,7 @@ const MyStorePage = () => {
       </div>
 
       {/* ── Store chips ──────────────────────────────────────────────────── */}
-      <div className="flex gap-[9px] flex-wrap">
+      <div className="flex gap-[9px] overflow-x-auto flex-nowrap -mx-1 px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:mx-0 sm:px-0">
         {[{ id: "all", name: "All stores" }, ...stores].map((store) => {
           const active = storeId === String(store.id);
           return (
@@ -349,7 +354,7 @@ const MyStorePage = () => {
             return (
               <div
                 key={item.id}
-                className={`bg-white border rounded-[16px] py-[14px] px-[18px] flex items-center gap-[14px] flex-wrap transition ${
+                className={`bg-white border rounded-[16px] py-3 sm:py-[14px] px-3 sm:px-[18px] flex items-center gap-2.5 sm:gap-[14px] flex-nowrap transition ${
                   isSelected
                     ? "border-[#0A6DC0] bg-[#F9FCFF]"
                     : "border-[#D8D8D88C] hover:border-[#0A6DC0]"
@@ -375,32 +380,35 @@ const MyStorePage = () => {
                 <button
                   type="button"
                   onClick={() => openStock(item)}
-                  className="flex items-center gap-[13px] flex-[1_1_240px] min-w-0 text-left bg-transparent border-none cursor-pointer p-0"
+                  className="flex items-center gap-2.5 sm:gap-[13px] flex-1 min-w-0 text-left bg-transparent border-none cursor-pointer p-0"
                 >
                   <ProductThumb
                     src={item.product?.image}
                     alt={item.product?.name ?? "Product"}
-                    size={46}
+                    size={42}
                   />
                   <span className="min-w-0">
-                    <span className="block font-bold text-[14.5px] text-[#2F2F2F] tracking-[-.2px] truncate">
-                      {item.product?.name ?? "Product"}
-                    </span>
-                    {chip && (
-                      <span
-                        className="inline-block text-[11px] font-bold px-[9px] py-[2px] rounded-full mt-1"
-                        style={{ background: chip.bg, color: chip.fg }}
-                      >
-                        {chip.label}
+                    {/* Name and status share a line so the row stays short. */}
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="font-bold text-[14px] sm:text-[14.5px] text-[#2F2F2F] tracking-[-.2px] truncate">
+                        {item.product?.name ?? "Product"}
                       </span>
-                    )}
-                    <span className="block text-[12.5px] text-[#8E8E93] mt-[3px] truncate">
+                      {chip && (
+                        <span
+                          className="shrink-0 text-[10.5px] sm:text-[11px] font-bold px-2 sm:px-[9px] py-[2px] rounded-full"
+                          style={{ background: chip.bg, color: chip.fg }}
+                        >
+                          {chip.label}
+                        </span>
+                      )}
+                    </span>
+                    <span className="block text-[12px] sm:text-[12.5px] text-[#8E8E93] mt-[3px] truncate">
                       {item.store?.name ?? "—"} · SKU {item.sku || "—"}
                     </span>
                   </span>
                 </button>
 
-                <span className="text-right shrink-0 min-w-[110px]">
+                <span className="text-right shrink-0 sm:min-w-[110px]">
                   <span className="block text-[13px] text-[#6E7480]">
                     {formatNaira(
                       parseFloat(item.selling_price ?? "0") || 0,

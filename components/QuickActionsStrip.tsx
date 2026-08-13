@@ -128,13 +128,13 @@ export const QuickActionsStrip = ({
       </div>
 
       {view === "tile" ? (
-        <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(178px,1fr))]">
+        <div className="flex gap-3 overflow-x-auto -mx-1 px-1 pb-1 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:overflow-visible sm:mx-0 sm:px-0 sm:[grid-template-columns:repeat(auto-fill,minmax(178px,1fr))]">
           {pinned.map((action) => (
             <button
               key={action.id}
               type="button"
               onClick={() => router.push(action.route)}
-              className="bg-white border border-[#D8D8D88C] rounded-[16px] p-4 cursor-pointer text-left flex flex-col gap-3 relative transition hover:border-[#0A6DC0] hover:-translate-y-[2px]"
+              className="shrink-0 w-[150px] snap-start sm:w-auto sm:shrink bg-white border border-[#D8D8D88C] rounded-[16px] p-4 cursor-pointer text-left flex flex-col gap-3 relative transition hover:border-[#0A6DC0] hover:-translate-y-[2px]"
             >
               <span
                 className="w-11 h-11 rounded-[13px] inline-flex items-center justify-center"

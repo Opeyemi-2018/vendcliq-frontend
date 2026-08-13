@@ -29,6 +29,7 @@ import {
   useUpdateStoreSettings,
 } from "@/hooks/useStores";
 import { formatPacks } from "@/lib/priceInput";
+import BackButton from "@/components/inventory/BackButton";
 
 interface Store {
   id: string;
@@ -336,12 +337,7 @@ const StoreDetailPage = () => {
 
   return (
     <div className="">
-      <button
-        onClick={() => router.back()}
-        className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors"
-      >
-        <MoveLeft className="w-5 h-5" />
-      </button>
+      <BackButton />
 
       <div className="flex flex-col gap-2 md:flex-row md:items-center justify-between">
         <div>
