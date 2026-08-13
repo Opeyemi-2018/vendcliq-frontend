@@ -1,13 +1,18 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { toast } from "sonner";
+import { openTourWelcome } from "@/lib/tour/store";
+import { TOUR_STEPS } from "@/lib/tour/steps";
 
 /** Opens the floating chat widget, which owns its own state. */
 const openChat = () => window.dispatchEvent(new CustomEvent("vc:open-chat"));
 
 /** The tour card and the AI card that sit above Logout in the prototype. */
-export const SidebarPromos = ({ tourStops = 17 }: { tourStops?: number }) => {
+export const SidebarPromos = ({
+  tourStops = TOUR_STEPS.length,
+}: {
+  tourStops?: number;
+}) => {
   const pathname = usePathname();
   const onAccount = pathname?.startsWith("/account");
 
@@ -60,7 +65,7 @@ export const SidebarPromos = ({ tourStops = 17 }: { tourStops?: number }) => {
 
         <button
           type="button"
-          onClick={() => toast("The guided tour is coming soon")}
+          onClick={openTourWelcome}
           className="relative bg-white text-[#0A2540] border-none rounded-lg px-3.5 py-[9px] font-semibold text-[13px] cursor-pointer self-start hover:bg-[#EAF2FB]"
         >
           Take The Tour

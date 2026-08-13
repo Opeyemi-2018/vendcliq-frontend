@@ -62,6 +62,13 @@ const Home = () => {
   const [mediumModalOpen, setMediumModalOpen] = useState(false);
   const [handoverOpen, setHandoverOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+
+  // The guided tour asks for this panel when it reaches the shortcuts stop.
+  useEffect(() => {
+    const open = () => setPickerOpen(true);
+    window.addEventListener("vc:tour-open-shortcuts", open);
+    return () => window.removeEventListener("vc:tour-open-shortcuts", open);
+  }, []);
   const { pins, setPins, reset: resetPins } = useShortcutPins(
     "inventory",
     DEFAULT_INVENTORY_PINS,
