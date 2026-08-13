@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { TOUR_STEPS, TOUR_HIGHLIGHTS } from "@/lib/tour/steps";
+import { TOUR_STEPS, TOUR_HIGHLIGHTS, TOUR_WELCOME } from "@/lib/tour/steps";
 import {
   backStep,
   beginTour,
@@ -84,7 +84,8 @@ export const TourOverlay = () => {
       openedPanel.current = step.open;
       // Give the route a beat to mount before the host can act on this.
       const timer = setTimeout(
-        () => window.dispatchEvent(new CustomEvent(`vc:tour-open-${step.open}`)),
+        () =>
+          window.dispatchEvent(new CustomEvent(`vc:tour-open-${step.open}`)),
         step.route && pathname !== step.route ? 700 : 60,
       );
       return () => clearTimeout(timer);
@@ -187,65 +188,83 @@ export const TourOverlay = () => {
   // ── Welcome ──────────────────────────────────────────────────────────
   if (phase === "welcome") {
     return createPortal(
-      <div className="fixed inset-0 z-[95] flex items-center justify-center p-6 overflow-y-auto font-dm-sans">
+      <div className="fixed inset-0 z-[95] flex items-center justify-center p-5 sm:p-6 font-dm-sans">
         <div
           onClick={endTour}
           className="absolute inset-0 bg-[rgba(10,37,64,.64)]"
         />
-        <div className="relative m-auto shrink-0 w-full max-w-[528px] bg-white rounded-[22px] px-8 pt-[30px] pb-6 shadow-[0_30px_70px_-22px_rgba(10,37,64,.55)]">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/brandmark.png"
-              alt="Vendcliq"
-              width={40}
-              height={40}
-              className="w-10 h-10 rounded-lg"
-            />
-            <span className="text-[11.5px] font-bold tracking-[.8px] uppercase text-[#0A6DC0]">
-              What&apos;s new
-            </span>
+        <div className="relative w-full max-w-[528px] max-h-[70vh] bg-white rounded-[22px] shadow-[0_30px_70px_-22px_rgba(10,37,64,.55)] flex flex-col overflow-hidden">
+          <div className="shrink-0 px-7 sm:px-8 pt-[26px]">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/brandmark.png"
+                alt="Vendcliq"
+                width={40}
+                height={40}
+                className="w-10 h-10 rounded-lg"
+              />
+              <span className="text-[11.5px] font-bold tracking-[.8px] uppercase text-[#0A6DC0]">
+                What&apos;s new
+              </span>
+            </div>
+
+            <h2 className="mt-5 font-clash font-semibold text-[24px] sm:text-[29px] leading-[1.14] tracking-[-.8px] text-[#2F2F2F]">
+              {TOUR_WELCOME.title}
+            </h2>
+            <p className="mt-[11px] text-[15px] leading-[1.5] text-[#6B6B70]">
+              {TOUR_WELCOME.intro}
+            </p>
           </div>
 
-          <h2 className="mt-5 font-clash font-semibold text-[26px] sm:text-[31px] leading-[1.14] tracking-[-.8px] text-[#2F2F2F]">
-            Some Things Have Changed — For The Better
-          </h2>
-          <p className="mt-[11px] text-[15px] leading-[1.5] text-[#6B6B70]">
-            We rebuilt the screens you use every day so you see more and tap
-            less. Take the tour and we will show you exactly what moved.
-          </p>
-
-          <div className="flex flex-col gap-[11px] mt-[22px]">
-            {TOUR_HIGHLIGHTS.map((label) => (
-              <div key={label} className="flex items-start gap-3">
-                <span className="w-[7px] h-[7px] rounded-full bg-[#FAC136] shrink-0 mt-[7px]" />
-                <span className="text-[14.5px] leading-[1.4] text-[#2F2F2F]">
+          <ol className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2.5 mt-4 mb-1 px-7 sm:px-8 list-none py-0">
+            {TOUR_HIGHLIGHTS.map((label, i) => (
+              <li key={label} className="flex items-start gap-3">
+                <span className="w-[22px] h-[22px] rounded-full bg-[#FFF3DB] text-[#85540A] text-[12px] font-bold inline-flex items-center justify-center shrink-0 mt-[1px]">
+                  {i + 1}
+                </span>
+                <span className="text-[14px] leading-[1.45] text-[#2F2F2F]">
                   {label}
                 </span>
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
 
-          <div className="flex items-center gap-3 mt-[26px] flex-wrap">
-            <button
-              type="button"
-              onClick={beginTour}
-              className="h-[52px] px-6 border-none rounded-[12px] bg-[#0A6DC0] text-white text-[15.5px] font-bold cursor-pointer inline-flex items-center gap-2.5 hover:bg-[#09599A]"
-            >
-              <span>Take The Tour</span>
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m9 6 6 6-6 6" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onClick={endTour}
-              className="h-[52px] px-5 border border-[#D8D8D8E6] rounded-[12px] bg-white text-[#2F2F2F] text-[15px] font-semibold cursor-pointer hover:border-[#0A6DC0] hover:text-[#0A6DC0]"
-            >
-              Not Now
-            </button>
-            <span className="text-[12.5px] text-[#8E8E93] ml-auto">
-              {total} stops · about 2 minutes
-            </span>
+          {/* Sticky footer: the actions stay reachable however long the list. */}
+          <div className="shrink-0 px-7 sm:px-8 pt-3.5 pb-6 border-t border-[#EEF1F4] bg-white">
+            <p className="text-[14px] leading-[1.5] font-semibold text-[#2F2F2F]">
+              {TOUR_WELCOME.closing}
+            </p>
+            <div className="flex items-center gap-3 mt-3.5 flex-wrap">
+              <button
+                type="button"
+                onClick={beginTour}
+                className="h-[52px] px-6 border-none rounded-[12px] bg-[#0A6DC0] text-white text-[15.5px] font-bold cursor-pointer inline-flex items-center gap-2.5 hover:bg-[#09599A]"
+              >
+                <span>Take The Tour</span>
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="#fff"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m9 6 6 6-6 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={endTour}
+                className="h-[52px] px-5 border border-[#D8D8D8E6] rounded-[12px] bg-white text-[#2F2F2F] text-[15px] font-semibold cursor-pointer hover:border-[#0A6DC0] hover:text-[#0A6DC0]"
+              >
+                Not Now
+              </button>
+              <span className="text-[12.5px] text-[#8E8E93] ml-auto">
+                {total} stops · about 2 minutes
+              </span>
+            </div>
           </div>
         </div>
       </div>,
@@ -257,10 +276,22 @@ export const TourOverlay = () => {
   if (phase === "end") {
     return createPortal(
       <div className="fixed inset-0 z-[95] flex items-center justify-center p-6 font-dm-sans">
-        <div onClick={endTour} className="absolute inset-0 bg-[rgba(10,37,64,.64)]" />
+        <div
+          onClick={endTour}
+          className="absolute inset-0 bg-[rgba(10,37,64,.64)]"
+        />
         <div className="relative w-full max-w-[460px] bg-white rounded-[22px] px-8 pt-[30px] pb-[26px] shadow-[0_30px_70px_-22px_rgba(10,37,64,.55)]">
           <div className="w-14 h-14 rounded-[16px] bg-[#E7F4EB] inline-flex items-center justify-center">
-            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#00681B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              width="30"
+              height="30"
+              fill="none"
+              stroke="#00681B"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="m4 12.5 5 5L20 6.5" />
             </svg>
           </div>
@@ -325,9 +356,7 @@ export const TourOverlay = () => {
     }
   }
 
-  const aLeft = rect
-    ? Math.max(26, Math.min(cw - 26, hx + hw / 2 - cLeft))
-    : 0;
+  const aLeft = rect ? Math.max(26, Math.min(cw - 26, hx + hw / 2 - cLeft)) : 0;
 
   const veil: React.CSSProperties = {
     position: "fixed",
@@ -342,9 +371,25 @@ export const TourOverlay = () => {
       {rect ? (
         <>
           <div style={{ ...veil, top: 0, left: 0, width: vw, height: hy }} />
-          <div style={{ ...veil, top: hy + hh, left: 0, width: vw, height: Math.max(0, vh - hy - hh) }} />
+          <div
+            style={{
+              ...veil,
+              top: hy + hh,
+              left: 0,
+              width: vw,
+              height: Math.max(0, vh - hy - hh),
+            }}
+          />
           <div style={{ ...veil, top: hy, left: 0, width: hx, height: hh }} />
-          <div style={{ ...veil, top: hy, left: hx + hw, width: Math.max(0, vw - hx - hw), height: hh }} />
+          <div
+            style={{
+              ...veil,
+              top: hy,
+              left: hx + hw,
+              width: Math.max(0, vw - hx - hw),
+              height: hh,
+            }}
+          />
           <div
             style={{
               position: "fixed",
@@ -388,10 +433,14 @@ export const TourOverlay = () => {
                 borderRadius: 2,
                 top: arrow === "up" ? -7 : "auto",
                 bottom: arrow === "down" ? -7 : "auto",
-                borderLeft: arrow === "up" ? "1px solid rgba(216,216,216,.55)" : "none",
-                borderTop: arrow === "up" ? "1px solid rgba(216,216,216,.55)" : "none",
-                borderRight: arrow === "down" ? "1px solid rgba(216,216,216,.55)" : "none",
-                borderBottom: arrow === "down" ? "1px solid rgba(216,216,216,.55)" : "none",
+                borderLeft:
+                  arrow === "up" ? "1px solid rgba(216,216,216,.55)" : "none",
+                borderTop:
+                  arrow === "up" ? "1px solid rgba(216,216,216,.55)" : "none",
+                borderRight:
+                  arrow === "down" ? "1px solid rgba(216,216,216,.55)" : "none",
+                borderBottom:
+                  arrow === "down" ? "1px solid rgba(216,216,216,.55)" : "none",
               }}
             />
           )}
@@ -434,7 +483,17 @@ export const TourOverlay = () => {
 
           {step?.prompt && (
             <div className="relative flex items-start gap-[9px] mt-3.5 px-3 py-2.5 rounded-[11px] bg-[#FFF3DB]">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#85540A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-px">
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="#85540A"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="shrink-0 mt-px"
+              >
                 <path d="M9 4.5v9.2l2.4-2 1.8 4.6 2.1-.9-1.8-4.5 3-.5z" />
                 <path d="M17.5 4.5A6.5 6.5 0 0 1 19 8.6" />
                 <path d="M3.5 8.6A6.5 6.5 0 0 1 5 4.5" />
@@ -471,7 +530,16 @@ export const TourOverlay = () => {
               className="h-[42px] px-5 border-none rounded-[11px] bg-[#0A6DC0] text-white text-[14.5px] font-bold cursor-pointer inline-flex items-center gap-2 hover:bg-[#09599A]"
             >
               <span>{index === total - 1 ? "Finish" : "Next"}</span>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="#fff"
+                strokeWidth="2.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <path d="m9 6 6 6-6 6" />
               </svg>
             </button>

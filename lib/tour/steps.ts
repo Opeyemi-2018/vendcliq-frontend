@@ -240,12 +240,19 @@ export const TOUR_STEPS: FlatStep[] = (() => {
 })();
 
 export const TOUR_HIGHLIGHTS = [
-  "Refreshed wallet overview — balance and money actions in one card",
-  "Inventory overview shows online and in-store sales at a glance",
-  "Quick Actions drawer — pin the six shortcuts you use most",
-  "Handover is easier: item by item, customer OTP or driver code",
-  "Sales History with easy toggles and search",
-  "Packs and pieces read as 1pck.2pcs instead of a decimal",
-  "Marketplace Conditions: minimum quantity, free delivery, bundles",
-  "Attendant and store settings moved somewhere more convenient",
+  "New Accounts screen — your balance, money moves and activity in one place.",
+  "Inventory dashboard shows online and in-store sales at a glance.",
+  "Quick Actions — pin the features you use most to your screen.",
+  "Handover for online sales is faster, with its own button on the dashboard.",
+  "Sales History refreshed — switch between in-store and online in one tap.",
+  "Item quantity reads better: no more 1.33 packs, now 1pck.2pcs.",
+  "Marketplace Conditions for online sales — minimum quantity, free delivery, bundles, free gifts.",
+  "Attendant and store settings moved somewhere easier to find.",
 ];
+
+export const TOUR_WELCOME = {
+  title: "Some Things Have Changed For The Better!",
+  intro:
+    "We rebuilt the screens you use every day so your business runs faster and smarter.",
+  closing: "We are confident you will love these new updates!",
+};
