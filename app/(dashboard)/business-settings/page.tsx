@@ -30,14 +30,14 @@ const BusinessSettings = () => {
 
       <div
         data-tour="page-tabs"
-        className="flex gap-1 bg-[#F4F5F7] p-1 rounded-full self-start flex-wrap"
+        className="flex gap-1 bg-[#F4F5F7] p-1 rounded-full self-stretch sm:self-start flex-nowrap"
       >
         {TABS.map((option) => (
           <button
             key={option.id}
             type="button"
             onClick={() => setTab(option.id)}
-            className={`border-none px-[18px] py-[9px] rounded-full text-[13.5px] cursor-pointer whitespace-nowrap ${
+            className={`flex-1 sm:flex-none border-none px-[18px] min-h-[44px] rounded-full text-[13.5px] cursor-pointer whitespace-nowrap ${
               tab === option.id
                 ? "bg-white text-[#0A6DC0] font-bold shadow-[0_1px_3px_rgba(0,0,0,.10)]"
                 : "bg-transparent text-[#6B6B70] font-semibold hover:text-[#2F2F2F]"

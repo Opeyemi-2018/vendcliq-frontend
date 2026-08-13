@@ -71,9 +71,9 @@ export const ShortcutPickerModal = ({
         role="dialog"
         aria-modal="true"
         aria-label="Edit shortcuts"
-        className="relative w-[560px] max-w-full max-h-[86vh] bg-white rounded-[22px] shadow-[0_26px_60px_-18px_rgba(10,37,64,.5)] flex flex-col overflow-hidden"
+        className="relative w-full h-full sm:w-[560px] sm:h-auto sm:max-w-full sm:max-h-[86vh] bg-white rounded-none sm:rounded-[22px] shadow-[0_26px_60px_-18px_rgba(10,37,64,.5)] flex flex-col overflow-hidden"
       >
-        <header className="px-6 pt-[22px] pb-[18px] flex items-start gap-[14px] border-b border-[#D8D8D880]">
+        <header className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-[22px] pb-3.5 sm:pb-[18px] flex items-start gap-3 sm:gap-[14px] border-b border-[#D8D8D880]">
           <span className="w-[46px] h-[46px] rounded-[14px] bg-[#E1EEFF] inline-flex items-center justify-center shrink-0">
             <VcIcon name="pencil" size={24} stroke="#0A6DC0" />
           </span>
@@ -126,7 +126,7 @@ export const ShortcutPickerModal = ({
                 key={action.id}
                 type="button"
                 onClick={() => toggle(action.id)}
-                className="flex items-center gap-[14px] w-full box-border text-left cursor-pointer px-[14px] py-3 rounded-[14px] border hover:border-[#0A6DC0]"
+                className="flex items-center gap-3 sm:gap-[14px] w-full box-border text-left cursor-pointer px-[14px] min-h-[56px] py-3 rounded-[14px] border hover:border-[#0A6DC0]"
                 style={{
                   borderColor: picked ? "#0A6DC0" : "rgba(216,216,216,.8)",
                   background: picked ? "#F0F7FF" : "#fff",

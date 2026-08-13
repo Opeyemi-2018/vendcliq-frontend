@@ -124,14 +124,14 @@ export const AddStockSheet = ({
   if (!open) return null;
 
   const tabClass = (active: boolean) =>
-    `inline-flex items-center gap-2 pb-3 -mb-px border-b-2 bg-transparent cursor-pointer text-[15px] ${
+    `flex-1 sm:flex-none inline-flex items-center justify-center sm:justify-start gap-2 min-h-[44px] pb-3 -mb-px border-b-2 bg-transparent cursor-pointer text-[14px] sm:text-[15px] ${
       active
         ? "border-[#0A6DC0] text-[#0A6DC0] font-bold"
         : "border-transparent text-[#565656] font-semibold hover:text-[#2F2F2F]"
     }`;
 
   return (
-    <div className="fixed inset-0 z-[76] flex items-center justify-center px-6 py-8 font-dm-sans">
+    <div className="fixed inset-0 z-[76] flex items-stretch sm:items-center justify-center px-0 py-0 sm:px-6 sm:py-8 font-dm-sans">
       <div
         onClick={() => onOpenChange(false)}
         className="absolute inset-0 bg-[rgba(10,37,64,.46)]"
@@ -140,16 +140,16 @@ export const AddStockSheet = ({
       <div
         role="dialog"
         aria-modal="true"
-        className="relative w-full max-w-[720px] bg-white rounded-[18px] shadow-[0_24px_70px_rgba(10,37,64,.2),0_4px_14px_rgba(10,37,64,.08)] flex flex-col max-h-[calc(100vh-110px)] overflow-hidden"
+        className="relative w-full sm:max-w-[720px] bg-white rounded-none sm:rounded-[18px] shadow-[0_24px_70px_rgba(10,37,64,.2),0_4px_14px_rgba(10,37,64,.08)] flex flex-col h-full sm:h-auto sm:max-h-[calc(100vh-110px)] overflow-hidden"
       >
         {/* ── Header ─────────────────────────────────────────────────────── */}
-        <div className="px-[30px] pt-[26px] shrink-0">
+        <div className="px-4 sm:px-[30px] pt-4 sm:pt-[26px] shrink-0 bg-white">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="text-[12.5px] font-semibold tracking-[.05em] uppercase text-[#0A6DC0]">
                 New stock item
               </div>
-              <h2 className="mt-1.5 font-clash font-bold text-[26px] leading-[1.15] text-[#1F2328]">
+              <h2 className="mt-1.5 font-clash font-bold text-[20px] sm:text-[26px] leading-[1.15] text-[#1F2328]">
                 {store ? `Add Stock to ${store.name}` : "Add Stock"}
               </h2>
             </div>
@@ -166,7 +166,7 @@ export const AddStockSheet = ({
           </div>
 
           {store && (
-            <div className="flex gap-[30px] mt-[22px] border-b border-[#D8D8D88C]">
+            <div className="flex sm:gap-[30px] mt-4 sm:mt-[22px] border-b border-[#D8D8D88C]">
               <button
                 type="button"
                 onClick={() => setTab("stock")}
@@ -208,7 +208,7 @@ export const AddStockSheet = ({
         </div>
 
         {/* ── Body ───────────────────────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto px-[30px] py-[26px]">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-[30px] py-4 sm:py-[26px]">
           {!store ? (
             <div className="flex flex-col gap-2.5">
               <p className="text-[13.5px] text-[#565656]">
@@ -263,7 +263,7 @@ export const AddStockSheet = ({
 
         {/* ── Footer ─────────────────────────────────────────────────────── */}
         {store && (
-          <div className="px-[30px] pb-[26px] pt-4 border-t border-[#D8D8D88C] shrink-0">
+          <div className="px-4 sm:px-[30px] pb-[max(16px,env(safe-area-inset-bottom))] sm:pb-[26px] pt-3.5 sm:pt-4 border-t border-[#D8D8D88C] shrink-0 bg-white">
             {created?.id ? (
               <button
                 type="button"

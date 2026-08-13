@@ -72,14 +72,14 @@ export const QuickHandoverDrawer = ({
         role="dialog"
         aria-modal="true"
         aria-label="Quick Handover"
-        className="relative w-[440px] max-w-[92vw] h-full bg-white shadow-[-18px_0_46px_-18px_rgba(10,37,64,.35)] flex flex-col font-dm-sans"
+        className="relative w-full sm:w-[440px] sm:max-w-[92vw] h-full bg-white shadow-[-18px_0_46px_-18px_rgba(10,37,64,.35)] flex flex-col font-dm-sans"
       >
-        <header className="px-6 pt-[22px] pb-4 border-b border-[#D8D8D880] flex items-start gap-[14px]">
-          <span className="w-[46px] h-[46px] rounded-[14px] bg-[#FFF3DB] inline-flex items-center justify-center shrink-0">
+        <header className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-[22px] pb-3.5 sm:pb-4 border-b border-[#D8D8D880] flex items-start gap-3 sm:gap-[14px]">
+          <span className="w-10 h-10 sm:w-[46px] sm:h-[46px] rounded-[12px] sm:rounded-[14px] bg-[#FFF3DB] inline-flex items-center justify-center shrink-0">
             <VcIcon name="truck" size={24} stroke="#B47800" />
           </span>
           <div className="flex-1 min-w-0">
-            <div className="font-clash font-bold text-[22px] tracking-[-.4px] text-[#2F2F2F]">
+            <div className="font-clash font-bold text-[18px] sm:text-[22px] tracking-[-.4px] text-[#2F2F2F]">
               Quick Handover
             </div>
             <div className="text-[13px] text-[#8E8E93] mt-[3px]">{subtitle}</div>
@@ -97,7 +97,7 @@ export const QuickHandoverDrawer = ({
           </button>
         </header>
 
-        <div className="flex-1 overflow-auto px-6 pt-[18px] pb-6 flex flex-col gap-3">
+        <div className="flex-1 min-h-0 overflow-auto px-4 sm:px-6 pt-3.5 sm:pt-[18px] pb-5 sm:pb-6 flex flex-col gap-3">
           {orders.length > 0 ? (
             orders.map((order) => (
               <div
@@ -156,7 +156,7 @@ export const QuickHandoverDrawer = ({
         </div>
 
         {oldest && (
-          <footer className="px-6 pt-4 pb-[22px] border-t border-[#D8D8D880]">
+          <footer className="shrink-0 px-4 sm:px-6 pt-3.5 sm:pt-4 pb-[max(16px,env(safe-area-inset-bottom))] sm:pb-[22px] border-t border-[#D8D8D880] bg-white">
             <button
               type="button"
               onClick={() => {

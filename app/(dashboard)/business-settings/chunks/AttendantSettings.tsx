@@ -251,7 +251,7 @@ export const AttendantSettings = () => {
   return (
     <div className="flex flex-wrap gap-5 items-start">
       {/* ── List ─────────────────────────────────────────────────────────── */}
-      <div className="flex-[1_1_340px] min-w-[300px] max-w-[420px] flex flex-col gap-3.5">
+      <div className="flex-[1_1_340px] w-full min-w-0 sm:min-w-[300px] sm:max-w-[420px] flex flex-col gap-3.5">
         <div className="grid grid-cols-3 gap-2.5">
           {[
             { label: "Total", value: attendants.length, colour: "#2F2F2F" },
@@ -360,7 +360,7 @@ export const AttendantSettings = () => {
       </div>
 
       {/* ── Permissions ──────────────────────────────────────────────────── */}
-      <div className={`${CARD} flex-[2_1_440px] min-w-[320px] p-[22px] flex flex-col gap-[18px]`}>
+      <div className={`${CARD} flex-[2_1_440px] w-full min-w-0 sm:min-w-[320px] p-4 sm:p-[22px] flex flex-col gap-[18px]`}>
         {!selected ? (
           <div className="py-16 text-center text-[#8E8E93] text-[13.5px]">
             Select an attendant to manage what they can do.
@@ -408,7 +408,7 @@ export const AttendantSettings = () => {
                   return (
                     <div
                       key={permission.key}
-                      className="flex items-center gap-3.5 px-4 py-[13px] border-b border-b-[#D8D8D873] bg-white last:border-b-0"
+                      className="flex items-center gap-3 sm:gap-3.5 px-3 sm:px-4 min-h-[56px] py-[13px] border-b border-b-[#D8D8D873] bg-white last:border-b-0"
                     >
                       <span
                         className="w-10 h-10 rounded-[11px] inline-flex items-center justify-center shrink-0"
@@ -420,7 +420,7 @@ export const AttendantSettings = () => {
                         />
                       </span>
                       <span
-                        className={`flex-1 min-w-0 text-[15px] ${
+                        className={`flex-1 min-w-0 text-[14px] sm:text-[15px] leading-[1.3] ${
                           on
                             ? "font-semibold text-[#2F2F2F]"
                             : "font-medium text-[#6E7480]"

@@ -203,7 +203,7 @@ export const StoreSettings = () => {
   return (
     <div className="flex flex-col gap-[18px] max-w-[760px]">
       {/* ── Store picker ─────────────────────────────────────────────────── */}
-      <div className="flex gap-2.5 flex-wrap">
+      <div className="flex gap-2.5 overflow-x-auto flex-nowrap -mx-1 px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:mx-0 sm:px-0">
         {stores.map((store) => {
           const active = String(store.id) === storeId;
           return (
@@ -211,7 +211,7 @@ export const StoreSettings = () => {
               key={store.id}
               type="button"
               onClick={() => setStoreId(String(store.id))}
-              className={`inline-flex items-center gap-2 h-11 px-5 rounded-[12px] cursor-pointer text-[14.5px] whitespace-nowrap ${
+              className={`shrink-0 inline-flex items-center gap-2 h-11 px-5 rounded-[12px] cursor-pointer text-[14.5px] whitespace-nowrap ${
                 active
                   ? "border-none bg-[#0A6DC0] text-white font-bold"
                   : "border border-[#D8D8D8E6] bg-white text-[#2F2F2F] font-semibold hover:border-[#0A6DC0] hover:text-[#0A6DC0]"
