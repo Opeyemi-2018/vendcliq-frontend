@@ -6,7 +6,6 @@ import {
   NavAccount,
   NavInventory,
   NavMarket,
-  NavEnterprise,
   NavMore,
   NavIconProps,
 } from "@/components/inventory/NavIcons";
@@ -37,7 +36,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { clearAuthTokens } from "@/lib/utils/api";
 import {
   Collapsible,
@@ -47,6 +45,7 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/userContext";
+import SidebarPromos from "@/components/SidebarPromos";
 
 // ── Tag badges ────────────────────────────────────────────────────────────────
 function NewTag() {
@@ -150,24 +149,6 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(!isAttendant
-      ? [
-          {
-            title: "Enterprise",
-            url: "/credit-ledger",
-            icon: NavEnterprise,
-            tag: "new" as const,
-            children: [
-              { title: "Credit Ledger", url: "/credit-ledger" },
-              {
-                title: "Delivery",
-                url: "/delivery",
-                tag: "coming-soon" as const,
-              },
-            ],
-          },
-        ]
-      : []),
     {
       title: "More",
       url: "#",
@@ -238,16 +219,23 @@ export function AppSidebar() {
         <SidebarGroup>
           {!isCollapsed && (
             <div className="px-4 py-4">
-              <Image src={"/vl.avif"} width={150} height={150} alt="logo" />
+              <Image
+                src="/logo-wordmark-light.png"
+                width={150}
+                height={26}
+                alt="Vendcliq"
+                className="h-[26px] w-auto ml-0.5"
+              />
             </div>
           )}
           {isCollapsed && (
             <div className="flex justify-center py-4">
               <Image
-                src="/sidebar-logo.svg"
+                src="/brandmark.png"
                 width={32}
                 height={32}
-                alt="logo"
+                alt="Vendcliq"
+                className="w-8 h-auto"
               />
             </div>
           )}
@@ -271,6 +259,7 @@ export function AppSidebar() {
                       >
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton
+                            data-tour={item.title === "More" ? "nav-more" : undefined}
                             tooltip={item.title}
                             isActive={parentActive}
                             className="menuButton mb-3 text-white hover:bg-white/10"
@@ -376,51 +365,8 @@ export function AppSidebar() {
         {/* Bottom section */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent className="space-y-3">
-            {!isAttendant && (
-              <SidebarMenu className="mt-4">
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <div
-                      style={{
-                        backgroundImage: "url('/mech.avif')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        height: "127px",
-                      }}
-                      className="h-[127px] w-[217px]"
-                    >
-                      {!isCollapsed && (
-                        <div className="space-y-3">
-                          <h1 className="text-white font-clash text-[14px] font-semibold">
-                            Payment Subscriptions
-                          </h1>
-                          <p className="text-[13px] font-dm-sans font-medium text-white leading-none">
-                            View subscription, manage your plan and upgrade.
-                          </p>
-                          <Button
-                            onClick={() => router.push("/plans")}
-                            className="bg-white text-[#0A2540] hover:bg-[#0A2540] hover:text-white"
-                          >
-                            Upgrade Plan
-                          </Button>
-                        </div>
-                      )}
-                      {isCollapsed && (
-                        <div className="flex justify-center py-4">
-                          <Image
-                            onClick={() => router.push("/plans")}
-                            src="/sub.svg"
-                            width={32}
-                            height={32}
-                            alt="logo"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            )}
+            {/* Both promo cards are expanded-only, as in the prototype. */}
+            {!isCollapsed && <SidebarPromos />}
 
             <SidebarMenu>
               <SidebarMenuItem>
