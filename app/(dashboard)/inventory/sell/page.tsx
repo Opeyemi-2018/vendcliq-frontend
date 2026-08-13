@@ -29,6 +29,7 @@ import { useCreateInvoice } from "@/hooks/useInventoryOverview";
 import PlacesAutocompleteInput from "@/hooks/googleMap";
 import EditStockPriceModal from "./chunks/EditStockPriceModal";
 import { formatQty, formatPacks, formatPieces, piecesOf } from "@/lib/priceInput";
+import TourPackDemo from "@/components/tour/TourPackDemo";
 
 
 interface Store {
@@ -659,6 +660,7 @@ export default function SellPage() {
           </div>
 
           {/* Stock list */}
+          <TourPackDemo />
           {stockLoading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <ThreeDots height="50" width="50" color="#0A6DC0" visible />

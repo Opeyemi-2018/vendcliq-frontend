@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
@@ -49,6 +49,17 @@ const MyStorePage = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [addStockStore, setAddStockStore] = useState<string | null>(null);
+
+  // The guided tour opens this sheet for the Marketplace Conditions stops.
+  useEffect(() => {
+    const open = () => setAddStockStore((current) => current ?? "");
+    window.addEventListener("vc:tour-open-add-stock", open);
+    window.addEventListener("vc:tour-open-conditions", open);
+    return () => {
+      window.removeEventListener("vc:tour-open-add-stock", open);
+      window.removeEventListener("vc:tour-open-conditions", open);
+    };
+  }, []);
   const queryClient = useQueryClient();
 
   const loading = storesLoading || stockLoading;
