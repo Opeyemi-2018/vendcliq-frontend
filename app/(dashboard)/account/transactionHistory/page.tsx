@@ -279,26 +279,29 @@ const TransactionHistoryPage = () => {
                     >
                       <VcIcon name={tile.icon} size={21} stroke={tile.fg} strokeWidth={2.2} />
                     </span>
+                    {/* Name and amount on one line, bank and time beneath. */}
                     <span className="flex-1 min-w-0">
-                      <span className="block font-bold text-[15px] text-[#2F2F2F] tracking-[-.2px] truncate">
-                        {row.title}
+                      <span className="flex items-baseline gap-2">
+                        <span className="flex-1 min-w-0 font-bold text-[14px] sm:text-[15px] text-[#2F2F2F] tracking-[-.2px] truncate">
+                          {row.title}
+                        </span>
+                        <span
+                          className="shrink-0 font-clash font-bold text-[15px] sm:text-[16px] tracking-[-.3px] whitespace-nowrap"
+                          style={{ color: row.amountColor }}
+                        >
+                          {row.amountDisplay}
+                        </span>
                       </span>
-                      <span className="block text-[12.5px] text-[#8E8E93] mt-[3px] truncate">
-                        {row.sub}
+                      <span className="flex items-baseline gap-2 mt-[3px]">
+                        <span className="flex-1 min-w-0 text-[12px] sm:text-[12.5px] text-[#8E8E93] truncate">
+                          {row.sub}
+                        </span>
+                        <span className="hidden md:block shrink-0 text-[12px] text-[#8E8E93]">
+                          {row.ref}
+                        </span>
                       </span>
                     </span>
-                    <span className="text-right shrink-0">
-                      <span
-                        className="block font-clash font-bold text-[16px] tracking-[-.3px]"
-                        style={{ color: row.amountColor }}
-                      >
-                        {row.amountDisplay}
-                      </span>
-                      <span className="block text-[12px] text-[#8E8E93] mt-[3px]">
-                        {row.ref}
-                      </span>
-                    </span>
-                    <VcIcon name="chevron" size={17} stroke="#B9BCC2" strokeWidth={2.4} className="shrink-0" />
+                    <VcIcon name="chevron" size={17} stroke="#B9BCC2" strokeWidth={2.4} className="hidden sm:block shrink-0" />
                   </button>
                 );
               })}

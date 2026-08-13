@@ -243,14 +243,6 @@ const Home = () => {
             Everything you sold today, in one place.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => router.push("/inventory/my-store")}
-          className="inline-flex items-center gap-2 h-[42px] px-4 rounded-[10px] border border-[#D8D8D8E6] bg-white cursor-pointer text-[14px] font-medium text-[#2F2F2F] whitespace-nowrap hover:border-[#0A6DC0] hover:text-[#0A6DC0]"
-        >
-          <VcIcon name="box" size={17} strokeWidth={1.9} />
-          <span>My Store</span>
-        </button>
       </div>
 
       {/* ── Hero + action cards ──────────────────────────────────────────── */}

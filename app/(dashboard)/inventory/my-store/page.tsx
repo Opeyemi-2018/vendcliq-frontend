@@ -176,12 +176,23 @@ const MyStorePage = () => {
           type="button"
           data-tour="store-add"
           onClick={() => setAddOpen(true)}
-          className="inline-flex items-center gap-2 h-11 px-[18px] rounded-[12px] border-none bg-[#0A6DC0] cursor-pointer text-[14px] font-bold text-white whitespace-nowrap hover:bg-[#09599A]"
+          className="hidden sm:inline-flex items-center gap-2 h-11 px-[18px] rounded-[12px] border-none bg-[#0A6DC0] cursor-pointer text-[14px] font-bold text-white whitespace-nowrap hover:bg-[#09599A]"
         >
           <VcIcon name="plus" size={18} stroke="#fff" strokeWidth={2.4} />
           <span>Add New</span>
         </button>
       </div>
+
+      <button
+        type="button"
+        data-tour="store-add"
+        onClick={() => setAddOpen(true)}
+        aria-label="Add New"
+        className="sm:hidden fixed right-6 bottom-[calc(115px+env(safe-area-inset-bottom))] z-40 h-14 pl-4 pr-5 rounded-full border-none bg-[#0A6DC0] text-white text-[15px] font-bold cursor-pointer inline-flex items-center gap-2 shadow-[0_12px_28px_-8px_rgba(10,109,192,.6)] hover:bg-[#09599A]"
+      >
+        <VcIcon name="plus" size={20} stroke="#fff" strokeWidth={2.6} />
+        <span>Add New</span>
+      </button>
 
       {/* ── Store chips ──────────────────────────────────────────────────── */}
       <div className="flex gap-[9px] overflow-x-auto flex-nowrap -mx-1 px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:mx-0 sm:px-0">

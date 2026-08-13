@@ -425,34 +425,39 @@ const AccountOverview = () => {
                     key={row.id}
                     type="button"
                     onClick={() => setReceiptTx(row.source)}
-                    className="w-full text-left flex items-center gap-[14px] py-[13px] px-1 border-t border-[#D8D8D873] cursor-pointer hover:bg-[#F9FCFF]"
+                    className="w-full text-left flex items-center gap-2.5 sm:gap-[14px] py-[11px] sm:py-[13px] px-1 border-t border-[#D8D8D873] cursor-pointer hover:bg-[#F9FCFF]"
                   >
                     <span
-                      className="w-[42px] h-[42px] rounded-[13px] inline-flex items-center justify-center shrink-0"
+                      className="w-9 h-9 sm:w-[42px] sm:h-[42px] rounded-[11px] sm:rounded-[13px] inline-flex items-center justify-center shrink-0"
                       style={{ background: tile.bg }}
                     >
                       <VcIcon name={tile.icon} size={20} stroke={tile.fg} strokeWidth={2.2} />
                     </span>
+                    {/* Name and amount share the first line; bank and time sit
+                        under the name. The amount must never wrap. */}
                     <span className="flex-1 min-w-0">
-                      <span className="block font-bold text-[14.5px] text-[#2F2F2F] tracking-[-.2px] truncate">
-                        {row.title}
+                      <span className="flex items-baseline gap-2">
+                        <span className="flex-1 min-w-0 font-bold text-[14px] sm:text-[14.5px] text-[#2F2F2F] tracking-[-.2px] truncate">
+                          {row.title}
+                        </span>
+                        <span
+                          className="shrink-0 font-bold text-[14px] sm:text-[15px] tracking-[-.2px] whitespace-nowrap"
+                          style={{ color: row.amountColor }}
+                        >
+                          {row.amountDisplay}
+                        </span>
                       </span>
-                      <span className="block text-[12.5px] text-[#8E8E93] mt-[3px] truncate">
-                        {row.sub}
+                      <span className="flex items-baseline gap-2 mt-[3px]">
+                        <span className="flex-1 min-w-0 text-[12px] sm:text-[12.5px] text-[#8E8E93] truncate">
+                          {row.sub}
+                        </span>
+                        {/* Reference codes are noise on a small screen. */}
+                        <span className="hidden md:block shrink-0 text-[12px] text-[#8E8E93]">
+                          {row.ref}
+                        </span>
                       </span>
                     </span>
-                    <span className="text-right shrink-0">
-                      <span
-                        className="block font-bold text-[15px] tracking-[-.2px]"
-                        style={{ color: row.amountColor }}
-                      >
-                        {row.amountDisplay}
-                      </span>
-                      <span className="block text-[12px] text-[#8E8E93] mt-[3px]">
-                        {row.ref}
-                      </span>
-                    </span>
-                    <VcIcon name="chevron" size={17} stroke="#B9BCC2" strokeWidth={2.4} className="shrink-0" />
+                    <VcIcon name="chevron" size={17} stroke="#B9BCC2" strokeWidth={2.4} className="hidden sm:block shrink-0" />
                   </button>
                 );
               })}
