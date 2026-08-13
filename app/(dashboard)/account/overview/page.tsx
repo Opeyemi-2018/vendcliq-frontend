@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
 import { useUser } from "@/context/userContext";
 import { useWallet } from "@/hooks/useWallet";
+import { useStores } from "@/hooks/useStores";
 import { useTransactions } from "@/hooks/useTransactions";
 import { formatNaira } from "@/lib/salesFilters";
 import { groupByDay, moneyFlow, transactionToRow } from "@/lib/transactionRows";
@@ -32,10 +33,22 @@ const AccountOverview = () => {
   const router = useRouter();
   const { user, isUserWalletNull } = useUser();
   const {
+    wallet,
     isLoading: walletLoading,
+    fetchWallet,
     getBalance,
     getAccountNumber,
   } = useWallet();
+
+  // The hook only seeds from localStorage, so a fresh login has no wallet
+  // until this runs. Without it the balance reads zero and the business
+  // account prompt shows to people who already have an account.
+  useEffect(() => {
+    fetchWallet();
+  }, [fetchWallet]);
+
+  // Whether the vendor has a store decides which prompt to offer them.
+  const { data: stores = [] } = useStores();
 
   const { data: transactions = [], isLoading: txLoading } = useTransactions();
 
@@ -51,8 +64,10 @@ const AccountOverview = () => {
   );
 
   const balance = Number(getBalance?.() ?? 0);
-  const accountNumber = getAccountNumber?.() ?? "";
-  const hasWallet = !isUserWalletNull && Boolean(accountNumber);
+  const accountNumber = getAccountNumber?.("WEMA") ?? "";
+  const hasWallet =
+    !isUserWalletNull &&
+    Boolean(wallet?.accountNumbers && Object.keys(wallet.accountNumbers).length);
 
   const rows = useMemo(
     () => transactions.map((tx) => transactionToRow(tx, hideBalance)),
@@ -170,6 +185,15 @@ const AccountOverview = () => {
           </div>
 
           <div className="flex-none flex flex-col gap-2 items-stretch">
+            {stores.length === 0 && (
+              <button
+                type="button"
+                onClick={() => router.push("/inventory/create-store")}
+                className="h-[54px] px-[26px] rounded-[12px] border border-[#D8D8D8E6] bg-white text-[#2F2F2F] cursor-pointer text-[15px] font-bold whitespace-nowrap hover:border-[#0A6DC0] hover:text-[#0A6DC0]"
+              >
+                Create A Store
+              </button>
+            )}
             <button
               type="button"
               onClick={() => router.push("/business-account")}
