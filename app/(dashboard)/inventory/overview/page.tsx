@@ -265,7 +265,7 @@ const Home = () => {
           </div>
 
           {/* Filters */}
-          <div className="relative flex items-center gap-[10px] flex-wrap">
+          <div className="relative flex items-center gap-2 sm:gap-[10px] flex-nowrap sm:flex-wrap">
             <div className="relative">
               <button
                 type="button"
@@ -515,20 +515,20 @@ const Home = () => {
           <button
             type="button"
             onClick={() => router.push("/inventory/sell")}
-            className="flex-1 min-h-[132px] border-none rounded-[20px] cursor-pointer bg-[linear-gradient(135deg,#0A6DC0_0%,#328CDC_100%)] text-white flex items-center gap-4 px-[22px] py-5 text-left shadow-[0_10px_24px_-8px_rgba(10,109,192,.5)] transition-transform hover:-translate-y-[2px]"
+            className="flex-1 min-h-[84px] sm:min-h-[132px] border-none rounded-[16px] sm:rounded-[20px] cursor-pointer bg-[linear-gradient(135deg,#0A6DC0_0%,#328CDC_100%)] text-white flex items-center gap-3 sm:gap-4 px-4 sm:px-[22px] py-3.5 sm:py-5 text-left shadow-[0_10px_24px_-8px_rgba(10,109,192,.5)] transition-transform hover:-translate-y-[2px]"
           >
-            <span className="w-14 h-14 rounded-[16px] bg-white/[.18] inline-flex items-center justify-center shrink-0">
+            <span className="w-11 h-11 sm:w-14 sm:h-14 rounded-[13px] sm:rounded-[16px] bg-white/[.18] inline-flex items-center justify-center shrink-0">
               <VcIcon name="bag" size={28} stroke="#fff" />
             </span>
             <span className="flex-1 min-w-0">
-              <span className="block font-clash font-bold text-[24px] tracking-[-.5px]">
+              <span className="block font-clash font-bold text-[17px] sm:text-[24px] tracking-[-.5px]">
                 Start Selling
               </span>
-              <span className="block text-[13px] text-white/85 mt-[3px]">
+              <span className="block text-[12px] sm:text-[13px] text-white/85 mt-[3px]">
                 Add items to a new order
               </span>
             </span>
-            <VcIcon name="chevron" size={24} stroke="#fff" strokeWidth={2.6} className="shrink-0" />
+            <VcIcon name="chevron" size={20} stroke="#fff" strokeWidth={2.6} className="shrink-0" />
           </button>
 
           {pendingHandovers.length > 0 ? (
@@ -536,28 +536,28 @@ const Home = () => {
               type="button"
               data-tour="handover-card"
               onClick={() => setHandoverOpen(true)}
-              className="flex-1 min-h-[132px] border-none rounded-[20px] cursor-pointer bg-[linear-gradient(135deg,#FAC136_0%,#FFB800_100%)] text-[#1A1400] flex items-center gap-4 px-[22px] py-5 text-left shadow-[0_10px_24px_-8px_rgba(220,160,20,.5)] transition-transform hover:-translate-y-[2px]"
+              className="flex-1 min-h-[84px] sm:min-h-[132px] border-none rounded-[16px] sm:rounded-[20px] cursor-pointer bg-[linear-gradient(135deg,#FAC136_0%,#FFB800_100%)] text-[#1A1400] flex items-center gap-3 sm:gap-4 px-4 sm:px-[22px] py-3.5 sm:py-5 text-left shadow-[0_10px_24px_-8px_rgba(220,160,20,.5)] transition-transform hover:-translate-y-[2px]"
             >
-              <span className="relative w-14 h-14 rounded-[16px] bg-black/10 inline-flex items-center justify-center shrink-0">
+              <span className="relative w-11 h-11 sm:w-14 sm:h-14 rounded-[13px] sm:rounded-[16px] bg-black/10 inline-flex items-center justify-center shrink-0">
                 <VcIcon name="truck" size={28} stroke="#1A1400" />
                 <span className="absolute -top-1.5 -right-1.5 min-w-6 h-6 px-1.5 box-border rounded-full bg-[#1A1400] text-[#FAC136] inline-flex items-center justify-center font-clash font-bold text-[13px]">
                   {pendingHandovers.length}
                 </span>
               </span>
               <span className="flex-1 min-w-0">
-                <span className="block font-clash font-bold text-[22px] tracking-[-.4px]">
+                <span className="block font-clash font-bold text-[17px] sm:text-[22px] tracking-[-.4px]">
                   Quick Handover
                 </span>
-                <span className="block text-[13px] text-[#1A1400]/[.78] mt-[3px]">
+                <span className="block text-[12px] sm:text-[13px] text-[#1A1400]/[.78] mt-[3px]">
                   {pendingHandovers.length === 1
                     ? "1 paid order awaiting pickup"
                     : `${pendingHandovers.length} paid orders awaiting pickup`}
                 </span>
               </span>
-              <VcIcon name="chevron" size={24} stroke="#1A1400" strokeWidth={2.6} className="shrink-0" />
+              <VcIcon name="chevron" size={20} stroke="#1A1400" strokeWidth={2.6} className="shrink-0" />
             </button>
           ) : (
-            <div className="flex-1 min-h-[132px] rounded-[20px] border border-[#D8D8D8B3] bg-white flex items-center gap-4 px-[22px] py-5">
+            <div className="flex-1 min-h-[84px] sm:min-h-[132px] rounded-[16px] sm:rounded-[20px] border border-[#D8D8D8B3] bg-white flex items-center gap-3 sm:gap-4 px-4 sm:px-[22px] py-3.5 sm:py-5">
               <span className="w-14 h-14 rounded-[16px] bg-[#E7F4EB] inline-flex items-center justify-center shrink-0">
                 <VcIcon name="check" size={27} stroke="#00681B" strokeWidth={2.2} />
               </span>

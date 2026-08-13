@@ -67,6 +67,8 @@ export const TourOverlay = () => {
   const [more, setMore] = useState({ up: false, down: false });
   // Below 768px the callout becomes a bottom sheet instead of a popover.
   const [isPhone, setIsPhone] = useState(false);
+  // On a phone the sheet can hide its body so the highlight is visible.
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const check = () => setIsPhone(window.innerWidth < 768);
@@ -601,6 +603,18 @@ export const TourOverlay = () => {
             />
           )}
 
+          {isPhone && (
+            <button
+              type="button"
+              onClick={() => setCollapsed((c) => !c)}
+              aria-label={collapsed ? "Show tour details" : "Hide tour details"}
+              aria-expanded={!collapsed}
+              className="absolute top-0 inset-x-0 h-9 -mt-[17px] flex items-center justify-center bg-transparent border-none cursor-pointer"
+            >
+              <span className="w-10 h-1 rounded-full bg-[#D8D8D8]" />
+            </button>
+          )}
+
           <div className="relative flex items-center justify-between gap-3">
             <span className="text-[11px] font-bold tracking-[.8px] uppercase text-[#0A6DC0] truncate">
               {step?.sectionLabel} · {(step?.indexInSection ?? 0) + 1} of{" "}
@@ -613,9 +627,38 @@ export const TourOverlay = () => {
             >
               Skip tour
             </button>
+            {isPhone && (
+              <button
+                type="button"
+                onClick={() => setCollapsed((c) => !c)}
+                aria-label={collapsed ? "Expand" : "Collapse"}
+                className="shrink-0 w-9 h-9 -mr-1 rounded-full bg-[#F4F5F7] border-none cursor-pointer inline-flex items-center justify-center text-[#565656]"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{
+                    transform: collapsed ? "rotate(180deg)" : "none",
+                    transition: "transform 180ms",
+                  }}
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+            )}
           </div>
 
-          <div className="relative h-[3px] rounded-sm bg-[#EEF1F4] mt-[11px] overflow-hidden">
+          <div
+            className={`relative h-[3px] rounded-sm bg-[#EEF1F4] mt-[11px] overflow-hidden ${
+              isPhone && collapsed ? "hidden" : ""
+            }`}
+          >
             <div
               style={{
                 position: "absolute",

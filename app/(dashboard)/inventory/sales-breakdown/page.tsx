@@ -13,6 +13,7 @@ import {
   CustomRangeInputs,
 } from "@/components/inventory/FilterDropdown";
 import { VcIcon } from "@/components/inventory/VcIcon";
+import BackButton from "@/components/inventory/BackButton";
 import { useSalesFilter } from "@/lib/salesFilterStore";
 import {
   PERIOD_OPTIONS,
@@ -148,14 +149,7 @@ const SalesBreakdown = () => {
     <div className="font-dm-sans text-[#2F2F2F] flex flex-col gap-[22px]">
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex items-start gap-4 flex-wrap">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          aria-label="Back"
-          className="w-[42px] h-[42px] rounded-[12px] border border-[#D8D8D8E6] bg-white cursor-pointer inline-flex items-center justify-center shrink-0 mt-1 hover:border-[#0A6DC0]"
-        >
-          <VcIcon name="chevron" size={19} stroke="#2F2F2F" strokeWidth={2.2} className="rotate-180" />
-        </button>
+        <BackButton className="mt-1" />
 
         <div className="flex-1 min-w-[260px]">
           <h1 className="font-clash font-semibold text-[24px] md:text-[30px] tracking-[-.6px] m-0">

@@ -1,6 +1,6 @@
 "use client";
 
-import { MoveLeft, Package } from "lucide-react";
+import { Package } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { ThreeDots } from "react-loader-spinner";
 import { Card } from "@/components/ui/card";
@@ -21,6 +21,7 @@ import { useStockDetail, useStoreStocks } from "@/hooks/useStores";
 import { useState } from "react";
 import { formatQty, formatPacks } from "@/lib/priceInput";
 import StockConditionsPanel from "@/components/inventory/StockConditionsPanel";
+import BackButton from "@/components/inventory/BackButton";
 
 const StockDetailPage = () => {
   const { canUpdateStock } = useUser();
@@ -65,12 +66,7 @@ const StockDetailPage = () => {
 
   return (
     <div className="">
-      <button
-        onClick={() => router.back()}
-        className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors"
-      >
-        <MoveLeft className="w-5 h-5" />
-      </button>
+      <BackButton />
 
       <div className="flex lg:items-center mb-3 md:mb-8 flex-col lg:flex-row justify-between gap-4">
         <div>

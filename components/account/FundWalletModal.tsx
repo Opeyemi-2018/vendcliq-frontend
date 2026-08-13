@@ -90,11 +90,12 @@ export const FundWalletModal = ({
           ))}
         </div>
 
-        <div className="mt-3 flex items-start gap-2.5 px-[14px] py-3 rounded-[12px] bg-[#F9FCFF] border border-[#0A6DC029]">
-          <VcIcon name="check" size={17} stroke="#0A6DC0" strokeWidth={2.2} className="shrink-0 mt-px" />
-          <span className="text-[12.5px] text-[#4B5563] leading-[1.45]">
-            Transfers are free. Use your own bank app — there is nothing to
-            confirm here once the money is sent.
+        <div className="mt-3 flex items-start gap-2.5 px-[14px] py-3 rounded-[12px] bg-[#FFF3DB] border border-[#F2D9A0]">
+          <VcIcon name="warning" size={17} stroke="#85540A" strokeWidth={2.2} className="shrink-0 mt-px" />
+          <span className="text-[12.5px] text-[#85540A] leading-[1.45]">
+            A deposit fee of ₦50 to ₦150 applies, depending on how much you
+            send. Use your own bank app. There is nothing to confirm here once
+            the money is sent.
           </span>
         </div>
 

@@ -40,13 +40,13 @@ export const SalesRow = ({
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") router.push(row.href);
       }}
-      className={`flex items-center gap-[14px] py-[13px] px-1 cursor-pointer hover:bg-[#F9FCFF] ${
+      className={`flex items-center gap-2.5 sm:gap-[14px] py-[11px] sm:py-[13px] px-1 cursor-pointer hover:bg-[#F9FCFF] ${
         first ? "" : "border-t border-[#D8D8D873]"
       }`}
       {...rest}
     >
       <div
-        className="w-[42px] h-[42px] rounded-[13px] inline-flex items-center justify-center shrink-0"
+        className="w-9 h-9 sm:w-[42px] sm:h-[42px] rounded-[11px] sm:rounded-[13px] inline-flex items-center justify-center shrink-0"
         style={{ background: online ? "#E1EEFF" : "#E0F2ED" }}
       >
         <VcIcon
@@ -58,12 +58,12 @@ export const SalesRow = ({
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-bold text-[14.5px] text-[#2F2F2F] tracking-[-.2px]">
+        <div className="flex items-center gap-2 flex-nowrap min-w-0">
+          <span className="font-bold text-[13.5px] sm:text-[14.5px] text-[#2F2F2F] tracking-[-.2px] truncate">
             {row.code}
           </span>
           <span
-            className="text-[10.5px] font-bold tracking-[.4px] uppercase px-2 py-[3px] rounded-full"
+            className="text-[10.5px] font-bold tracking-[.4px] uppercase px-2 py-[3px] rounded-full shrink-0"
             style={{
               background: online ? "#E1EEFF" : "#E0F2ED",
               color: online ? "#0A6DC0" : "#0E6E55",
@@ -84,19 +84,19 @@ export const SalesRow = ({
             e.stopPropagation();
             router.push(row.href);
           }}
-          className="inline-flex items-center gap-[7px] h-[38px] px-[15px] rounded-[10px] border-none cursor-pointer text-[13px] font-bold bg-[#FAC136] text-[#1A1400] hover:bg-[#FFB800] shrink-0"
+          className="inline-flex items-center justify-center gap-[7px] w-9 h-9 sm:w-auto sm:h-[38px] sm:px-[15px] rounded-[10px] border-none cursor-pointer text-[13px] font-bold bg-[#FAC136] text-[#1A1400] hover:bg-[#FFB800] shrink-0"
         >
           <VcIcon name="truck" size={16} stroke="#1A1400" strokeWidth={2.2} />
-          <span>Hand over</span>
+          <span className="hidden sm:inline">Hand over</span>
         </button>
       )}
 
-      <div className="text-right shrink-0 min-w-[116px]">
-        <div className="font-bold text-[15px] text-[#2F2F2F] tracking-[-.2px]">
+      <div className="text-right shrink-0 sm:min-w-[116px]">
+        <div className="font-bold text-[14px] sm:text-[15px] text-[#2F2F2F] tracking-[-.2px] whitespace-nowrap">
           {formatNaira(row.amount, hideAmounts)}
         </div>
         <span
-          className="inline-block mt-1 text-[11.5px] font-bold px-[10px] py-[3px] rounded-full"
+          className="inline-block mt-0.5 sm:mt-1 text-[11px] sm:text-[11.5px] font-bold px-2 sm:px-[10px] py-[2px] sm:py-[3px] rounded-full whitespace-nowrap"
           style={{ background: row.statusBg, color: row.statusFg }}
         >
           {row.statusLabel}
@@ -106,9 +106,10 @@ export const SalesRow = ({
       <VcIcon
         name="chevron"
         size={18}
+        aria-hidden="true"
         stroke="#B9BCC2"
         strokeWidth={2.4}
-        className="shrink-0"
+        className="hidden sm:block shrink-0"
       />
     </div>
   );
