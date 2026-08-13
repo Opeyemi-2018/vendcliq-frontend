@@ -27,7 +27,7 @@ interface StockConditionsPanelProps {
 }
 
 /**
- * Marketplace conditions on the stock detail page: shows what is live and lets
+ * Marketplace rules on the stock detail page: shows what is live and lets
  * one be added, edited, paused or removed without leaving the page.
  */
 export const StockConditionsPanel = ({
@@ -86,15 +86,15 @@ export const StockConditionsPanel = ({
           buildConditionPayload(stockId, toDraft(added, sellingPrice)),
         );
         if (response?.statusCode !== 200 && response?.statusCode !== 201) {
-          return revert(response?.error || "Could not save this condition");
+          return revert(response?.error || "Could not save this rule");
         }
-        toast.success("Condition added");
+        toast.success("Rule added");
       } else if (removed) {
         const response: any = await deleteStockCondition(removed.id);
         if (response?.statusCode && response.statusCode >= 400) {
-          return revert(response?.error || "Could not delete this condition");
+          return revert(response?.error || "Could not delete this rule");
         }
-        toast.success("Condition removed");
+        toast.success("Rule removed");
       } else if (edited) {
         const before = previous.find((p) => p.id === edited.id);
         const onlyToggled =
@@ -106,9 +106,9 @@ export const StockConditionsPanel = ({
           : buildConditionPayload(stockId, toDraft(edited, sellingPrice));
         const response: any = await updateStockCondition(edited.id, payload);
         if (response?.statusCode && response.statusCode >= 400) {
-          return revert(response?.error || "Could not update this condition");
+          return revert(response?.error || "Could not update this rule");
         }
-        toast.success(onlyToggled ? "Condition updated" : "Condition saved");
+        toast.success(onlyToggled ? "Rule updated" : "Rule saved");
       }
 
       await refetch();
@@ -124,7 +124,7 @@ export const StockConditionsPanel = ({
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
           <h2 className="font-clash font-bold text-[18px] text-[#1F2328]">
-            Marketplace conditions
+            Marketplace rules
           </h2>
           <p className="text-[13px] text-[#565656] mt-1 leading-[1.5]">
             Deals buyers see for this product on the marketplace — bundles,

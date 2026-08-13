@@ -136,13 +136,13 @@ export const saveNewConditions = async (
       } else {
         result.failed.push({
           condition,
-          message: response?.error || "Could not save this condition",
+          message: response?.error || "Could not save this rule",
         });
       }
     } catch (error: any) {
       result.failed.push({
         condition,
-        message: error?.message || "Could not save this condition",
+        message: error?.message || "Could not save this rule",
       });
     }
   }

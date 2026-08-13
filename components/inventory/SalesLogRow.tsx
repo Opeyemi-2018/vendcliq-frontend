@@ -62,7 +62,7 @@ export const SalesLogRow = ({ row, hideAmounts = false }: SalesLogRowProps) => {
               color: online ? "#0A6DC0" : "#0E6E55",
             }}
           >
-            {online ? "Online" : "In-store"}
+            {online ? "Online" : "Shop"}
           </span>
         </div>
         <div className="text-[12.5px] text-[#8E8E93] mt-[3px]">

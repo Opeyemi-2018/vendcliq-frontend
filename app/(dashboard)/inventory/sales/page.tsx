@@ -171,7 +171,7 @@ const SalesHistoryPage = () => {
   const tabs: { id: ChannelTab; label: string }[] = [
     { id: "all", label: `All ${[...inStoreRows, ...onlineRows].length}` },
     { id: "online", label: `Online ${onlineRows.length}` },
-    { id: "instore", label: `In-store ${inStoreRows.length}` },
+    { id: "instore", label: `Shop ${inStoreRows.length}` },
   ];
 
   const periodOptions = PERIOD_OPTIONS.map((p) => ({
@@ -271,7 +271,7 @@ const SalesHistoryPage = () => {
               onClick={() => setMediumModalOpen(true)}
               className="inline-flex items-center gap-2 h-[38px] px-[14px] rounded-full border border-white/[.32] bg-white/15 text-white text-[12.5px] font-semibold cursor-pointer whitespace-nowrap hover:bg-white/[.28]"
             >
-              <span>Breakdown by medium</span>
+              <span>Breakdown by channel</span>
               <VcIcon name="chevron" size={14} stroke="#fff" strokeWidth={2.6} />
             </button>
           </div>

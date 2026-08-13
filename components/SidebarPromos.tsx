@@ -2,17 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import { openTourWelcome } from "@/lib/tour/store";
-import { TOUR_STEPS } from "@/lib/tour/steps";
+import { TOUR_ENTRY } from "@/lib/tour/steps";
 
 /** Opens the floating chat widget, which owns its own state. */
 const openChat = () => window.dispatchEvent(new CustomEvent("vc:open-chat"));
 
 /** The tour card and the AI card that sit above Logout in the prototype. */
-export const SidebarPromos = ({
-  tourStops = TOUR_STEPS.length,
-}: {
-  tourStops?: number;
-}) => {
+export const SidebarPromos = () => {
   const pathname = usePathname();
   const onAccount = pathname?.startsWith("/account");
 
@@ -45,12 +41,12 @@ export const SidebarPromos = ({
             </svg>
           </span>
           <span className="font-clash font-semibold text-[14px] text-white tracking-[-.2px]">
-            Start a quick tour
+            {TOUR_ENTRY.title}
           </span>
         </div>
 
         <span className="relative text-[12.5px] text-white/[.78] leading-[1.4]">
-          {tourStops} stops · about 2 minutes
+          {TOUR_ENTRY.line}
         </span>
 
         <div className="relative flex gap-1" aria-hidden="true">
@@ -68,7 +64,7 @@ export const SidebarPromos = ({
           onClick={openTourWelcome}
           className="relative bg-white text-[#0A2540] border-none rounded-lg px-3.5 py-[9px] font-semibold text-[13px] cursor-pointer self-start hover:bg-[#EAF2FB]"
         >
-          Take The Tour
+          {TOUR_ENTRY.button}
         </button>
       </div>
 
