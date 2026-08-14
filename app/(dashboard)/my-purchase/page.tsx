@@ -1,238 +1,265 @@
 "use client";
 
-import { useState } from "react";
-import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/card";
-import { MoveRight, Search, ChevronLeft, ChevronRight } from "lucide-react";
-import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 import { ClipLoader } from "react-spinners";
-import { usePurchasedInvoices } from "@/hooks/usePurchaseInvoices";
+import {
+  usePurchasedInvoices,
+  useInvoiceDelivery,
+} from "@/hooks/usePurchaseInvoices";
+import { VcIcon } from "@/components/inventory/VcIcon";
+import BackButton from "@/components/inventory/BackButton";
+import { formatNaira } from "@/lib/salesFilters";
+import type { PurchasedInvoice } from "@/types/purchase";
+
+/** Same three tones the sales screens use for a status. */
+const statusTone = (status: string) => {
+  const value = (status || "").toUpperCase();
+  if (value === "COMPLETED" || value === "PAID")
+    return { bg: "#E7F4EB", fg: "#003909", label: "Completed" };
+  if (value === "PENDING")
+    return { bg: "#FFF3DB", fg: "#85540A", label: "Pending" };
+  return { bg: "#F4F5F7", fg: "#6B6B70", label: value || "Unknown" };
+};
+
+const time = (iso: string) => {
+  try {
+    return format(new Date(iso), "d MMM · h:mm a");
+  } catch {
+    return "—";
+  }
+};
 
 const PurchasedInvoicesPage = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
   const router = useRouter();
+  const [query, setQuery] = useState("");
+  // The endpoint searches for us, so hold off a beat rather than firing a
+  // request per keystroke.
+  const [search, setSearch] = useState("");
 
-  const { data: invoices = [], isLoading, error, refetch } = usePurchasedInvoices();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isFetching, error, refetch } = usePurchasedInvoices(
+    page,
+    10,
+    search,
+  );
 
-  const filteredInvoices = !searchQuery.trim()
-    ? invoices
-    : invoices.filter((invoice) =>
-        invoice.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        invoice.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        invoice.total.toString().includes(searchQuery) ||
-        format(new Date(invoice.created_at), "dd/MM/yyyy HH:mm").includes(searchQuery)
-      );
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(query);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [query]);
 
-  const totalItems = filteredInvoices.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedInvoices = filteredInvoices.slice(startIndex, startIndex + itemsPerPage);
+  const rows = useMemo(() => data?.rows ?? [], [data]);
+  const pagination = data?.pagination;
 
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  // Which of the invoices on this page are being delivered.
+  const deliveryById = useInvoiceDelivery(
+    useMemo(() => rows.map((i: PurchasedInvoice) => i.id), [rows]),
+  );
 
-  const renderPagination = () => {
-    const pages = [];
-    const maxVisible = 5;
-    let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    const end = Math.min(totalPages, start + maxVisible - 1);
-
-    if (end - start + 1 < maxVisible) {
-      start = Math.max(1, end - maxVisible + 1);
-    }
-
-    for (let i = start; i <= end; i++) {
-      pages.push(
-        <Button
-          key={i}
-          variant={currentPage === i ? "default" : "outline"}
-          size="sm"
-          className={`h-8 w-8 ${currentPage === i ? "bg-[#0A6DC0] text-white hover:bg-[#0A6DC0]" : ""}`}
-          onClick={() => handlePageChange(i)}
-        >
-          {i}
-        </Button>,
-      );
-    }
-
-    return pages;
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd/MM/yyyy HH:mm");
-  };
+  const totalSpend = useMemo(
+    () => rows.reduce((sum: number, r: PurchasedInvoice) => sum + (r.total || 0), 0),
+    [rows],
+  );
 
   if (error) {
     return (
-      <Card className="p-6">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">Error: {error.message}</p>
+      <div className="font-dm-sans max-w-[900px]">
+        <div className="bg-white border border-[#D8D8D8B3] rounded-[16px] p-8 text-center">
+          <p className="text-[#C0392B] text-[14px]">{error.message}</p>
           <button
+            type="button"
             onClick={() => refetch()}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="mt-4 h-11 px-5 rounded-[12px] border-none bg-[#0A6DC0] text-white font-bold text-[14px] cursor-pointer hover:bg-[#09599A]"
           >
-            Retry
+            Try again
           </button>
         </div>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <div className="">
-      <div className="mb-3 flex justify-between items-center">
-        <div>
-          <h1 className="font-clash text-[20px] md:text-[25px] lg:text-[32px] font-semibold text-[#2F2F2F] dark:text-white">
+    <div className="font-dm-sans text-[#2F2F2F] flex flex-col gap-[18px] max-w-[900px]">
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="flex items-start gap-[14px] flex-wrap">
+        <BackButton className="mt-1" />
+        <div className="flex-1 min-w-[200px]">
+          <h1 className="font-clash font-semibold text-[24px] md:text-[30px] tracking-[-.6px] m-0">
             My Purchases
           </h1>
-          <p className="hidden md:inline font-medium font-dm-sans text-[#9E9A9A] text-[13px] md:text-[16px]">
-            Upload your purchase details here
+          <p className="text-[14.5px] text-[#8E8E93] mt-[5px] m-0">
+            Everything you bought, and what is still on its way.
           </p>
         </div>
-        <Button
+        <button
+          type="button"
           onClick={() => router.push("/add-purchase")}
-          className="bg-[#0A6DC0] hover:bg-[#09599a] text-[13px] md:text-[16px] flex gap-2 lg:gap-10 px-6 py-5 md:py-6 text-white"
+          className="shrink-0 mt-1 inline-flex items-center gap-2 h-11 px-4 sm:px-[18px] rounded-[12px] border-none bg-[#0A6DC0] cursor-pointer text-[14px] font-bold text-white whitespace-nowrap hover:bg-[#09599A]"
         >
-          + Upload Purchase
-        </Button>
+          <VcIcon name="plus" size={18} stroke="#fff" strokeWidth={2.4} />
+          <span>Upload Purchase</span>
+        </button>
       </div>
 
-      <div className="md:p-5 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-          <Input
-            placeholder="Search by invoice code, status, amount or date..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 py-6"
-          />
-          {searchQuery && (
-            <p className="text-sm text-gray-500 mt-2">
-              Found {filteredInvoices.length} invoice(s)
-            </p>
-          )}
+      {/* ── Spend summary ──────────────────────────────────────────────── */}
+      <section className="relative rounded-[20px] px-5 sm:px-6 py-[18px] sm:py-[22px] text-white bg-[linear-gradient(135deg,#0A6DC0_0%,#3A6BC4_100%)] shadow-[0_12px_28px_-10px_rgba(10,109,192,.45)] overflow-hidden">
+        <div className="absolute -top-[70px] -right-[50px] w-[220px] h-[220px] rounded-full bg-white/[.06] pointer-events-none" />
+        <div className="relative">
+          <div className="text-[13px] text-white/85">
+            {pagination && pagination.totalPages > 1
+              ? "Purchases on this page"
+              : "Total purchases"}
+          </div>
+          <div className="font-clash font-bold text-[28px] sm:text-[34px] tracking-[-.8px] mt-1">
+            {formatNaira(totalSpend)}
+          </div>
+          <div className="text-[13px] text-white/80 mt-1">
+            {pagination?.totalCount ?? rows.length}{" "}
+            {(pagination?.totalCount ?? rows.length) === 1
+              ? "invoice"
+              : "invoices"}
+            {pagination && pagination.totalPages > 1
+              ? ` · page ${pagination.currentPage} of ${pagination.totalPages}`
+              : ""}
+          </div>
         </div>
-        <div className="overflow-x-auto border border-[#E4E4E4] rounded-[20px]">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-16 text-center">
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <ClipLoader size={40} color="#0A6DC0" />
-                      <p className="text-gray-500 text-sm">Loading invoices...</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : paginatedInvoices.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                    {searchQuery ? "No invoices match your search" : "No invoices found"}
-                  </td>
-                </tr>
-              ) : (
-                paginatedInvoices.map((invoice) => (
-                  <tr
-                    key={invoice.id}
-                    className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => router.push(`/my-purchase/${invoice.id}`)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">{invoice.code}</td>
-                    <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
-                      {formatDate(invoice.created_at)}
-                    </td>
-                    <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
-                      {formatCurrency(invoice.total)}
-                    </td>
-                    <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        invoice.status === "COMPLETED"
-                          ? "bg-green-100 text-green-800"
-                          : invoice.status === "PENDING"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
-                      }`}>
-                        {invoice.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <MoveRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      </section>
 
-        {!isLoading && !error && filteredInvoices.length > 0 && (
-          <div className="flex flex-row justify-between items-center mt-6 gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage === 1}
-              onClick={() => handlePageChange(currentPage - 1)}
-              className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24"
-            >
-              <ChevronLeft size={16} /> Previous
-            </Button>
+      {/* ── Search ─────────────────────────────────────────────────────── */}
+      <label className="w-full flex items-center gap-[10px] h-12 px-[14px] box-border rounded-[10px] border border-[#D8D8D8E6] bg-white">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#8E8E93" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.2-3.2" />
+        </svg>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by invoice code"
+          className="flex-1 min-w-0 border-none outline-none bg-transparent text-[14px] text-[#2F2F2F]"
+        />
+        {/* The search runs on the server, so say when it is still running. */}
+        {isFetching && !isLoading && (
+          <ClipLoader size={15} color="#8E8E93" className="shrink-0" />
+        )}
+      </label>
 
-            <div className="hidden lg:flex items-center gap-2 flex-wrap justify-center">
-              {renderPagination()}
+      {/* ── Rows ───────────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-2.5">
+        {isLoading ? (
+          <div className="flex flex-col items-center gap-3 py-16">
+            <ClipLoader size={34} color="#0A6DC0" />
+            <p className="text-[13px] text-[#8E8E93]">Loading purchases…</p>
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="bg-white border border-dashed border-[#D8D8D8E6] rounded-[16px] py-12 px-5 text-center">
+            <div className="font-bold text-[15px] text-[#2F2F2F]">
+              {search ? "No purchases match this search" : "No purchases yet"}
             </div>
-
-            <div className="flex items-center gap-10">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage >= totalPages}
-                onClick={() => handlePageChange(currentPage + 1)}
-                className="flex items-center gap-1 text-[12px] font-medium text-[#565656] w-24"
-              >
-                Next <ChevronRight size={16} />
-              </Button>
-
-              <div className="hidden lg:block text-sm text-gray-600">
-                Showing {startIndex + 1} - {Math.min(startIndex + itemsPerPage, filteredInvoices.length)} of {filteredInvoices.length}
-              </div>
+            <div className="text-[13px] text-[#8E8E93] mt-1">
+              {search
+                ? "Try another invoice code."
+                : "Upload a purchase and it will show here."}
             </div>
           </div>
+        ) : (
+          rows.map((invoice: PurchasedInvoice) => {
+            const tone = statusTone(invoice.status);
+            return (
+              <button
+                key={invoice.id}
+                type="button"
+                onClick={() => router.push(`/my-purchase/${invoice.id}`)}
+                className="w-full text-left bg-white border border-[#D8D8D88C] rounded-[16px] px-3 sm:px-[18px] py-3 sm:py-[14px] flex items-center gap-2.5 sm:gap-[14px] cursor-pointer transition hover:border-[#0A6DC0]"
+              >
+                <span className="relative w-10 h-10 sm:w-[46px] sm:h-[46px] rounded-[12px] sm:rounded-[14px] bg-[#E8EEFF] inline-flex items-center justify-center shrink-0">
+                  <VcIcon name="note" size={22} stroke="#4052A3" strokeWidth={1.9} />
+                  {deliveryById[invoice.id] && (
+                    <span
+                      title="Has an item being delivered"
+                      className="absolute -bottom-1 -right-1 w-[22px] h-[22px] rounded-full bg-[#FAC136] border-2 border-white inline-flex items-center justify-center"
+                    >
+                      <VcIcon name="truck" size={12} stroke="#1A1400" strokeWidth={2.2} />
+                    </span>
+                  )}
+                </span>
+
+                <span className="flex-1 min-w-0">
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="font-bold text-[14px] sm:text-[15px] tracking-[-.2px] truncate">
+                      {invoice.code}
+                    </span>
+                    <span
+                      className="shrink-0 text-[10.5px] font-bold tracking-[.4px] uppercase px-2 py-[3px] rounded-full"
+                      style={{ background: tone.bg, color: tone.fg }}
+                    >
+                      {tone.label}
+                    </span>
+                  </span>
+                  <span className="block text-[12px] sm:text-[12.5px] text-[#8E8E93] mt-[3px] truncate">
+                    {invoice.attributes?.supplier
+                      ? `${invoice.attributes.supplier} · `
+                      : ""}
+                    {time(invoice.created_at)}
+                  </span>
+                </span>
+
+                <span className="text-right shrink-0">
+                  <span className="block font-clash font-bold text-[15px] sm:text-[17px] tracking-[-.3px] whitespace-nowrap">
+                    {formatNaira(invoice.total)}
+                  </span>
+                  <span className="block text-[11.5px] text-[#8E8E93] mt-0.5 whitespace-nowrap">
+                    {invoice.items_count ?? 0}{" "}
+                    {(invoice.items_count ?? 0) === 1 ? "item" : "items"}
+                  </span>
+                </span>
+
+                <VcIcon
+                  name="chevron"
+                  size={18}
+                  stroke="#B9BCC2"
+                  strokeWidth={2.4}
+                  className="hidden sm:block shrink-0"
+                />
+              </button>
+            );
+          })
         )}
       </div>
+
+      {/* ── Paging ─────────────────────────────────────────────────────── */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <span className="text-[13px] text-[#8E8E93]">
+            Page {pagination.currentPage} of {pagination.totalPages}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={pagination.currentPage <= 1 || isFetching}
+              className="h-11 px-4 rounded-[10px] border border-[#D8D8D8E6] bg-white text-[14px] font-semibold text-[#2F2F2F] cursor-pointer hover:border-[#0A6DC0] hover:text-[#0A6DC0] disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:border-[#D8D8D8E6] disabled:hover:text-[#2F2F2F]"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPage((p) => Math.min(pagination.totalPages, p + 1))
+              }
+              disabled={pagination.nextPage == null || isFetching}
+              className="h-11 px-4 rounded-[10px] border-none bg-[#0A6DC0] text-white text-[14px] font-bold cursor-pointer hover:bg-[#09599A] disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:bg-[#0A6DC0]"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

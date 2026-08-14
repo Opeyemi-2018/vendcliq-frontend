@@ -281,6 +281,7 @@ const SalesHistoryPage = () => {
       {/* ── Filter bar ───────────────────────────────────────────────────── */}
       <div className="flex items-center gap-[10px] flex-wrap">
         <FilterDropdown
+          className="order-2 sm:order-none"
           variant="plain"
           open={openMenu === "period"}
           onToggle={() => setOpenMenu(openMenu === "period" ? null : "period")}
@@ -322,7 +323,7 @@ const SalesHistoryPage = () => {
 
         <label
           data-tour="store-search"
-          className="flex-[1_1_220px] min-w-0 flex items-center gap-[10px] h-[42px] px-[14px] box-border rounded-[10px] border border-[#D8D8D8E6] bg-white"
+          className="order-1 sm:order-none w-full sm:w-auto sm:flex-[1_1_220px] min-w-0 flex items-center gap-[10px] h-12 sm:h-[42px] px-[14px] box-border rounded-[10px] border border-[#D8D8D8E6] bg-white"
         >
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#8E8E93" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
             <circle cx="11" cy="11" r="7" />
@@ -340,7 +341,7 @@ const SalesHistoryPage = () => {
       {/* ── Channel tabs ─────────────────────────────────────────────────── */}
       <div
         data-tour="page-tabs"
-        className="flex gap-1 bg-[#F4F5F7] p-1 rounded-full self-start flex-wrap"
+        className="flex gap-1 bg-[#F4F5F7] p-1 rounded-full self-stretch sm:self-start flex-nowrap"
       >
         {tabs.map((tab) => (
           <button
@@ -348,7 +349,7 @@ const SalesHistoryPage = () => {
             type="button"
             onClick={() => setChannelTab(tab.id)}
             className={cn(
-              "border-none px-[18px] py-[9px] rounded-full text-[13.5px] cursor-pointer whitespace-nowrap",
+              "flex-1 sm:flex-none border-none px-3 sm:px-[18px] min-h-[44px] sm:min-h-0 sm:py-[9px] rounded-full text-[13.5px] cursor-pointer whitespace-nowrap",
               channelTab === tab.id
                 ? "bg-white text-[#0A6DC0] font-bold shadow-[0_1px_3px_rgba(0,0,0,.10)]"
                 : "bg-transparent text-[#6B6B70] font-semibold hover:text-[#2F2F2F]",
@@ -360,7 +361,7 @@ const SalesHistoryPage = () => {
       </div>
 
       {/* ── Status filters ───────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 flex-wrap -mt-1">
+      <div className="flex items-center gap-2 flex-nowrap overflow-x-auto -mt-1 -mx-1 px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:mx-0 sm:px-0">
         {(
           [
             { id: "all", label: "All statuses", count: channelRows.length, tone: "#6B6B70", bg: "#F4F5F7" },
@@ -375,7 +376,7 @@ const SalesHistoryPage = () => {
               type="button"
               onClick={() => setStatusFilter(chip.id)}
               className={cn(
-                "inline-flex items-center gap-2 h-9 px-[14px] rounded-full text-[13px] font-semibold cursor-pointer border transition",
+                "shrink-0 inline-flex items-center gap-2 h-9 px-[14px] rounded-full text-[13px] font-semibold cursor-pointer border transition",
                 active
                   ? "border-transparent"
                   : "bg-white border-[#D8D8D8E6] text-[#6B6B70] hover:border-[#0A6DC0] hover:text-[#0A6DC0]",

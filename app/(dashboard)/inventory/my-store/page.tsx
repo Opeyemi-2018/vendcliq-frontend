@@ -188,7 +188,7 @@ const MyStorePage = () => {
         data-tour="store-add"
         onClick={() => setAddOpen(true)}
         aria-label="Add New"
-        className="sm:hidden fixed right-6 bottom-[calc(115px+env(safe-area-inset-bottom))] z-40 h-14 pl-4 pr-5 rounded-full border-none bg-[#0A6DC0] text-white text-[15px] font-bold cursor-pointer inline-flex items-center gap-2 shadow-[0_12px_28px_-8px_rgba(10,109,192,.6)] hover:bg-[#09599A]"
+        className={`${selected.length > 0 ? "hidden" : "sm:hidden"} fixed right-6 bottom-[calc(115px+env(safe-area-inset-bottom))] z-40 h-14 pl-4 pr-5 rounded-full border-none bg-[#0A6DC0] text-white text-[15px] font-bold cursor-pointer inline-flex items-center gap-2 shadow-[0_12px_28px_-8px_rgba(10,109,192,.6)] hover:bg-[#09599A]`}
       >
         <VcIcon name="plus" size={20} stroke="#fff" strokeWidth={2.6} />
         <span>Add New</span>
@@ -463,14 +463,16 @@ const MyStorePage = () => {
           moves the next row out from under the cursor. Fixed rather than
           sticky because an ancestor's overflow breaks sticky here. */}
       {selected.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[min(680px,92vw)] flex items-center gap-3 flex-wrap bg-[#0A2540] rounded-[16px] px-4 py-3 shadow-[0_16px_40px_-12px_rgba(10,37,64,.55)]">
-          <span className="inline-flex items-center gap-2.5 text-[13.5px] font-bold text-white">
-            <span className="inline-flex items-center justify-center min-w-[26px] h-[26px] px-2 rounded-full bg-white/[.16] text-white text-[13px]">
+        <div className="fixed bottom-[calc(96px+env(safe-area-inset-bottom))] sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-[min(680px,calc(100vw-24px))] flex items-center gap-2 sm:gap-3 flex-nowrap bg-[#0A2540] rounded-[16px] px-3 sm:px-4 py-2.5 sm:py-3 shadow-[0_16px_40px_-12px_rgba(10,37,64,.55)]">
+          <span className="inline-flex items-center gap-2 sm:gap-2.5 text-[13.5px] font-bold text-white min-w-0">
+            <span className="inline-flex items-center justify-center min-w-[26px] h-[26px] px-2 rounded-full bg-white/[.16] text-white text-[13px] shrink-0">
               {selected.length}
             </span>
-            <span>
+            {/* "product selected" is only worth the width on a wider screen. */}
+            <span className="hidden sm:inline truncate">
               {selected.length === 1 ? "product" : "products"} selected
             </span>
+            <span className="sm:hidden">selected</span>
           </span>
           <div className="flex-1" />
           <button
@@ -492,7 +494,7 @@ const MyStorePage = () => {
               );
               router.push(`/inventory/my-store/${targetStore}/moveStock`);
             }}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-[10px] border-none bg-white/[.14] text-white text-[13.5px] font-bold cursor-pointer hover:bg-white/[.24]"
+            className="shrink-0 inline-flex items-center gap-2 h-10 px-3 sm:px-4 rounded-[10px] border-none bg-white/[.14] text-white text-[13px] sm:text-[13.5px] font-bold cursor-pointer whitespace-nowrap hover:bg-white/[.24]"
           >
             <VcIcon name="list" size={16} stroke="#fff" strokeWidth={2.2} />
             Move stock
@@ -500,7 +502,7 @@ const MyStorePage = () => {
           <button
             type="button"
             onClick={() => setDeleteOpen(true)}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-[10px] border-none bg-[#E4694F] text-white text-[13.5px] font-bold cursor-pointer hover:bg-[#C0392B]"
+            className="shrink-0 inline-flex items-center gap-2 h-10 px-3 sm:px-4 rounded-[10px] border-none bg-[#E4694F] text-white text-[13px] sm:text-[13.5px] font-bold cursor-pointer whitespace-nowrap hover:bg-[#C0392B]"
           >
             <VcIcon name="warning" size={16} stroke="#fff" strokeWidth={2.2} />
             Delete

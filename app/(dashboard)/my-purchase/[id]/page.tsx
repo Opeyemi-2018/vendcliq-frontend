@@ -3,48 +3,53 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ArrowLeft, MoveRight } from "lucide-react";
+import Image from "next/image";
 import { ClipLoader } from "react-spinners";
 import { usePurchasedInvoiceById } from "@/hooks/usePurchaseInvoices";
-import Image from "next/image";
+import { VcIcon } from "@/components/inventory/VcIcon";
+import BackButton from "@/components/inventory/BackButton";
+import { formatNaira } from "@/lib/salesFilters";
+import { formatQty } from "@/lib/priceInput";
+
+const statusTone = (status: string) => {
+  const value = (status || "").toUpperCase();
+  if (value === "COMPLETED" || value === "PAID")
+    return { bg: "#E7F4EB", fg: "#003909", label: "Completed" };
+  if (value === "PENDING")
+    return { bg: "#FFF3DB", fg: "#85540A", label: "Pending" };
+  return { bg: "#F4F5F7", fg: "#6B6B70", label: value || "Unknown" };
+};
+
+const when = (iso: string) => {
+  try {
+    return format(new Date(iso), "d MMM yyyy · h:mm a");
+  } catch {
+    return "—";
+  }
+};
+
+const imgSrc = (src?: string | null) =>
+  src ? (src.startsWith("//") ? `https:${src}` : src) : null;
 
 const PurchasedInvoiceDetailPage = () => {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
 
-  const {
-    data: invoice,
-    isLoading,
-    error,
-    refetch,
-  } = usePurchasedInvoiceById(id);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd/MM/yyyy HH:mm");
-  };
+  const { data: invoice, isLoading, error, refetch } =
+    usePurchasedInvoiceById(id);
 
   const navigateToItemDetail = (item: any) => {
     if (!item?.id) return;
 
     const queryParams = new URLSearchParams();
-    queryParams.set("delivery", item.delivery.toString());
+    queryParams.set("delivery", item.delivery?.toString() ?? "");
     queryParams.set("productName", encodeURIComponent(item.product.name));
     queryParams.set("quantity", item.quantity.toString());
     queryParams.set("cost", item.cost.toString());
     queryParams.set("price", item.stock.price.toString());
     queryParams.set("subTotal", item.sub_total.toString());
-    queryParams.set("profit", item.profit.toString());
+    queryParams.set("profit", item.profit?.toString() ?? "0");
 
     if (item.product.image) {
       queryParams.set("productImage", encodeURIComponent(item.product.image));
@@ -53,9 +58,7 @@ const PurchasedInvoiceDetailPage = () => {
       "sku",
       encodeURIComponent(item.product.name || item.stock.sku || ""),
     );
-    if (item.mode) {
-      queryParams.set("mode", item.mode);
-    }
+    if (item.mode) queryParams.set("mode", item.mode);
     if (item.otp_codes?.driver_otp) {
       queryParams.set("driverOtp", item.otp_codes.driver_otp);
     }
@@ -68,174 +71,203 @@ const PurchasedInvoiceDetailPage = () => {
 
   if (error) {
     return (
-      <Card className="p-6">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">Error: {error.message}</p>
-          <Button
+      <div className="font-dm-sans max-w-[900px]">
+        <div className="bg-white border border-[#D8D8D8B3] rounded-[16px] p-8 text-center">
+          <p className="text-[#C0392B] text-[14px]">{error.message}</p>
+          <button
+            type="button"
             onClick={() => refetch()}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="mt-4 h-11 px-5 rounded-[12px] border-none bg-[#0A6DC0] text-white font-bold text-[14px] cursor-pointer hover:bg-[#09599A]"
           >
-            Retry
-          </Button>
+            Try again
+          </button>
         </div>
-      </Card>
+      </div>
     );
   }
 
+  const tone = statusTone(invoice?.status ?? "");
+
+  const HEAD =
+    "text-left whitespace-nowrap px-4 py-3 text-[11.5px] font-bold tracking-[.5px] uppercase text-[#8E8E93]";
+  const CELL = "px-4 py-3 text-[13.5px] text-[#2F2F2F] whitespace-nowrap";
+
   return (
-    <div className="text-[#2F2F2F]">
-      <div className="flex mb-4 justify-between">
-        <ArrowLeft size={20} onClick={() => router.back()} />
-        <div>
-          <h1 className="text-right font-clash text-[20px] md:text-[25px] lg:text-[32px] font-semibold">
-            {isLoading ? "Loading..." : invoice?.code}
+    <div className="font-dm-sans text-[#2F2F2F] flex flex-col gap-[18px] max-w-[900px]">
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="flex items-start gap-[14px] flex-wrap">
+        <BackButton className="mt-1" />
+        <div className="flex-1 min-w-[200px]">
+          <h1 className="font-clash font-semibold text-[22px] md:text-[28px] tracking-[-.6px] m-0 break-all">
+            {isLoading ? "Loading…" : (invoice?.code ?? "Purchase")}
           </h1>
-          <p className="font-medium font-dm-sans text-[#9E9A9A] text-[13px] md:text-[16px]">
-            see items on this invoice
+          <p className="text-[14.5px] text-[#8E8E93] mt-[5px] m-0">
+            The items on this purchase.
           </p>
         </div>
       </div>
 
-      <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white font-dm-sans">
+      {/* ── Summary ────────────────────────────────────────────────────── */}
+      <section className="bg-white border border-[#D8D8D8B3] rounded-[18px] p-5">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center min-h-[150px]">
-            <ClipLoader size={40} color="#0A6DC0" />
-            <p className="mt-4 text-gray-600">Loading invoice details...</p>
+          <div className="flex justify-center py-8">
+            <ClipLoader size={28} color="#0A6DC0" />
           </div>
         ) : invoice ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 md:gap-y-5">
+          <div className="grid gap-x-6 gap-y-4 grid-cols-2 sm:grid-cols-4">
             <div>
-              <p className="font-bold">No of Products</p>
-              <p>{invoice.items_count} items</p>
+              <div className="text-[11.5px] font-bold tracking-[.5px] uppercase text-[#8E8E93]">
+                Products
+              </div>
+              <div className="font-clash font-bold text-[19px] tracking-[-.3px] mt-1">
+                {invoice.items_count}
+              </div>
             </div>
             <div>
-              <p className="font-bold">Total Amount</p>
-              <p>{formatCurrency(invoice.total)}</p>
+              <div className="text-[11.5px] font-bold tracking-[.5px] uppercase text-[#8E8E93]">
+                Total
+              </div>
+              <div className="font-clash font-bold text-[19px] tracking-[-.3px] mt-1">
+                {formatNaira(invoice.total)}
+              </div>
             </div>
             <div>
-              <p className="font-bold">Created Date</p>
-              <p>{formatDate(invoice.created_at)}</p>
+              <div className="text-[11.5px] font-bold tracking-[.5px] uppercase text-[#8E8E93]">
+                Bought
+              </div>
+              <div className="text-[13.5px] mt-1.5">
+                {when(invoice.created_at)}
+              </div>
             </div>
             <div>
-              <p className="font-bold">Status</p>
+              <div className="text-[11.5px] font-bold tracking-[.5px] uppercase text-[#8E8E93]">
+                Status
+              </div>
               <span
-                className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                  invoice.status === "COMPLETED"
-                    ? "bg-green-100 text-green-800"
-                    : invoice.status === "PENDING"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-gray-100 text-gray-800"
-                }`}
+                className="inline-block mt-1.5 text-[11.5px] font-bold px-[10px] py-[3px] rounded-full"
+                style={{ background: tone.bg, color: tone.fg }}
               >
-                {invoice.status}
+                {tone.label}
               </span>
             </div>
           </div>
         ) : (
-          <div className="text-center py-8">
-            <p className="text-gray-500">Invoice not found</p>
-          </div>
+          <p className="text-center text-[#8E8E93] text-[13.5px] py-6">
+            Purchase not found
+          </p>
         )}
-      </div>
+      </section>
 
-      <div className="md:p-5 lg:border border-[#E4E4E4] rounded-[20px] bg-white mt-8">
-        <h1 className="font-clash text-[14px] md:text-[16px] font-bold mb-3">
-          {isLoading ? "Loading..." : invoice?.code.slice(0, 10)}
-        </h1>
-        <div className="overflow-x-auto border border-[#E4E4E4] rounded-[20px]">
-          <table className="w-full table-fixed">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left p-4 pl-4 font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[30%]">
-                  Product
-                </th>
-                <th className="hidden md:table-cell text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[15%]">
-                  Unit Price
-                </th>
-                <th className="hidden md:table-cell text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[10%]">
-                  Qty
-                </th>
-                <th className="hidden md:table-cell text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[15%]">
-                  Amount
-                </th>
-                <th className="hidden md:table-cell text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[15%]">
-                  Status
-                </th>
-                <th className="text-left font-medium font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] w-[15%]">
-                  More
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="py-8">
-                    <div className="flex flex-col items-center justify-center">
-                      <ClipLoader size={40} color="#0A6DC0" />
-                      <p className="mt-4 text-gray-600">Loading items...</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : invoice && invoice.items.length > 0 ? (
-                invoice.items.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors font-regular font-dm-sans text-[11px] md:text-[13px] lg:text-[16px] text-[#2F2F2F] dark:text-gray-200"
-                    onClick={() => navigateToItemDetail(item)}
-                  >
-                    <td className="py-4 pl-4 font-medium">
-                      <div className="flex items-center gap-1">
-                        <div className="w-10 h-10 relative p-1 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
-                          <Image
-                            src={item.product.image}
-                            alt={item.product.name}
-                            fill
-                            className="object-contain"
-                          />
-                        </div>
-                        <p className="truncate">
-                          {item.product.name.slice(0, 15)}...
-                        </p>
-                      </div>
-                    </td>
-                    <td className="hidden md:table-cell py-4 truncate">
-                      {formatCurrency(item.stock.price)}
-                    </td>
-                    <td className="hidden md:table-cell py-4 truncate">
-                      {item.quantity}
-                    </td>
-                    <td className="hidden md:table-cell py-4 truncate">
-                      {formatCurrency(item.cost)}
-                    </td>
-                    <td className="hidden md:table-cell py-4">
-                      <span
-                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          invoice.status === "COMPLETED"
-                            ? "bg-green-100 text-green-800"
-                            : invoice.status === "PENDING"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {invoice.status}
-                      </span>
-                    </td>
-                    <td className="py-4">
-                      <MoveRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-gray-500">
-                    No items found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      {/* ── Items ──────────────────────────────────────────────────────── */}
+      <section className="bg-white border border-[#D8D8D8B3] rounded-[18px] overflow-hidden">
+        <div className="px-5 pt-[18px] pb-3.5">
+          <h2 className="font-clash font-semibold text-[17px] tracking-[-.3px] m-0">
+            Items on this purchase
+          </h2>
+          <p className="text-[13px] text-[#8E8E93] mt-1 m-0">
+            Tap any item to see its delivery and codes.
+          </p>
         </div>
-      </div>
+
+        {isLoading ? (
+          <div className="flex justify-center py-14">
+            <ClipLoader size={30} color="#0A6DC0" />
+          </div>
+        ) : invoice && invoice.items.length > 0 ? (
+          /* The table keeps every column; narrow screens scroll it sideways
+             rather than dropping information. */
+          <div className="overflow-x-auto border-t border-[#D8D8D873]">
+            <table className="w-full min-w-[720px] border-collapse">
+              <thead className="bg-[#F9FAFB]">
+                <tr>
+                  <th className={HEAD}>Product</th>
+                  <th className={HEAD}>Unit price</th>
+                  <th className={HEAD}>Qty</th>
+                  <th className={HEAD}>Amount</th>
+                  <th className={HEAD}>Delivery</th>
+                  <th className={HEAD}>Status</th>
+                  <th className={`${HEAD} w-px`} aria-label="Open" />
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.items.map((item: any) => {
+                  const src = imgSrc(item.product?.image);
+                  return (
+                    <tr
+                      key={item.id}
+                      onClick={() => navigateToItemDetail(item)}
+                      className="border-t border-[#D8D8D873] cursor-pointer hover:bg-[#F9FCFF]"
+                    >
+                      <td className={`${CELL} !whitespace-normal`}>
+                        <span className="flex items-center gap-2.5 min-w-0">
+                          <span className="w-10 h-10 rounded-[10px] bg-[#F4F6F8] border border-[#D8D8D873] shrink-0 overflow-hidden inline-flex items-center justify-center">
+                            {src ? (
+                              <Image
+                                src={src}
+                                alt={item.product?.name ?? "Product"}
+                                width={40}
+                                height={40}
+                                className="w-full h-full object-contain"
+                              />
+                            ) : (
+                              <VcIcon name="bottle" size={18} stroke="#6E7480" />
+                            )}
+                          </span>
+                          <span className="font-semibold truncate max-w-[190px]">
+                            {item.product?.name ?? "Product"}
+                          </span>
+                        </span>
+                      </td>
+                      <td className={CELL}>{formatNaira(item.stock?.price ?? 0)}</td>
+                      <td className={CELL}>{formatQty(item.quantity)}</td>
+                      <td className={`${CELL} font-bold`}>
+                        {formatNaira(item.cost ?? 0)}
+                      </td>
+                      <td className={CELL}>
+                        {item.delivery ? (
+                          <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold px-[10px] py-[3px] rounded-full bg-[#FFF3DB] text-[#85540A]">
+                            <VcIcon
+                              name="truck"
+                              size={13}
+                              stroke="#85540A"
+                              strokeWidth={2.2}
+                            />
+                            Yes
+                          </span>
+                        ) : (
+                          <span className="inline-block text-[11.5px] font-bold px-[10px] py-[3px] rounded-full bg-[#F4F5F7] text-[#6B6B70]">
+                            No
+                          </span>
+                        )}
+                      </td>
+                      <td className={CELL}>
+                        <span
+                          className="inline-block text-[11.5px] font-bold px-[10px] py-[3px] rounded-full"
+                          style={{ background: tone.bg, color: tone.fg }}
+                        >
+                          {tone.label}
+                        </span>
+                      </td>
+                      <td className={CELL}>
+                        <VcIcon
+                          name="chevron"
+                          size={18}
+                          stroke="#B9BCC2"
+                          strokeWidth={2.4}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-center text-[#8E8E93] text-[13.5px] py-10">
+            No items on this purchase
+          </p>
+        )}
+      </section>
     </div>
   );
 };

@@ -26,7 +26,7 @@ export const FundWalletModal = ({
   open,
   onOpenChange,
   accountNumber,
-  accountName = "Vendcliq Wallet",
+  accountName,
   bankName = "WEMA Bank",
 }: FundWalletModalProps) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -45,12 +45,16 @@ export const FundWalletModal = ({
   const rows = [
     { label: "Bank", value: bankName, copyable: false },
     { label: "Account number", value: accountNumber, copyable: true },
-    { label: "Account name", value: accountName, copyable: true },
+    {
+      label: "Account name",
+      value: accountName || "—",
+      copyable: Boolean(accountName),
+    },
   ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[440px] font-dm-sans text-[#2F2F2F] rounded-xl bg-white">
+      <DialogContent className="max-w-[calc(100vw-24px)] sm:max-w-[440px] p-4 sm:p-6 font-dm-sans text-[#2F2F2F] rounded-xl bg-white">
         <DialogHeader>
           <DialogTitle className="font-clash font-bold text-[22px] tracking-[-.4px]">
             Fund your wallet
@@ -61,16 +65,18 @@ export const FundWalletModal = ({
           </p>
         </DialogHeader>
 
-        <div className="mt-1 border border-[#D8D8D8B3] rounded-[15px] px-4 py-1">
+        <div className="mt-1 border border-[#D8D8D8B3] rounded-[15px] px-3 sm:px-4 py-1">
           {rows.map((row, index) => (
             <div
               key={row.label}
-              className={`flex items-center justify-between gap-4 py-[14px] ${
+              className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4 py-3 sm:py-[14px] ${
                 index < rows.length - 1 ? "border-b border-[#D8D8D880]" : ""
               }`}
             >
-              <span className="text-[13px] text-[#8E8E93]">{row.label}</span>
-              <span className="flex items-center gap-2.5 min-w-0">
+              <span className="text-[12.5px] sm:text-[13px] text-[#8E8E93] shrink-0">
+                {row.label}
+              </span>
+              <span className="flex items-center gap-2.5 min-w-0 sm:justify-end">
                 <span className="text-[15px] font-bold text-[#2F2F2F] truncate">
                   {row.value || "—"}
                 </span>

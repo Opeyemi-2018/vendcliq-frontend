@@ -15,6 +15,8 @@ export interface PurchasedInvoice {
     supplier: string | null;
     manual_purchase: boolean;
   } | null; // Add null here
+  /** The list endpoint sends a count but an empty items array. */
+  items_count?: number;
   items: any[];
 }
 

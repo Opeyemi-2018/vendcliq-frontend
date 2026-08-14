@@ -4,10 +4,9 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useUser } from "@/context/userContext";
 import {
-  MessageCircle,
+  Sparkles,
   X,
   Send,
-  Bot,
   Loader2,
   Check,
   AlertCircle,
@@ -758,13 +757,12 @@ export default function AIChatWidget() {
         }`}
       >
         <div className="flex items-center gap-3">
-          <Bot size={20} />
-          <div>
-            <div className="flex items-center gap-4">
-              <p className="text-sm font-semibold">Hi {user?.firstname} </p>
-              <span className="">👋</span>
-            </div>
-            <p className="text-xs text-white/70">How can I help you today?</p>
+          <Sparkles size={20} className="text-[#FAC136] shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold">Vendcliq AI here</p>
+            <p className="text-xs text-white/70">
+              Ask me questions about your business
+            </p>
           </div>
         </div>
       </div>
@@ -787,7 +785,7 @@ export default function AIChatWidget() {
           aria-label={open ? "Close assistant" : "Open AI assistant"}
           className="relative w-14 h-14 rounded-full bg-[#0A6DC0] hover:bg-[#085a9e] active:scale-95 transition-all flex items-center justify-center text-white shadow-lg"
         >
-          {open ? <X size={22} /> : <MessageCircle size={22} />}
+          {open ? <X size={22} /> : <Sparkles size={22} />}
         </button>
       </div>
 
@@ -808,11 +806,11 @@ ${isMobile ? "inset-0" : "bottom-24 right-6 w-[380px] sm:w-[420px]"}`}
         <div className="bg-[#0A2540] px-4 py-3 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-[#0A6DC0] flex items-center justify-center text-white">
-              <Bot size={18} />
+              <Sparkles size={18} />
             </div>
             <div>
               <p className="text-white font-dm-sans font-semibold text-[14px]">
-                Sales Assistant
+                Vendcliq AI
               </p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="w-2 h-2 rounded-full bg-[#1D9E75]" />
