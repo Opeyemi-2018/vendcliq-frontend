@@ -93,7 +93,7 @@ export default function SignupPage() {
     2: <Step2 onNext={next} onPrev={prev} data={data} />,
     3: <Step3 onNext={next} data={data} />,
     4: <Step4 onNext={next} data={data} />,
-    5: <Step5 onNext={next} data={data} />,
+    5: <Step5 onNext={next} onPrev={prev} data={data} />,
     6: <Step6 onNext={next} data={data} />,
     7: <Step7 onNext={next} data={data} />,
     8: <Step8 onNext={next} data={data} />,

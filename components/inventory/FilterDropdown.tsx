@@ -49,6 +49,9 @@ export const FilterDropdown = ({
 
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [openUp, setOpenUp] = useState(false);
+  // A right-aligned menu hangs off the left edge when its trigger sits near
+  // the start of a narrow screen, so alignment is decided from the geometry.
+  const [flipToLeft, setFlipToLeft] = useState(false);
 
   // The custom-range inputs sit at the bottom of the panel, so near the foot of
   // the page the menu would be clipped off-screen. Flip it above the trigger
@@ -62,11 +65,13 @@ export const FilterDropdown = ({
       setOpenUp(
         window.innerHeight - rect.bottom < needed && rect.top > needed,
       );
+      const menuWidth = Math.min(width, window.innerWidth - 24);
+      setFlipToLeft(align === "right" && rect.right - menuWidth < 8);
     };
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
-  }, [open, children]);
+  }, [open, children, width, align]);
 
   return (
     <div className="relative" {...rest}>
@@ -92,9 +97,9 @@ export const FilterDropdown = ({
                 : variant === "hero"
                   ? "top-[46px]"
                   : "top-[48px]",
-              align === "right" ? "right-0" : "left-0",
+              align === "right" && !flipToLeft ? "right-0" : "left-0",
             )}
-            style={{ width }}
+            style={{ width, maxWidth: "calc(100vw - 24px)" }}
           >
             {options.map((option) => {
               const active = option.id === selectedId;
