@@ -70,9 +70,9 @@ function TrackingTimeline({
 
   if (isLoading) {
     return (
-      <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white font-dm-sans mb-3">
-        <h2 className="font-bold text-[16px] md:text-[18px] mb-5">
-          Tracking details
+      <div className="bg-white border border-[#D8D8D8B3] rounded-[18px] p-4 sm:p-5 mb-[18px] font-dm-sans">
+        <h2 className="font-clash font-semibold text-[17px] tracking-[-.3px] m-0 mb-4">
+          Where it is
         </h2>
         <div className="flex flex-col gap-4 animate-pulse">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -91,12 +91,12 @@ function TrackingTimeline({
 
   if (isError || !data || !data.status) {
     return (
-      <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white font-dm-sans mb-3">
-        <h2 className="font-bold text-[16px] md:text-[18px] mb-3">
-          Tracking details
+      <div className="bg-white border border-[#D8D8D8B3] rounded-[18px] p-4 sm:p-5 mb-[18px] font-dm-sans">
+        <h2 className="font-clash font-semibold text-[17px] tracking-[-.3px] m-0 mb-3">
+          Where it is
         </h2>
-        <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
-          <p className="text-sm text-amber-700 font-medium">
+        <div className="flex items-start gap-2.5 bg-[#FFF3DB] border border-[#F2D9A0] rounded-[12px] px-4 py-3">
+          <p className="text-[13px] text-[#85540A] font-medium leading-[1.45] m-0">
             {/* ← Show real server message if available */}
             {isError
               ? (error as any)?.message || "Failed to load tracking"
@@ -111,22 +111,22 @@ function TrackingTimeline({
   const completedSteps = getCompletedSteps(data.status);
 
   return (
-    <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white font-dm-sans mb-3">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="font-bold text-[16px] md:text-[18px]">
-          Tracking details
+    <div className="bg-white border border-[#D8D8D8B3] rounded-[18px] p-4 sm:p-5 mb-[18px] font-dm-sans">
+      <div className="flex items-baseline justify-between gap-3 flex-wrap mb-4">
+        <h2 className="font-clash font-semibold text-[17px] tracking-[-.3px] m-0">
+          Where it is
         </h2>
         {data.lastUpdated && (
-          <span className="text-xs text-gray-400">
+          <span className="text-[12px] text-[#8E8E93]">
             Updated {format(new Date(data.lastUpdated), "dd MMM yyyy, hh:mm a")}
           </span>
         )}
       </div>
 
       {/* Current status badge */}
-      <div className="mb-5 inline-flex items-center gap-2 px-3 py-1.5 bg-[#31A078]/10 border border-[#31A078]/20 rounded-full">
-        <span className="w-2 h-2 rounded-full bg-[#31A078] animate-pulse" />
-        <span className="text-sm font-semibold text-[#31A078]">
+      <div className="mb-5 inline-flex items-center gap-2 px-3 py-1.5 bg-[#E7F4EB] rounded-full">
+        <span className="w-2 h-2 rounded-full bg-[#00681B] animate-pulse" />
+        <span className="text-[13px] font-bold text-[#003909] capitalize">
           {data.status.replace(/_/g, " ")}
         </span>
       </div>
@@ -143,9 +143,9 @@ function TrackingTimeline({
               <div className="flex flex-col items-center">
                 <div
                   className={cn(
-                    "w-7 h-7 rounded-sm flex items-center justify-center flex-shrink-0 z-10 transition-colors",
-                    isCompleted ? "bg-[#31A078]" : "bg-gray-200",
-                    isCurrent && "ring-2 ring-[#31A078] ring-offset-1",
+                    "w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 z-10 transition-colors",
+                    isCompleted ? "bg-[#00681B]" : "bg-[#E4E7EB]",
+                    isCurrent && "ring-2 ring-[#00681B] ring-offset-2",
                   )}
                 >
                   <Check className="w-4 h-4 text-white" strokeWidth={3} />
@@ -154,7 +154,7 @@ function TrackingTimeline({
                   <div
                     className={cn(
                       "w-0.5 flex-1 my-1 transition-colors",
-                      isCompleted ? "bg-[#31A078]" : "bg-gray-200",
+                      isCompleted ? "bg-[#00681B]" : "bg-[#E4E7EB]",
                     )}
                     style={{ minHeight: 32 }}
                   />
@@ -165,19 +165,21 @@ function TrackingTimeline({
               <div className={cn("pb-6 flex-1", isLast && "pb-0")}>
                 <p
                   className={cn(
-                    "font-semibold text-sm",
-                    isCompleted ? "text-[#31A078]" : "text-gray-400",
-                    isCurrent && "text-[#31A078] font-bold",
+                    "font-semibold text-[14px]",
+                    isCompleted ? "text-[#2F2F2F]" : "text-[#B9BCC2]",
+                    isCurrent && "text-[#003909] font-bold",
                   )}
                 >
                   {step.label}
                   {isCurrent && (
-                    <span className="ml-2 text-[10px] font-bold bg-[#31A078] text-white px-1.5 py-0.5 rounded-full">
-                      Current
+                    <span className="ml-2 text-[10px] font-bold bg-[#E7F4EB] text-[#003909] px-2 py-0.5 rounded-full uppercase tracking-[.4px]">
+                      Now
                     </span>
                   )}
                 </p>
-                <p className="text-sm text-gray-500 mt-0.5">{step.desc}</p>
+                <p className="text-[12.5px] text-[#8E8E93] mt-0.5 leading-[1.45]">
+                  {step.desc}
+                </p>
               </div>
             </div>
           );
