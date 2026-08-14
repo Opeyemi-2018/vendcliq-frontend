@@ -21,6 +21,7 @@ import {
   purchaseRequestToRow,
   saleInvoiceToRow,
 } from "@/lib/salesRows";
+import { groupByDay } from "@/lib/dayGroups";
 import SalesLogRow from "@/components/inventory/SalesLogRow";
 import { useSalesFilter } from "@/lib/salesFilterStore";
 import FilterDropdown, {
@@ -165,6 +166,17 @@ const SalesHistoryPage = () => {
   // Totals follow the current filter, so they are summed from the rows shown.
   const total = useMemo(
     () => rows.reduce((sum, row) => sum + row.amount, 0),
+    [rows],
+  );
+
+  // A range covers many days, so the log reads as days rather than one run of
+  // rows. `rows` is already newest-first, so the days come out that way too.
+  const dayGroups = useMemo(
+    () =>
+      groupByDay(rows, (row) => row.createdAt).map((group) => ({
+        ...group,
+        total: group.items.reduce((sum, row) => sum + row.amount, 0),
+      })),
     [rows],
   );
 
@@ -406,13 +418,27 @@ const SalesHistoryPage = () => {
               Loading sales…
             </div>
           </div>
-        ) : rows.length > 0 ? (
-          rows.map((row) => (
-            <SalesLogRow
-              key={`${row.channel}-${row.id}`}
-              row={row}
-              hideAmounts={hideAmounts}
-            />
+        ) : dayGroups.length > 0 ? (
+          dayGroups.map((group) => (
+            <div key={group.key} className="flex flex-col gap-[10px]">
+              <div className="flex items-baseline justify-between gap-3 mt-2 first:mt-0">
+                <span className="text-[11.5px] font-bold tracking-[.6px] uppercase text-[#8E8E93]">
+                  {group.label}
+                </span>
+                <span className="text-[12.5px] font-semibold text-[#6B6B70] whitespace-nowrap">
+                  {group.items.length}{" "}
+                  {group.items.length === 1 ? "sale" : "sales"} ·{" "}
+                  {formatNaira(group.total, hideAmounts)}
+                </span>
+              </div>
+              {group.items.map((row) => (
+                <SalesLogRow
+                  key={`${row.channel}-${row.id}`}
+                  row={row}
+                  hideAmounts={hideAmounts}
+                />
+              ))}
+            </div>
           ))
         ) : (
           <div className="bg-white border border-dashed border-[#D8D8D8E6] rounded-[16px] py-10 px-5 text-center">
