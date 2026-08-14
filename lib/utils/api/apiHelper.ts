@@ -697,12 +697,27 @@ export const handleSubmitBusinessVerification = (payload: FormData) => {
   );
 };
 
+/**
+ * Wallet transactions, optionally narrowed to a period.
+ *
+ * `startDate` and `endDate` want full ISO timestamps. A bare `YYYY-MM-DD` end
+ * is read as that day at midnight, which drops the whole of the closing day —
+ * so callers should send the end of the day, not the date on its own.
+ */
 export const handleGetTransactions = async (
   page: number = 1,
   limit: number = 50,
+  startDate?: string,
+  endDate?: string,
 ): Promise<TransactionHistoryResponse> => {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+  if (startDate) params.set("startDate", startDate);
+  if (endDate) params.set("endDate", endDate);
   return await fetcher<TransactionHistoryResponse>(
-    `${TRANSACTION_HISTORY}?page=${page}&limit=${limit}`,
+    `${TRANSACTION_HISTORY}?${params.toString()}`,
   );
 };
 
