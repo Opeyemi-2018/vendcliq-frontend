@@ -5,11 +5,17 @@ import { useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Check, Loader2 } from "lucide-react";
+import { Check } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useTrackingStatus } from "@/hooks/useTracking";
 import { format } from "date-fns";
+import BackButton from "@/components/inventory/BackButton";
+import { formatNaira } from "@/lib/salesFilters";
+import { formatQty } from "@/lib/priceInput";
+
+const EYEBROW =
+  "text-[11.5px] font-bold tracking-[.5px] uppercase text-[#8E8E93]";
 
 const TRACKING_STEPS = [
   {
@@ -221,30 +227,29 @@ const ItemDetailPage = () => {
   }
 
   return (
-    <div className="font-dm-sans text-[#2F2F2F]">
-      <div className="flex mb-4 justify-between">
-        <ArrowLeft size={20} onClick={() => router.back()} />
-        <div>
-          <h1 className="text-right font-clash text-[20px] md:text-[25px] lg:text-[32px] font-semibold">
-            {sku}
+    <div className="font-dm-sans text-[#2F2F2F] max-w-[900px]">
+      <div className="flex items-start gap-[14px] flex-wrap mb-[18px]">
+        <BackButton className="mt-1" />
+        <div className="flex-1 min-w-[200px]">
+          <h1 className="font-clash font-semibold text-[22px] md:text-[28px] tracking-[-.6px] m-0">
+            {sku || productName || "Item"}
           </h1>
-          <p className="font-medium font-dm-sans text-[#9E9A9A] text-[13px] md:text-[16px]">
-            Here is the details of this delivery
+          <p className="text-[14.5px] text-[#8E8E93] mt-[5px] m-0">
+            What you bought, and where it has got to.
           </p>
         </div>
       </div>
 
       {delivery && customerOtp && (
-        <div className="mb-5">
-          <p className="md:font-bold mb-2 text-[13px] md:text-[16px]">
-            Share this OTP delivery confirmation code with the driver or
-            supplier
+        <div className="mb-[18px] bg-[#FFF3DB] border border-[#F2D9A0] rounded-[16px] p-4 sm:p-5">
+          <p className="text-[13.5px] font-semibold text-[#85540A] m-0">
+            Give this code to the driver or supplier on delivery.
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-3">
             {customerOtp.split("").map((digit, index) => (
               <span
                 key={index}
-                className="border border-[#9E9A9A] bg-[#D8D8D866] w-[50px] h-[50px] flex items-center justify-center rounded-lg font-bold text-lg"
+                className="w-11 h-12 sm:w-[50px] sm:h-[52px] bg-white border border-[#F2D9A0] rounded-[10px] flex items-center justify-center font-clash font-bold text-[20px] text-[#85540A]"
               >
                 {digit}
               </span>
@@ -253,8 +258,8 @@ const ItemDetailPage = () => {
         </div>
       )}
 
-      <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white font-dm-sans mb-3">
-        <div className="bg-[#FAFAFA] rounded-lg lg:border border-[#E4E4E4]">
+      <div className="bg-white border border-[#D8D8D8B3] rounded-[18px] p-4 sm:p-5 mb-[18px]">
+        <div className="bg-[#F9FAFB] rounded-[12px] border border-[#D8D8D873]">
           {productImage &&
             productImage !== "undefined" &&
             productImage !== "null" && (
@@ -273,27 +278,35 @@ const ItemDetailPage = () => {
             )}
         </div>
 
-        <div className="mt-4 grid md:grid-cols-2 gap-y-3 lg:grid-cols-3">
+        <div className="mt-4 grid gap-x-6 gap-y-4 grid-cols-2 sm:grid-cols-4">
           <div>
-            <h1 className="font-bold">Item Name</h1>
-            <p>{sku}</p>
+            <div className={EYEBROW}>Quantity</div>
+            <div className="font-clash font-bold text-[19px] tracking-[-.3px] mt-1">
+              {formatQty(quantity)}
+            </div>
           </div>
           <div>
-            <h1 className="font-bold">Quantity</h1>
-            <p>{quantity}</p>
+            <div className={EYEBROW}>Unit price</div>
+            <div className="font-clash font-bold text-[19px] tracking-[-.3px] mt-1">
+              {formatNaira(price)}
+            </div>
           </div>
           <div>
-            <h1 className="font-bold">Unit Price</h1>
-            <p>{price}</p>
+            <div className={EYEBROW}>Amount</div>
+            <div className="font-clash font-bold text-[19px] tracking-[-.3px] mt-1">
+              {formatNaira(cost)}
+            </div>
           </div>
-          <div>
-            <h1 className="font-bold">Amount</h1>
-            <p>{cost}</p>
+          <div className="min-w-0">
+            <div className={EYEBROW}>Item</div>
+            <div className="text-[13.5px] mt-1.5 truncate">
+              {sku || productName || "—"}
+            </div>
           </div>
           {address && (
-            <div>
-              <h1 className="font-bold">Delivery Address</h1>
-              <p>{address}</p>
+            <div className="col-span-2 sm:col-span-4">
+              <div className={EYEBROW}>Delivery address</div>
+              <div className="text-[13.5px] mt-1.5">{address}</div>
             </div>
           )}
         </div>
@@ -302,15 +315,16 @@ const ItemDetailPage = () => {
       {/* ← Real tracking timeline */}
       <TrackingTimeline itemId={itemId} delivery={delivery} />
 
-      <div className="px-6 py-6 bg-gray-50 border-t border-gray-100">
-        <Button
+      <div className="bg-white border border-[#D8D8D8B3] rounded-[18px] p-4 sm:p-5 mt-[18px]">
+        <button
+          type="button"
           onClick={() => setReportOpen(!reportOpen)}
-          className="w-full px-6 bg-[#0A6DC0] hover:bg-[#085a9e] py-5 md:py-6 text-white font-medium rounded-lg"
+          className="w-full h-12 rounded-[12px] border-none bg-[#0A6DC0] text-white font-bold text-[15px] cursor-pointer hover:bg-[#09599A]"
         >
           Report this delivery
-        </Button>
-        <p className="mt-3 text-center text-sm text-gray-500">
-          Contact our support for any complaints about this delivery
+        </button>
+        <p className="mt-3 text-center text-[13px] text-[#8E8E93]">
+          Contact support if anything about this delivery is wrong.
         </p>
       </div>
     </div>

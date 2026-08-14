@@ -285,14 +285,39 @@ export function AppSidebar() {
                               {"tag" in item && item.tag === "new" && (
                                 <NewTag />
                               )}
-                              <ChevronDown
-                                className={`text-white transition-transform duration-200 ${
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`${
                                   openItems.includes(item.title)
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                                style={{ width: "20px", height: "20px" }}
-                              />
+                                    ? "Hide"
+                                    : "Show"
+                                } ${item.title} menu`}
+                                aria-expanded={openItems.includes(item.title)}
+                                onClick={(e) => {
+                                  // Expand in place; the label still navigates.
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (!isMobile) setOpen(true);
+                                  toggleItem(item.title);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key !== "Enter" && e.key !== " ") return;
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  toggleItem(item.title);
+                                }}
+                                className="inline-flex items-center justify-center w-8 h-8 -mr-1.5 rounded-md cursor-pointer hover:bg-white/10"
+                              >
+                                <ChevronDown
+                                  className={`text-white transition-transform duration-200 ${
+                                    openItems.includes(item.title)
+                                      ? "rotate-180"
+                                      : ""
+                                  }`}
+                                  style={{ width: "20px", height: "20px" }}
+                                />
+                              </span>
                             </div>
                           </SidebarMenuButton>
                         </CollapsibleTrigger>

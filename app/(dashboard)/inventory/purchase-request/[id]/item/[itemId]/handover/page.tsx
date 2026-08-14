@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -27,6 +27,9 @@ import HandoverSuccessModal, {
 type Method = "customer" | "driver";
 
 /** Masks all but the last four digits: 0803 ••• 4417. */
+/** Length of a handover code. */
+const OTP_LENGTH = 4;
+
 const maskPhone = (phone?: string | null) => {
   if (!phone) return "the customer";
   const digits = phone.replace(/\s/g, "");
@@ -49,13 +52,10 @@ export default function HandoverPage() {
   const [receipt, setReceipt] = useState<HandoverReceipt | null>(null);
 
   const driverCode = item?.otp_codes?.driver_otp ?? "";
-  const customerCode = item?.otp_codes?.customer_otp ?? "";
 
-  // Code length is whatever the API issued, within the supported 4–6 range.
-  const otpLength = useMemo(() => {
-    const len = (customerCode || driverCode || "").length;
-    return len >= 4 && len <= 6 ? len : 4;
-  }, [customerCode, driverCode]);
+  // Handover codes are four digits. Kept as a named constant rather than
+  // measured off whatever string the API happened to return.
+  const otpLength = OTP_LENGTH;
 
   React.useEffect(() => {
     setDigits(Array(otpLength).fill(""));

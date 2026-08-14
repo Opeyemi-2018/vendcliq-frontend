@@ -26,7 +26,7 @@ export const FundWalletModal = ({
   open,
   onOpenChange,
   accountNumber,
-  accountName = "Vendcliq Wallet",
+  accountName,
   bankName = "WEMA Bank",
 }: FundWalletModalProps) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -45,7 +45,11 @@ export const FundWalletModal = ({
   const rows = [
     { label: "Bank", value: bankName, copyable: false },
     { label: "Account number", value: accountNumber, copyable: true },
-    { label: "Account name", value: accountName, copyable: true },
+    {
+      label: "Account name",
+      value: accountName || "—",
+      copyable: Boolean(accountName),
+    },
   ];
 
   return (

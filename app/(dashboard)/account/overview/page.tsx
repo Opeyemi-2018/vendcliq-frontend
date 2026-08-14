@@ -474,6 +474,7 @@ const AccountOverview = () => {
         open={fundOpen}
         onOpenChange={setFundOpen}
         accountNumber={accountNumber}
+        accountName={wallet?.accountName}
       />
 
       <TransactionReceiptModal
