@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Lock,
   CreditCard,
-  User,
   FileText,
   Headphones,
   FileCheck,
@@ -14,7 +13,6 @@ import {
 // Import your chunk components
 import ChangePassword from "./chunks/ChangePassword";
 import ChangeTransactionPin from "./chunks/ChangeTransactionPin";
-import AttendantPermission from "./chunks/AttendantPermission";
 import BusinessVerification from "./chunks/BusinessVerification";
 import CustomerSupport from "./chunks/CustomerSupport";
 import TermsOfService from "./chunks/TermsOfService";
@@ -39,11 +37,6 @@ const Settings = () => {
             icon: CreditCard,
           },
           {
-            id: "attendantPermission",
-            label: "Attendant Permission",
-            icon: User,
-          },
-          {
             id: "businessVerification",
             label: "Business Verification",
             icon: FileText,
@@ -60,9 +53,6 @@ const Settings = () => {
 
       case "changeTransactionPin":
         return <ChangeTransactionPin />;
-
-      case "attendantPermission":
-        return <AttendantPermission />;
 
       case "businessVerification":
         return <BusinessVerification />;

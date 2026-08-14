@@ -1,12 +1,58 @@
-@import url("https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Clash Display is self-hosted. The previous `@import` of the Fontshare
+ * stylesheet was stripped by the CSS build (the compiled chunk contained no
+ * @import at all), leaving only the 500-weight Medium file — so every
+ * `font-clash font-bold` silently rendered at Medium.
+ */
+/* Wrong hand-over code nudges the digit boxes (prototype `vcShake`). */
+@keyframes vcShake {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translateX(-7px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
 @font-face {
   font-family: "Clash Display";
-  src: url("/fonts/ClashDisplay-Medium.woff") format("woff");
+  src: url("/fonts/ClashDisplay-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Clash Display";
+  src: url("/fonts/ClashDisplay-500.woff2") format("woff2");
   font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Clash Display";
+  src: url("/fonts/ClashDisplay-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Clash Display";
+  src: url("/fonts/ClashDisplay-700.woff2") format("woff2");
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
@@ -157,4 +203,30 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* ── Sidebar promo cards (prototype) ──────────────────────────────────────── */
+@keyframes vcSheen {
+  0% { transform: translateX(-130%) skewX(-18deg); }
+  55%, 100% { transform: translateX(360%) skewX(-18deg); }
+}
+@keyframes vcRing {
+  0% { transform: scale(1); opacity: .5; }
+  70%, 100% { transform: scale(2.1); opacity: 0; }
+}
+@keyframes vcStep {
+  0%, 100% { opacity: .35; }
+  30% { opacity: 1; }
+}
+@keyframes vcGlow {
+  0%, 100% { opacity: .3; transform: scale(1); }
+  50% { opacity: .62; transform: scale(1.14); }
+}
+@keyframes vcDot {
+  0%, 100% { transform: translateY(0); opacity: .4; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}
+@keyframes vcFloat {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-5px) rotate(5deg); }
 }

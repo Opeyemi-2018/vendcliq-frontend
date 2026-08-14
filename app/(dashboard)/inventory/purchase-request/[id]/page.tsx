@@ -1,262 +1,243 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
-import { MoveLeft } from "lucide-react";
+import { toast } from "sonner";
+import { ClipLoader } from "react-spinners";
 import { usePurchaseRequestById } from "@/hooks/usePurchaseRequests";
+import { formatNaira, formatQuantity } from "@/lib/salesFilters";
+import { handoverProgress } from "@/lib/salesRows";
+import { VcIcon } from "@/components/inventory/VcIcon";
+import ProductThumb from "@/components/inventory/ProductThumb";
 
-const PurchaseRequestDetailPage = () => {
+export default function OnlineSaleInvoicePage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
   const { data: request, isLoading, error } = usePurchaseRequestById(id);
 
-  const formatCurrency = (amount: number) =>
-    amount.toLocaleString("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-    });
+  React.useEffect(() => {
+    if (error) toast.error("Could not load this online sale");
+  }, [error]);
 
-  const getStatusBadge = (status?: string) => {
-    const s = status?.toLowerCase();
+  const items = useMemo(() => request?.items ?? [], [request]);
+  const { done, total } = handoverProgress(items);
+  const pct = total ? Math.round((done / total) * 100) : 0;
 
-    if (s === "paid") {
-      return (
-        <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-          Paid
-        </span>
-      );
-    }
-
-    if (s === "pending") {
-      return (
-        <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-          Pending
-        </span>
-      );
-    }
-
-    return (
-      <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
-        {status || "Unknown"}
-      </span>
-    );
-  };
+  const nextPending = useMemo(
+    () => items.find((i: any) => !i.attributes?.handover_completed),
+    [items],
+  );
 
   if (isLoading) {
     return (
-      <div>
-        {/* Back button skeleton */}
-        <div className="w-9 h-9 rounded-full bg-gray-100 animate-pulse mb-4" />
-
-        {/* Title skeleton */}
-        <div className="mb-4 md:mb-6 space-y-2">
-          <div className="h-7 bg-gray-100 rounded-lg w-40 animate-pulse" />
-          <div className="h-4 bg-gray-100 rounded w-48 animate-pulse" />
-        </div>
-
-        <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px]">
-          <div className="h-6 bg-gray-100 rounded w-36 animate-pulse mb-4" />
-
-          <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-            {/* Table header skeleton */}
-            <div className="bg-gray-50 px-6 py-3 flex gap-8">
-              {[
-                "Product",
-                "Quantity",
-                "Unit Cost",
-                "Subtotal",
-                "Status",
-                "Delivery",
-                "Handover",
-              ].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-4 bg-gray-100 rounded w-16 animate-pulse"
-                />
-              ))}
-            </div>
-
-            {/* Table rows skeleton */}
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="px-6 py-4 flex gap-8 items-center border-t border-gray-100"
-              >
-                {/* Product cell */}
-                <div className="flex items-center gap-2 min-w-[140px]">
-                  <div className="w-10 h-10 rounded-md bg-gray-100 animate-pulse flex-shrink-0" />
-                  <div className="h-4 bg-gray-100 rounded w-24 animate-pulse" />
-                </div>
-                {/* Other cells */}
-                {Array.from({ length: 6 }).map((_, j) => (
-                  <div
-                    key={j}
-                    className="h-4 bg-gray-100 rounded w-16 animate-pulse"
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="flex justify-center items-center py-24">
+        <ClipLoader color="#0A6DC0" size={34} />
       </div>
     );
   }
 
-  if (error || !request) {
+  if (!request) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
-        <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
-        <p className="text-gray-700 mb-6">
-          {error?.message || "Request not found"}
-        </p>
-        <Link
-          href="/inventory/purchase-request"
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+      <div className="bg-white border border-dashed border-[#D8D8D8E6] rounded-[16px] py-10 px-5 text-center max-w-[600px]">
+        <div className="font-bold text-[15px] text-[#2F2F2F]">
+          Online sale not found
+        </div>
+        <button
+          type="button"
+          onClick={() => router.push("/inventory/sales")}
+          className="mt-3 text-[13px] font-bold text-[#0A6DC0] hover:underline"
         >
-          Back to Purchase Requests
-        </Link>
+          Back to Sales History
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="">
-      <button
-        onClick={() => router.push("/inventory/purchase-request")}
-        className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors"
-      >
-        <MoveLeft className="w-5 h-5" />
-      </button>
-      <div className="mb-4 md:mb-6">
-        <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
-          {request.code}
-        </h1>
-        <p className="font-medium font-dm-sans text-[#9E9A9A]">
-          See items on this invoice
-        </p>
+    <div className="flex flex-col gap-[22px] max-w-[1360px]">
+      <div className="flex items-start gap-[14px] flex-wrap">
+        <button
+          type="button"
+          aria-label="Back"
+          onClick={() => router.push("/inventory/sales")}
+          className="w-[42px] h-[42px] rounded-[12px] border border-[#D8D8D8E6] bg-white cursor-pointer inline-flex items-center justify-center shrink-0 mt-1 hover:border-[#0A6DC0]"
+        >
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#2F2F2F" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m14 6-6 6 6 6" />
+          </svg>
+        </button>
+        <div className="flex-1 min-w-[260px]">
+          <span className="text-[12.5px] font-bold tracking-[.4px] uppercase text-[#8E8E93]">
+            Online Sales
+          </span>
+          <h1 className="mt-1.5 font-clash font-semibold text-[30px] tracking-[-.6px] text-[#2F2F2F]">
+            {request.code}
+          </h1>
+          <p className="mt-[5px] text-[14px] text-[#8E8E93]">
+            See items on this online sale
+          </p>
+        </div>
       </div>
 
-      <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px]">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900">
-            Requested Items
-          </h2>
-        </div>
-
-        {request.items?.length === 0 ? (
-          <div className="p-12 text-center text-gray-500">
-            No items in this request
+      <div className="flex flex-wrap gap-5 items-start">
+        {/* ── Requested items ────────────────────────────────────────────── */}
+        <div className="flex-[1_1_560px] min-w-0 bg-white border border-[#E4E4E4] rounded-[20px] overflow-hidden">
+          <div className="px-[22px] pt-5 pb-4 flex items-center justify-between gap-[14px] flex-wrap">
+            <div>
+              <h2 className="m-0 font-clash font-semibold text-[19px] tracking-[-.3px] text-[#2F2F2F]">
+                Requested items
+              </h2>
+              <p className="mt-1 text-[13px] text-[#8E8E93]">
+                Pick an item to hand it over.
+              </p>
+            </div>
+            {(request.status || "").toUpperCase() === "PAID" && (
+              <span className="inline-flex items-center gap-[7px] h-[30px] px-3 rounded-full bg-[#E7F4EB] text-[#003909] text-[12.5px] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00681B]" />
+                <span>Payment received</span>
+              </span>
+            )}
           </div>
-        ) : (
-          <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto text-[#2F2F2F]">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr className="whitespace-nowrap">
-                    <th className="px-6 py-3 text-left font-medium">Product</th>
-                    <th className="px-6 py-3 text-left font-medium">
-                      Quantity
-                    </th>
-                    <th className="px-6 py-3 text-left font-medium">
-                      Unit Cost
-                    </th>
-                    <th className="px-6 py-3 text-left font-medium">
-                      Subtotal
-                    </th>
-                    <th className="px-6 py-3 text-left font-medium">Status</th>
-                    <th className="px-6 py-3 text-left font-medium">
-                      Delivery
-                    </th>
-                    <th className="px-6 py-3 text-left font-medium">
-                      Handover
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {request.items.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() =>
+
+          <div className="overflow-x-auto">
+            <div className="min-w-[800px]">
+              <div className="grid [grid-template-columns:minmax(210px,2.1fr)_84px_104px_108px_78px_132px_22px] gap-3 items-center px-[22px] py-[13px] bg-[#F9FCFF] border-y border-[#D8D8D899] text-[11.5px] font-bold tracking-[.4px] uppercase text-[#6E7480]">
+                <span>Product</span>
+                <span>Quantity</span>
+                <span>Unit cost</span>
+                <span>Subtotal</span>
+                <span>Delivery</span>
+                <span>Handover</span>
+                <span />
+              </div>
+
+              {items.map((item: any) => {
+                const isDone = Boolean(item.attributes?.handover_completed);
+                return (
+                  <div
+                    key={item.id}
+                    data-tour="invoice-item"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() =>
+                      router.push(
+                        `/inventory/purchase-request/${id}/item/${item.id}`,
+                      )
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ")
                         router.push(
                           `/inventory/purchase-request/${id}/item/${item.id}`,
-                        )
-                      }
-                    >
-                      <td className="px-6">
-                        <div className="flex gap-2 items-center">
-                          <div className="flex-shrink-0">
-                            {item.product?.image ? (
-                              <div className="w-10 h-10 rounded-md overflow-hidden border border-gray-200">
-                                <Image
-                                  src={item.product.image}
-                                  alt={item.product.name || "Product"}
-                                  width={56}
-                                  height={56}
-                                  className="object-cover w-full h-full"
-                                />
-                              </div>
-                            ) : (
-                              <div className="w-14 h-14 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 text-xs border border-gray-200">
-                                No image
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium whitespace-nowrap">
-                              {item.product?.name || "Unnamed Product"}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {item.quantity}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium">
-                        {formatCurrency(item.cost)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium">
-                        {formatCurrency(item.sub_total)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(request.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {item.delivery ? (
-                          <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                            Yes
-                          </span>
-                        ) : (
-                          <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
-                            No
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {item.attributes?.handover_completed ? (
-                          <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                            Completed
-                          </span>
-                        ) : (
-                          <span className="inline-flex px-3 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                            Pending
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        );
+                    }}
+                    className="grid [grid-template-columns:minmax(210px,2.1fr)_84px_104px_108px_78px_132px_22px] gap-3 items-center px-[22px] py-[14px] border-b border-[#D8D8D873] cursor-pointer bg-white hover:bg-[#F9FCFF]"
+                  >
+                    <div className="flex items-center gap-[13px] min-w-0">
+                      <ProductThumb
+                        src={item.product?.image}
+                        alt={item.product?.name ?? "Product"}
+                        size={44}
+                      />
+                      <span className="text-[14.5px] font-semibold text-[#2F2F2F] tracking-[-.2px] truncate">
+                        {item.product?.name ?? "Item"}
+                      </span>
+                    </div>
+                    <span className="text-[14px] text-[#2F2F2F]">
+                      {formatQuantity(item.quantity)}
+                    </span>
+                    <span className="text-[14px] text-[#2F2F2F]">
+                      {formatNaira(item.cost)}
+                    </span>
+                    <span className="text-[14px] font-bold text-[#2F2F2F]">
+                      {formatNaira(item.sub_total)}
+                    </span>
+                    <span className="text-[13.5px] text-[#6E7480]">
+                      {item.delivery ? "Yes" : "No"}
+                    </span>
+                    <div>
+                      {isDone ? (
+                        <span className="inline-flex items-center gap-1.5 h-7 px-[11px] rounded-full bg-[#E7F4EB] text-[#003909] text-[12px] font-bold">
+                          <VcIcon name="check" size={13} stroke="#00681B" strokeWidth={3} />
+                          <span>Completed</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 h-7 px-[11px] rounded-full bg-[#FFF3DB] text-[#85540A] text-[12px] font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#E0A21A]" />
+                          <span>Pending</span>
+                        </span>
+                      )}
+                    </div>
+                    <VcIcon name="chevron" size={18} stroke="#B9BCC2" strokeWidth={2.4} />
+                  </div>
+                );
+              })}
             </div>
           </div>
-        )}
+
+          <div className="flex items-center justify-between gap-[14px] px-[22px] py-[18px] flex-wrap">
+            <span className="text-[13.5px] text-[#8E8E93]">
+              {total} {total === 1 ? "item" : "items"} requested · {done} handed
+              over
+            </span>
+            <div className="flex items-baseline gap-2.5">
+              <span className="text-[13.5px] text-[#8E8E93]">Order total</span>
+              <span className="font-clash font-bold text-[22px] tracking-[-.4px] text-[#2F2F2F]">
+                {formatNaira(request.total ?? 0)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Handover progress ──────────────────────────────────────────── */}
+        <div className="flex-[1_1_300px] min-w-[280px] max-w-[380px] flex flex-col gap-4">
+          <div
+            data-tour="handover-card"
+            className="bg-white border border-[#E4E4E4] rounded-[20px] p-5"
+          >
+            <div className="font-clash font-semibold text-[18px] tracking-[-.3px] text-[#2F2F2F]">
+              Handover progress
+            </div>
+            <div className="text-[13.5px] text-[#8E8E93] mt-1">
+              {done} of {total} items handed over
+            </div>
+            <div className="mt-[14px] h-2.5 rounded-[5px] bg-[#F1F2F4] overflow-hidden">
+              <div
+                className="h-full rounded-[5px] bg-[#0A6DC0] transition-[width] duration-200"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+
+            {nextPending ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(
+                      `/inventory/purchase-request/${id}/item/${nextPending.id}/handover`,
+                    )
+                  }
+                  className="mt-[18px] w-full h-[50px] border-none rounded-[13px] bg-[#FAC136] text-[#1A1400] font-bold text-[15px] cursor-pointer inline-flex items-center justify-center gap-[9px] hover:bg-[#FFB800]"
+                >
+                  <VcIcon name="truck" size={18} stroke="#1A1400" strokeWidth={2.2} />
+                  <span>Hand over next item</span>
+                </button>
+                <div className="text-[12.5px] text-[#8E8E93] mt-2 text-center">
+                  Next up: {nextPending.product?.name ?? "Item"}
+                </div>
+              </>
+            ) : (
+              <div className="mt-[18px] flex items-center gap-[11px] p-[14px] rounded-[13px] bg-[#E7F4EB]">
+                <VcIcon name="check" size={20} stroke="#00681B" strokeWidth={2.6} className="shrink-0" />
+                <span className="text-[13.5px] font-bold text-[#003909]">
+                  Every item on this order is handed over.
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
-};
-
-export default PurchaseRequestDetailPage;
+}

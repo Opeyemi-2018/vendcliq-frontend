@@ -96,17 +96,17 @@ const PurchaseRequestListPage = () => {
     <div className="">
       <div className="mb-4 md:mb-6">
         <h1 className="font-clash text-[20px] md:text-[25px] font-semibold text-[#2F2F2F]">
-          Purchase Requests
+          Online Sales
         </h1>
         <p className="font-medium font-dm-sans text-[#9E9A9A]">
-          View and track all your purchase requests and stock order easily.
+          View and track all your online sales and stock orders easily.
         </p>
       </div>
 
       <div className="mb-4 bg-[url('/purchase-bg.svg')] bg-no-repeat bg-cover bg-center p-3 md:p-6 overflow-hidden md:h-[150px] mt-3 flex flex-col md:flex-row justify-between rounded-2xl">
         <div className="flex w-full md:items-center justify-between flex-col md:flex-row h-full">
           <div>
-            <p className="text-white font-dm-sans">Total Purchase Requests</p>
+            <p className="text-white font-dm-sans">Total Online Sales</p>
             <h1 className="text-white text-[20px] md:text-[25px] font-semibold font-clash">
               {isLoading ? (
                 <ThreeDots height="20" width="20" color="#ffffff" visible />
@@ -184,7 +184,7 @@ const PurchaseRequestListPage = () => {
       <div className="md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white mb-3 md:mb-5">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-[16px] font-bold font-dm-sans">
-            Purchase Requests
+            Online Sales
           </h1>
         </div>
 
@@ -226,7 +226,7 @@ const PurchaseRequestListPage = () => {
                     >
                       {selectedDate
                         ? `No requests found for ${format(selectedDate, "MMM dd, yyyy")}`
-                        : "No purchase requests found"}
+                        : "No online sales found"}
                     </td>
                   </tr>
                 ) : (

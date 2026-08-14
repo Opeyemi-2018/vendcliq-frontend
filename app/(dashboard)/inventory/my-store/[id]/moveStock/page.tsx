@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { MoveLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,8 @@ import { X } from "lucide-react";
 import { moveStock } from "@/lib/utils/api/apiHelper";
 
 import { useStores } from "@/hooks/useStores";
+import { formatQty } from "@/lib/priceInput";
+import BackButton from "@/components/inventory/BackButton";
 
 interface StockItem {
   id: string;
@@ -214,12 +216,7 @@ const MoveStockPage = () => {
     <div className="">
       {/* Header with Back Button */}
       <div className="">
-        <button
-          onClick={() => router.back()}
-          className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors "
-        >
-          <MoveLeft className="w-5 h-5" />
-        </button>
+        <BackButton />
 
         <h1 className="font-clash text-[18px] md:text-[25px] font-semibold text-[#2F2F2F] dark:text-white">
           Move Selected to
@@ -266,7 +263,7 @@ const MoveStockPage = () => {
               <div>
                 <p className="font-medium text-[#2F2F2F]">{stock.sku}</p>
                 <p className="text-[13px] text-[#2F2F2F] font-dm-sans">
-                  Qty in stock: {parseFloat(stock.quantity).toFixed(0)}
+                  Qty in stock: {formatQty(stock.quantity)}
                 </p>
               </div>
             </div>

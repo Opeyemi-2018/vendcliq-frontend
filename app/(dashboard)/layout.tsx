@@ -5,6 +5,8 @@ import { ReactNode, useEffect, useRef } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import AIChatWidget from "@/components/ChatWidget";
+import TourOverlay from "@/components/tour/TourOverlay";
+import TourHandoverDemo from "@/components/tour/TourHandoverDemo";
 
 const DashboardContent = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
@@ -45,6 +47,8 @@ const DashboardContent = ({ children }: { children: ReactNode }) => {
           data-scroll-container
         >
            <AIChatWidget />
+           <TourHandoverDemo />
+           <TourOverlay />
           {children}
         </div>
       </main>

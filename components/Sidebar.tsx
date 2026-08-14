@@ -1,15 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { LogOut, ChevronDown } from "lucide-react";
 import {
-  BookOpen,
-  Home,
-  RectangleEllipsis,
-  LogOut,
-  ChevronDown,
-  Building2,
-  Store,
-} from "lucide-react";
+  NavAccount,
+  NavInventory,
+  NavMarket,
+  NavMore,
+  NavIconProps,
+} from "@/components/inventory/NavIcons";
 import {
   Sidebar,
   SidebarContent,
@@ -37,7 +36,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import { clearAuthTokens } from "@/lib/utils/api";
 import {
   Collapsible,
@@ -47,6 +45,7 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/context/userContext";
+import SidebarPromos from "@/components/SidebarPromos";
 
 // ── Tag badges ────────────────────────────────────────────────────────────────
 function NewTag() {
@@ -88,22 +87,33 @@ export function AppSidebar() {
     canAccessMarketplace,
   } = useUser();
 
-  const allItems = [
+  type NavTag = "new" | "refresh" | "coming-soon";
+  type NavChild = { title: string; url: string; tag?: NavTag };
+
+  const allItems: {
+    title: string;
+    url: string;
+    icon: React.ComponentType<NavIconProps>;
+    tag?: NavTag;
+    children?: NavChild[];
+  }[] = [
+    // Tapping a section header navigates to its own overview, so the children
+    // no longer repeat an "Overview" entry (prototype behaviour).
     ...(!isAttendant
       ? [
           {
             title: "Account",
             url: "/account/overview",
-            icon: Home,
+            icon: NavAccount,
             children: [
-              { title: "Overview", url: "/account/overview" },
               { title: "Send Money", url: "/account/send-money" },
-              { title: "Pay Utility Bill", url: "/account/pay-utility" },
+              { title: "Airtime & Data", url: "/account/pay-utility" },
               {
-                title: "Transaction History",
+                title: "Transactions History",
                 url: "/account/transactionHistory",
               },
-              { title: "Payment & Subscription", url: "/payment-subscription" },
+              { title: "Subscription & Payment", url: "/payment-subscription" },
+              { title: "Credit Ledger", url: "/credit-ledger" },
             ],
           },
         ]
@@ -111,15 +121,18 @@ export function AppSidebar() {
     {
       title: "Inventory",
       url: "/inventory/overview",
-      icon: BookOpen,
+      icon: NavInventory,
       children: [
-        { title: "Overview", url: "/inventory/overview" },
         ...(canSell() ? [{ title: "Sell", url: "/inventory/sell" }] : []),
         ...(canBuy() ? [{ title: "Buy", url: "/inventory/buy" }] : []),
         { title: "My Store", url: "/inventory/my-store" },
-        ...(!isAttendant
-          ? [{ title: "My Purchase", url: "/my-purchase" }]
+        { title: "Customer List", url: "/customer" },
+        ...(canReporting()
+          ? [{ title: "Business Report", url: "/business-report" }]
           : []),
+        { title: "Sales History", url: "/inventory/sales" },
+        ...(canExpenses() ? [{ title: "Expenses", url: "/expenses" }] : []),
+        { title: "Supplier List", url: "/suppliers" },
       ],
     },
     ...(canAccessMarketplace()
@@ -127,24 +140,11 @@ export function AppSidebar() {
           {
             title: "Market Place",
             url: "/market-place",
-            icon: Store,
-          },
-        ]
-      : []),
-    ...(!isAttendant
-      ? [
-          {
-            title: "Enterprise",
-            url: "/credit-ledger",
-            icon: Building2,
-            tag: "new" as const,
+            icon: NavMarket,
             children: [
-              { title: "Credit Ledger", url: "/credit-ledger" },
-              {
-                title: "Delivery",
-                url: "/delivery",
-                tag: "coming-soon" as const,
-              },
+              ...(!isAttendant
+                ? [{ title: "My Purchases", url: "/my-purchase" }]
+                : []),
             ],
           },
         ]
@@ -152,20 +152,13 @@ export function AppSidebar() {
     {
       title: "More",
       url: "#",
-      icon: RectangleEllipsis,
+      icon: NavMore,
       children: [
-        ...(canReporting()
-          ? [
-              {
-                title: "Business Report",
-                url: "/business-report",
-                tag: "refresh" as const,
-              },
-            ]
+        // Business Report / Customer List / Supplier List / Expenses now live
+        // under Inventory (and as pinned Quick Actions), per the prototype.
+        ...(!isAttendant
+          ? [{ title: "Business Settings", url: "/business-settings" }]
           : []),
-        { title: "Supplier List", url: "/suppliers" },
-        { title: "Customer List", url: "/customer" },
-        ...(canExpenses() ? [{ title: "Expenses", url: "/expenses" }] : []),
         { title: "Profile Settings", url: "/profile-settings" },
         { title: "Referral", url: "/referral" },
         ...(!isAttendant
@@ -226,16 +219,23 @@ export function AppSidebar() {
         <SidebarGroup>
           {!isCollapsed && (
             <div className="px-4 py-4">
-              <Image src={"/vl.avif"} width={150} height={150} alt="logo" />
+              <Image
+                src="/logo-wordmark-light.png"
+                width={150}
+                height={26}
+                alt="Vendcliq"
+                className="h-[26px] w-auto ml-0.5"
+              />
             </div>
           )}
           {isCollapsed && (
             <div className="flex justify-center py-4">
               <Image
-                src="/sidebar-logo.svg"
+                src="/brandmark.png"
                 width={32}
                 height={32}
-                alt="logo"
+                alt="Vendcliq"
+                className="w-8 h-auto"
               />
             </div>
           )}
@@ -259,11 +259,18 @@ export function AppSidebar() {
                       >
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton
+                            data-tour={item.title === "More" ? "nav-more" : undefined}
                             tooltip={item.title}
                             isActive={parentActive}
                             className="menuButton mb-3 text-white hover:bg-white/10"
                             onClick={() => {
                               if (!isMobile) setOpen(true);
+                              // A section header is also a destination: go to
+                              // its own overview, then let it expand.
+                              if (item.url && item.url !== "#") {
+                                router.push(item.url);
+                                if (isMobile) setOpenMobile(false);
+                              }
                             }}
                           >
                             <item.icon
@@ -278,14 +285,39 @@ export function AppSidebar() {
                               {"tag" in item && item.tag === "new" && (
                                 <NewTag />
                               )}
-                              <ChevronDown
-                                className={`text-white transition-transform duration-200 ${
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`${
                                   openItems.includes(item.title)
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                                style={{ width: "20px", height: "20px" }}
-                              />
+                                    ? "Hide"
+                                    : "Show"
+                                } ${item.title} menu`}
+                                aria-expanded={openItems.includes(item.title)}
+                                onClick={(e) => {
+                                  // Expand in place; the label still navigates.
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (!isMobile) setOpen(true);
+                                  toggleItem(item.title);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key !== "Enter" && e.key !== " ") return;
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  toggleItem(item.title);
+                                }}
+                                className="inline-flex items-center justify-center w-8 h-8 -mr-1.5 rounded-md cursor-pointer hover:bg-white/10"
+                              >
+                                <ChevronDown
+                                  className={`text-white transition-transform duration-200 ${
+                                    openItems.includes(item.title)
+                                      ? "rotate-180"
+                                      : ""
+                                  }`}
+                                  style={{ width: "20px", height: "20px" }}
+                                />
+                              </span>
                             </div>
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
@@ -358,51 +390,8 @@ export function AppSidebar() {
         {/* Bottom section */}
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent className="space-y-3">
-            {!isAttendant && (
-              <SidebarMenu className="mt-4">
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <div
-                      style={{
-                        backgroundImage: "url('/mech.avif')",
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                        height: "127px",
-                      }}
-                      className="h-[127px] w-[217px]"
-                    >
-                      {!isCollapsed && (
-                        <div className="space-y-3">
-                          <h1 className="text-white font-clash text-[14px] font-semibold">
-                            Payment Subscriptions
-                          </h1>
-                          <p className="text-[13px] font-dm-sans font-medium text-white leading-none">
-                            View subscription, manage your plan and upgrade.
-                          </p>
-                          <Button
-                            onClick={() => router.push("/plans")}
-                            className="bg-white text-[#0A2540] hover:bg-[#0A2540] hover:text-white"
-                          >
-                            Upgrade Plan
-                          </Button>
-                        </div>
-                      )}
-                      {isCollapsed && (
-                        <div className="flex justify-center py-4">
-                          <Image
-                            onClick={() => router.push("/plans")}
-                            src="/sub.svg"
-                            width={32}
-                            height={32}
-                            alt="logo"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            )}
+            {/* Both promo cards are expanded-only, as in the prototype. */}
+            {!isCollapsed && <SidebarPromos />}
 
             <SidebarMenu>
               <SidebarMenuItem>

@@ -28,6 +28,8 @@ import {
   useUpdateStore,
   useUpdateStoreSettings,
 } from "@/hooks/useStores";
+import { formatPacks } from "@/lib/priceInput";
+import BackButton from "@/components/inventory/BackButton";
 
 interface Store {
   id: string;
@@ -134,16 +136,15 @@ const StoreDetailPage = () => {
 
   useEffect(() => {
     if (store) {
-      const storeWithSettings = store as Store;
+      // The API nests these under `settings`, not on the store itself.
+      const settings = (store as any).settings ?? {};
       setStoreSettings({
-        is_default: storeWithSettings.is_default || false,
-        show_on_marketplace: storeWithSettings.show_on_marketplace || false,
-        is_archived: storeWithSettings.is_archived || false,
-        allow_credit_sales: storeWithSettings.allow_credit_sales || false,
-        credit_sale_auth_required:
-          storeWithSettings.credit_sale_auth_required || false,
-        credit_sale_auth_emails:
-          storeWithSettings.credit_sale_auth_emails || [],
+        is_default: settings.is_default || false,
+        show_on_marketplace: settings.show_on_marketplace || false,
+        is_archived: settings.is_archived || false,
+        allow_credit_sales: settings.allow_credit_sales || false,
+        credit_sale_auth_required: settings.credit_sale_auth_required || false,
+        credit_sale_auth_emails: settings.credit_sale_auth_emails || [],
       });
       setEditForm({
         address: {
@@ -336,12 +337,7 @@ const StoreDetailPage = () => {
 
   return (
     <div className="">
-      <button
-        onClick={() => router.back()}
-        className="p-2 text-[#2F2F2F] hover:text-[#0A6DC0] hover:bg-[#F9F9F9] rounded-full inline-flex transition-colors"
-      >
-        <MoveLeft className="w-5 h-5" />
-      </button>
+      <BackButton />
 
       <div className="flex flex-col gap-2 md:flex-row md:items-center justify-between">
         <div>
@@ -561,7 +557,7 @@ const StoreDetailPage = () => {
                         <p className="font-medium text-[#2F2F2F]">{item.sku}</p>
                       </td>
                       <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
-                        {parseFloat(item.quantity).toFixed(0)}
+                        {formatPacks(item.quantity, item.product?.items_per_pack)}
                       </td>
                       <td className="hidden md:table-cell py-4 font-medium text-[#2F2F2F]">
                         ₦{parseFloat(item.selling_price).toLocaleString()}

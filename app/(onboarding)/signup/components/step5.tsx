@@ -20,13 +20,16 @@ import {
   handleResendPhoneVerificationToken,
 } from "@/lib/utils/api/apiHelper";
 import ProgressHeader from "./ProgressHeader";
+import { ChevronLeft } from "lucide-react";
 
 interface Props {
-  onNext: (data: Partial<SignupFormData>) => void; 
+  onNext: (data: Partial<SignupFormData>) => void;
+  /** Back to the method picker, so a wrong choice is not a dead end. */
+  onPrev: () => void;
   data: SignupFormData;
 }
 
-export default function Step5({ onNext, data }: Props) {
+export default function Step5({ onNext, onPrev, data }: Props) {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [timeLeft, setTimeLeft] = useState(20);
@@ -109,6 +112,14 @@ export default function Step5({ onNext, data }: Props) {
   return (
     <div className="">
       <ProgressHeader currentStep={5} />
+      <button
+        type="button"
+        onClick={onPrev}
+        className="flex items-center gap-2 text-[#2F2F2F] pb-4 md:pb-10 hover:opacity-70 mb-4"
+      >
+        <ChevronLeft className="w-5 h-5" />
+        Back
+      </button>
 
       <h1 className="font-clash text-[22px] font-semibold text-[#2F2F2F] mb-3">
         Verify Phone Number

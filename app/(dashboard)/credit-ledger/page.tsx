@@ -35,6 +35,7 @@ import {
   getInvoiceById,
 } from "@/lib/utils/api/apiHelper";
 import Image from "next/image";
+import { formatQty } from "@/lib/priceInput";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface PaymentHistory {
@@ -740,7 +741,7 @@ export default function CreditLedger() {
                                     </div>
                                   </div>
                                   <span className="text-xs font-medium font-dm-sans text-center">
-                                    {parseFloat(inv.quantity).toFixed(0)}{" "}
+                                    {formatQty(inv.quantity)}{" "}
                                     {inv.mode === "PACKS" ? "pk" : "pc"}
                                   </span>
                                   <span className="text-xs text-gray-600 font-dm-sans text-right">

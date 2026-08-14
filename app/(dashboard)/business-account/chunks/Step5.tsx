@@ -28,7 +28,12 @@ import {
   type GovernmentIdData,
   ID_TYPE_LABELS,
 } from "@/types/business";
-import { handleSubmitBusinessVerification } from "@/lib/utils/api/apiHelper";
+import {
+  handleSubmitBusinessVerification,
+  handleCreateWallet,
+} from "@/lib/utils/api/apiHelper";
+import { useUser } from "@/context/userContext";
+import { useWallet } from "@/hooks/useWallet";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -51,6 +56,8 @@ interface Props {
 }
 
 export default function Step5({ onPrev, cacData }: Props) {
+  const { user, setUser } = useUser();
+  const { fetchWallet } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [idImagePreview, setIdImagePreview] = useState<string | null>(null);
@@ -109,8 +116,43 @@ export default function Step5({ onPrev, cacData }: Props) {
     const response = await handleSubmitBusinessVerification(formData);
 
     if (response.status === "success") {
-      toast.success("Verification completed!");
       localStorage.removeItem("businessSignupProgress");
+
+      // Verification alone does not open the account; the virtual account has
+      // to be asked for. This call was missing, so vendors finished the flow
+      // with no wallet at all.
+      try {
+        const walletRes = await handleCreateWallet();
+        if (walletRes?.status === "success") {
+          const account = walletRes.data?.account;
+          // Reflect it locally so the app does not need a fresh login to
+          // notice the wallet exists.
+          if (user) {
+            setUser({
+              ...user,
+              wallet: {
+                walletId: 0,
+                accountName: account?.accountName,
+                accountNumbers: account?.accountNumber
+                  ? { WEMA: account.accountNumber }
+                  : undefined,
+              },
+            });
+          }
+          await fetchWallet();
+        } else {
+          toast.error(
+            walletRes?.msg ||
+              "Your details were accepted but the account could not be opened. Contact support.",
+          );
+        }
+      } catch {
+        toast.error(
+          "Your details were accepted but the account could not be opened. Contact support.",
+        );
+      }
+
+      toast.success("Verification completed!");
       setShowSuccess(true);
     } else {
       toast.error(response.msg || "Validation failed");

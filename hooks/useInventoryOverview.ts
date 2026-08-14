@@ -30,6 +30,7 @@ export const useSalesData = (startDate: string, endDate: string) => {
       return {
         totalSales: data.total_sales ?? 0,
         mediumBreakdown: data.medium ?? {},
+        stores: data.stores ?? [],
       };
     },
     enabled: !!startDate && !!endDate,
