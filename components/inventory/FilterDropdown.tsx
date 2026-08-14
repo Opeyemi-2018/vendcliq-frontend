@@ -24,6 +24,8 @@ interface FilterDropdownProps {
   align?: "left" | "right";
   width?: number;
   children?: React.ReactNode;
+  /** Merged with the wrapper's positioning classes, never replacing them. */
+  className?: string;
   "data-tour"?: string;
 }
 
@@ -40,6 +42,7 @@ export const FilterDropdown = ({
   align = "left",
   width = 250,
   children,
+  className,
   ...rest
 }: FilterDropdownProps) => {
   const trigger =
@@ -74,7 +77,7 @@ export const FilterDropdown = ({
   }, [open, children, width, align]);
 
   return (
-    <div className="relative" {...rest}>
+    <div className={cn("relative", className)} {...rest}>
       <button ref={triggerRef} type="button" onClick={onToggle} className={trigger}>
         {icon}
         <span>{buttonLabel}</span>
