@@ -15,6 +15,18 @@ const time = (isoDate: string) => {
   }
 };
 
+/**
+ * "12th Aug". The overview list runs across several days, so the time on its
+ * own left it unclear which day a sale belonged to.
+ */
+const dayStamp = (isoDate: string) => {
+  try {
+    return format(new Date(isoDate), "do MMM");
+  } catch {
+    return "";
+  }
+};
+
 interface SalesRowProps {
   row: SalesRowData;
   hideAmounts?: boolean;
@@ -70,6 +82,9 @@ export const SalesRow = ({
             }}
           >
             {online ? "Online" : "Shop"}
+          </span>
+          <span className="shrink-0 text-[11px] font-bold text-[#6B6B70] bg-[#F4F5F7] px-2 py-[3px] rounded-full whitespace-nowrap">
+            {dayStamp(row.createdAt)}
           </span>
         </div>
         <div className="text-[12.5px] text-[#8E8E93] mt-[3px] truncate">

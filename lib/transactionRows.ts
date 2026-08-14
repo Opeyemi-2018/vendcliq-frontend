@@ -1,4 +1,5 @@
-import { format, isToday, isYesterday } from "date-fns";
+import { format } from "date-fns";
+import { groupByDay as groupDays } from "@/lib/dayGroups";
 import { Transaction } from "@/types/transactions";
 
 export type TxKind = "sale" | "in" | "out";
@@ -88,27 +89,11 @@ export interface TxGroup {
 }
 
 /** Groups rows by day: "Today · 11 Aug", "Yesterday · 10 Aug", then the date. */
-export const groupByDay = (rows: TxRowData[]): TxGroup[] => {
-  const groups = new Map<string, TxRowData[]>();
-
-  for (const row of rows) {
-    let label: string;
-    try {
-      const date = new Date(row.createdAt);
-      const short = format(date, "d MMM");
-      label = isToday(date)
-        ? `Today · ${short}`
-        : isYesterday(date)
-          ? `Yesterday · ${short}`
-          : format(date, "EEEE · d MMM");
-    } catch {
-      label = "Earlier";
-    }
-    groups.set(label, [...(groups.get(label) ?? []), row]);
-  }
-
-  return [...groups.entries()].map(([label, rows]) => ({ label, rows }));
-};
+export const groupByDay = (rows: TxRowData[]): TxGroup[] =>
+  groupDays(rows, (row) => row.createdAt).map((group) => ({
+    label: group.label,
+    rows: group.items,
+  }));
 
 /** Money in/out over the trailing `days`, derived from the transaction list. */
 export const moneyFlow = (transactions: Transaction[], days = 7) => {
