@@ -6,7 +6,7 @@ Built against `Vendcliq Overview Refresh.dc.html` as the source of truth for
 layout and styling, `CHANGES.md` for scope, and `vendcliq-tour-prompts.md` for
 the guided tour's copy and mobile rules.
 
-**34 commits · 89 files · 50 new, 39 changed.**
+**37 commits · 90 files · 51 new, 39 changed.**
 
 ---
 
@@ -161,6 +161,14 @@ to `auto`, so it grew to its content and painted over the footer.
 `className` would silently replace `relative` and break menu positioning
 everywhere it is used.
 
+**Bulk stock delete — fixed on the backend.** For a long stretch the endpoint
+never received the DELETE body: a valid UUID, an empty array and no body at all
+returned an identical 400 "ids must be an array", while a bogus endpoint
+returned 403, which proved the body was parsed but the ids never read. The
+frontend request shape was correct throughout and needed no change. It now
+answers distinctly — 404 "No stocks found for the provided ids" for an unknown
+id, 400 "ids should not be empty" for an empty array.
+
 **Smaller ones:** `total_sales` double-counting, a green chip on a pending
 status, `−₦-1,133,953` from a missing `Math.abs`, an infinite render loop from
 a fresh array in a dependency list, a selection bar that shifted rows under the
@@ -219,13 +227,6 @@ Verified by measuring at 375–412px, not by eyeballing screenshots.
 
 ## 8. Still open
 
-**Bulk stock delete does not work — backend.** Proven with evidence: `POST`
-returns 404 "Cannot POST /stocks/bulk" (so DELETE is the right verb); a bogus
-endpoint returns 403 (so body parsing works); a valid UUID, an empty array and
-no body all return an **identical** 400 "ids must be an array". Tried both fetch
-and axios, and query-string variants. The backend is not receiving the DELETE
-body.
-
 **`PUT inventory/stock-conditions/:id` is undocumented.** Used for pause/resume
 and edits. It fails loudly rather than silently if unsupported.
 
@@ -258,9 +259,8 @@ Three gaps on `inventory/invoices/purchases`, all the same shape:
 
 Plus:
 
-4. **`inventory/stocks/bulk` does not receive the DELETE body** (see above).
-5. **`PUT inventory/stock-conditions/:id`** — confirm it exists.
-6. **`name` on the update-store payload** is sent and appears to work, but was
+4. **`PUT inventory/stock-conditions/:id`** — confirm it exists.
+5. **`name` on the update-store payload** is sent and appears to work, but was
    never in the declared type.
 
 ---
