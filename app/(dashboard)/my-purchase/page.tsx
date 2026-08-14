@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { ClipLoader } from "react-spinners";
@@ -34,35 +34,32 @@ const time = (iso: string) => {
 const PurchasedInvoicesPage = () => {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  // The endpoint searches for us, so hold off a beat rather than firing a
+  // request per keystroke.
+  const [search, setSearch] = useState("");
 
   const [page, setPage] = useState(1);
-  const { data, isLoading, isFetching, error, refetch } =
-    usePurchasedInvoices(page);
+  const { data, isLoading, isFetching, error, refetch } = usePurchasedInvoices(
+    page,
+    10,
+    search,
+  );
 
-  const invoices = useMemo(() => data?.rows ?? [], [data]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(query);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const rows = useMemo(() => data?.rows ?? [], [data]);
   const pagination = data?.pagination;
 
   // Which of the invoices on this page are being delivered.
   const deliveryById = useInvoiceDelivery(
-    useMemo(() => invoices.map((i: PurchasedInvoice) => i.id), [invoices]),
+    useMemo(() => rows.map((i: PurchasedInvoice) => i.id), [rows]),
   );
-
-  /** Search filters the page in hand; the endpoint has no search of its own. */
-  const rows = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return invoices;
-    return invoices.filter((invoice: PurchasedInvoice) =>
-      [
-        invoice.code,
-        invoice.status,
-        String(invoice.total),
-        invoice.attributes?.supplier ?? "",
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(q),
-    );
-  }, [invoices, query]);
 
   const totalSpend = useMemo(
     () => rows.reduce((sum: number, r: PurchasedInvoice) => sum + (r.total || 0), 0),
@@ -141,13 +138,14 @@ const PurchasedInvoicesPage = () => {
         </svg>
         <input
           value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setPage(1);
-          }}
-          placeholder="Search invoice, supplier or amount"
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by invoice code"
           className="flex-1 min-w-0 border-none outline-none bg-transparent text-[14px] text-[#2F2F2F]"
         />
+        {/* The search runs on the server, so say when it is still running. */}
+        {isFetching && !isLoading && (
+          <ClipLoader size={15} color="#8E8E93" className="shrink-0" />
+        )}
       </label>
 
       {/* ── Rows ───────────────────────────────────────────────────────── */}
@@ -160,11 +158,11 @@ const PurchasedInvoicesPage = () => {
         ) : rows.length === 0 ? (
           <div className="bg-white border border-dashed border-[#D8D8D8E6] rounded-[16px] py-12 px-5 text-center">
             <div className="font-bold text-[15px] text-[#2F2F2F]">
-              {query ? "No purchases match this search" : "No purchases yet"}
+              {search ? "No purchases match this search" : "No purchases yet"}
             </div>
             <div className="text-[13px] text-[#8E8E93] mt-1">
-              {query
-                ? "Try another invoice code or supplier."
+              {search
+                ? "Try another invoice code."
                 : "Upload a purchase and it will show here."}
             </div>
           </div>
@@ -234,7 +232,7 @@ const PurchasedInvoicesPage = () => {
       </div>
 
       {/* ── Paging ─────────────────────────────────────────────────────── */}
-      {!query && pagination && pagination.totalPages > 1 && (
+      {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <span className="text-[13px] text-[#8E8E93]">
             Page {pagination.currentPage} of {pagination.totalPages}
@@ -262,11 +260,6 @@ const PurchasedInvoicesPage = () => {
         </div>
       )}
 
-      {query && (
-        <p className="text-[12.5px] text-[#8E8E93] -mt-1">
-          Searching this page only. Clear the search to move between pages.
-        </p>
-      )}
     </div>
   );
 };

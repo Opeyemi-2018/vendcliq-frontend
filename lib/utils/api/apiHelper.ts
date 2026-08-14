@@ -1127,13 +1127,15 @@ export const handleGetSuppliers = async (): Promise<GetSuppliersResponse> => {
 export const handleGetPurchasedInvoices = async (
   page = 1,
   limit = 10,
+  search = "",
 ): Promise<PurchasedInvoicesResponse> => {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit),
-  }).toString();
+  });
+  if (search.trim()) params.set("search", search.trim());
   return await fetcher<PurchasedInvoicesResponse>(
-    `${GET_PURCHASED_INVOICES}?${params}`,
+    `${GET_PURCHASED_INVOICES}?${params.toString()}`,
   );
 };
 export const handleCreatePurchaseWithFile = async (

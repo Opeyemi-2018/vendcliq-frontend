@@ -7,7 +7,8 @@ import {
 
 export const purchaseKeys = {
   all: ["purchased-invoices"] as const,
-  page: (page: number) => ["purchased-invoices", "page", page] as const,
+  page: (page: number, search: string) =>
+    ["purchased-invoices", "page", page, search] as const,
   detail: (id: string) => ["purchased-invoices", id] as const,
   tracking: (itemId: string) => ["item-tracking", itemId] as const,
 };
@@ -15,13 +16,14 @@ export const purchaseKeys = {
 /**
  * One page at a time: there are hundreds of invoices, and the endpoint pages
  * them server-side. The pagination block travels with the rows so the screen
- * knows how many pages there are.
+ * knows how many pages there are. Search is server-side too, so it looks at
+ * every invoice rather than only the page in hand.
  */
-export const usePurchasedInvoices = (page = 1, limit = 10) => {
+export const usePurchasedInvoices = (page = 1, limit = 10, search = "") => {
   return useQuery({
-    queryKey: purchaseKeys.page(page),
+    queryKey: purchaseKeys.page(page, search),
     queryFn: async () => {
-      const response = await handleGetPurchasedInvoices(page, limit);
+      const response = await handleGetPurchasedInvoices(page, limit, search);
       if (response.statusCode === 200 && Array.isArray(response.data)) {
         return { rows: response.data, pagination: response.pagination };
       }
