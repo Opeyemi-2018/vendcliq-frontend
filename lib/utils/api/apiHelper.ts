@@ -1124,10 +1124,18 @@ export const handleGetSuppliers = async (): Promise<GetSuppliersResponse> => {
   return await fetcher<any>(GET_SUPPLIERS);
 };
 
-export const handleGetPurchasedInvoices =
-  async (): Promise<PurchasedInvoicesResponse> => {
-    return await fetcher<PurchasedInvoicesResponse>(GET_PURCHASED_INVOICES);
-  };
+export const handleGetPurchasedInvoices = async (
+  page = 1,
+  limit = 10,
+): Promise<PurchasedInvoicesResponse> => {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  }).toString();
+  return await fetcher<PurchasedInvoicesResponse>(
+    `${GET_PURCHASED_INVOICES}?${params}`,
+  );
+};
 export const handleCreatePurchaseWithFile = async (
   payload: CreatePurchasePayload,
 ): Promise<CreatePurchaseResponse> => {

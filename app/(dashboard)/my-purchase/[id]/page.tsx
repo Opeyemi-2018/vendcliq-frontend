@@ -177,13 +177,14 @@ const PurchasedInvoiceDetailPage = () => {
           /* The table keeps every column; narrow screens scroll it sideways
              rather than dropping information. */
           <div className="overflow-x-auto border-t border-[#D8D8D873]">
-            <table className="w-full min-w-[620px] border-collapse">
+            <table className="w-full min-w-[720px] border-collapse">
               <thead className="bg-[#F9FAFB]">
                 <tr>
                   <th className={HEAD}>Product</th>
                   <th className={HEAD}>Unit price</th>
                   <th className={HEAD}>Qty</th>
                   <th className={HEAD}>Amount</th>
+                  <th className={HEAD}>Delivery</th>
                   <th className={HEAD}>Status</th>
                   <th className={`${HEAD} w-px`} aria-label="Open" />
                 </tr>
@@ -221,6 +222,23 @@ const PurchasedInvoiceDetailPage = () => {
                       <td className={CELL}>{formatQty(item.quantity)}</td>
                       <td className={`${CELL} font-bold`}>
                         {formatNaira(item.cost ?? 0)}
+                      </td>
+                      <td className={CELL}>
+                        {item.delivery ? (
+                          <span className="inline-flex items-center gap-1.5 text-[11.5px] font-bold px-[10px] py-[3px] rounded-full bg-[#FFF3DB] text-[#85540A]">
+                            <VcIcon
+                              name="truck"
+                              size={13}
+                              stroke="#85540A"
+                              strokeWidth={2.2}
+                            />
+                            Yes
+                          </span>
+                        ) : (
+                          <span className="inline-block text-[11.5px] font-bold px-[10px] py-[3px] rounded-full bg-[#F4F5F7] text-[#6B6B70]">
+                            No
+                          </span>
+                        )}
                       </td>
                       <td className={CELL}>
                         <span

@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { ClipLoader } from "react-spinners";
-import { usePurchasedInvoices } from "@/hooks/usePurchaseInvoices";
+import {
+  usePurchasedInvoices,
+  useInvoiceDelivery,
+} from "@/hooks/usePurchaseInvoices";
 import { VcIcon } from "@/components/inventory/VcIcon";
 import BackButton from "@/components/inventory/BackButton";
 import { formatNaira } from "@/lib/salesFilters";
@@ -32,9 +35,19 @@ const PurchasedInvoicesPage = () => {
   const router = useRouter();
   const [query, setQuery] = useState("");
 
-  const { data: invoices = [], isLoading, error, refetch } =
-    usePurchasedInvoices();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isFetching, error, refetch } =
+    usePurchasedInvoices(page);
 
+  const invoices = useMemo(() => data?.rows ?? [], [data]);
+  const pagination = data?.pagination;
+
+  // Which of the invoices on this page are being delivered.
+  const deliveryById = useInvoiceDelivery(
+    useMemo(() => invoices.map((i: PurchasedInvoice) => i.id), [invoices]),
+  );
+
+  /** Search filters the page in hand; the endpoint has no search of its own. */
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return invoices;
@@ -100,12 +113,22 @@ const PurchasedInvoicesPage = () => {
       <section className="relative rounded-[20px] px-5 sm:px-6 py-[18px] sm:py-[22px] text-white bg-[linear-gradient(135deg,#0A6DC0_0%,#3A6BC4_100%)] shadow-[0_12px_28px_-10px_rgba(10,109,192,.45)] overflow-hidden">
         <div className="absolute -top-[70px] -right-[50px] w-[220px] h-[220px] rounded-full bg-white/[.06] pointer-events-none" />
         <div className="relative">
-          <div className="text-[13px] text-white/85">Total purchases</div>
+          <div className="text-[13px] text-white/85">
+            {pagination && pagination.totalPages > 1
+              ? "Purchases on this page"
+              : "Total purchases"}
+          </div>
           <div className="font-clash font-bold text-[28px] sm:text-[34px] tracking-[-.8px] mt-1">
             {formatNaira(totalSpend)}
           </div>
           <div className="text-[13px] text-white/80 mt-1">
-            {rows.length} {rows.length === 1 ? "invoice" : "invoices"}
+            {pagination?.totalCount ?? rows.length}{" "}
+            {(pagination?.totalCount ?? rows.length) === 1
+              ? "invoice"
+              : "invoices"}
+            {pagination && pagination.totalPages > 1
+              ? ` · page ${pagination.currentPage} of ${pagination.totalPages}`
+              : ""}
           </div>
         </div>
       </section>
@@ -118,7 +141,10 @@ const PurchasedInvoicesPage = () => {
         </svg>
         <input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
           placeholder="Search invoice, supplier or amount"
           className="flex-1 min-w-0 border-none outline-none bg-transparent text-[14px] text-[#2F2F2F]"
         />
@@ -152,8 +178,16 @@ const PurchasedInvoicesPage = () => {
                 onClick={() => router.push(`/my-purchase/${invoice.id}`)}
                 className="w-full text-left bg-white border border-[#D8D8D88C] rounded-[16px] px-3 sm:px-[18px] py-3 sm:py-[14px] flex items-center gap-2.5 sm:gap-[14px] cursor-pointer transition hover:border-[#0A6DC0]"
               >
-                <span className="w-10 h-10 sm:w-[46px] sm:h-[46px] rounded-[12px] sm:rounded-[14px] bg-[#E8EEFF] inline-flex items-center justify-center shrink-0">
-                  <VcIcon name="truck" size={22} stroke="#4052A3" strokeWidth={1.9} />
+                <span className="relative w-10 h-10 sm:w-[46px] sm:h-[46px] rounded-[12px] sm:rounded-[14px] bg-[#E8EEFF] inline-flex items-center justify-center shrink-0">
+                  <VcIcon name="note" size={22} stroke="#4052A3" strokeWidth={1.9} />
+                  {deliveryById[invoice.id] && (
+                    <span
+                      title="Has an item being delivered"
+                      className="absolute -bottom-1 -right-1 w-[22px] h-[22px] rounded-full bg-[#FAC136] border-2 border-white inline-flex items-center justify-center"
+                    >
+                      <VcIcon name="truck" size={12} stroke="#1A1400" strokeWidth={2.2} />
+                    </span>
+                  )}
                 </span>
 
                 <span className="flex-1 min-w-0">
@@ -198,6 +232,41 @@ const PurchasedInvoicesPage = () => {
           })
         )}
       </div>
+
+      {/* ── Paging ─────────────────────────────────────────────────────── */}
+      {!query && pagination && pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <span className="text-[13px] text-[#8E8E93]">
+            Page {pagination.currentPage} of {pagination.totalPages}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={pagination.currentPage <= 1 || isFetching}
+              className="h-11 px-4 rounded-[10px] border border-[#D8D8D8E6] bg-white text-[14px] font-semibold text-[#2F2F2F] cursor-pointer hover:border-[#0A6DC0] hover:text-[#0A6DC0] disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:border-[#D8D8D8E6] disabled:hover:text-[#2F2F2F]"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPage((p) => Math.min(pagination.totalPages, p + 1))
+              }
+              disabled={pagination.nextPage == null || isFetching}
+              className="h-11 px-4 rounded-[10px] border-none bg-[#0A6DC0] text-white text-[14px] font-bold cursor-pointer hover:bg-[#09599A] disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:bg-[#0A6DC0]"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+      {query && (
+        <p className="text-[12.5px] text-[#8E8E93] -mt-1">
+          Searching this page only. Clear the search to move between pages.
+        </p>
+      )}
     </div>
   );
 };
