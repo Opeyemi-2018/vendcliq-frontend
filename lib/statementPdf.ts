@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { format } from "date-fns";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -97,7 +98,9 @@ export const generateStatementPdf = async (statement: Statement) => {
   doc.text(TAGLINE, MARGIN, y + 27);
 
   doc.setFontSize(6.4);
-  doc.text("IN PARTNERSHIP WITH", pageWidth - MARGIN, y + 6, { align: "right" });
+  doc.text("IN PARTNERSHIP WITH", pageWidth - MARGIN, y + 6, {
+    align: "right",
+  });
   doc.setFont("helvetica", "bold").setFontSize(11);
   doc.setTextColor(...INK);
   doc.text(bankLabel(statement), pageWidth - MARGIN, y + 22, {
@@ -296,17 +299,14 @@ export const generateStatementPdf = async (statement: Statement) => {
   });
 
   // Page numbers need the final count, so they go on in a second pass.
-  const pages = doc.getNumberOfPages();
+  const pages = (doc as any).internal.getNumberOfPages();
   for (let page = 1; page <= pages; page += 1) {
     doc.setPage(page);
     doc.setFont("helvetica", "normal").setFontSize(6.3);
     doc.setTextColor(...MUTED);
-    doc.text(
-      `Page ${page} of ${pages}`,
-      pageWidth - MARGIN,
-      pageHeight - 18,
-      { align: "right" },
-    );
+    doc.text(`Page ${page} of ${pages}`, pageWidth - MARGIN, pageHeight - 18, {
+      align: "right",
+    });
   }
 
   doc.save(statementFileName(statement, "pdf"));
@@ -340,15 +340,11 @@ function decoratePage(
   doc.setFillColor(...BLUE);
   doc.rect(0, 5, pageWidth, 3, "F");
 
-  const page = doc.getCurrentPageInfo().pageNumber;
+  const page = (doc as any).internal.getCurrentPageInfo().pageNumber;
   if (page > 1) {
     doc.setFont("helvetica", "bold").setFontSize(9);
     doc.setTextColor(...INK);
-    doc.text(
-      `STATEMENT OF ACCOUNT  ${bankLabel(statement)}`,
-      MARGIN,
-      28,
-    );
+    doc.text(`STATEMENT OF ACCOUNT  ${bankLabel(statement)}`, MARGIN, 28);
     doc.setFont("helvetica", "normal").setFontSize(7);
     doc.setTextColor(...MUTED);
     doc.text(
