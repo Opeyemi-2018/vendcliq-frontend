@@ -328,7 +328,6 @@ function metaCell(
   doc.text(doc.splitTextToSize(value, width).slice(0, 2), x, y + 11);
 }
 
-/** The bars, running header and footer that repeat on every page. */
 function decoratePage(
   doc: jsPDF,
   statement: Statement,
