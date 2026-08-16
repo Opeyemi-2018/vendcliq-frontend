@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { isSameDay } from "date-fns";
@@ -26,7 +27,10 @@ export const useSalesData = (startDate: string, endDate: string) => {
   return useQuery({
     queryKey: dashboardKeys.salesData(startDate, endDate),
     queryFn: async () => {
-      const data: SupplierSalesResponse = await getTotalSales(startDate, endDate);
+      const data: SupplierSalesResponse = await getTotalSales(
+        startDate,
+        endDate,
+      );
       return {
         totalSales: data.total_sales ?? 0,
         mediumBreakdown: data.medium ?? {},
@@ -60,7 +64,10 @@ export const useSales = () => {
   });
 };
 
-export const useFilteredSales = (statusFilter: string, selectedDate: Date | undefined) => {
+export const useFilteredSales = (
+  statusFilter: string,
+  selectedDate: Date | undefined,
+) => {
   const { data: allSales = [], isLoading, error, refetch } = useSales();
 
   const filteredInvoices = useMemo(() => {
@@ -79,7 +86,7 @@ export const useFilteredSales = (statusFilter: string, selectedDate: Date | unde
 
     if (statusFilter !== "all") {
       filtered = filtered.filter(
-        (inv) => inv.status?.toLowerCase() === statusFilter.toLowerCase()
+        (inv) => inv.status?.toLowerCase() === statusFilter.toLowerCase(),
       );
     }
 
@@ -106,7 +113,8 @@ export const useSaleInvoice = (id: string) => {
       throw new Error(res.error || "Failed to load invoice");
     },
     enabled: !!id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // ✅ Always stale
+    refetchOnMount: true, // ✅ Always refetch on mount
   });
 };
 
@@ -130,10 +138,14 @@ export const useReturnItems = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: { invoice_id: string; items: { item_id: string; quantity: number; reason: string }[] }) =>
-      handleReturnItems(payload),
+    mutationFn: (payload: {
+      invoice_id: string;
+      items: { item_id: string; quantity: number; reason: string }[];
+    }) => handleReturnItems(payload),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: dashboardKeys.saleInvoice(variables.invoice_id) });
+      queryClient.invalidateQueries({
+        queryKey: dashboardKeys.saleInvoice(variables.invoice_id),
+      });
       queryClient.invalidateQueries({ queryKey: dashboardKeys.allSales });
       queryClient.invalidateQueries({ queryKey: dashboardKeys.recentSales });
     },
@@ -162,7 +174,9 @@ export const useUpdateInvoice = () => {
       handleUpdateInvoice(invoiceId, payload),
     onSuccess: (response, variables) => {
       // Invalidate the specific invoice
-      queryClient.invalidateQueries({ queryKey: dashboardKeys.saleInvoice(variables.invoiceId) });
+      queryClient.invalidateQueries({
+        queryKey: dashboardKeys.saleInvoice(variables.invoiceId),
+      });
       // Invalidate all sales lists
       queryClient.invalidateQueries({ queryKey: dashboardKeys.allSales });
       queryClient.invalidateQueries({ queryKey: dashboardKeys.recentSales });
