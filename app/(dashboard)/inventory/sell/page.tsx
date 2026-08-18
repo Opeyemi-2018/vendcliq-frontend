@@ -16,7 +16,6 @@ import {
   MapPin,
   Mail,
   Edit,
-  
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -28,9 +27,13 @@ import { useCreateInvoice } from "@/hooks/useInventoryOverview";
 
 import PlacesAutocompleteInput from "@/hooks/googleMap";
 import EditStockPriceModal from "./chunks/EditStockPriceModal";
-import { formatQty, formatPacks, formatPieces, piecesOf } from "@/lib/priceInput";
+import {
+  formatQty,
+  formatPacks,
+  formatPieces,
+  piecesOf,
+} from "@/lib/priceInput";
 import TourPackDemo from "@/components/tour/TourPackDemo";
-
 
 interface Store {
   id: string;
@@ -277,12 +280,17 @@ export default function SellPage() {
 
     // Get available stock
     const availablePacks = parseFloat(activeItem.quantity);
-    const availablePieces = piecesOf(availablePacks, activeItem.product.items_per_pack);
+    const availablePieces = piecesOf(
+      availablePacks,
+      activeItem.product.items_per_pack,
+    );
 
     // Validate based on mode
     if (activeMode === "PACKS") {
       if (qty > availablePacks) {
-        return toast.error(`Only ${formatPacks(availablePacks, activeItem.product.items_per_pack)} available in stock`);
+        return toast.error(
+          `Only ${formatPacks(availablePacks, activeItem.product.items_per_pack)} available in stock`,
+        );
       }
     } else {
       // PIECES mode
@@ -404,7 +412,9 @@ export default function SellPage() {
             );
             const newPieces = Math.max(1, ci.quantity + delta);
             if (newPieces > availablePieces) {
-              toast.error(`Only ${formatQty(availablePieces)} pieces available`);
+              toast.error(
+                `Only ${formatQty(availablePieces)} pieces available`,
+              );
               return ci;
             }
             newQuantity = newPieces;
@@ -504,7 +514,7 @@ export default function SellPage() {
             quantity: quantityToSend,
             delivery: false,
             mode: ci.mode,
-            discounted_amount: ci.discount,
+            discounted_amount: ci.discount * ci.quantity,
             empties:
               ci.empties > 0 && ci.emptiesMode !== null
                 ? { type: ci.emptiesMode, quantity: ci.empties }
@@ -736,7 +746,10 @@ export default function SellPage() {
                         </p>
                         <p className="font-bold text-[12px] md:text-[16px] text-[#2F2F2F] ">
                           {(itemDisplayModes[item.id] || "PACKS") === "PACKS"
-                            ? formatPacks(item.quantity, item.product.items_per_pack)
+                            ? formatPacks(
+                                item.quantity,
+                                item.product.items_per_pack,
+                              )
                             : `${formatPieces(item.quantity, item.product.items_per_pack)} pieces`}
                         </p>
                         {/* Show items_per_pack value here */}
@@ -907,8 +920,7 @@ export default function SellPage() {
                                   Available Empties in Store
                                 </p>
                                 <p className="font-bold text-[#2F2F2F] text-lg">
-                                  {formatQty(activeItem?.empties_qty)}{" "}
-                                  units
+                                  {formatQty(activeItem?.empties_qty)} units
                                 </p>
                               </div>
 
