@@ -65,6 +65,12 @@ const networkLogos: Record<string, string> = {
 
 const amounts = [100, 200, 500, 1000, 2000, 5000];
 
+// The network-detection provider is currently unreliable and sometimes returns raw
+// backend/crash text as its error message, so we show a fixed friendly message instead
+// of surfacing whatever it sends back.
+const NETWORK_DETECTION_FALLBACK_MSG =
+  "We couldn't verify this number right now. please try again later.";
+
 export default function AirtimeFlow() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -113,12 +119,10 @@ export default function AirtimeFlow() {
             setValue("network", network);
             toast.success(`Network detected: ${network}`);
           } else {
-            setNetworkError(result.msg || "Could not detect network");
+            setNetworkError(NETWORK_DETECTION_FALLBACK_MSG);
           }
-        } catch (err: any) {
-          setNetworkError(
-            err?.response?.data?.msg || "Network error. Please try again.",
-          );
+        } catch {
+          setNetworkError(NETWORK_DETECTION_FALLBACK_MSG);
         }
 
         setNetworkLoading(false);
@@ -318,7 +322,7 @@ export default function AirtimeFlow() {
                       </span>
                     </>
                   ) : networkError ? (
-                    <span className="text-red-600 text-sm">{networkError}</span>
+                    <span className="rounded-md p-1 text-red-500 bg-red-50 text-[13px]">{networkError}</span>
                   ) : (
                     <span className="text-gray-400 text-[12px]">
                       Enter 11-digit phone number to detect network

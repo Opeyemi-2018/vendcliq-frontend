@@ -65,6 +65,14 @@ const networkLogos: Record<string, string> = {
   ETISALAT: "/logos/9mobile.png",
 };
 
+// The network-detection provider is currently unreliable and sometimes returns raw
+// backend/crash text as its error message, so we show fixed friendly messages instead
+// of surfacing whatever it sends back.
+const NETWORK_DETECTION_FALLBACK_MSG =
+  "We couldn't verify this number right now. please try again shortly. ";
+const DATA_PLANS_FALLBACK_MSG =
+  "We couldn't load data plans right now. Our provider service is temporarily unavailable — please try again shortly.";
+
 export default function DataFlow() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -135,12 +143,10 @@ export default function DataFlow() {
             setDetectedNetwork(network);
             setValue("network", network);
           } else {
-            setNetworkError(result.msg || "Could not detect network");
+            setNetworkError(NETWORK_DETECTION_FALLBACK_MSG);
           }
-        } catch (err: any) {
-          setNetworkError(
-            err?.response?.data?.msg || "Network error. Please try again.",
-          );
+        } catch {
+          setNetworkError(NETWORK_DETECTION_FALLBACK_MSG);
         }
 
         setNetworkLoading(false);
@@ -170,14 +176,12 @@ export default function DataFlow() {
             setFetchedPlans(innerData);
             setCurrentPage(0);
           } else {
-            const errorMsg = result.msg || "Failed to retrieve data plans";
-            setPlansError(errorMsg);
-            toast.error(errorMsg);
+            setPlansError(DATA_PLANS_FALLBACK_MSG);
+            toast.error(DATA_PLANS_FALLBACK_MSG);
           }
         } catch {
-          const errorMsg = "Network error. Please try again.";
-          setPlansError(errorMsg);
-          toast.error(errorMsg);
+          setPlansError(DATA_PLANS_FALLBACK_MSG);
+          toast.error(DATA_PLANS_FALLBACK_MSG);
         }
 
         setPlansLoading(false);
@@ -372,7 +376,9 @@ export default function DataFlow() {
                       </span>
                     </>
                   ) : networkError ? (
-                    <span className="text-red-600 text-sm">{networkError}</span>
+                    <span className="rounded-md p-1 text-red-500 bg-red-50 text-[13px]">
+                      {networkError}
+                    </span>
                   ) : (
                     <span className="text-gray-400 text-[10px]">
                       Enter 11-digit phone number to detect network
