@@ -2,8 +2,8 @@
 
 import { Package } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
-import { ThreeDots } from "react-loader-spinner";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { UpdateStockModal } from "./chunks/UpdateDialog";
@@ -46,9 +46,40 @@ const StockDetailPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <ThreeDots height="80" width="80" color="#0A6DC0" visible={true} />
-        <p className="mt-4 text-[#9E9A9A]">Loading stock details...</p>
+      <div className="">
+        <Skeleton className="h-9 w-9 rounded-full mb-4" />
+
+        <div className="flex lg:items-center mb-3 md:mb-8 flex-col lg:flex-row justify-between gap-4">
+          <div>
+            <Skeleton className="h-7 w-64 mb-2" />
+            <Skeleton className="h-4 w-72" />
+          </div>
+          <Skeleton className="h-10 w-28 rounded-md" />
+        </div>
+
+        <div className="mb-4 flex gap-4 items-center overflow-x-auto lg:overflow-visible">
+          <Skeleton className="min-w-[260px] flex-shrink-0 lg:min-w-0 lg:flex-1 h-[100px] rounded-2xl" />
+          <Skeleton className="min-w-[260px] flex-shrink-0 lg:min-w-0 lg:flex-1 h-[100px] rounded-2xl" />
+          <Skeleton className="min-w-[260px] flex-shrink-0 lg:min-w-0 lg:flex-1 h-[100px] rounded-2xl" />
+        </div>
+
+        <Card className="md:p-6">
+          <Skeleton className="h-56 md:h-64 w-full rounded-lg" />
+
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i}>
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 mt-8">
+            <Skeleton className="h-12 md:h-14 w-full rounded-xl" />
+            <Skeleton className="h-12 md:h-14 w-full rounded-xl" />
+          </div>
+        </Card>
       </div>
     );
   }

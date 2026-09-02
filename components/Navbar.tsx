@@ -1,6 +1,12 @@
 "use client";
 import { SidebarMenuButton, SidebarTrigger } from "@/components/ui/sidebar";
-import { LogOut, ChevronDown, Headphones, User } from "lucide-react";
+import {
+  LogOut,
+  ChevronDown,
+  Headphones,
+  User,
+  Calculator,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,9 +35,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { clearAuthTokens } from "@/lib/utils/api";
+import CalculatorWidget from "./CalculatorWidget";
 
 const Navbar = () => {
   const { isAttendant } = useUser();
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
 
   const { user } = useUser();
   const router = useRouter();
@@ -95,6 +103,13 @@ const Navbar = () => {
           style={{ gap: "30px" }}
           className="flex items-center text-[13px] md:text-[16px] font-medium"
         >
+          <button
+            onClick={() => setCalculatorOpen(true)}
+            className="p-2 hover:bg-[#F5F6FA] rounded-lg transition-all"
+            title="Open Calculator"
+          >
+            <Calculator className="text-[#0A6DC0] w-6 h-6" />
+          </button>
           {mounted && user && isUserWalletNull && !isAttendant && (
             <Link
               href="/business-account"
@@ -166,7 +181,7 @@ const Navbar = () => {
                     No, Keep Vending
                   </AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={handleLogout} 
+                    onClick={handleLogout}
                     className="bg-white text-[#2F2F2F] hover:bg-[#0A6DC012] w-full sm:w-auto"
                   >
                     Yes, Log Out
@@ -177,6 +192,12 @@ const Navbar = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      <CalculatorWidget
+        isOpen={calculatorOpen}
+        onClose={() => setCalculatorOpen(false)}
+        // onDiscountSelect={(discount) => setTempDiscount(discount.toString())}
+        // currentItemPrice={activeItem ? unitPrice(activeItem, activeMode) : 0}
+      />
     </nav>
   );
 };

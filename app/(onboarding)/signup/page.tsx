@@ -19,7 +19,6 @@ export default function SignupPage() {
   const [isInitialized, setIsInitialized] = useState(false);
   const isRestoredSession = useRef(false);
 
-  // Restore progress on mount
   useEffect(() => {
     try {
       const savedData = localStorage.getItem("signupFormData");
