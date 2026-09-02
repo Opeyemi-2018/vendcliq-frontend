@@ -14,13 +14,18 @@ const StockHistoryPage = () => {
   const params = useParams();
   const stockId = params.stockId as string;
 
-  const { data: movements = [], isLoading, error, refetch } = useStockMovements(stockId);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const totalItems = movements.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-  const paginatedMovements = movements.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const {
+    data: { movements = [], pagination } = {},
+    isLoading,
+    error,
+    refetch,
+  } = useStockMovements(stockId, currentPage, itemsPerPage);
+
+  const totalItems = pagination?.totalCount ?? movements.length;
+  const totalPages = pagination?.totalPages ?? 1;
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -87,42 +92,42 @@ const StockHistoryPage = () => {
             ) : (
               <>
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full min-w-[720px] text-sm md:text-base">
                     <thead className="border-b border-[#E6E6E6]">
                       <tr>
-                        <th className="text-left py-3 pl-4 font-medium font-dm-sans">Product</th>
-                        <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">Status</th>
-                        <th className="text-left py-3 font-medium font-dm-sans">Quantity</th>
-                        <th className="text-left py-3 font-medium font-dm-sans">Total (Balance)</th>
-                        <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">Type</th>
-                        <th className="hidden md:table-cell text-left py-3 font-medium font-dm-sans">Date</th>
+                        <th className="text-left py-3 pl-4 pr-3 font-medium font-dm-sans whitespace-nowrap">Product</th>
+                        <th className="text-left py-3 px-3 font-medium font-dm-sans whitespace-nowrap">Status</th>
+                        <th className="text-left py-3 px-3 font-medium font-dm-sans whitespace-nowrap">Quantity</th>
+                        <th className="text-left py-3 px-3 font-medium font-dm-sans whitespace-nowrap">Total (Balance)</th>
+                        <th className="text-left py-3 px-3 font-medium font-dm-sans whitespace-nowrap">Type</th>
+                        <th className="text-left py-3 pl-3 pr-4 font-medium font-dm-sans whitespace-nowrap">Date</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E4E4E4]">
-                      {paginatedMovements.map((movement) => (
+                      {movements.map((movement) => (
                         <tr key={movement.id} className="hover:bg-gray-50">
-                          <td className="py-4 pl-4">
-                            <div className="flex items-center gap-2">
+                          <td className="py-4 pl-4 pr-3">
+                            <div className="flex items-center gap-2 whitespace-nowrap">
                               {getProductImage(movement) ? (
-                                <Image src={getProductImage(movement)!} alt={getProductName(movement)} width={10} height={10} className="rounded-md" />
+                                <Image src={getProductImage(movement)!} alt={getProductName(movement)} width={32} height={32} className="rounded-md h-8 w-8 object-cover shrink-0" />
                               ) : (
-                                <Package className="text-gray-400" />
+                                <Package className="text-gray-400 shrink-0" />
                               )}
                               <div className="font-medium font-dm-sans">{getProductName(movement)}</div>
                             </div>
                           </td>
-                          <td className="hidden md:table-cell py-4">
+                          <td className="py-4 px-3 whitespace-nowrap">
                             <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(getStatus(movement))}`}>
                               {getStatus(movement)}
                             </span>
                           </td>
-                          <td className="py-4 font-medium">
+                          <td className="py-4 px-3 font-medium whitespace-nowrap">
                             {getMovementSign(movement.movement_type)}
                             {movement.quantity}
                           </td>
-                          <td className="py-4 font-medium font-dm-sans">{movement.balance}</td>
-                          <td className="hidden md:table-cell py-4 font-medium font-dm-sans">{movement.movement_type}</td>
-                          <td className="hidden md:table-cell py-4 font-medium font-dm-sans">
+                          <td className="py-4 px-3 font-medium font-dm-sans whitespace-nowrap">{movement.balance}</td>
+                          <td className="py-4 px-3 font-medium font-dm-sans whitespace-nowrap">{movement.movement_type}</td>
+                          <td className="py-4 pl-3 pr-4 font-medium font-dm-sans whitespace-nowrap">
                             {format(new Date(movement.created_at), "MMM dd, yyyy • hh:mm a")}
                           </td>
                         </tr>

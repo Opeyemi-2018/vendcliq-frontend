@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import {
   getStores,
   getStoreById,
@@ -14,7 +19,7 @@ import {
   handleGetStockMovements,
 } from "@/lib/utils/api/apiHelper";
 import { Store, StoreStockItem, StoreStockDetail } from "@/types/store";
-import { StockMovement } from "@/types/stock";
+import { StockMovement, StockMovementsResponse } from "@/types/stock";
 
 // ============================================
 // QUERY KEYS
@@ -96,18 +101,22 @@ export const useStockDetail = (storeId: string, stockId: string) => {
   });
 };
 
-export const useStockMovements = (stockId: string) => {
+export const useStockMovements = (stockId: string, page: number = 1, limit: number = 10) => {
   return useQuery({
-    queryKey: storeKeys.stockMovements(stockId),
+    queryKey: [...storeKeys.stockMovements(stockId), page, limit],
     queryFn: async () => {
-      const result = await handleGetStockMovements(stockId);
+      const result = await handleGetStockMovements(stockId, page, limit);
       if (result.statusCode === 200 && result.data) {
-        return result.data as StockMovement[];
+        return {
+          movements: result.data as StockMovement[],
+          pagination: result.pagination,
+        };
       }
-      return [];
+      return { movements: [] as StockMovement[], pagination: null as StockMovementsResponse["pagination"] | null };
     },
     enabled: !!stockId,
     staleTime: 2 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 };
 
