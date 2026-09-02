@@ -387,7 +387,6 @@ export default function DataFlow() {
                 </div>
               </div>
 
-              {/* Data Plans */}
               <div>
                 {fetchedPlans.length !== 0 && <Label>Select Data Plans</Label>}
 
