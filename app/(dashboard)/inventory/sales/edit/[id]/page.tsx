@@ -645,7 +645,7 @@ export default function EditInvoicePage() {
           quantity: ci.quantity,
           delivery: false,
           mode: ci.mode,
-          discounted_amount: ci.discount,
+          discounted_amount: ci.discount * ci.quantity,
           empties:
             ci.empties > 0 && ci.emptiesMode !== null
               ? { type: ci.emptiesMode, quantity: ci.empties }
