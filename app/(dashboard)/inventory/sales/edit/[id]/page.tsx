@@ -278,14 +278,21 @@ export default function EditInvoicePage() {
                   qty_sold: 0,
                 };
 
+                const itemQuantity = parseFloat(item.quantity);
                 return {
                   stock: stockItem,
-                  quantity: parseFloat(item.quantity),
+                  quantity: itemQuantity,
                   mode: item.mode as SellMode,
-                  discount: item.discounted_amount || 0,
+                  // discounted_amount from the backend is the line total (per-unit × quantity),
+                  // but cart items track discount per unit everywhere else, so convert back.
+                  // Rounded to kobo to avoid floating-point drift when re-submitted (discount * quantity).
+                  discount:
+                    itemQuantity > 0
+                      ? Math.round(((item.discounted_amount || 0) / itemQuantity) * 100) / 100
+                      : 0,
                   empties: item.empties?.quantity || 0,
                   emptiesMode: item.empties?.type || null,
-                  packsQuantity: parseFloat(item.quantity),
+                  packsQuantity: itemQuantity,
                   serverSubTotal: item.sub_total, // store for reference only, not used in calc
                 };
               });
@@ -346,14 +353,21 @@ export default function EditInvoicePage() {
                   qty_sold: 0,
                 };
 
+                const itemQuantity = Number(item.quantity);
                 return {
                   stock: stockItem,
-                  quantity: item.quantity,
+                  quantity: itemQuantity,
                   mode: item.mode as SellMode,
-                  discount: item.discounted_amount || 0,
+                  // discounted_amount from the backend is the line total (per-unit × quantity),
+                  // but cart items track discount per unit everywhere else, so convert back.
+                  // Rounded to kobo to avoid floating-point drift when re-submitted (discount * quantity).
+                  discount:
+                    itemQuantity > 0
+                      ? Math.round(((item.discounted_amount || 0) / itemQuantity) * 100) / 100
+                      : 0,
                   empties: item.empties?.quantity || 0,
                   emptiesMode: item.empties?.type || null,
-                  packsQuantity: item.quantity,
+                  packsQuantity: itemQuantity,
                 };
               });
               setCart(cartItems);
