@@ -593,7 +593,7 @@ export default function AIChatWidget() {
         }`}
       >
         {/* History Header */}
-        <div className="bg-[#0A2540] px-4 py-4 flex items-center justify-between flex-shrink-0">
+        <div className="bg-[#0A2540] px-2 md:px-4 py-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setHistoryOpen(false)}
@@ -603,14 +603,14 @@ export default function AIChatWidget() {
             </button>
             <div className="flex items-center gap-2">
               <History size={18} className="text-white/70" />
-              <h2 className="text-white font-dm-sans font-semibold text-[15px]">
+              <h2 className="text-white font-dm-sans md:font-semibold text-[12px] md:text-[15px]">
                 Conversation History
               </h2>
             </div>
           </div>
           <button
             onClick={startNewChat}
-            className="text-xs bg-[#0A6DC0] hover:bg-[#085a9e] text-white px-3 py-1.5 rounded-full transition"
+            className="text-[10px] md:text-xs bg-[#0A6DC0] hover:bg-[#085a9e] text-white px-3 py-1.5 rounded-full transition"
           >
             New Chat
           </button>
