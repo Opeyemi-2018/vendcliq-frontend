@@ -121,7 +121,7 @@ export default function Step5({ onNext, onPrev, data }: Props) {
         Back
       </button>
 
-      <h1 className="font-clash text-[22px] font-semibold text-[#2F2F2F] mb-3">
+      <h1 className="font-clash text-[28px] leading-tight tracking-tight sm:text-[32px] font-semibold text-[#0A2540] mb-3">
         Verify Phone Number
       </h1>
       <div className="text-[#9E9A9A] mb-8 flex items-center gap-2">
@@ -180,7 +180,7 @@ export default function Step5({ onNext, onPrev, data }: Props) {
                           }
                         }}
                         onFocus={(e) => e.target.select()}
-                        className="w-12 h-12 text-[13px] text-[#333333] lg:w-14 lg:h-14 text-center  rounded-xl border-2 bg-[#D8D8D866] focus:border-[#0A6DC0] focus:bg-white transition-all"
+                        className="w-12 h-12 text-[13px] text-[#333333] lg:w-14 lg:h-14 text-center  rounded-xl border-2 border-slate-200 bg-white focus:border-[#0A6DC0] focus:bg-white transition-all"
                         disabled={loading}
                       />
                     ))}

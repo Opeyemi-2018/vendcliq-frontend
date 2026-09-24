@@ -67,7 +67,7 @@ export default function Step8({ data }: Props) {
     <div>
       <ProgressHeader currentStep={8} />
 
-      <h1 className="text-[22px] font-semibold mb-3 font-clash">
+      <h1 className="text-[28px] leading-tight tracking-tight sm:text-[32px] font-semibold mb-3 font-clash text-[#0A2540]">
         What&apos;s your main business goal?
       </h1>
       <p className="text-[#9E9A9A] mb-8">

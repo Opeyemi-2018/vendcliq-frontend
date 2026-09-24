@@ -143,7 +143,7 @@ export default function Step2({ onNext, onPrev, data }: Props) {
         <ChevronLeft className="w-5 h-5" />
         Back
       </button>
-      <h1 className="font-clash text-[22px] font-semibold text-[#2F2F2F] mb-3">
+      <h1 className="font-clash text-[28px] leading-tight tracking-tight sm:text-[32px] font-semibold text-[#0A2540] mb-3">
         Create Password
       </h1>
       <p className="text-[#9E9A9A] mb-8">
@@ -163,7 +163,7 @@ export default function Step2({ onNext, onPrev, data }: Props) {
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       {...field}
-                      className="pl-10 pr-12 bg-[#FAFAFA] h-12"
+                      className="pl-10 pr-12 h-12 rounded-xl border-slate-200 bg-white shadow-sm"
                     />
                     <div className="absolute left-3 top-3 text-gray-400">
                       <Lock />
@@ -198,7 +198,7 @@ export default function Step2({ onNext, onPrev, data }: Props) {
                       type={showConfirm ? "text" : "password"}
                       placeholder="Confirm your password"
                       {...field}
-                      className="pl-10 pr-12 bg-[#FAFAFA] h-12"
+                      className="pl-10 pr-12 h-12 rounded-xl border-slate-200 bg-white shadow-sm"
                     />
                     <div className="absolute left-3 top-3 text-gray-400">
                       <Lock />

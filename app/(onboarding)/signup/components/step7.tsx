@@ -95,7 +95,7 @@ export default function Step7({ onNext, data }: Props) {
     <div>
       <ProgressHeader currentStep={7} />
 
-      <h1 className="text-[22px] font-semibold mb-3 font-clash">
+      <h1 className="text-[28px] leading-tight tracking-tight sm:text-[32px] font-semibold mb-3 font-clash text-[#0A2540]">
         Business Details
       </h1>
       <p className="text-[#9E9A9A] mb-8">
@@ -151,7 +151,7 @@ export default function Step7({ onNext, data }: Props) {
           placeholder="Enter your business name"
           value={businessName}
           onChange={(e) => setBusinessName(e.target.value)}
-          className="h-12 bg-[#D8D8D866] border-0"
+          className="h-12 rounded-xl border-slate-200 bg-white shadow-sm"
         />
       </div>
 
@@ -163,7 +163,7 @@ export default function Step7({ onNext, data }: Props) {
           value={businessAddress}
           onChange={handleAddressChange}
           placeholder="Enter full business address"
-          className="bg-[#D8D8D866] h-12 border-0"
+          className="h-12 rounded-xl border-slate-200 bg-white shadow-sm"
         />
       </div>
 

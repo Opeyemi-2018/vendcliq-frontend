@@ -123,10 +123,10 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="w-full lg:max-w-[40rem] mx-auto md:py-8 px-3 lg:px-10 xl:px-24">
+    <div className="w-full">
       <button
         onClick={() => (step === 1 ? router.back() : setStep(1))}
-        className="flex items-center gap-2 text-[#2F2F2F] py-10 hover:opacity-70 mb-6"
+        className="flex items-center gap-2 text-[#2F2F2F] hover:opacity-70 mb-6"
       >
         <ChevronLeft className="w-5 h-5" />
         Back
@@ -135,7 +135,7 @@ export default function ForgotPassword() {
       {/* Step 1: Request OTP */}
       {step === 1 && (
         <div>
-          <h1 className="text-[22px] font-clash font-semibold mb-2 text-[#2F2F2F]">
+          <h1 className="text-[28px] leading-tight tracking-tight sm:text-[32px] font-clash font-semibold mb-2 text-[#0A2540]">
             Forgot Password?
           </h1>
           <p className="text-[#9E9A9A] mb-8 text-[16px] leading-relaxed">
@@ -163,7 +163,7 @@ export default function ForgotPassword() {
                           type="email"
                           placeholder="Enter your email"
                           {...field}
-                          className="pl-10 bg-[#D8D8D866] h-12 border-0"
+                          className="pl-10 h-12 rounded-xl border-slate-200 bg-white shadow-sm"
                           disabled={isLoading}
                         />
                       </div>
@@ -195,7 +195,7 @@ export default function ForgotPassword() {
       {/* Step 2: Reset Password with OTP */}
       {step === 2 && (
         <div>
-          <h1 className="text-[22px] font-clash font-semibold mb-2 text-[#2F2F2F]">
+          <h1 className="text-[28px] leading-tight tracking-tight sm:text-[32px] font-clash font-semibold mb-2 text-[#0A2540]">
             Reset Password
           </h1>
           <p className="text-[#9E9A9A] mb-8 text-[16px] leading-relaxed">
@@ -263,7 +263,7 @@ export default function ForgotPassword() {
                             }}
                             onFocus={(e) => e.target.select()}
                             id={`otp-${index}`}
-                            className="w-12 h-12 text-[13px] text-[#333333] lg:w-14 lg:h-14 text-center rounded-xl border-2 bg-[#D8D8D866] focus:border-[#0A6DC0] focus:bg-white transition-all"
+                            className="w-12 h-12 text-[13px] text-[#333333] lg:w-14 lg:h-14 text-center rounded-xl border-2 border-slate-200 bg-white focus:border-[#0A6DC0] focus:bg-white transition-all"
                             disabled={isLoading}
                           />
                         ))}
@@ -290,7 +290,7 @@ export default function ForgotPassword() {
                           type={showPassword ? "text" : "password"}
                           placeholder="Enter new password"
                           {...field}
-                          className="pl-10 pr-12 bg-[#D8D8D866] h-12 border-0"
+                          className="pl-10 pr-12 h-12 rounded-xl border-slate-200 bg-white shadow-sm"
                           disabled={isLoading}
                         />
                         <button
@@ -327,7 +327,7 @@ export default function ForgotPassword() {
                           type={showConfirmPassword ? "text" : "password"}
                           placeholder="Confirm new password"
                           {...field}
-                          className="pl-10 pr-12 bg-[#D8D8D866] h-12 border-0"
+                          className="pl-10 pr-12 h-12 rounded-xl border-slate-200 bg-white shadow-sm"
                           disabled={isLoading}
                         />
                         <button

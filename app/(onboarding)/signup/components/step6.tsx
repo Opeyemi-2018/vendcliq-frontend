@@ -55,7 +55,7 @@ export default function Step6({ onNext, data }: Props) {
       <ProgressHeader currentStep={6} />
 
       <div className="mb-10">
-        <h1 className="text-[22px] font-clash font-semibold text-[#2F2F2F] mb-1">
+        <h1 className="text-[28px] leading-tight tracking-tight sm:text-[32px] font-clash font-semibold text-[#0A2540] mb-1">
           Account Type
         </h1>
         <p className="text-[#9E9A9A] text-[16px] leading-relaxed">

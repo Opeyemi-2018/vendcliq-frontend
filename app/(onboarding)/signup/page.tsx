@@ -101,7 +101,7 @@ export default function SignupPage() {
   // Show loading state while initializing
   if (!isInitialized) {
     return (
-      <div className="w-full py-8 px-3 lg:px-10 xl:px-24">
+      <div className="w-full">
         <div className="mx-auto lg:max-w-[40rem] w-full flex items-center justify-center min-h-[60vh]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0A6DC0]"></div>
         </div>
@@ -110,7 +110,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="w-full py-8 px-3 lg:px-10 xl:px-24">
+    <div className="w-full">
       <Toaster position="top-center" richColors />
       <div className="mx-auto lg:max-w-[40rem] w-full">
         {steps[step as keyof typeof steps]}

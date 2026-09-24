@@ -11,7 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/Input";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -161,17 +161,22 @@ const SignIN = () => {
   };
 
   return (
-    <div className="w-full mt-20 lg:max-w-[40rem] mx-auto px-3 lg:px-10 xl:px-24">
-      <h1 className="font-clash text-[22px] font-semibold mb-2 text-[#2F2F2F]">
-        Welcome Back
-      </h1>
-      <p className="text-[#9E9A9A] mb-4 text-[16px] leading-relaxed">
-        Enter your email and password to continue right where you stopped
+    <>
+      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#0A6DC0]">
+        Welcome back
       </p>
+      <h1 className="font-clash text-[36px] font-semibold leading-[1.05] tracking-tight text-[#0A2540] sm:text-[44px]">
+        Good to see you.
+      </h1>
+      <p className="mb-8 mt-4 text-[16px] leading-relaxed text-[#5B6B7F]">
+        Sign in to pick up right where you stopped — your stock, sales
+        and orders are waiting.
+      </p>
+
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-4 md:space-y-6"
+          className="space-y-4"
         >
           {/* EMAIL FIELD */}
           <FormField
@@ -179,17 +184,16 @@ const SignIN = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-[#2F2F2F] font-medium text-[16px]">
-                  Email
-                </FormLabel>
+                <FormLabel className="sr-only">Email</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                    <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                     <Input
                       type="email"
-                      placeholder="Enter email"
+                      placeholder="Email address"
+                      autoComplete="email"
                       {...field}
-                      className="pl-10 bg-[#D8D8D866] h-12"
+                      className="h-14 rounded-2xl border-slate-200 bg-white pl-12 shadow-sm"
                       disabled={isLoading}
                     />
                   </div>
@@ -205,29 +209,31 @@ const SignIN = () => {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-[#2F2F2F] font-medium text-[16px]">
-                  Password
-                </FormLabel>
+                <FormLabel className="sr-only">Password</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+                    <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                     <Input
                       type={showPassword ? "text" : "password"}
-                      placeholder="Enter password"
+                      placeholder="Password"
+                      autoComplete="current-password"
                       {...field}
-                      className="pl-10 bg-[#D8D8D866] h-12"
+                      className="h-14 rounded-2xl border-slate-200 bg-white pl-12 pr-12 shadow-sm"
                       disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       disabled={isLoading}
                     >
                       {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
+                        <EyeOff className="h-5 w-5" />
                       ) : (
-                        <Eye className="w-5 h-5" />
+                        <Eye className="h-5 w-5" />
                       )}
                     </button>
                   </div>
@@ -237,39 +243,45 @@ const SignIN = () => {
             )}
           />
 
-          <Link
-            href="/forgot-password"
-            className="text-[#0A6DC0] hover:underline font-medium float-end text-sm"
-          >
-            Forgot Password?
-          </Link>
+          <div className="flex justify-end">
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-[#0A6DC0] underline-offset-4 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
           <Button
             type="submit"
             disabled={isLoading}
-            className="bg-[#0A6DC0] hover:bg-[#085a9e] disabled:bg-gray-400 text-white px-4 py-2 rounded-lg w-full h-11 transition-all"
+            className="h-12 w-full rounded-2xl bg-[#0A6DC0] px-4 text-white transition-all hover:bg-[#085a9e] disabled:bg-gray-400"
           >
             {isLoading ? (
               <span className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 Signing in...
               </span>
             ) : (
-              "Sign In"
+              <span className="flex items-center gap-2">
+                Sign in
+                <ArrowRight className="h-4 w-4" />
+              </span>
             )}
           </Button>
         </form>
       </Form>
 
-      <p className="text-sm text-gray-600 pt-5 text-center">
-        Don&apos;t have an account?{" "}
+      <p className="pt-6 text-center text-sm text-gray-600">
+        New to Vendcliq?{" "}
         <Link
           href="/signup"
-          className="text-[#0A6DC0] hover:underline font-medium"
+          className="font-medium text-[#0A6DC0] underline underline-offset-4"
         >
-          Sign up
+          Create an account
         </Link>
       </p>
-    </div>
+    </>
   );
 };
 

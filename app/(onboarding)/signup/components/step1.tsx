@@ -58,7 +58,7 @@ export default function Step1({ onNext, data }: Props) {
     <div>
       <ProgressHeader currentStep={1} />
 
-      <h1 className="font-clash  text-[22px] font-semibold  text-[#2F2F2F]">
+      <h1 className="font-clash text-[28px] leading-tight tracking-tight sm:text-[32px] font-semibold text-[#0A2540]">
         Create Account
       </h1>
       <p className="text-[#9E9A9A] mb-4 text-[16px] leading-relaxed">
@@ -80,7 +80,7 @@ export default function Step1({ onNext, data }: Props) {
                     <Input
                       placeholder="First name"
                       {...field}
-                      className="pl-10 bg-[#D8D8D866] h-12 border-0"
+                      className="pl-10 h-12 rounded-xl border-slate-200 bg-white shadow-sm"
                       disabled={loading}
                     />
                   </div>
@@ -102,7 +102,7 @@ export default function Step1({ onNext, data }: Props) {
                     <Input
                       placeholder="Last name"
                       {...field}
-                      className="pl-10 bg-[#D8D8D866] h-12 border-0"
+                      className="pl-10 h-12 rounded-xl border-slate-200 bg-white shadow-sm"
                       disabled={loading}
                     />
                   </div>
@@ -125,7 +125,7 @@ export default function Step1({ onNext, data }: Props) {
                       type="email"
                       placeholder="Enter your email"
                       {...field}
-                      className="pl-10 bg-[#D8D8D866] h-12 border-0"
+                      className="pl-10 h-12 rounded-xl border-slate-200 bg-white shadow-sm"
                       disabled={loading}
                     />
                   </div>
@@ -147,7 +147,7 @@ export default function Step1({ onNext, data }: Props) {
                     <Input
                       placeholder="Enter referral code"
                       {...field}
-                      className="pl-10 bg-[#D8D8D866] h-12 border-0"
+                      className="pl-10 h-12 rounded-xl border-slate-200 bg-white shadow-sm"
                       disabled={loading}
                     />
                   </div>
