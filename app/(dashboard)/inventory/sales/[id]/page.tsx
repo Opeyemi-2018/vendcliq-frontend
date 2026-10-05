@@ -140,6 +140,7 @@ export default function SaleInvoiceDetailPage() {
           quantity: 0,
           reason: RETURN_REASONS[0],
           originalQuantity: Number(item.quantity),
+          mode: item.mode,
           unitPrice: Number(item.stock?.price ?? 0),
           productName: item.product?.name ?? "Product",
           originalSubtotal: Number(item.sub_total),
@@ -148,12 +149,55 @@ export default function SaleInvoiceDetailPage() {
     });
   };
 
-  const updateReturnQty = (itemId: string, delta: number) => {
+  // Packs return in half steps (half a crate), pieces in whole ones — the
+  // server rejects fractional pieces.
+  const returnStep = (mode?: string) =>
+    String(mode || "").toUpperCase() === "PIECES" ? 1 : 0.5;
+
+  const clampReturnQty = (entry: any, value: number) => {
+    const step = returnStep(entry.mode);
+    const snapped = step === 1 ? Math.floor(value) : Math.round(value / step) * step;
+    return Math.max(0, Math.min(entry.originalQuantity, snapped));
+  };
+
+  const updateReturnQty = (itemId: string, direction: number) => {
     setReturnEntries((prev) => {
       const entry = prev[itemId];
       if (!entry) return prev;
-      const newQty = Math.max(0, Math.min(entry.originalQuantity, entry.quantity + delta));
-      return { ...prev, [itemId]: { ...entry, quantity: newQty } };
+      const quantity = clampReturnQty(
+        entry,
+        entry.quantity + direction * returnStep(entry.mode),
+      );
+      return { ...prev, [itemId]: { ...entry, quantity, qtyText: undefined } };
+    });
+  };
+
+  /** Typed quantity: kept as typed while editing ("1." mid-entry), the
+   * clamped number is what's returned. */
+  const typeReturnQty = (itemId: string, text: string) => {
+    setReturnEntries((prev) => {
+      const entry = prev[itemId];
+      if (!entry) return prev;
+      const parsed = parseFloat(text);
+      const quantity = Number.isNaN(parsed)
+        ? 0
+        : Math.max(0, Math.min(entry.originalQuantity, parsed));
+      return { ...prev, [itemId]: { ...entry, quantity, qtyText: text } };
+    });
+  };
+
+  const settleReturnQty = (itemId: string) => {
+    setReturnEntries((prev) => {
+      const entry = prev[itemId];
+      if (!entry) return prev;
+      return {
+        ...prev,
+        [itemId]: {
+          ...entry,
+          quantity: clampReturnQty(entry, entry.quantity),
+          qtyText: undefined,
+        },
+      };
     });
   };
 
@@ -165,7 +209,10 @@ export default function SaleInvoiceDetailPage() {
   };
 
   const handleConfirmReturn = async () => {
-    const items = Object.values(returnEntries).filter((e: any) => e.quantity > 0);
+    // A quantity still being typed may not be snapped to the unit's step.
+    const items = Object.values(returnEntries)
+      .map((e: any) => ({ ...e, quantity: clampReturnQty(e, e.quantity) }))
+      .filter((e: any) => e.quantity > 0);
     if (items.length === 0) return;
     
     await returnItemsMutation.mutateAsync({
@@ -404,9 +451,21 @@ export default function SaleInvoiceDetailPage() {
                                     >
                                       −
                                     </button>
-                                    <span className="w-6 text-center text-sm font-semibold text-red-500">
-                                      {entry.quantity}
-                                    </span>
+                                    <input
+                                      type="text"
+                                      inputMode="decimal"
+                                      aria-label="Quantity to return"
+                                      value={entry.qtyText ?? String(entry.quantity)}
+                                      onChange={(e) =>
+                                        typeReturnQty(
+                                          item.id,
+                                          e.target.value.replace(/[^0-9.]/g, ""),
+                                        )
+                                      }
+                                      onBlur={() => settleReturnQty(item.id)}
+                                      onFocus={(e) => e.target.select()}
+                                      className="w-12 h-6 rounded border border-gray-300 text-center text-sm font-semibold text-red-500 focus:outline-none focus:border-red-400"
+                                    />
                                     <button
                                       onClick={() => updateReturnQty(item.id, 1)}
                                       disabled={entry.quantity >= entry.originalQuantity}
