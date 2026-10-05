@@ -43,6 +43,8 @@ interface Store {
   show_on_marketplace?: boolean;
   is_archived?: boolean;
   allow_credit_sales?: boolean;
+  /** Charge 7.5% VAT on this store's sales (inventory PR #89). */
+  add_vat?: boolean;
   credit_sale_auth_required?: boolean;
   credit_sale_auth_emails?: string[];
 }
@@ -78,6 +80,7 @@ const StoreDetailPage = () => {
     show_on_marketplace: false,
     is_archived: false,
     allow_credit_sales: false,
+    add_vat: false,
     credit_sale_auth_required: false,
     credit_sale_auth_emails: [] as string[],
   });
@@ -143,6 +146,7 @@ const StoreDetailPage = () => {
         show_on_marketplace: settings.show_on_marketplace || false,
         is_archived: settings.is_archived || false,
         allow_credit_sales: settings.allow_credit_sales || false,
+        add_vat: settings.add_vat === true || settings.add_vat === 1,
         credit_sale_auth_required: settings.credit_sale_auth_required || false,
         credit_sale_auth_emails: settings.credit_sale_auth_emails || [],
       });
@@ -194,6 +198,7 @@ const StoreDetailPage = () => {
         show_on_marketplace: storeSettings.show_on_marketplace,
         is_archived: storeSettings.is_archived,
         allow_credit_sales: storeSettings.allow_credit_sales,
+        add_vat: storeSettings.add_vat,
         credit_sale_auth_required: storeSettings.credit_sale_auth_required,
         credit_sale_auth_emails: storeSettings.credit_sale_auth_emails,
       };
@@ -682,6 +687,22 @@ const StoreDetailPage = () => {
                 checked={storeSettings.is_default}
                 onCheckedChange={(checked) =>
                   setStoreSettings((prev) => ({ ...prev, is_default: checked }))
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between space-x-2">
+              <div>
+                <p className="text-sm font-medium text-[#2F2F2F]">
+                  Add VAT charges
+                </p>
+                <p className="text-xs text-[#9E9A9A]">
+                  7.5% VAT on every sale from this store (empties excluded)
+                </p>
+              </div>
+              <Switch
+                checked={!!storeSettings.add_vat}
+                onCheckedChange={(checked) =>
+                  setStoreSettings((prev) => ({ ...prev, add_vat: checked }))
                 }
               />
             </div>
