@@ -676,6 +676,7 @@ export default function EditInvoicePage() {
         invoiceId,
         payload,
       });
+      
 
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success("Invoice updated successfully!");
