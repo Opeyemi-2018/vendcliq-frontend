@@ -24,6 +24,10 @@ import {
   handleSignIn,
 } from "@/lib/utils/api/apiHelper";
 import { useUser, extractVerificationStatus } from "@/context/userContext";
+import {
+  toPermissionMap,
+  writePermissionsCookie,
+} from "@/lib/access/attendantAccess";
 
 const SignIN = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -98,31 +102,14 @@ const SignIN = () => {
               const permData = permRes?.data;
 
               if (permData && typeof permData === "object") {
-                setAttendantPermissions({
-                  can_buy: !!permData.can_buy,
-                  can_sell: !!permData.can_sell,
-                  can_update_stock: !!permData.can_update_stock,
-                  can_move_stock: !!permData.can_move_stock,
-                  can_add_stock: !!permData.can_add_stock,
-                  can_market_place: !!permData.can_market_place,
-                  can_push_to_market: !!permData.can_push_to_market,
-                  can_view_store_info: !!permData.can_view_store_info,
-                  can_reporting: !!permData.can_reporting,
-                  can_expenses: !!permData.can_expenses,
-                  can_sell_on_credit: !!permData.can_sell_on_credit,
-                });
-                const perms: string[] = [];
-                if (permData.can_sell) perms.push("canSell");
-                if (permData.can_buy) perms.push("canBuy");
-                if (permData.can_reporting) perms.push("canReporting");
-                if (permData.can_expenses) perms.push("canExpenses");
-                if (permData.can_market_place)
-                  perms.push("canAccessMarketplace");
-
-                document.cookie = `userPermissions=${perms.join(",")}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
+                // Also writes the userPermissions cookie middleware reads.
+                setAttendantPermissions(toPermissionMap(permData));
+              } else {
+                writePermissionsCookie(null);
               }
             } catch {
               // permissions fetch failed — all will default to false for attendant
+              writePermissionsCookie(null);
             }
           }
 
@@ -135,9 +122,9 @@ const SignIN = () => {
             );
           }
 
-          // After the ATTENDANTS block, in the else or just before router.push
+          // Owners pass every check; middleware ignores this cookie for them.
           if (userData.account.accountRole !== "ATTENDANTS") {
-            document.cookie = `userPermissions=canSell,canBuy,canReporting,canExpenses,canAccessMarketplace; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
+            writePermissionsCookie(null);
           }
 
           toast.success("Signed in successfully!");

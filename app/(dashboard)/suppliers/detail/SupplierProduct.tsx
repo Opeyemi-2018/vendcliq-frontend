@@ -17,6 +17,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { handleGetSupplierStocks } from "@/lib/utils/api/apiHelper";
+import { useUser } from "@/context/userContext";
 
 interface SupplierProductsProps {
   supplier: Supplier;
@@ -25,6 +26,7 @@ interface SupplierProductsProps {
 
 export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
   const router = useRouter();
+  const { canUseMarket } = useUser();
 
   const [stocks, setStocks] = useState<SupplierStockItem[]>([]);
   const [loadingStocks, setLoadingStocks] = useState(true);
@@ -225,12 +227,14 @@ export function SupplierProducts({ supplier, onBack }: SupplierProductsProps) {
                         ₦{parseFloat(stock.selling_price).toLocaleString()}
                       </td>
                       <td className="w-1/5 py-4">
+                        {canUseMarket() && (
                         <button
                           onClick={() => handleViewInMarket(stock.id)}
                           className="text-[#0A6DC0] whitespace-nowrap hover:text-[#085a9e] font-bold transition-colors"
                         >
                           View In Market
                         </button>
+                        )}
                       </td>
                     </tr>
                   ))}

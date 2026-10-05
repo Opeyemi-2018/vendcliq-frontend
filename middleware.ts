@@ -1,6 +1,13 @@
 // middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import {
+  ATTENDANT_HOME,
+  DENIED_PARAM,
+  PERMISSIONS_COOKIE,
+  parsePermissionsCookie,
+  ruleForPath,
+} from "@/lib/access/attendantAccess";
 
 export function middleware(request: NextRequest) {
   const publicRoutes = [
@@ -34,48 +41,19 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
+  // === ATTENDANT RULES (lib/access/attendantAccess — same as the app) ===
+  // Owners pass every check. Attendants need the permission flag; the
+  // cookie is written at sign-in and refreshed by the client guard.
   const userRole = request.cookies.get("userRole")?.value;
-  const isAttendant = userRole === "ATTENDANTS";
-
-  // === ATTENDANT: hard-blocked routes (regardless of permissions) ===
-  const attendantBlockedPrefixes = [
-    "/account",
-    "/credit-ledger",
-    "/delivery",
-    "/my-purchase",
-    "/payment-subscription",
-    "/plans",
-    // "/referral",
-    "/request-account-deletion",
-  ];
-
-  if (isAttendant) {
-    const isHardBlocked = attendantBlockedPrefixes.some(
-      (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
+  if (userRole === "ATTENDANTS") {
+    const permissions = parsePermissionsCookie(
+      request.cookies.get(PERMISSIONS_COOKIE)?.value,
     );
-    if (isHardBlocked) {
-      return NextResponse.redirect(new URL("/inventory/overview", request.url));
-    }
-  }
-
-  // === PERMISSION-BASED ROUTE GUARDS ===
-  // Store permissions as a comma-separated cookie on login, e.g.:
-  // "canSell,canBuy,canReporting"
-  const permsCookie = request.cookies.get("userPermissions")?.value ?? "";
-  const permissions = new Set(permsCookie.split(",").filter(Boolean));
-
-  const permissionRoutes: Array<{ prefix: string; perm: string }> = [
-    { prefix: "/inventory/sell", perm: "canSell" },
-    { prefix: "/inventory/buy",  perm: "canBuy" },
-    { prefix: "/expenses",        perm: "canExpenses" },
-    { prefix: "/business-report", perm: "canReporting" },
-    { prefix: "/market-place",    perm: "canAccessMarketplace" },
-  ];
-
-  for (const { prefix, perm } of permissionRoutes) {
-    const matches = pathname === prefix || pathname.startsWith(prefix + "/");
-    if (matches && !permissions.has(perm)) {
-      return NextResponse.redirect(new URL("/inventory/overview", request.url));
+    const rule = ruleForPath(pathname);
+    if (rule && !rule.allow({ isAttendant: true, permissions })) {
+      const url = new URL(ATTENDANT_HOME, request.url);
+      url.searchParams.set(DENIED_PARAM, rule.feature);
+      return NextResponse.redirect(url);
     }
   }
 
@@ -91,6 +69,12 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/account/:path*",
+    "/add-purchase/:path*",
+    "/business-account/:path*",
+    "/business-settings/:path*",
+    "/cart/:path*",
+    "/loan/:path*",
+    "/loans/:path*",
     "/credit-ledger/:path*",
     "/delivery/:path*",
     "/my-purchase/:path*",

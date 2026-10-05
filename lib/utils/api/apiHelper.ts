@@ -1122,6 +1122,13 @@ export const handleGetAttendants = async (): Promise<any> => {
   return await fetcher<any>(GET_ATTENDANTS);
 };
 
+/** Owner removes an attendant (same endpoint the app uses). */
+export const handleDeleteAttendant = async (
+  attendantId: string | number,
+): Promise<any> => {
+  return await deleter<any>(`${GET_ATTENDANTS}/${attendantId}`);
+};
+
 export const handleGetAttendantPermissions = async (
   attendantId: string | number,
 ): Promise<any> => {

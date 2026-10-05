@@ -10,6 +10,7 @@ import MarketplaceConditions, {
 import StockCreatedModal from "./StockCreatedModal";
 import { saveNewConditions } from "@/lib/conditionSync";
 import type { Store } from "@/types/store";
+import { useUser } from "@/context/userContext";
 
 interface AddStockSheetProps {
   open: boolean;
@@ -53,6 +54,9 @@ export const AddStockSheet = ({
   bundleOptions = [],
 }: AddStockSheetProps) => {
   const [tab, setTab] = useState<"stock" | "conditions">("stock");
+  // Marketplace Rules are "push to market": attendants need that flag.
+  const { canPushToMarket } = useUser();
+  const showRules = canPushToMarket();
   const [conditions, setConditions] = useState<MarketplaceCondition[]>([]);
   const [formState, setFormState] = useState({ submitting: false, ready: false });
   // Set once the stock exists — until then conditions cannot be attached.
@@ -165,7 +169,7 @@ export const AddStockSheet = ({
             </button>
           </div>
 
-          {store && (
+          {store && showRules && (
             <div className="flex sm:gap-[30px] mt-4 sm:mt-[22px] border-b border-[#D8D8D88C]">
               <button
                 type="button"
@@ -245,7 +249,9 @@ export const AddStockSheet = ({
               </div>
               <div
                 data-tour="np-conditions"
-                className={tab === "conditions" ? "block" : "hidden"}
+                className={
+                  tab === "conditions" && showRules ? "block" : "hidden"
+                }
               >
                 <MarketplaceConditions
                   conditions={conditions}
@@ -309,10 +315,14 @@ export const AddStockSheet = ({
         open={showCreated}
         productName={created?.productName}
         storeName={store?.name}
-        onAddConditions={() => {
-          setShowCreated(false);
-          setTab("conditions");
-        }}
+        onAddConditions={
+          showRules
+            ? () => {
+                setShowCreated(false);
+                setTab("conditions");
+              }
+            : undefined
+        }
         onGoBack={() => {
           setShowCreated(false);
           onOpenChange(false);

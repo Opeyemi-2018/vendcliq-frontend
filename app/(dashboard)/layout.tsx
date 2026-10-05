@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import AIChatWidget from "@/components/ChatWidget";
 import TourOverlay from "@/components/tour/TourOverlay";
 import TourHandoverDemo from "@/components/tour/TourHandoverDemo";
+import AttendantRouteGuard from "@/components/access/AttendantRouteGuard";
 
 const DashboardContent = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
@@ -49,7 +50,7 @@ const DashboardContent = ({ children }: { children: ReactNode }) => {
            <AIChatWidget />
            <TourHandoverDemo />
            <TourOverlay />
-          {children}
+          <AttendantRouteGuard>{children}</AttendantRouteGuard>
         </div>
       </main>
     </>

@@ -78,77 +78,60 @@ export function AppSidebar() {
   const [openItems, setOpenItems] = useState<string[]>([]);
   const pathname = usePathname();
   const router = useRouter();
-  const {
-    isAttendant,
-    canReporting,
-    canBuy,
-    canExpenses,
-    canSell,
-    canAccessMarketplace,
-  } = useUser();
+  // Every entry runs through the same route rules the guard and middleware
+  // use (lib/access/attendantAccess), so nav never offers a page that would
+  // bounce. Attendants don't see what they can't use (hidden, not disabled).
+  const { canOpenPath } = useUser();
 
   type NavTag = "new" | "refresh" | "coming-soon";
   type NavChild = { title: string; url: string; tag?: NavTag };
-
-  const allItems: {
+  type NavItem = {
     title: string;
     url: string;
     icon: React.ComponentType<NavIconProps>;
     tag?: NavTag;
     children?: NavChild[];
-  }[] = [
+  };
+
+  const navItems: NavItem[] = [
     // Tapping a section header navigates to its own overview, so the children
     // no longer repeat an "Overview" entry (prototype behaviour).
-    ...(!isAttendant
-      ? [
-          {
-            title: "Account",
-            url: "/account/overview",
-            icon: NavAccount,
-            children: [
-              { title: "Send Money", url: "/account/send-money" },
-              { title: "Airtime & Data", url: "/account/pay-utility" },
-              {
-                title: "Transactions History",
-                url: "/account/transactionHistory",
-              },
-              { title: "Subscription & Payment", url: "/payment-subscription" },
-              { title: "Credit Ledger", url: "/credit-ledger" },
-            ],
-          },
-        ]
-      : []),
+    {
+      title: "Account",
+      url: "/account/overview",
+      icon: NavAccount,
+      children: [
+        { title: "Send Money", url: "/account/send-money" },
+        { title: "Airtime & Data", url: "/account/pay-utility" },
+        {
+          title: "Transactions History",
+          url: "/account/transactionHistory",
+        },
+        { title: "Subscription & Payment", url: "/payment-subscription" },
+        { title: "Credit Ledger", url: "/credit-ledger" },
+      ],
+    },
     {
       title: "Inventory",
       url: "/inventory/overview",
       icon: NavInventory,
       children: [
-        ...(canSell() ? [{ title: "Sell", url: "/inventory/sell" }] : []),
-        ...(canBuy() ? [{ title: "Buy", url: "/inventory/buy" }] : []),
+        { title: "Sell", url: "/inventory/sell" },
+        { title: "Buy", url: "/inventory/buy" },
         { title: "My Store", url: "/inventory/my-store" },
         { title: "Customer List", url: "/customer" },
-        ...(canReporting()
-          ? [{ title: "Business Report", url: "/business-report" }]
-          : []),
+        { title: "Business Report", url: "/business-report" },
         { title: "Sales History", url: "/inventory/sales" },
-        ...(canExpenses() ? [{ title: "Expenses", url: "/expenses" }] : []),
+        { title: "Expenses", url: "/expenses" },
         { title: "Supplier List", url: "/suppliers" },
       ],
     },
-    ...(canAccessMarketplace()
-      ? [
-          {
-            title: "Market Place",
-            url: "/market-place",
-            icon: NavMarket,
-            children: [
-              ...(!isAttendant
-                ? [{ title: "My Purchases", url: "/my-purchase" }]
-                : []),
-            ],
-          },
-        ]
-      : []),
+    {
+      title: "Market Place",
+      url: "/market-place",
+      icon: NavMarket,
+      children: [{ title: "My Purchases", url: "/my-purchase" }],
+    },
     {
       title: "More",
       url: "#",
@@ -156,17 +139,20 @@ export function AppSidebar() {
       children: [
         // Business Report / Customer List / Supplier List / Expenses now live
         // under Inventory (and as pinned Quick Actions), per the prototype.
-        ...(!isAttendant
-          ? [{ title: "Business Settings", url: "/business-settings" }]
-          : []),
+        { title: "Business Settings", url: "/business-settings" },
         { title: "Profile Settings", url: "/profile-settings" },
         { title: "Referral", url: "/referral" },
-        ...(!isAttendant
-          ? [{ title: "Account Deletion", url: "/request-account-deletion" }]
-          : []),
+        { title: "Account Deletion", url: "/request-account-deletion" },
       ],
     },
   ];
+
+  const allItems = navItems
+    .filter((item) => item.url === "#" || canOpenPath(item.url))
+    .map((item) => ({
+      ...item,
+      children: item.children?.filter((child) => canOpenPath(child.url)),
+    }));
 
   const isActive = (url: string) => {
     if (!url || url === "#") return false;

@@ -6,7 +6,8 @@ interface StockCreatedModalProps {
   open: boolean;
   productName?: string;
   storeName?: string;
-  onAddConditions: () => void;
+  /** Omitted when the user can't push to market — the CTA is hidden. */
+  onAddConditions?: () => void;
   onGoBack: () => void;
 }
 
@@ -53,18 +54,21 @@ export const StockCreatedModal = ({
         </h3>
         <p className="mt-2 text-[13.5px] leading-[1.55] text-[#565656]">
           {productName ? <strong>{productName}</strong> : "Your product"} is now
-          {storeName ? ` in ${storeName}` : " in your store"}. Add marketplace
-          conditions to set bundles, discounts or minimum orders for it.
+          {storeName ? ` in ${storeName}` : " in your store"}.
+          {onAddConditions &&
+            " Add marketplace conditions to set bundles, discounts or minimum orders for it."}
         </p>
 
         <div className="mt-6 flex flex-col gap-2.5">
-          <button
-            type="button"
-            onClick={onAddConditions}
-            className="w-full h-[50px] rounded-[12px] border-none bg-[#0A6DC0] text-white font-bold text-[15px] cursor-pointer hover:bg-[#09599A]"
-          >
-            Add marketplace conditions
-          </button>
+          {onAddConditions && (
+            <button
+              type="button"
+              onClick={onAddConditions}
+              className="w-full h-[50px] rounded-[12px] border-none bg-[#0A6DC0] text-white font-bold text-[15px] cursor-pointer hover:bg-[#09599A]"
+            >
+              Add marketplace conditions
+            </button>
+          )}
           <button
             type="button"
             onClick={onGoBack}

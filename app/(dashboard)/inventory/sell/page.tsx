@@ -24,6 +24,7 @@ import { ThreeDots } from "react-loader-spinner";
 import { useStores, useStoreStocks } from "@/hooks/useStores";
 import { useCustomers, useCreateCustomer } from "@/hooks/useCustomers";
 import { useCreateInvoice } from "@/hooks/useInventoryOverview";
+import { useUser } from "@/context/userContext";
 
 import PlacesAutocompleteInput from "@/hooks/googleMap";
 import EditStockPriceModal from "./chunks/EditStockPriceModal";
@@ -127,6 +128,8 @@ const imgSrc = (src: string | null) => {
 export default function SellPage() {
   const router = useRouter();
   const createInvoiceMutation = useCreateInvoice();
+  // Attendant sales say who sold them (receipts, history) — as the app does.
+  const { soldBy } = useUser();
   const { data: customers = [], isLoading: customersLoading } = useCustomers();
   const createCustomer = useCreateCustomer();
   const {
@@ -526,6 +529,7 @@ export default function SellPage() {
             },
           };
         }),
+        ...(soldBy ? { attributes: { sold_by: soldBy } } : {}),
       };
 
       const response = await createInvoiceMutation.mutateAsync(payload);

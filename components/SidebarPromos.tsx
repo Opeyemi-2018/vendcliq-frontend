@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { openTourWelcome } from "@/lib/tour/store";
 import { TOUR_ENTRY } from "@/lib/tour/steps";
+import { useUser } from "@/context/userContext";
 
 /** Opens the floating chat widget, which owns its own state. */
 const openChat = () => window.dispatchEvent(new CustomEvent("vc:open-chat"));
@@ -11,10 +12,14 @@ const openChat = () => window.dispatchEvent(new CustomEvent("vc:open-chat"));
 export const SidebarPromos = () => {
   const pathname = usePathname();
   const onAccount = pathname?.startsWith("/account");
+  // The tour walks owner screens (wallet, business settings), which an
+  // attendant would just bounce off.
+  const { isOwner } = useUser();
 
   return (
     <div className="flex flex-col gap-2.5 pt-3.5">
       {/* ── Quick tour ─────────────────────────────────────────────────── */}
+      {isOwner && (
       <div
         className="relative overflow-hidden rounded-[12px] p-3.5 flex flex-col gap-2.5"
         style={{ background: "linear-gradient(135deg, #10365C 0%, #0A6DC0 130%)" }}
@@ -67,6 +72,7 @@ export const SidebarPromos = () => {
           {TOUR_ENTRY.button}
         </button>
       </div>
+      )}
 
       {/* ── Vendcliq AI ────────────────────────────────────────────────── */}
       <div

@@ -24,7 +24,7 @@ import StockConditionsPanel from "@/components/inventory/StockConditionsPanel";
 import BackButton from "@/components/inventory/BackButton";
 
 const StockDetailPage = () => {
-  const { canUpdateStock } = useUser();
+  const { canUpdateStock, canPushToMarket } = useUser();
   const router = useRouter();
   const params = useParams();
   const storeId = params.id as string;
@@ -221,6 +221,8 @@ const StockDetailPage = () => {
         </div>
       </Card>
 
+      {/* Marketplace conditions are "push to market" (app rule). */}
+      {canPushToMarket() && (
       <StockConditionsPanel
         stockId={String(stock.id)}
         productName={stock.product?.name}
@@ -236,6 +238,7 @@ const StockDetailPage = () => {
               : undefined,
           }))}
       />
+      )}
     </div>
   );
 };

@@ -12,7 +12,19 @@ import {
   handleGetAttendantPermissions,
   handleAssignAttendantPermissions,
   handleUpdateAttendantPermissions,
+  handleDeleteAttendant,
 } from "@/lib/utils/api/apiHelper";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface AttendantRow {
   id: number;
@@ -25,18 +37,23 @@ interface AttendantRow {
   storeIds?: string[];
 }
 
-/** The ten real permission flags, in the order the spec lists them. */
-const PERMISSIONS: { key: string; label: string; paths: string[] }[] = [
-  { key: "can_buy", label: "Can Buy", paths: ["M6 6h15l-1.5 9h-12z", "M6 6 5 3H2", "M9 20a1 1 0 1 0 2 0 1 1 0 1 0-2 0", "M16 20a1 1 0 1 0 2 0 1 1 0 1 0-2 0"] },
-  { key: "can_sell", label: "Can Sell", paths: ["M3 7h18l-2 13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z", "M8 7V5a4 4 0 0 1 8 0v2"] },
-  { key: "can_update_stock", label: "Can Update Stock", paths: ["M12 20h9", "M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"] },
-  { key: "can_move_stock", label: "Can Move Stock", paths: ["M4 8h12", "m12 4 4 4-4 4", "M20 16H8", "m12 12-4 4 4 4"] },
-  { key: "can_add_stock", label: "Can Add Stock", paths: ["M12 5v14", "M5 12h14"] },
-  { key: "can_market_place", label: "Can Access Marketplace", paths: ["M4 9h16v11H4z", "m3 9 1.6-5h14.8L21 9", "M9.5 20v-5.5h5V20"] },
-  { key: "can_push_to_market", label: "Can Push to Market", paths: ["M12 19V5", "m5 12 7-7 7 7"] },
-  { key: "can_view_store_info", label: "Can View Store Info", paths: ["M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z", "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"] },
-  { key: "can_reporting", label: "Can View Reports", paths: ["M5 20V10", "M12 20V4", "M19 20v-7"] },
-  { key: "can_expenses", label: "Can Manage Expenses", paths: ["M3 6h18v12H3z", "M3 10h18", "M7 15h4"] },
+/**
+ * The eleven attendant permission flags — same order, labels and subtitles
+ * as the app's Attendant Permissions screen (app-vendcliq
+ * attendant_permissions_screen.dart), so owners see one set of rules.
+ */
+const PERMISSIONS: { key: string; label: string; sub: string; paths: string[] }[] = [
+  { key: "can_sell", label: "Sell", sub: "Ring up sales and accept payment", paths: ["M3 7h18l-2 13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z", "M8 7V5a4 4 0 0 1 8 0v2"] },
+  { key: "can_buy", label: "Buy", sub: "Record purchases from suppliers", paths: ["M6 6h15l-1.5 9h-12z", "M6 6 5 3H2", "M9 20a1 1 0 1 0 2 0 1 1 0 1 0-2 0", "M16 20a1 1 0 1 0 2 0 1 1 0 1 0-2 0"] },
+  { key: "can_update_stock", label: "Update Stock", sub: "Edit existing stock quantities/prices", paths: ["M12 20h9", "M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"] },
+  { key: "can_add_stock", label: "Add Stock", sub: "Add new products to inventory", paths: ["M12 5v14", "M5 12h14"] },
+  { key: "can_move_stock", label: "Move Stock", sub: "Move stock between stores", paths: ["M4 8h12", "m12 4 4 4-4 4", "M20 16H8", "m12 12-4 4 4 4"] },
+  { key: "can_market_place", label: "Market Place", sub: "Access the marketplace", paths: ["M4 9h16v11H4z", "m3 9 1.6-5h14.8L21 9", "M9.5 20v-5.5h5V20"] },
+  { key: "can_push_to_market", label: "Push to Market", sub: "List products on the marketplace", paths: ["M12 19V5", "m5 12 7-7 7 7"] },
+  { key: "can_view_store_info", label: "View Store Info & Payment Methods", sub: "See store details and payment settings", paths: ["M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z", "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"] },
+  { key: "can_reporting", label: "Reporting", sub: "Access business reports and analytics", paths: ["M5 20V10", "M12 20V4", "M19 20v-7"] },
+  { key: "can_expenses", label: "Manage Expenses", sub: "Record and view business expenses", paths: ["M3 6h18v12H3z", "M3 10h18", "M7 15h4"] },
+  { key: "can_sell_on_credit", label: "Sell on Credit", sub: "Make credit sales in stores that allow credit", paths: ["M3 6h18v12H3z", "M3 10h18", "M15 15h3"] },
 ];
 
 const EMPTY_PERMISSIONS = Object.fromEntries(
@@ -125,6 +142,7 @@ export const AttendantSettings = () => {
     useState<Record<string, boolean>>(EMPTY_PERMISSIONS);
   const [loadingPermissions, setLoadingPermissions] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -245,6 +263,30 @@ export const AttendantSettings = () => {
       toast.error(error?.message || "Could not save permissions");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // DELETE /client/v2/attendants/:id, as the app's Remove attendant.
+  const remove = async () => {
+    if (!selected) return;
+    setRemoving(true);
+    try {
+      const res: any = await handleDeleteAttendant(selected.id);
+      const status = Number(res?.statusCode ?? 200);
+      const failed =
+        res?.status === "error" || res?.status === false || status >= 400;
+      if (failed) {
+        toast.error(res?.msg || res?.message || "Could not remove attendant");
+        return;
+      }
+      toast.success(`${selected.fullname} removed`);
+      const rest = attendants.filter((a) => a.id !== selected.id);
+      setAttendants(rest);
+      setSelectedId(rest[0]?.id ?? null);
+    } catch (error: any) {
+      toast.error(error?.message || "Could not remove attendant");
+    } finally {
+      setRemoving(false);
     }
   };
 
@@ -419,14 +461,19 @@ export const AttendantSettings = () => {
                           colour={on ? "#0A6DC0" : "#8E8E93"}
                         />
                       </span>
-                      <span
-                        className={`flex-1 min-w-0 text-[14px] sm:text-[15px] leading-[1.3] ${
-                          on
-                            ? "font-semibold text-[#2F2F2F]"
-                            : "font-medium text-[#6E7480]"
-                        }`}
-                      >
-                        {permission.label}
+                      <span className="flex-1 min-w-0">
+                        <span
+                          className={`block text-[14px] sm:text-[15px] leading-[1.3] ${
+                            on
+                              ? "font-semibold text-[#2F2F2F]"
+                              : "font-medium text-[#6E7480]"
+                          }`}
+                        >
+                          {permission.label}
+                        </span>
+                        <span className="block text-[12.5px] text-[#8E8E93] mt-0.5 leading-[1.35]">
+                          {permission.sub}
+                        </span>
                       </span>
                       <Toggle
                         on={on}
@@ -459,6 +506,41 @@ export const AttendantSettings = () => {
               )}
               <span>Save Attendant Permissions</span>
             </button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button
+                  type="button"
+                  disabled={removing}
+                  className="w-full h-[48px] rounded-[13px] border border-[#F2C9C3] bg-white text-[#C0392B] cursor-pointer text-[15px] font-bold inline-flex items-center justify-center gap-2 hover:bg-[#FDF3F2] disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {removing ? (
+                    <ClipLoader size={16} color="#C0392B" />
+                  ) : (
+                    "Remove attendant"
+                  )}
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="font-clash font-semibold text-[22px]">
+                    Remove attendant?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="font-dm-sans text-[#464343]">
+                    {selected.fullname} will be removed from your team.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={remove}
+                    className="bg-[#C0392B] hover:bg-[#A93226] text-white"
+                  >
+                    Remove
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </>
         )}
       </div>

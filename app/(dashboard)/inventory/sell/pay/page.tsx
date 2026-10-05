@@ -100,7 +100,7 @@ const PAYMENT_OPTIONS: {
 ];
 
 function PayInvoiceContent() {
-  const { canSellOnCredit } = useUser();
+  const { canSellOnCredit, canOpenPath } = useUser();
   const filteredPaymentOptions = PAYMENT_OPTIONS.filter((option) => {
     if (option.type === "CREDIT") return canSellOnCredit();
     return true;
@@ -295,7 +295,10 @@ function PayInvoiceContent() {
       if (response.statusCode === 200 || response.statusCode === 201) {
         toast.success(response.data?.message || "Credit sale completed!");
         setShowCreditOtpModal(false);
-        router.push("/credit-ledger");
+        // Credit Ledger is owner-only; attendants land on Sales History.
+        router.push(
+          canOpenPath("/credit-ledger") ? "/credit-ledger" : "/inventory/sales",
+        );
       } else {
         toast.error(response.error || "OTP verification failed");
       }
