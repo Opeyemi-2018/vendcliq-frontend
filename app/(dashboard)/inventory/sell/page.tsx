@@ -153,13 +153,6 @@ export default function SellPage() {
   const [activeStockId, setActiveStockId] = useState<string | null>(null);
   const [activeMode, setActiveMode] = useState<SellMode>("PACKS");
   const [activeQty, setActiveQty] = useState<string>("1");
-  const [activeDiscount, setActiveDiscount] = useState<string>("");
-  const [activeEmpties, setActiveEmpties] = useState<string>("");
-  const [activeEmptiesMode, setActiveEmptiesMode] = useState<"SELL" | "CREDIT">(
-    "SELL",
-  );
-  const [showDiscountInput, setShowDiscountInput] = useState(false);
-  const [showEmptiesInput, setShowEmptiesInput] = useState(false);
 
   const [discountModalOpen, setDiscountModalOpen] = useState(false);
   // Cart line whose empties are being edited (one-touch selling).
@@ -169,7 +162,6 @@ export default function SellPage() {
   const [tempDiscount, setTempDiscount] = useState<string>("");
 
   // Empties modal
-  const [emptiesModalOpen, setEmptiesModalOpen] = useState(false);
   const [tempEmpties, setTempEmpties] = useState<string>("");
   const [tempEmptiesMode, setTempEmptiesMode] = useState<"SELL" | "CREDIT">(
     "SELL",
@@ -233,11 +225,6 @@ export default function SellPage() {
     setActiveStockId(item.id);
     setActiveMode(line?.mode ?? "PACKS");
     setActiveQty(String(line?.quantity ?? 0));
-    setActiveDiscount("");
-    setActiveEmpties("");
-    setActiveEmptiesMode("SELL");
-    setShowDiscountInput(false);
-    setShowEmptiesInput(false);
     // Set the display mode for this item when opened (optional)
     setItemDisplayModes((prev) => ({
       ...prev,
@@ -248,24 +235,6 @@ export default function SellPage() {
   const activeItem = stock.find((s) => s.id === activeStockId) ?? null;
 
   const activePrice = activeItem ? unitPrice(activeItem, activeMode) : 0;
-
-  const previewSubtotal = (() => {
-    if (!activeItem) return 0;
-    const qty = parseFloat(activeQty) || 0;
-    const disc = parseFloat(activeDiscount) || 0;
-    const empties = parseFloat(activeEmpties) || 0;
-
-    // Product total with discount applied per unit
-    const discountedProductPrice = Math.max(0, activePrice - disc);
-    const productTotal = discountedProductPrice * qty;
-
-    // Empties total WITHOUT discount (full price)
-    const emptiesPrice = parseFloat(activeItem.empties_price) || 0;
-    const emptiesTotal =
-      showEmptiesInput && empties > 0 ? emptiesPrice * empties : 0;
-
-    return productTotal + emptiesTotal;
-  })();
 
   /**
    * One-touch selling: sets the product's cart line to `qty` in `mode` straight
@@ -313,128 +282,6 @@ export default function SellPage() {
   };
 
   const stepFor = (mode: SellMode) => (mode === "PACKS" ? 0.5 : 1);
-
-  const handleAddToCart = () => {
-    if (!activeItem) return;
-    const qty = parseFloat(activeQty);
-    if (!qty || qty <= 0) return toast.error("Enter a valid quantity");
-
-    // Validate pieces are in multiples of items_per_pack
-    // Validate pieces are in whole numbers and multiples of items_per_pack
-    // Validate pieces are in whole numbers only (no decimals)
-    if (activeMode === "PIECES") {
-      // First check if it's a whole number
-      if (!Number.isInteger(qty)) {
-        return toast.error(
-          `Pieces quantity cannot be decimal. Please enter a whole number. Example: 1, 2, 3, etc.`,
-        );
-      }
-    }
-
-    // Get available stock
-    const availablePacks = parseFloat(activeItem.quantity);
-    const availablePieces = piecesOf(
-      availablePacks,
-      activeItem.product.items_per_pack,
-    );
-
-    // Validate based on mode
-    if (activeMode === "PACKS") {
-      if (qty > availablePacks) {
-        return toast.error(
-          `Only ${formatPacks(availablePacks, activeItem.product.items_per_pack)} available in stock`,
-        );
-      }
-    } else {
-      // PIECES mode
-      if (qty > availablePieces) {
-        return toast.error(
-          `Only ${formatQty(availablePieces)} pieces available in stock (${formatPacks(availablePacks, activeItem.product.items_per_pack)})`,
-        );
-      }
-    }
-
-    const empties = showEmptiesInput ? parseFloat(activeEmpties) || 0 : 0;
-    const discount = showDiscountInput ? parseFloat(activeDiscount) || 0 : 0;
-
-    // Check empties availability
-    const availableEmpties = parseFloat(activeItem.empties_qty);
-    if (empties > availableEmpties) {
-      return toast.error(`Only ${availableEmpties} empties available in stock`);
-    }
-
-    // Calculate packs quantity for stock validation
-    let packsQuantity =
-      activeMode === "PACKS" ? qty : qty / activeItem.product.items_per_pack;
-
-    // Check if adding to cart would exceed available stock
-    const existingIndex = cart.findIndex(
-      (c) => c.stock.id === activeItem.id && c.mode === activeMode,
-    );
-
-    let newTotalPacks = 0;
-    if (existingIndex >= 0) {
-      const existingItem = cart[existingIndex];
-      newTotalPacks = existingItem.packsQuantity + packsQuantity;
-    } else {
-      newTotalPacks = packsQuantity;
-    }
-
-    if (newTotalPacks > availablePacks) {
-      const availablePiecesMsg = piecesOf(
-        availablePacks,
-        activeItem.product.items_per_pack,
-      );
-      return toast.error(
-        `Cannot add more. Only ${formatPacks(availablePacks, activeItem.product.items_per_pack)} (${formatQty(availablePiecesMsg)} pieces) available in total`,
-      );
-    }
-
-    // Check if adding empties would exceed available
-    if (existingIndex >= 0) {
-      const existingItem = cart[existingIndex];
-      const newTotalEmpties = existingItem.empties + empties;
-      if (newTotalEmpties > availableEmpties) {
-        return toast.error(
-          `Cannot add more empties. Only ${availableEmpties} empties available in total`,
-        );
-      }
-    }
-
-    if (existingIndex >= 0) {
-      const updated = [...cart];
-      updated[existingIndex] = {
-        ...updated[existingIndex],
-        quantity: updated[existingIndex].quantity + qty,
-        packsQuantity: updated[existingIndex].packsQuantity + packsQuantity,
-        discount,
-        empties: updated[existingIndex].empties + empties,
-        emptiesMode:
-          empties > 0 ? activeEmptiesMode : updated[existingIndex].emptiesMode,
-      };
-      setCart(updated);
-    } else {
-      setCart((prev) => [
-        ...prev,
-        {
-          stock: activeItem,
-          quantity: qty, // Store original quantity
-          mode: activeMode,
-          discount,
-          empties,
-          emptiesMode: empties > 0 ? activeEmptiesMode : null,
-          packsQuantity: packsQuantity, // Store packs equivalent for stock validation
-        },
-      ]);
-    }
-    setActiveStockId(null);
-    setActiveQty("1");
-    setActiveDiscount("");
-    setActiveEmpties("");
-    setShowDiscountInput(false);
-    setShowEmptiesInput(false);
-    toast.success(`${activeItem.product.name} added to cart`);
-  };
 
   const removeCartItem = (idx: number) => {
     setCart((prev) => prev.filter((_, i) => i !== idx));
@@ -1395,10 +1242,6 @@ export default function SellPage() {
                     setCart(updated);
                     setEditingDiscountIndex(null);
                     toast.success("Discount updated!");
-                  } else if (activeItem) {
-                    // Add new discount to active item
-                    setActiveDiscount(tempDiscount);
-                    setShowDiscountInput(true);
                   }
 
                   setDiscountModalOpen(false);
