@@ -31,7 +31,7 @@ import { VcIcon, CalendarIcon } from "@/components/inventory/VcIcon";
 import MediumBreakdownModal from "@/components/inventory/MediumBreakdownModal";
 
 type ChannelTab = "all" | "online" | "instore";
-type StatusFilter = "all" | "pending" | "awaiting";
+type StatusFilter = "all" | "pending" | "partpaid" | "overpaid" | "awaiting";
 
 const SalesHistoryPage = () => {
   const router = useRouter();
@@ -140,6 +140,12 @@ const SalesHistoryPage = () => {
     if (statusFilter === "awaiting") {
       return channelRows.filter((row) => row.awaitingHandover);
     }
+    if (statusFilter === "partpaid") {
+      return channelRows.filter((row) => row.partPaid);
+    }
+    if (statusFilter === "overpaid") {
+      return channelRows.filter((row) => row.overpaid);
+    }
     return channelRows;
   }, [channelRows, statusFilter]);
 
@@ -160,6 +166,14 @@ const SalesHistoryPage = () => {
   );
   const awaitingCount = useMemo(
     () => channelRows.filter((row) => row.awaitingHandover).length,
+    [channelRows],
+  );
+  const partPaidCount = useMemo(
+    () => channelRows.filter((row) => row.partPaid).length,
+    [channelRows],
+  );
+  const overpaidCount = useMemo(
+    () => channelRows.filter((row) => row.overpaid).length,
     [channelRows],
   );
 
@@ -378,6 +392,8 @@ const SalesHistoryPage = () => {
           [
             { id: "all", label: "All statuses", count: channelRows.length, tone: "#6B6B70", bg: "#F4F5F7" },
             { id: "pending", label: "Pending payment", count: pendingCount, tone: "#85540A", bg: "#FFF3DB" },
+            { id: "partpaid", label: "Part paid", count: partPaidCount, tone: "#85540A", bg: "#FFF3DB" },
+            { id: "overpaid", label: "Overpaid", count: overpaidCount, tone: "#85540A", bg: "#FFF3DB" },
             { id: "awaiting", label: "Awaiting handover", count: awaitingCount, tone: "#0A6DC0", bg: "#E1EEFF" },
           ] as { id: StatusFilter; label: string; count: number; tone: string; bg: string }[]
         ).map((chip) => {

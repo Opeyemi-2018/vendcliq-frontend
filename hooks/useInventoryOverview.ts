@@ -9,6 +9,8 @@ import {
   handleReturnItems,
   handleCreateInvoice,
   handleUpdateInvoice,
+  getInvoicePayments,
+  handleCancelItem,
 } from "@/lib/utils/api/apiHelper";
 import { SupplierSalesResponse } from "@/types/sales";
 
@@ -19,6 +21,7 @@ export const dashboardKeys = {
   recentPurchases: ["recent-purchases"] as const,
   allSales: ["sales"] as const,
   saleInvoice: (id: string) => ["sale-invoice", id] as const,
+  invoicePayments: (id: string) => ["invoice-payments", id] as const,
   soldItem: (invoiceId: string, itemId: string) =>
     ["sold-item", invoiceId, itemId] as const,
 };
@@ -181,6 +184,36 @@ export const useUpdateInvoice = () => {
       queryClient.invalidateQueries({ queryKey: dashboardKeys.allSales });
       queryClient.invalidateQueries({ queryKey: dashboardKeys.recentSales });
       queryClient.invalidateQueries({ queryKey: ["sales-data"] });
+    },
+  });
+};
+
+/**
+ * Every payment on an invoice (part / mixed payments), amount paid, the
+ * server's outstanding balance and any overpayments. `pollMs` re-reads it
+ * while a transfer is expected (e.g. a mixed payment's transfer leg).
+ */
+export const useInvoicePayments = (id: string, pollMs?: number | false) => {
+  return useQuery({
+    queryKey: dashboardKeys.invoicePayments(id),
+    queryFn: () => getInvoicePayments(id),
+    enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchInterval: pollMs || false,
+  });
+};
+
+/** Seller cancels one marketplace line; refreshes the order and lists. */
+export const useCancelItem = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ itemId, reason }: { itemId: string; reason: string }) =>
+      handleCancelItem(itemId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["invoice-payments"] });
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.allSales });
     },
   });
 };

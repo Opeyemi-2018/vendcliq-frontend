@@ -7,15 +7,26 @@ import Image from "next/image";
 import { Edit, MoveLeft, MoveRight, Printer, X, RotateCcw } from "lucide-react";
 import { ThreeDots } from "react-loader-spinner";
 import { SaleInvoiceItem } from "@/types/sales";
-import { useReturnItems, useSaleInvoice } from "@/hooks/useInventoryOverview";
+import {
+  useInvoicePayments,
+  useReturnItems,
+  useSaleInvoice,
+} from "@/hooks/useInventoryOverview";
+import InvoicePaymentPanel from "@/components/inventory/InvoicePaymentPanel";
+import { formatNaira } from "@/lib/money";
+import { useUser } from "@/context/userContext";
 
 const RETURN_REASONS = ["Damaged", "Wrong Item", "Expired", "Other"];
 
 export default function SaleInvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  // Attendants without selling rights can't edit an unpaid sale.
+  const { canSell } = useUser();
 
   const { data: invoice, isLoading, error, refetch } = useSaleInvoice(id);
+  // Every payment (part / mixed), amount paid and the server's balance.
+  const { data: payments, isLoading: paymentsLoading } = useInvoicePayments(id);
   const returnItemsMutation = useReturnItems();
 
   const [showPrintModal, setShowPrintModal] = useState(false);
@@ -23,14 +34,8 @@ export default function SaleInvoiceDetailPage() {
   const [returnEntries, setReturnEntries] = useState<Record<string, any>>({});
   const [returnSuccess, setReturnSuccess] = useState(false);
 
-  const formatCurrency = (amount?: number | null) => {
-    const safeAmount = typeof amount === "number" ? amount : 0;
-    return safeAmount.toLocaleString("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-    });
-  };
+  // Kobo shown exactly (₦1,257.75), never rounded or half-shown (₦40.5).
+  const formatCurrency = (amount?: number | string | null) => formatNaira(amount);
 
   const getAmountPayable = (inv: any) =>
     inv.amount_payable ?? inv.attributes?.amount_payable ?? inv.total ?? 0;
@@ -47,6 +52,18 @@ export default function SaleInvoiceDetailPage() {
       return (
         <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
           Completed
+        </span>
+      );
+    if (s === "paid")
+      return (
+        <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+          Paid
+        </span>
+      );
+    if (s === "partially_paid")
+      return (
+        <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800">
+          Part paid
         </span>
       );
     if (s === "pending")
@@ -299,7 +316,7 @@ export default function SaleInvoiceDetailPage() {
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0 mt-1.5 flex-wrap">
-          {invoice?.status?.toLowerCase() === "pending" && (
+          {invoice?.status?.toLowerCase() === "pending" && canSell() && (
             <button
               type="button"
               onClick={() => router.push(`/inventory/sales/edit/${invoice.id}`)}
@@ -433,8 +450,24 @@ export default function SaleInvoiceDetailPage() {
                                   )}
                                 </div>
                                 <div>
-                                  <div className="text-sm font-medium">{item.product?.name || "Unnamed Product"}</div>
+                                  <div
+                                    className={`text-sm font-medium ${item.attributes?.cancelled ? "line-through text-gray-400" : ""}`}
+                                  >
+                                    {item.product?.name || "Unnamed Product"}
+                                  </div>
                                   <div className="text-xs text-gray-500">Mode: {item.mode}</div>
+                                  {item.attributes?.cancelled ? (
+                                    <span className="inline-flex mt-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-red-50 text-red-700">
+                                      Cancelled
+                                    </span>
+                                  ) : item.attributes?.payment_released === false &&
+                                    invoice.status?.toUpperCase() === "PARTIALLY_PAID" ? (
+                                    // Held until the balance is paid (credit-store
+                                    // stock on a part-paid sale).
+                                    <span className="inline-flex mt-1 px-2 py-0.5 text-[11px] font-semibold rounded-full bg-amber-50 text-amber-800">
+                                      Awaiting payment
+                                    </span>
+                                  ) : null}
                                 </div>
                               </div>
                             </td>
@@ -553,6 +586,26 @@ export default function SaleInvoiceDetailPage() {
             )}
           </div>
         </div>
+
+        {!returnMode && (
+          <InvoicePaymentPanel
+            invoice={invoice}
+            payments={payments}
+            paymentsLoading={paymentsLoading}
+            // In-store sale still owing money: pay the balance (cash, transfer
+            // or mixed) on the payment page, sized to what's left.
+            onCollect={
+              ["PENDING", "PARTIALLY_PAID"].includes(
+                (payments?.status ?? invoice.status ?? "").toUpperCase(),
+              )
+                ? () =>
+                    router.push(
+                      `/inventory/sell/pay?invoiceId=${invoice.id}&balance=1`,
+                    )
+                : undefined
+            }
+          />
+        )}
 
         {returnMode && (
           <div className="w-full lg:w-[300px] lg:flex-shrink-0 border border-[#E4E4E4] rounded-[20px] bg-white p-5 flex flex-col lg:sticky lg:top-6 lg:self-start">

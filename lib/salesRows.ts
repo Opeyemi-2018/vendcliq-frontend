@@ -21,6 +21,10 @@ export interface SalesRowData {
   /** True once every line on an online order has been handed over. */
   handoverComplete?: boolean;
   itemSummary?: string;
+  /** Some money in, the rest still owed (part payment). */
+  partPaid?: boolean;
+  /** More money came in than the total (inventory #91 `overpaid_amount`). */
+  overpaid?: boolean;
   href: string;
   storeId?: string | null;
 }
@@ -34,8 +38,10 @@ const BLUE = { bg: "#E1EEFF", fg: "#0A6DC0" };
  * `false` — so this counts truthy `handover_completed` only.
  */
 export const handoverProgress = (items: PurchaseRequestItem[] = []) => {
-  const total = items.length;
-  const done = items.filter((i) => i.attributes?.handover_completed).length;
+  // A cancelled line has nothing left to hand over.
+  const live = items.filter((i) => !i.attributes?.cancelled);
+  const total = live.length;
+  const done = live.filter((i) => i.attributes?.handover_completed).length;
   return { done, total, complete: total > 0 && done === total };
 };
 
@@ -81,7 +87,10 @@ export const purchaseRequestToRow = (
   let statusLabel = "Paid";
   let tone = GREEN;
 
-  if (awaiting) {
+  if (status === "PARTIALLY_PAID") {
+    statusLabel = "Part paid";
+    tone = AMBER;
+  } else if (awaiting) {
     // Work still to do, but nothing wrong — blue rather than a warning colour.
     statusLabel = "Awaiting handover";
     tone = BLUE;
@@ -114,6 +123,8 @@ export const purchaseRequestToRow = (
       : undefined,
     handoverComplete: complete,
     itemSummary: itemSummary(request.items),
+    partPaid: status === "PARTIALLY_PAID",
+    overpaid: Number((request as any).overpaid_amount ?? 0) > 0,
     href: `/inventory/purchase-request/${request.id}`,
     storeId: onlineStoreId(request),
   };
@@ -123,9 +134,17 @@ export const purchaseRequestToRow = (
 export const saleInvoiceToRow = (invoice: SaleInvoice): SalesRowData => {
   const status = (invoice.status || "").toUpperCase();
 
+  const overpaid = Number(invoice.overpaid_amount ?? 0) > 0;
+
   let statusLabel = "Paid";
   let tone = GREEN;
-  if (status === "COMPLETED") {
+  if (status === "PARTIALLY_PAID") {
+    statusLabel = "Part paid";
+    tone = AMBER;
+  } else if (overpaid) {
+    statusLabel = "Overpaid";
+    tone = AMBER;
+  } else if (status === "COMPLETED") {
     statusLabel = "Completed";
   } else if (status && status !== "PAID") {
     statusLabel = titleCase(status);
@@ -143,6 +162,8 @@ export const saleInvoiceToRow = (invoice: SaleInvoice): SalesRowData => {
     statusBg: tone.bg,
     statusFg: tone.fg,
     awaitingHandover: false,
+    partPaid: status === "PARTIALLY_PAID",
+    overpaid,
     href: `/inventory/sales/${invoice.id}`,
     storeId: invoice.store_id != null ? String(invoice.store_id) : null,
   };

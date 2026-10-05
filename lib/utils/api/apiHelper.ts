@@ -57,6 +57,7 @@ import {
   UploadCacResponse,
 } from "@/types/business";
 
+import type { InvoicePayments, ItemRefund } from "@/types/sales";
 import axiosInstance from ".";
 import {
   CONFIRM_PHONE_NUMBER,
@@ -163,6 +164,8 @@ import {
   GET_MANUFACTURERS,
   GET_USER_STOCKS,
   RETURN_ITEMS,
+  INVOICE_PAYMENTS,
+  CANCEL_ITEM,
   GET_CART,
   UPDATE_CART_ITEM,
   DELETE_CART_ITEM,
@@ -1281,9 +1284,20 @@ export const getTotalSales = async (
   startDate: string,
   endDate: string,
 ): Promise<SupplierSalesResponse> => {
+  // The local day's exact bounds: a bare yyyy-MM-dd is a UTC day on the
+  // server, so sales after local midnight (00:00–01:00 Lagos) landed on the
+  // previous day (inventory #100 accepts timestamps).
+  const localBound = (day: string, end: boolean) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return day;
+    const [y, m, d] = day.split("-").map(Number);
+    const t = end
+      ? new Date(y, m - 1, d, 23, 59, 59, 999)
+      : new Date(y, m - 1, d, 0, 0, 0, 0);
+    return t.toISOString();
+  };
   const params = new URLSearchParams({
-    startDate,
-    endDate,
+    startDate: localBound(startDate, false),
+    endDate: localBound(endDate, true),
   }).toString();
 
   const url = `${SUPPLIER_SALES}?${params}`;
@@ -1434,6 +1448,29 @@ export const getUserStocks = async (
   if (search) params.search = search;
 
   return await fetcher<any>(GET_USER_STOCKS, params);
+};
+
+/** Every payment on an invoice, with amount paid / outstanding (part and
+ * mixed payments) and any overpayments. */
+export const getInvoicePayments = async (
+  invoiceId: string,
+): Promise<InvoicePayments> => {
+  const res = await fetcher<any>(INVOICE_PAYMENTS(invoiceId));
+  return res?.data ?? res;
+};
+
+/** Cancels one marketplace line; the reply carries the buyer's refund. */
+export const handleCancelItem = async (
+  itemId: string,
+  reason: string,
+): Promise<{ refund?: ItemRefund | null; [key: string]: any }> => {
+  const res = await poster<any>(CANCEL_ITEM(itemId), { reason });
+  // `poster` resolves on any status — surface the server's refusal.
+  if (res?.statusCode && res.statusCode >= 400) {
+    const msg = res?.message ?? res?.error?.message ?? res?.error;
+    throw new Error(typeof msg === "string" ? msg : "Could not cancel the item");
+  }
+  return res?.data ?? res;
 };
 
 export const handleReturnItems = async (payload: {
