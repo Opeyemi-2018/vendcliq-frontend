@@ -22,7 +22,10 @@ export interface CreateCartResponse {
 
 
 export interface PayInvoicePayload {
-  paymentType: "WALLET" | "TRANSFER";
+  paymentType: "WALLET" | "TRANSFER" | "CASH" | "CREDIT" | "POS";
+  /** This payment only (part / mixed payments); omitted = the whole balance. */
+  amount?: number;
+  due_date?: string;
   transactionPin?: string;
   narration?: string;
   terminal_id?: string;
