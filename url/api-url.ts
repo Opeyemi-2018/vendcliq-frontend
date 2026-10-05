@@ -159,6 +159,10 @@ const UPDATE_STOCK_PRICES = (stockId: string) => `inventory/stocks/${stockId}`;
 const GET_INVOICE_BY_ID = (id: string) => `inventory/invoices/${id}`;
 const GET_USER_STOCKS = "inventory/stocks/user/stocks";
 const RETURN_ITEMS = "inventory/items/return";
+// Part / mixed payments (inventory PR #89): every payment on an invoice.
+const INVOICE_PAYMENTS = (id: string) => `inventory/invoices/${id}/payments`;
+// Seller cancels one marketplace line (refund to the buyer).
+const CANCEL_ITEM = (itemId: string) => `inventory/items/${itemId}/cancel`;
 const GET_STORE_STOCK_BY_ID = (storeId: string) =>
   `inventory/stocks/${storeId}?limit=200&all=true`;
 const GET_MARKETPLACE_STOCKS = (search = "", page = 1, limit = 20) =>
@@ -278,6 +282,8 @@ export {
   GET_MANUFACTURERS,
   GET_USER_STOCKS,
   RETURN_ITEMS,
+  INVOICE_PAYMENTS,
+  CANCEL_ITEM,
   GET_STORE_STOCK_BY_ID,
   GET_MARKETPLACE_STOCKS,
   GET_MARKETPLACE_OFFERS,

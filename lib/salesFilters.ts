@@ -102,8 +102,23 @@ export const comparisonLabel = (period: PeriodId): string => {
  * Money, Nigerian style, no decimals — the format the refresh uses in every
  * hero and list. `hidden` renders the masked form instead.
  */
-export const formatNaira = (amount: number, hidden = false): string =>
-  hidden ? "₦ ****" : `₦${Math.round(amount || 0).toLocaleString("en-NG")}`;
+/**
+ * Naira as every Vendcliq screen shows it: whole naira when there is no kobo
+ * (₦540), two decimals when there is (₦40.50 — never ₦40.5). VAT makes kobo
+ * common (₦1,257.75); rounding it away hid real balances.
+ */
+export const formatNaira = (
+  amount?: number | string | null,
+  hidden = false,
+): string => {
+  if (hidden) return "₦ ****";
+  const n = Math.round((Number(amount) || 0) * 100) / 100;
+  const whole = Number.isInteger(n);
+  return `₦${n.toLocaleString("en-NG", {
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  })}`;
+};
 
 /** Quantities render to 2 dp throughout the refresh. */
 export const formatQuantity = (quantity: number | string): string => {

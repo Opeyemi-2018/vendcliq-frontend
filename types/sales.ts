@@ -19,6 +19,11 @@ export interface SaleInvoiceItem {
     customer_otp: string;
   };
   profit: number;
+  /** VAT on this line (7.5% of the discounted goods when the store adds VAT). */
+  vat?: number;
+  vat_rate?: number;
+  /** sub_total + vat */
+  gross?: number;
   created_at: string;
   updated_at: string;
   product: {
@@ -50,9 +55,15 @@ export interface SaleInvoice {
   amount_payable: number;     // from API: amount_payable
   empties_value: number;
   empties_owed: number;
+  /** VAT across the lines — already inside `total`. */
+  vat?: number;
+  amount_paid?: number;
+  outstanding_balance?: number;
+  /** Money paid beyond the total (sales list, inventory #91). */
+  overpaid_amount?: number;
 
   code: string;
-  status: "PENDING" | "COMPLETED" | string;
+  status: "PENDING" | "PARTIALLY_PAID" | "PAID" | "COMPLETED" | string;
   created_at: string;
   updated_at: string;
   attributes: {
@@ -136,4 +147,54 @@ export interface SupplierSalesResponse {
   total_sales: number;
   stores: SupplierSalesStore[];
   medium: SupplierSalesMedium;
+}
+// ── Part / mixed payments (inventory PR #89) ─────────────────────────────────
+
+/** One payment on an invoice (a cash leg, a transfer, a card…). */
+export interface InvoicePayment {
+  id: string;
+  method: string; // CASH | TRANSFER | WALLET | POS | CARD | CREDIT
+  amount: number;
+  source?: string;
+  reference?: string | null;
+  narration?: string | null;
+  released_item_ids?: string[];
+  attributes?: {
+    applied_amount?: number;
+    overpaid_amount?: number;
+    amount_paid_after?: number;
+    outstanding_after?: number;
+    [key: string]: any;
+  };
+  created_at: string;
+}
+
+/** Money received beyond the invoice total, and what happened to it. */
+export interface InvoiceOverpayment {
+  id: string;
+  amount: number;
+  status: string; // MANUAL_REVIEW | REFUNDED | PAID_TO_STORE | FAILED | REFUNDING_TO_BANK …
+  refund_method?: string | null;
+  transaction_id?: string | null;
+  error?: string | null;
+  created_at: string;
+}
+
+/** GET /inventory/invoices/:id/payments */
+export interface InvoicePayments {
+  invoice_id?: string;
+  status: string;
+  total: number;
+  amount_paid: number;
+  outstanding_balance: number;
+  payments: InvoicePayment[];
+  overpayments: InvoiceOverpayment[];
+}
+
+/** A cancelled line's refund: to the buyer's wallet, their bank account, or
+ * handed back by the store (MANUAL). */
+export interface ItemRefund {
+  amount: number;
+  method: "WALLET" | "BANK" | "MANUAL" | string;
+  [key: string]: any;
 }
