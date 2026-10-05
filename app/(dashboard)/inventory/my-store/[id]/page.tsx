@@ -65,7 +65,7 @@ interface StockItem {
 const ITEMS_PER_PAGE = 5;
 
 const StoreDetailPage = () => {
-  const { canMoveStock, canAddStock } = useUser();
+  const { canMoveStock, canAddStock, canOpenPath, isOwner } = useUser();
   const router = useRouter();
   const params = useParams();
   const storeId = params.id as string;
@@ -443,6 +443,8 @@ const StoreDetailPage = () => {
           )}
         </div>
 
+        {/* Store details and settings are owner-only (app: Store Settings). */}
+        {isOwner && (
         <div className="flex items-center justify-between mt-8 gap-4">
           <Button
             onClick={() => setIsEditOpen(true)}
@@ -458,6 +460,7 @@ const StoreDetailPage = () => {
             Store Settings
           </Button>
         </div>
+        )}
       </div>
 
       <div className="mt-8 md:p-6 lg:border border-[#E4E4E4] rounded-[20px] bg-white">
@@ -571,6 +574,9 @@ const StoreDetailPage = () => {
                         ₦{parseFloat(item.cost_price).toLocaleString()}
                       </td>
                       <td className="py-4">
+                        {canOpenPath(
+                          `/inventory/my-store/${storeId}/stock/${item.id}`,
+                        ) && (
                         <button
                           onClick={() =>
                             router.push(
@@ -581,6 +587,7 @@ const StoreDetailPage = () => {
                         >
                           <MoveRight className="w-5 h-5 text-gray-500" />
                         </button>
+                        )}
                       </td>
                     </tr>
                   ))}

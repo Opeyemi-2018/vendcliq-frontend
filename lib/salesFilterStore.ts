@@ -38,9 +38,14 @@ export const getSalesFilter = () => state;
 
 /**
  * Subscribes to the shared filter. `fallbackPeriod` applies only until the
- * user makes a choice of their own.
+ * user makes a choice of their own. `todayOnly` pins the period to Today —
+ * attendants without the Reporting permission only see today's sales (app
+ * rule), whatever was picked before.
  */
-export const useSalesFilter = (fallbackPeriod: PeriodId = "today") => {
+export const useSalesFilter = (
+  fallbackPeriod: PeriodId = "today",
+  { todayOnly = false }: { todayOnly?: boolean } = {},
+) => {
   const [, force] = useState(0);
 
   useEffect(() => {
@@ -52,12 +57,19 @@ export const useSalesFilter = (fallbackPeriod: PeriodId = "today") => {
   }, []);
 
   return {
-    period: state.chosen ? state.period : fallbackPeriod,
-    custom: state.custom,
+    period: todayOnly
+      ? ("today" as PeriodId)
+      : state.chosen
+        ? state.period
+        : fallbackPeriod,
+    custom: todayOnly ? {} : state.custom,
     storeId: state.storeId,
-    setPeriod: (period: PeriodId) => setSalesFilter({ period }),
-    setCustom: (custom: Partial<DateRange>) =>
-      setSalesFilter({ custom: { ...state.custom, ...custom } }),
+    setPeriod: (period: PeriodId) => {
+      if (!todayOnly) setSalesFilter({ period });
+    },
+    setCustom: (custom: Partial<DateRange>) => {
+      if (!todayOnly) setSalesFilter({ custom: { ...state.custom, ...custom } });
+    },
     setStoreId: (storeId: string) => setSalesFilter({ storeId }),
   };
 };

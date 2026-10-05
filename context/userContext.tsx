@@ -3,6 +3,10 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  canOpenPath as canOpenPathFor,
+  writePermissionsCookie,
+} from "@/lib/access/attendantAccess";
 
 export interface UserData {
   createdAt?: string;
@@ -115,6 +119,15 @@ interface UserContextType {
   canViewStoreInfo: () => boolean;
   canReporting: () => boolean;
   canExpenses: () => boolean;
+  /** Marketplace + My Purchases: Buy OR Market Place (app rule). */
+  canUseMarket: () => boolean;
+  /** Owner-only areas (wallet, Account, business settings, attendants). */
+  isOwner: boolean;
+  /** Route-level rule from lib/access/attendantAccess. */
+  canOpenPath: (pathname: string) => boolean;
+  /** Stamped on an attendant's sale as attributes.sold_by (app:
+   *  CurrentSeller.soldBy); null for owners, whose sales need no "Sold by". */
+  soldBy: { id: number | undefined; name: string } | null;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -199,6 +212,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setAttendantPermissionsState(p);
     if (p) {
       localStorage.setItem("attendantPermissions", JSON.stringify(p));
+      // middleware.ts reads this cookie to block typed URLs server-side.
+      writePermissionsCookie(p);
     } else {
       localStorage.removeItem("attendantPermissions");
     }
@@ -271,6 +286,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
     !isAttendant || (attendantPermissions?.can_reporting ?? false);
   const canExpenses = () =>
     !isAttendant || (attendantPermissions?.can_expenses ?? false);
+  const canUseMarket = () => canBuy() || canAccessMarketplace();
+  const isOwner = !isAttendant;
+  const sellerName = user
+    ? `${user.firstname ?? ""} ${user.lastname ?? ""}`.trim()
+    : "";
+  const soldBy =
+    isAttendant && sellerName ? { id: user?.userId, name: sellerName } : null;
+  const canOpenPath = (pathname: string) =>
+    canOpenPathFor(pathname, {
+      isAttendant,
+      permissions: attendantPermissions,
+    });
 
   return (
     <UserContext.Provider
@@ -301,6 +328,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
         canViewStoreInfo,
         canReporting,
         canExpenses,
+        canUseMarket,
+        isOwner,
+        canOpenPath,
+        soldBy,
       }}
     >
       {children}

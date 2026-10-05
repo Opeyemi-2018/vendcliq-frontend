@@ -24,6 +24,7 @@ import {
 import { groupByDay } from "@/lib/dayGroups";
 import SalesLogRow from "@/components/inventory/SalesLogRow";
 import { useSalesFilter } from "@/lib/salesFilterStore";
+import { useUser } from "@/context/userContext";
 import FilterDropdown, {
   CustomRangeInputs,
 } from "@/components/inventory/FilterDropdown";
@@ -35,12 +36,15 @@ type StatusFilter = "all" | "pending" | "partpaid" | "overpaid" | "awaiting";
 
 const SalesHistoryPage = () => {
   const router = useRouter();
+  // Attendants without Reporting see today's sales only, no breakdowns.
+  const { canReporting } = useUser();
+  const todayOnly = !canReporting();
 
   const [hideAmounts, setHideAmounts] = useState(false);
   // Defaults to the last week here; a choice made on either surface carries
   // across navigation via the shared store.
   const { period, custom, storeId, setPeriod, setCustom, setStoreId } =
-    useSalesFilter("week");
+    useSalesFilter("week", { todayOnly });
   const customStart = custom.start ?? "";
   const customEnd = custom.end ?? "";
   const [openMenu, setOpenMenu] = useState<"period" | "store" | null>(null);
@@ -200,7 +204,9 @@ const SalesHistoryPage = () => {
     { id: "instore", label: `Shop ${inStoreRows.length}` },
   ];
 
-  const periodOptions = PERIOD_OPTIONS.map((p) => ({
+  const periodOptions = PERIOD_OPTIONS.filter(
+    (p) => !todayOnly || p.id === "today",
+  ).map((p) => ({
     id: p.id,
     label: p.label,
   }));
@@ -283,6 +289,7 @@ const SalesHistoryPage = () => {
             </div>
           </div>
 
+          {!todayOnly && (
           <div className="flex flex-col gap-2 shrink-0">
             <button
               type="button"
@@ -301,6 +308,7 @@ const SalesHistoryPage = () => {
               <VcIcon name="chevron" size={14} stroke="#fff" strokeWidth={2.6} />
             </button>
           </div>
+          )}
         </div>
       </section>
 

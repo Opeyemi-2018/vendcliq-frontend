@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { VcIcon, IconName } from "./VcIcon";
+import { useUser } from "@/context/userContext";
 
 interface AddNewSheetProps {
   open: boolean;
@@ -62,6 +63,12 @@ export const AddNewSheet = ({
   onAddProduct,
 }: AddNewSheetProps) => {
   const router = useRouter();
+  // New Product needs Add Stock; New Store follows its route rule (Add
+  // Stock too); New Attendant is owner-only.
+  const { canAddStock, canOpenPath } = useUser();
+  const options = OPTIONS.filter((option) =>
+    option.id === "product" ? canAddStock() : canOpenPath(option.route),
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -76,7 +83,7 @@ export const AddNewSheet = ({
         </DialogHeader>
 
         <div className="flex flex-col gap-2.5 mt-1">
-          {OPTIONS.map((option) => (
+          {options.map((option) => (
             <button
               key={option.id}
               type="button"

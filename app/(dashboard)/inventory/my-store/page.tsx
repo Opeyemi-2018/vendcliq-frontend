@@ -17,6 +17,8 @@ import ConfirmDeleteStockModal from "@/components/inventory/ConfirmDeleteStockMo
 import { bulkDeleteStocks } from "@/lib/utils/api/apiHelper";
 import { useQueryClient } from "@tanstack/react-query";
 import type { StoreStockItem } from "@/types/store";
+import { useUser } from "@/context/userContext";
+import { deniedMessage } from "@/lib/access/attendantAccess";
 
 type StockTab = "all" | "low" | "expiring";
 type SortMode = "name" | "stock" | "value";
@@ -36,6 +38,9 @@ const FLAG_CHIP = {
 
 const MyStorePage = () => {
   const router = useRouter();
+  const { canAddStock, canMoveStock, canUpdateStock, isOwner } = useUser();
+  // Deleting stock is owner-only (no attendant permission for it).
+  const canBulkSelect = canMoveStock() || isOwner;
 
   const { data: stores = [], isLoading: storesLoading } = useStores();
   const { data: stock = [], isLoading: stockLoading } = useAllStoreStock(stores);
@@ -146,8 +151,13 @@ const MyStorePage = () => {
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
 
-  const openStock = (item: StoreStockItem) =>
+  const openStock = (item: StoreStockItem) => {
+    if (!canUpdateStock()) {
+      toast.error(deniedMessage("Stock Details"));
+      return;
+    }
     router.push(`/inventory/my-store/${item.store?.id}/stock/${item.id}`);
+  };
 
   return (
     <div data-tour="store-page" className="flex flex-col gap-[18px] max-w-[1360px]">
@@ -172,6 +182,7 @@ const MyStorePage = () => {
             {storeLabel}
           </p>
         </div>
+        {canAddStock() && (
         <button
           type="button"
           data-tour="store-add"
@@ -181,8 +192,10 @@ const MyStorePage = () => {
           <VcIcon name="plus" size={18} stroke="#fff" strokeWidth={2.4} />
           <span>Add New</span>
         </button>
+        )}
       </div>
 
+      {canAddStock() && (
       <button
         type="button"
         data-tour="store-add"
@@ -193,6 +206,7 @@ const MyStorePage = () => {
         <VcIcon name="plus" size={20} stroke="#fff" strokeWidth={2.6} />
         <span>Add New</span>
       </button>
+      )}
 
       {/* ── Store chips ──────────────────────────────────────────────────── */}
       <div className="flex gap-[9px] overflow-x-auto flex-nowrap -mx-1 px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:mx-0 sm:px-0">
@@ -325,6 +339,7 @@ const MyStorePage = () => {
             Clear
           </button>
         )}
+        {canBulkSelect && (
         <button
           type="button"
           onClick={() =>
@@ -334,6 +349,7 @@ const MyStorePage = () => {
         >
           {allSelected ? "Deselect all" : "Select all"}
         </button>
+        )}
         <button
           type="button"
           onClick={() =>
@@ -371,6 +387,7 @@ const MyStorePage = () => {
                     : "border-[#D8D8D88C] hover:border-[#0A6DC0]"
                 }`}
               >
+                {canBulkSelect && (
                 <button
                   type="button"
                   role="checkbox"
@@ -387,6 +404,7 @@ const MyStorePage = () => {
                     <VcIcon name="check" size={13} stroke="#fff" strokeWidth={3} />
                   )}
                 </button>
+                )}
 
                 <button
                   type="button"
@@ -475,6 +493,7 @@ const MyStorePage = () => {
             <span className="sm:hidden">selected</span>
           </span>
           <div className="flex-1" />
+          {canMoveStock() && (
           <button
             type="button"
             onClick={() => {
@@ -499,6 +518,8 @@ const MyStorePage = () => {
             <VcIcon name="list" size={16} stroke="#fff" strokeWidth={2.2} />
             Move stock
           </button>
+          )}
+          {isOwner && (
           <button
             type="button"
             onClick={() => setDeleteOpen(true)}
@@ -507,6 +528,7 @@ const MyStorePage = () => {
             <VcIcon name="warning" size={16} stroke="#fff" strokeWidth={2.2} />
             Delete
           </button>
+          )}
         </div>
       )}
 

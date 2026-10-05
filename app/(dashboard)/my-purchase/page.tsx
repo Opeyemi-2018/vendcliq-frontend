@@ -10,6 +10,7 @@ import {
 } from "@/hooks/usePurchaseInvoices";
 import { VcIcon } from "@/components/inventory/VcIcon";
 import BackButton from "@/components/inventory/BackButton";
+import { useUser } from "@/context/userContext";
 import { formatNaira } from "@/lib/salesFilters";
 import type { PurchasedInvoice } from "@/types/purchase";
 
@@ -33,6 +34,8 @@ const time = (iso: string) => {
 
 const PurchasedInvoicesPage = () => {
   const router = useRouter();
+  // Logging a purchase is buying: needs Can Buy (app rule).
+  const { canBuy } = useUser();
   const [query, setQuery] = useState("");
   // The endpoint searches for us, so hold off a beat rather than firing a
   // request per keystroke.
@@ -96,6 +99,7 @@ const PurchasedInvoicesPage = () => {
             Everything you bought, and what is still on its way.
           </p>
         </div>
+        {canBuy() && (
         <button
           type="button"
           onClick={() => router.push("/add-purchase")}
@@ -104,6 +108,7 @@ const PurchasedInvoicesPage = () => {
           <VcIcon name="plus" size={18} stroke="#fff" strokeWidth={2.4} />
           <span>Upload Purchase</span>
         </button>
+        )}
       </div>
 
       {/* ── Spend summary ──────────────────────────────────────────────── */}

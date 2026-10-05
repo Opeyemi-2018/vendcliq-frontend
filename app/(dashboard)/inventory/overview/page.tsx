@@ -35,6 +35,7 @@ import QuickActionsStrip, {
   DEFAULT_INVENTORY_PINS,
   INVENTORY_ACTIONS,
 } from "@/components/QuickActionsStrip";
+import { useUser } from "@/context/userContext";
 
 const MAX_ROWS = 6;
 type ChannelTab = "all" | "online" | "instore";
@@ -44,6 +45,10 @@ const pillClass =
 
 const Home = () => {
   const router = useRouter();
+  const { canSell, canReporting, canOpenPath } = useUser();
+  // Attendants without Reporting: Today only, no breakdowns (app rule).
+  const todayOnly = !canReporting();
+  const quickActions = INVENTORY_ACTIONS.filter((a) => canOpenPath(a.route));
 
   const [hideAmounts, setHideAmounts] = useState(false);
   // Shared with Sales History so a chosen range survives navigation.
@@ -54,7 +59,7 @@ const Home = () => {
     setPeriod,
     setCustom,
     setStoreId,
-  } = useSalesFilter("today");
+  } = useSalesFilter("today", { todayOnly });
   const customStart = custom.start ?? "";
   const customEnd = custom.end ?? "";
   const [openMenu, setOpenMenu] = useState<"period" | "store" | null>(null);
@@ -262,19 +267,22 @@ const Home = () => {
               <button
                 type="button"
                 data-tour="inv-filters"
+                disabled={todayOnly}
                 onClick={() =>
                   setOpenMenu(openMenu === "period" ? null : "period")
                 }
-                className={pillClass}
+                className={`${pillClass} disabled:cursor-default`}
               >
                 <CalendarIcon />
                 <span>{periodLabel(period, range)}</span>
-                <VcIcon
-                  name="chevronDown"
-                  size={15}
-                  stroke="#fff"
-                  strokeWidth={2.4}
-                />
+                {!todayOnly && (
+                  <VcIcon
+                    name="chevronDown"
+                    size={15}
+                    stroke="#fff"
+                    strokeWidth={2.4}
+                  />
+                )}
               </button>
 
               {openMenu === "period" && (
@@ -479,7 +487,8 @@ const Home = () => {
             </div>
           </div>
 
-          {/* Breakdown pills */}
+          {/* Breakdown pills (reporting) */}
+          {!todayOnly && (
           <div className="relative mt-[22px] flex flex-wrap gap-[10px]">
             <button
               type="button"
@@ -500,10 +509,12 @@ const Home = () => {
               <VcIcon name="chevron" size={14} stroke="#fff" strokeWidth={2.6} />
             </button>
           </div>
+          )}
         </section>
 
         {/* Action cards */}
         <div className="flex flex-col gap-[14px]">
+          {canSell() && (
           <button
             type="button"
             onClick={() => router.push("/inventory/sell")}
@@ -522,6 +533,7 @@ const Home = () => {
             </span>
             <VcIcon name="chevron" size={20} stroke="#fff" strokeWidth={2.6} className="shrink-0" />
           </button>
+          )}
 
           {pendingHandovers.length > 0 ? (
             <button
@@ -569,7 +581,7 @@ const Home = () => {
       {/* ── Quick actions ────────────────────────────────────────────────── */}
       <QuickActionsStrip
         data-tour="shortcut-picker"
-        actions={INVENTORY_ACTIONS}
+        actions={quickActions}
         pinnedIds={pins}
         onEditShortcuts={() => setPickerOpen(true)}
       />
@@ -577,7 +589,7 @@ const Home = () => {
       <ShortcutPickerModal
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        actions={INVENTORY_ACTIONS}
+        actions={quickActions}
         pinnedIds={pins}
         onChange={setPins}
         onReset={resetPins}

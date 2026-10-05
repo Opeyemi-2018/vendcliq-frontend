@@ -86,6 +86,7 @@ export interface AssignAttendantPermissionsPayload {
   can_view_store_info: boolean;
   can_reporting: boolean;
   can_expenses: boolean;
+  can_sell_on_credit?: boolean;
 }
 
 export interface AssignAttendantPermissionsResponse {
