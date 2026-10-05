@@ -94,12 +94,15 @@ interface CartItem {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const fmt = (n: number) =>
-  n.toLocaleString("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    minimumFractionDigits: 0,
-  });
+// Kobo shown exactly when there is any (₦1,257.75), never ₦40.5.
+const fmt = (n: number) => {
+  const v = Math.round((Number(n) || 0) * 100) / 100;
+  const whole = Number.isInteger(v);
+  return `₦${v.toLocaleString("en-NG", {
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  })}`;
+};
 
 const unitPrice = (item: StockItem, mode: SellMode) =>
   mode === "PACKS"
@@ -335,7 +338,19 @@ export default function SellPage() {
   // ── Invoice totals ───────────────────────────────────────────────────────
 
   const totalItems = cart.length;
-  const totalAmount = cart.reduce((s, ci) => s + itemSubtotal(ci), 0);
+  const goodsTotal = cart.reduce((s, ci) => s + itemSubtotal(ci), 0);
+  // The store charges 7.5% VAT on the goods after discount (empties are a
+  // deposit, never taxed) — the same rule the server applies at checkout,
+  // per line, rounded to the kobo. The invoice total is the server's.
+  const storeAddsVat = Boolean((selectedStore as any)?.settings?.add_vat);
+  const vatTotal = storeAddsVat
+    ? cart.reduce((s, ci) => {
+        const goods =
+          Math.max(0, unitPrice(ci.stock, ci.mode) - ci.discount) * ci.quantity;
+        return s + Math.round(goods * 0.075 * 100) / 100;
+      }, 0)
+    : 0;
+  const totalAmount = goodsTotal + vatTotal;
   const totalDiscount = cart.reduce(
     (s, ci) => s + ci.discount * ci.quantity, // Remove the + ci.empties part
     0,
@@ -983,9 +998,17 @@ export default function SellPage() {
                 <div className="flex justify-between text-[#9E9A9A]">
                   <span>Total Amount</span>
                   <span className="font-medium text-[#2F2F2F]">
-                    {fmt(totalAmount)}
+                    {fmt(goodsTotal)}
                   </span>
                 </div>
+                {vatTotal > 0 && (
+                  <div className="flex justify-between text-[#9E9A9A]">
+                    <span>VAT (7.5%)</span>
+                    <span className="font-medium text-[#2F2F2F]">
+                      {fmt(vatTotal)}
+                    </span>
+                  </div>
+                )}
                 {totalDiscount > 0 && (
                   <div className="flex justify-between text-[#9E9A9A]">
                     <span>Total Discount</span>
