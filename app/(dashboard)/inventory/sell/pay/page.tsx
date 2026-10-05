@@ -29,9 +29,14 @@ import { useState } from "react";
 import Image from "next/image";
 import { usePaymentSocket } from "@/hooks/invoiceSocket";
 import { useUser } from "@/context/userContext";
-import { useSaleInvoice } from "@/hooks/useInventoryOverview"; // Add this import
+import {
+  useInvoicePayments,
+  useSaleInvoice,
+} from "@/hooks/useInventoryOverview";
+import MixedPaymentPanel from "@/components/inventory/MixedPaymentPanel";
+import { formatNaira, plainAmount } from "@/lib/money";
 
-type PaymentType = "TRANSFER" | "CASH" | "CREDIT";
+type PaymentType = "TRANSFER" | "CASH" | "CREDIT" | "MIXED";
 
 interface PayFormData {
   paymentType: PaymentType;
@@ -97,16 +102,23 @@ const PAYMENT_OPTIONS: {
     title: "Sell on Credit",
     description: "Authorized credit sale, payment due later",
   },
+  {
+    type: "MIXED",
+    title: "Mixed payment",
+    description: "Part cash, part transfer",
+  },
 ];
 
 function PayInvoiceContent() {
   const { canSellOnCredit } = useUser();
+  const searchParams = useSearchParams();
+  // Collecting a balance (Collect Balance on a part-paid sale): no credit.
+  const collectingBalance = searchParams.get("balance") === "1";
   const filteredPaymentOptions = PAYMENT_OPTIONS.filter((option) => {
-    if (option.type === "CREDIT") return canSellOnCredit();
+    if (option.type === "CREDIT") return canSellOnCredit() && !collectingBalance;
     return true;
   });
 
-  const searchParams = useSearchParams();
   const router = useRouter();
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showCreditOtpModal, setShowCreditOtpModal] = useState(false);
@@ -135,6 +147,10 @@ function PayInvoiceContent() {
 
   // Use the hook to fetch invoice data
   const { data: invoice, isLoading, error } = useSaleInvoice(invoiceId || "");
+  // Paid so far / outstanding — what this screen collects is the server's
+  // balance (VAT included), never a goods-only sum.
+  const { data: payments } = useInvoicePayments(invoiceId || "");
+  const [cashText, setCashText] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [paymentType, setPaymentType] = useState<PaymentType>("TRANSFER");
@@ -157,7 +173,14 @@ function PayInvoiceContent() {
     ? {
         invoiceId: invoice.id,
         code: invoice.code,
-        total: invoice.amount_payable,
+        // VAT and sold empties included; on a part-paid sale, what's left.
+        total: Number(
+          payments?.outstanding_balance ??
+            invoice.outstanding_balance ??
+            invoice.total ??
+            invoice.amount_payable ??
+            0,
+        ),
         items_count: invoice.items_count,
         storeAddress: invoice.store?.address?.name || "",
         storeName: invoice.store?.name || "",
@@ -193,10 +216,26 @@ function PayInvoiceContent() {
     setMobileStep("details");
   };
 
+  // Cash "Amount received": pre-filled with exactly what's owed (kobo
+  // included). Less records a part payment; under ₦1 over is the total.
+  const toCollect = invoicePreview?.total ?? 0;
+  const cashReceived =
+    cashText == null ? toCollect : Number(cashText.replace(/,/g, "")) || 0;
+
   const handlePayment = async () => {
     if (paymentType === "CREDIT" && !dueDate) {
       toast.error("Please select a due date for credit sale");
       return;
+    }
+    if (paymentType === "CASH") {
+      if (cashReceived <= 0) {
+        toast.error("Enter the amount received.");
+        return;
+      }
+      if (cashReceived >= toCollect + 1) {
+        toast.error("That's more than the total. Give change and enter the total.");
+        return;
+      }
     }
 
     setLoading(true);
@@ -208,6 +247,11 @@ function PayInvoiceContent() {
 
       if (paymentType === "CREDIT" && dueDate) {
         payload.due_date = dueDate;
+      }
+      // Part payment: only this amount. Paying in full sends none (the
+      // server takes the whole balance).
+      if (paymentType === "CASH" && cashReceived < toCollect - 0.005) {
+        payload.amount = Math.round(cashReceived * 100) / 100;
       }
 
       const response = await handlePayInvoice(invoiceId!, payload);
@@ -240,8 +284,13 @@ function PayInvoiceContent() {
             setShowCreditOtpModal(true);
           } else {
             setShowSuccessModal(true);
+            const left = Number(
+              (response.data as any)?.invoice?.outstanding_balance ?? 0,
+            );
             toast.success(
-              response.data?.message || "Payment recorded successfully!",
+              left > 0.005
+                ? `Part payment recorded · ${formatNaira(left)} left`
+                : response.data?.message || "Payment recorded successfully!",
             );
           }
         }
@@ -475,15 +524,50 @@ function PayInvoiceContent() {
         </div>
         <Separator className="my-2" />
         <div className="flex justify-between font-bold text-base">
-          <span className="font-dm-sans">Amount Payable</span>
+          <span className="font-dm-sans">
+            {collectingBalance ? "Balance to collect" : "Amount Payable"}
+          </span>
           <span className="text-[#0A6DC0]">
-            ₦{invoicePreview.total.toLocaleString()}
+            {formatNaira(invoicePreview.total)}
           </span>
         </div>
+        {Number(invoice?.vat ?? 0) > 0 && !collectingBalance && (
+          <p className="text-xs text-gray-500 text-right">
+            Includes VAT (7.5%) {formatNaira(invoice?.vat)}
+          </p>
+        )}
       </div>
 
+      {paymentType === "MIXED" && invoiceId && (
+        <div className="mt-6">
+          <MixedPaymentPanel
+            invoiceId={invoiceId}
+            total={invoicePreview.total}
+            onDone={() => router.push(`/inventory/sales/${invoiceId}`)}
+          />
+        </div>
+      )}
+
       {/* Credit due date + pay button */}
-      <div className="mt-6">
+      <div className={`mt-6 ${paymentType === "MIXED" ? "hidden" : ""}`}>
+        {paymentType === "CASH" && (
+          <div className="mb-6">
+            <Label className="font-medium text-[#2F2F2F] mb-2 block">
+              Amount received
+            </Label>
+            <Input
+              inputMode="decimal"
+              value={cashText ?? plainAmount(toCollect)}
+              onChange={(e) =>
+                setCashText(e.target.value.replace(/[^0-9.,]/g, ""))
+              }
+              className="bg-white border border-gray-300 focus:border-[#0A6DC0] text-lg font-semibold"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Less than the total records a part payment; the rest stays owed.
+            </p>
+          </div>
+        )}
         {paymentType === "CREDIT" && (
           <div className="mb-6">
             <Label className="font-medium text-[#2F2F2F] mb-2 block">
