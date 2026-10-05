@@ -1284,9 +1284,20 @@ export const getTotalSales = async (
   startDate: string,
   endDate: string,
 ): Promise<SupplierSalesResponse> => {
+  // The local day's exact bounds: a bare yyyy-MM-dd is a UTC day on the
+  // server, so sales after local midnight (00:00–01:00 Lagos) landed on the
+  // previous day (inventory #100 accepts timestamps).
+  const localBound = (day: string, end: boolean) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return day;
+    const [y, m, d] = day.split("-").map(Number);
+    const t = end
+      ? new Date(y, m - 1, d, 23, 59, 59, 999)
+      : new Date(y, m - 1, d, 0, 0, 0, 0);
+    return t.toISOString();
+  };
   const params = new URLSearchParams({
-    startDate,
-    endDate,
+    startDate: localBound(startDate, false),
+    endDate: localBound(endDate, true),
   }).toString();
 
   const url = `${SUPPLIER_SALES}?${params}`;
