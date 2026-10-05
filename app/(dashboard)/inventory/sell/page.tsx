@@ -94,12 +94,15 @@ interface CartItem {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const fmt = (n: number) =>
-  n.toLocaleString("en-NG", {
-    style: "currency",
-    currency: "NGN",
-    minimumFractionDigits: 0,
-  });
+// Kobo shown exactly when there is any (₦1,257.75), never ₦40.5.
+const fmt = (n: number) => {
+  const v = Math.round((Number(n) || 0) * 100) / 100;
+  const whole = Number.isInteger(v);
+  return `₦${v.toLocaleString("en-NG", {
+    minimumFractionDigits: whole ? 0 : 2,
+    maximumFractionDigits: whole ? 0 : 2,
+  })}`;
+};
 
 const unitPrice = (item: StockItem, mode: SellMode) =>
   mode === "PACKS"
@@ -153,19 +156,15 @@ export default function SellPage() {
   const [activeStockId, setActiveStockId] = useState<string | null>(null);
   const [activeMode, setActiveMode] = useState<SellMode>("PACKS");
   const [activeQty, setActiveQty] = useState<string>("1");
-  const [activeDiscount, setActiveDiscount] = useState<string>("");
-  const [activeEmpties, setActiveEmpties] = useState<string>("");
-  const [activeEmptiesMode, setActiveEmptiesMode] = useState<"SELL" | "CREDIT">(
-    "SELL",
-  );
-  const [showDiscountInput, setShowDiscountInput] = useState(false);
-  const [showEmptiesInput, setShowEmptiesInput] = useState(false);
 
   const [discountModalOpen, setDiscountModalOpen] = useState(false);
+  // Cart line whose empties are being edited (one-touch selling).
+  const [editingEmptiesIndex, setEditingEmptiesIndex] = useState<number | null>(
+    null,
+  );
   const [tempDiscount, setTempDiscount] = useState<string>("");
 
   // Empties modal
-  const [emptiesModalOpen, setEmptiesModalOpen] = useState(false);
   const [tempEmpties, setTempEmpties] = useState<string>("");
   const [tempEmptiesMode, setTempEmptiesMode] = useState<"SELL" | "CREDIT">(
     "SELL",
@@ -224,14 +223,11 @@ export default function SellPage() {
   } = useStoreStocks(selectedStore?.id || "");
 
   const openItem = (item: StockItem) => {
+    // One-touch selling: the row shows what's already in the cart (0 if not).
+    const line = cart.find((c) => c.stock.id === item.id);
     setActiveStockId(item.id);
-    setActiveMode("PACKS");
-    setActiveQty("1");
-    setActiveDiscount("");
-    setActiveEmpties("");
-    setActiveEmptiesMode("SELL");
-    setShowDiscountInput(false);
-    setShowEmptiesInput(false);
+    setActiveMode(line?.mode ?? "PACKS");
+    setActiveQty(String(line?.quantity ?? 0));
     // Set the display mode for this item when opened (optional)
     setItemDisplayModes((prev) => ({
       ...prev,
@@ -243,145 +239,52 @@ export default function SellPage() {
 
   const activePrice = activeItem ? unitPrice(activeItem, activeMode) : 0;
 
-  const previewSubtotal = (() => {
-    if (!activeItem) return 0;
-    const qty = parseFloat(activeQty) || 0;
-    const disc = parseFloat(activeDiscount) || 0;
-    const empties = parseFloat(activeEmpties) || 0;
-
-    // Product total with discount applied per unit
-    const discountedProductPrice = Math.max(0, activePrice - disc);
-    const productTotal = discountedProductPrice * qty;
-
-    // Empties total WITHOUT discount (full price)
-    const emptiesPrice = parseFloat(activeItem.empties_price) || 0;
-    const emptiesTotal =
-      showEmptiesInput && empties > 0 ? emptiesPrice * empties : 0;
-
-    return productTotal + emptiesTotal;
-  })();
-
-  const handleAddToCart = () => {
-    if (!activeItem) return;
-    const qty = parseFloat(activeQty);
-    if (!qty || qty <= 0) return toast.error("Enter a valid quantity");
-
-    // Validate pieces are in multiples of items_per_pack
-    // Validate pieces are in whole numbers and multiples of items_per_pack
-    // Validate pieces are in whole numbers only (no decimals)
-    if (activeMode === "PIECES") {
-      // First check if it's a whole number
-      if (!Number.isInteger(qty)) {
-        return toast.error(
-          `Pieces quantity cannot be decimal. Please enter a whole number. Example: 1, 2, 3, etc.`,
-        );
-      }
+  /**
+   * One-touch selling: sets the product's cart line to `qty` in `mode` straight
+   * away (0 removes it). The line keeps its discount and empties. Over-stock
+   * or fractional pieces are refused with the same messages as before.
+   */
+  const setLineQty = (item: StockItem, mode: SellMode, qty: number) => {
+    const perPack = item.product.items_per_pack || 1;
+    const availablePacks = parseFloat(item.quantity);
+    if (qty < 0 || !Number.isFinite(qty)) return;
+    if (mode === "PIECES" && !Number.isInteger(qty)) {
+      toast.error("Pieces quantity cannot be decimal. Enter a whole number.");
+      return;
     }
-
-    // Get available stock
-    const availablePacks = parseFloat(activeItem.quantity);
-    const availablePieces = piecesOf(
-      availablePacks,
-      activeItem.product.items_per_pack,
-    );
-
-    // Validate based on mode
-    if (activeMode === "PACKS") {
-      if (qty > availablePacks) {
-        return toast.error(
-          `Only ${formatPacks(availablePacks, activeItem.product.items_per_pack)} available in stock`,
-        );
-      }
-    } else {
-      // PIECES mode
-      if (qty > availablePieces) {
-        return toast.error(
-          `Only ${formatQty(availablePieces)} pieces available in stock (${formatPacks(availablePacks, activeItem.product.items_per_pack)})`,
-        );
-      }
-    }
-
-    const empties = showEmptiesInput ? parseFloat(activeEmpties) || 0 : 0;
-    const discount = showDiscountInput ? parseFloat(activeDiscount) || 0 : 0;
-
-    // Check empties availability
-    const availableEmpties = parseFloat(activeItem.empties_qty);
-    if (empties > availableEmpties) {
-      return toast.error(`Only ${availableEmpties} empties available in stock`);
-    }
-
-    // Calculate packs quantity for stock validation
-    let packsQuantity =
-      activeMode === "PACKS" ? qty : qty / activeItem.product.items_per_pack;
-
-    // Check if adding to cart would exceed available stock
-    const existingIndex = cart.findIndex(
-      (c) => c.stock.id === activeItem.id && c.mode === activeMode,
-    );
-
-    let newTotalPacks = 0;
-    if (existingIndex >= 0) {
-      const existingItem = cart[existingIndex];
-      newTotalPacks = existingItem.packsQuantity + packsQuantity;
-    } else {
-      newTotalPacks = packsQuantity;
-    }
-
-    if (newTotalPacks > availablePacks) {
-      const availablePiecesMsg = piecesOf(
-        availablePacks,
-        activeItem.product.items_per_pack,
+    const packs = mode === "PACKS" ? qty : qty / perPack;
+    if (packs > availablePacks + 1e-9) {
+      toast.error(
+        mode === "PACKS"
+          ? `Only ${formatPacks(availablePacks, perPack)} available in stock`
+          : `Only ${formatQty(piecesOf(availablePacks, perPack))} pieces available in stock (${formatPacks(availablePacks, perPack)})`,
       );
-      return toast.error(
-        `Cannot add more. Only ${formatPacks(availablePacks, activeItem.product.items_per_pack)} (${formatQty(availablePiecesMsg)} pieces) available in total`,
-      );
+      return;
     }
-
-    // Check if adding empties would exceed available
-    if (existingIndex >= 0) {
-      const existingItem = cart[existingIndex];
-      const newTotalEmpties = existingItem.empties + empties;
-      if (newTotalEmpties > availableEmpties) {
-        return toast.error(
-          `Cannot add more empties. Only ${availableEmpties} empties available in total`,
-        );
+    setCart((prev) => {
+      const idx = prev.findIndex((c) => c.stock.id === item.id);
+      if (qty === 0) return idx < 0 ? prev : prev.filter((_, i) => i !== idx);
+      if (idx < 0) {
+        return [
+          ...prev,
+          {
+            stock: item,
+            quantity: qty,
+            mode,
+            discount: 0,
+            empties: 0,
+            emptiesMode: null,
+            packsQuantity: packs,
+          },
+        ];
       }
-    }
-
-    if (existingIndex >= 0) {
-      const updated = [...cart];
-      updated[existingIndex] = {
-        ...updated[existingIndex],
-        quantity: updated[existingIndex].quantity + qty,
-        packsQuantity: updated[existingIndex].packsQuantity + packsQuantity,
-        discount,
-        empties: updated[existingIndex].empties + empties,
-        emptiesMode:
-          empties > 0 ? activeEmptiesMode : updated[existingIndex].emptiesMode,
-      };
-      setCart(updated);
-    } else {
-      setCart((prev) => [
-        ...prev,
-        {
-          stock: activeItem,
-          quantity: qty, // Store original quantity
-          mode: activeMode,
-          discount,
-          empties,
-          emptiesMode: empties > 0 ? activeEmptiesMode : null,
-          packsQuantity: packsQuantity, // Store packs equivalent for stock validation
-        },
-      ]);
-    }
-    setActiveStockId(null);
-    setActiveQty("1");
-    setActiveDiscount("");
-    setActiveEmpties("");
-    setShowDiscountInput(false);
-    setShowEmptiesInput(false);
-    toast.success(`${activeItem.product.name} added to cart`);
+      const next = [...prev];
+      next[idx] = { ...next[idx], quantity: qty, mode, packsQuantity: packs };
+      return next;
+    });
   };
+
+  const stepFor = (mode: SellMode) => (mode === "PACKS" ? 0.5 : 1);
 
   const removeCartItem = (idx: number) => {
     setCart((prev) => prev.filter((_, i) => i !== idx));
@@ -435,7 +338,19 @@ export default function SellPage() {
   // ── Invoice totals ───────────────────────────────────────────────────────
 
   const totalItems = cart.length;
-  const totalAmount = cart.reduce((s, ci) => s + itemSubtotal(ci), 0);
+  const goodsTotal = cart.reduce((s, ci) => s + itemSubtotal(ci), 0);
+  // The store charges 7.5% VAT on the goods after discount (empties are a
+  // deposit, never taxed) — the same rule the server applies at checkout,
+  // per line, rounded to the kobo. The invoice total is the server's.
+  const storeAddsVat = Boolean((selectedStore as any)?.settings?.add_vat);
+  const vatTotal = storeAddsVat
+    ? cart.reduce((s, ci) => {
+        const goods =
+          Math.max(0, unitPrice(ci.stock, ci.mode) - ci.discount) * ci.quantity;
+        return s + Math.round(goods * 0.075 * 100) / 100;
+      }, 0)
+    : 0;
+  const totalAmount = goodsTotal + vatTotal;
   const totalDiscount = cart.reduce(
     (s, ci) => s + ci.discount * ci.quantity, // Remove the + ci.empties part
     0,
@@ -778,6 +693,13 @@ export default function SellPage() {
                               key={m}
                               onClick={() => {
                                 setActiveMode(m);
+                                // The cart line follows the unit (pieces whole).
+                                const q = parseFloat(activeQty) || 0;
+                                if (q > 0) {
+                                  const nq = m === "PIECES" ? Math.floor(q) : q;
+                                  setActiveQty(String(nq));
+                                  setLineQty(item, m, nq);
+                                }
                                 // Update display mode for this specific item only
                                 setItemDisplayModes((prev) => ({
                                   ...prev,
@@ -800,11 +722,14 @@ export default function SellPage() {
                         {/* Quantity */}
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() =>
-                              setActiveQty((v) =>
-                                String(Math.max(0.5, parseFloat(v) - 1)),
-                              )
-                            }
+                            onClick={() => {
+                              const q = Math.max(
+                                0,
+                                (parseFloat(activeQty) || 0) - stepFor(activeMode),
+                              );
+                              setActiveQty(String(q));
+                              setLineQty(item, activeMode, q);
+                            }}
                             className="w-16 h-10 rounded-lg border border-[#E4E4E4] flex items-center justify-center text-[#2F2F2F] hover:bg-gray-50"
                           >
                             <Minus className="w-4 h-4" />
@@ -812,15 +737,25 @@ export default function SellPage() {
                           <Input
                             type="number"
                             value={activeQty}
-                            onChange={(e) => setActiveQty(e.target.value)}
+                            onChange={(e) => {
+                              setActiveQty(e.target.value);
+                              const q =
+                                e.target.value.trim() === ""
+                                  ? 0
+                                  : parseFloat(e.target.value);
+                              if (Number.isFinite(q)) setLineQty(item, activeMode, q);
+                            }}
                             className="w-full bg-white text-center font-semibold border-[#D8D8D866]"
-                            min={0.5}
-                            step={0.5}
+                            min={0}
+                            step={stepFor(activeMode)}
                           />
                           <button
-                            onClick={() =>
-                              setActiveQty((v) => String(parseFloat(v) + 1))
-                            }
+                            onClick={() => {
+                              const q =
+                                (parseFloat(activeQty) || 0) + stepFor(activeMode);
+                              setActiveQty(String(q));
+                              setLineQty(item, activeMode, q);
+                            }}
                             className="w-16 h-10 rounded-lg border border-[#E4E4E4] flex items-center justify-center text-[#2F2F2F] hover:bg-gray-50"
                           >
                             <Plus className="w-4 h-4" />
@@ -828,226 +763,10 @@ export default function SellPage() {
                           {/* <span className="text-sm text-[#9E9A9A]">Packs</span> */}
                         </div>
 
-                        {/* Action buttons */}
-                        {/* Action buttons */}
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            onClick={() => {
-                              setTempDiscount(activeDiscount);
-                              setDiscountModalOpen(true);
-                            }}
-                            className="py-2 px-3 rounded-xl text-sm font-medium border transition-all flex items-center justify-center gap-1.5 bg-[#F9F9F9] border-[#D8D8D866] text-[#2F2F2F]"
-                          >
-                            Add Discount
-                          </button>
-                          <button
-                            onClick={() => {
-                              setTempEmpties(activeEmpties);
-                              setTempEmptiesMode(activeEmptiesMode);
-                              setEmptiesModalOpen(true);
-                            }}
-                            className="py-2 px-3 rounded-xl text-sm font-medium border transition-all flex items-center justify-center gap-1.5 bg-[#F9F9F9] border-[#D8D8D866] text-[#2F2F2F]"
-                          >
-                            Sell with Empties
-                          </button>
-                        </div>
-
-                        {/* Show badges if discount or empties are added */}
-                        <div className="space-y-2">
-                          {activeDiscount && parseFloat(activeDiscount) > 0 && (
-                            <div className="flex items-center justify-between bg-[#FFF8EC] p-2 rounded-lg">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-[#E89500]">
-                                  Discount: {fmt(parseFloat(activeDiscount))}
-                                </span>
-                              </div>
-                              <button
-                                onClick={() => setActiveDiscount("")}
-                                className="text-[#E89500] hover:text-red-500"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          )}
-
-                          {activeEmpties && parseFloat(activeEmpties) > 0 && (
-                            <div className="flex items-center justify-between bg-[#EEF5FB] p-2 rounded-lg">
-                              <div className="flex items-center gap-2">
-                                <Package className="w-3.5 h-3.5 text-[#0A6DC0]" />
-                                <span className="text-sm text-[#0A6DC0]">
-                                  {activeEmpties} empties (
-                                  {activeEmptiesMode === "CREDIT"
-                                    ? "Credit"
-                                    : "Sold"}
-                                  )
-                                </span>
-                              </div>
-                              <button
-                                onClick={() => {
-                                  setActiveEmpties("");
-                                  setActiveEmptiesMode("SELL");
-                                }}
-                                className="text-[#0A6DC0] hover:text-red-500"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Empties input */}
-                        {/* Empties Modal */}
-                        {emptiesModalOpen && (
-                          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                            <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
-                              <div className="flex items-center justify-between p-4 border-b border-[#F0F0F0]">
-                                <p className="font-bold text-[#2F2F2F]">
-                                  Selling with Empties?
-                                </p>
-                                <button
-                                  onClick={() => {
-                                    setEmptiesModalOpen(false);
-                                    setTempEmpties("");
-                                    setTempEmptiesMode("SELL");
-                                  }}
-                                >
-                                  <X className="w-5 h-5 text-[#9E9A9A]" />
-                                </button>
-                              </div>
-
-                              <div className="space-y-1 bg-[#EEF5FB] p-3 rounded-lg mx-4 mt-4">
-                                <p className="text-xs text-[#0A6DC0] font-medium">
-                                  Available Empties in Store
-                                </p>
-                                <p className="font-bold text-[#2F2F2F] text-lg">
-                                  {formatQty(activeItem?.empties_qty)} units
-                                </p>
-                              </div>
-
-                              <div className="p-4 space-y-4">
-                                <div className="space-y-1">
-                                  <p className="text-xs text-[#9E9A9A]">
-                                    Empties Qty
-                                  </p>
-                                  <Input
-                                    type="number"
-                                    placeholder="Enter empties Qty"
-                                    value={tempEmpties}
-                                    onChange={(e) =>
-                                      setTempEmpties(e.target.value)
-                                    }
-                                    className="border-[#E4E4E4]"
-                                  />
-                                </div>
-
-                                <div className="space-y-1">
-                                  <p className="text-xs text-[#9E9A9A]">
-                                    Empties Price
-                                  </p>
-                                  <p className="font-semibold text-[#2F2F2F]">
-                                    {fmt(
-                                      parseFloat(
-                                        activeItem?.empties_price || "0",
-                                      ),
-                                    )}
-                                  </p>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <p className="text-xs text-[#9E9A9A]">
-                                    Sales Mode
-                                  </p>
-                                  {(["SELL", "CREDIT"] as const).map((em) => (
-                                    <label
-                                      key={em}
-                                      className="flex items-start gap-2 cursor-pointer"
-                                    >
-                                      <div
-                                        className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                                          tempEmptiesMode === em
-                                            ? "border-[#0A6DC0] bg-[#0A6DC0]"
-                                            : "border-gray-300"
-                                        }`}
-                                        onClick={() => setTempEmptiesMode(em)}
-                                      >
-                                        {tempEmptiesMode === em && (
-                                          <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                                        )}
-                                      </div>
-                                      <div>
-                                        <p className="text-sm font-medium text-[#2F2F2F]">
-                                          {em === "SELL"
-                                            ? "Sell Empties"
-                                            : "Empties On Credit"}
-                                        </p>
-                                        <p className="text-xs text-[#9E9A9A]">
-                                          {em === "SELL"
-                                            ? "Sell both drinks and empties to the customer. i.e Drink price + Empties Price"
-                                            : "Get drinks for empties and pay later"}
-                                        </p>
-                                      </div>
-                                    </label>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div className="p-4 border-t border-[#F0F0F0] flex gap-2">
-                                <Button
-                                  onClick={() => {
-                                    setEmptiesModalOpen(false);
-                                    setTempEmpties("");
-                                    setTempEmptiesMode("SELL");
-                                  }}
-                                  variant="outline"
-                                  className="flex-1"
-                                >
-                                  Cancel
-                                </Button>
-                                <Button
-                                  onClick={() => {
-                                    const emptiesQty = parseFloat(tempEmpties);
-                                    const availableEmpties = parseFloat(
-                                      activeItem?.empties_qty || "0",
-                                    );
-
-                                    if (emptiesQty > availableEmpties) {
-                                      toast.error(
-                                        `Only ${availableEmpties} empties available in stock`,
-                                      );
-                                      return;
-                                    }
-
-                                    setActiveEmpties(tempEmpties);
-                                    setActiveEmptiesMode(tempEmptiesMode);
-                                    setShowEmptiesInput(true);
-                                    setEmptiesModalOpen(false);
-                                    setTempEmpties("");
-                                  }}
-                                  className="flex-1 bg-[#0A6DC0] hover:bg-[#09599a] text-white"
-                                >
-                                  Add Empties
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Preview subtotal */}
-                        <div className="flex items-center justify-between py-2 border-t border-[#F0F0F0]">
-                          <span className="text-sm text-[#9E9A9A]">
-                            Subtotal
-                          </span>
-                          <span className="font-bold text-[#2F2F2F]">
-                            {fmt(previewSubtotal)}
-                          </span>
-                        </div>
-
-                        <Button
-                          onClick={handleAddToCart}
-                          className="w-full bg-[#0A6DC0] hover:bg-[#09599a] text-white rounded-xl h-11 font-semibold"
-                        >
-                          Add to Cart
-                        </Button>
+                        <p className="text-xs text-[#9E9A9A]">
+                          Changes go straight to the cart. Add discounts and
+                          empties on the cart.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -1208,46 +927,53 @@ export default function SellPage() {
                       </div>
                     </div>
 
-                    {ci.discount > 0 && (
-                      <div className="space-y-1">
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-2">
-                            <p className="text-[#9E9A9A] text-[13px]">
-                              Discount per item:{" "}
-                            </p>
-                            <p className="font-bold text-[#2F2F2F]">
-                              {fmt(ci.discount)}
-                            </p>
-                            <button
-                              onClick={() => {
-                                // Open discount edit modal for this cart item
-                                setEditingDiscountIndex(idx);
-                                setTempDiscount(ci.discount.toString());
-                                setDiscountModalOpen(true);
-                              }}
-                              className="text-[#C7C7CC] hover:text-[#09599a]"
-                              title="Edit Discount"
-                            >
-                              <Edit size={16} />
-                            </button>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-[#9E9A9A] text-[13px]">
-                              Total Discount:
-                            </p>
-                            <p className="font-bold text-[#2F2F2F]">
-                              {fmt(ci.discount * ci.quantity)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {ci.empties > 0 && (
-                      <p className="text-xs text-[#0A6DC0]">
-                        {ci.empties} Empties (
-                        {ci.emptiesMode === "CREDIT" ? "On Credit" : "Sold"})
-                      </p>
-                    )}
+                    {/* Discount and empties are set on the cart line. */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingDiscountIndex(idx);
+                          setTempDiscount(ci.discount > 0 ? ci.discount.toString() : "");
+                          setDiscountModalOpen(true);
+                        }}
+                        className={`min-h-[44px] px-3 py-1.5 rounded-xl border text-left text-[13px] ${ci.discount > 0 ? "border-[#0A6DC0]" : "border-[#D8D8D866] text-center text-[#0A6DC0] font-semibold"}`}
+                      >
+                        {ci.discount > 0 ? (
+                          <>
+                            <span className="block font-bold text-[#2F2F2F]">
+                              {fmt(ci.discount)} <Edit size={12} className="inline text-[#0A6DC0]" />
+                            </span>
+                            <span className="block text-[11.5px] text-[#9E9A9A]">
+                              Discount per {ci.mode === "PACKS" ? "pack" : "piece"} · {fmt(ci.discount * ci.quantity)} total
+                            </span>
+                          </>
+                        ) : (
+                          "+ Add discount"
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingEmptiesIndex(idx);
+                          setTempEmpties(ci.empties > 0 ? ci.empties.toString() : "");
+                          setTempEmptiesMode(ci.emptiesMode ?? "SELL");
+                        }}
+                        className={`min-h-[44px] px-3 py-1.5 rounded-xl border text-left text-[13px] ${ci.empties > 0 ? "border-[#0A6DC0]" : "border-[#D8D8D866] text-center text-[#0A6DC0] font-semibold"}`}
+                      >
+                        {ci.empties > 0 ? (
+                          <>
+                            <span className="block font-bold text-[#2F2F2F]">
+                              {ci.empties} <Edit size={12} className="inline text-[#0A6DC0]" />
+                            </span>
+                            <span className="block text-[11.5px] text-[#9E9A9A]">
+                              {ci.emptiesMode === "CREDIT" ? "Empties owed" : "Empties sold"}
+                            </span>
+                          </>
+                        ) : (
+                          "+ Add empties"
+                        )}
+                      </button>
+                    </div>
                     <div className="border-t border-[#D8D8D866] pt-2"></div>
                     <div className="flex justify-between text-xs font-medium">
                       <span className="text-[#9E9A9A] ">Subtotal</span>
@@ -1272,9 +998,17 @@ export default function SellPage() {
                 <div className="flex justify-between text-[#9E9A9A]">
                   <span>Total Amount</span>
                   <span className="font-medium text-[#2F2F2F]">
-                    {fmt(totalAmount)}
+                    {fmt(goodsTotal)}
                   </span>
                 </div>
+                {vatTotal > 0 && (
+                  <div className="flex justify-between text-[#9E9A9A]">
+                    <span>VAT (7.5%)</span>
+                    <span className="font-medium text-[#2F2F2F]">
+                      {fmt(vatTotal)}
+                    </span>
+                  </div>
+                )}
                 {totalDiscount > 0 && (
                   <div className="flex justify-between text-[#9E9A9A]">
                     <span>Total Discount</span>
@@ -1401,6 +1135,86 @@ export default function SellPage() {
         </div>
       )}
 
+      {/* Cart line empties */}
+      {editingEmptiesIndex !== null && cart[editingEmptiesIndex] && (() => {
+        const ci = cart[editingEmptiesIndex];
+        const inStock = Math.floor(parseFloat(ci.stock.empties_qty) || 0);
+        const qty = parseFloat(tempEmpties) || 0;
+        const over = tempEmptiesMode === "SELL" && qty > inStock;
+        const price = parseFloat(ci.stock.empties_price) || 0;
+        const close = () => {
+          setEditingEmptiesIndex(null);
+          setTempEmpties("");
+        };
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl">
+              <div className="flex items-center justify-between p-4 border-b border-[#F0F0F0]">
+                <p className="font-bold text-[#2F2F2F]">
+                  {ci.empties > 0 ? "Edit empties" : "Selling with empties?"}
+                </p>
+                <button onClick={close}>
+                  <X className="w-5 h-5 text-[#9E9A9A]" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                <div className="grid grid-cols-2 gap-2">
+                  {(["SELL", "CREDIT"] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setTempEmptiesMode(m)}
+                      className={`py-2 rounded-lg text-sm font-medium border ${tempEmptiesMode === m ? "bg-[#0A6DC00D] border-[#0A6DC0] text-[#0A6DC0]" : "bg-[#F5F6FA] border-transparent text-[#9E9A9A]"}`}
+                    >
+                      {m === "SELL" ? "Sell empties" : "Empties on credit"}
+                    </button>
+                  ))}
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-sm font-medium text-[#2F2F2F]">Empties qty</p>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={tempEmpties}
+                    onChange={(e) => setTempEmpties(e.target.value)}
+                    className="border-[#E4E4E4]"
+                  />
+                  {tempEmptiesMode === "SELL" && (
+                    <p className={`text-xs ${over ? "text-red-600" : "text-[#9E9A9A]"}`}>
+                      {over
+                        ? `Only ${inStock} empties available in stock`
+                        : `${inStock} empties in stock · ${fmt(price)} each`}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="p-4 border-t border-[#F0F0F0] flex gap-2">
+                <Button onClick={close} variant="outline" className="flex-1">
+                  Cancel
+                </Button>
+                <Button
+                  disabled={over}
+                  onClick={() => {
+                    const n = Math.max(0, Math.floor(qty));
+                    setCart((prev) =>
+                      prev.map((c, i) =>
+                        i === editingEmptiesIndex
+                          ? { ...c, empties: n, emptiesMode: n > 0 ? tempEmptiesMode : null }
+                          : c,
+                      ),
+                    );
+                    close();
+                  }}
+                  className="flex-1 bg-[#0A6DC0] hover:bg-[#09599a] text-white"
+                >
+                  {ci.empties > 0 ? "Save empties" : "Add empties"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Discount Modal */}
       {discountModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -1451,10 +1265,6 @@ export default function SellPage() {
                     setCart(updated);
                     setEditingDiscountIndex(null);
                     toast.success("Discount updated!");
-                  } else if (activeItem) {
-                    // Add new discount to active item
-                    setActiveDiscount(tempDiscount);
-                    setShowDiscountInput(true);
                   }
 
                   setDiscountModalOpen(false);
